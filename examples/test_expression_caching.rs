@@ -1,11 +1,10 @@
 //! Simple test to verify expression caching implementation works
 
-use ligature_ast::{Expr, ExprKind, Literal, Program, Span};
+use ligature_ast::{Expr, ExprKind, Literal, Span};
 use ligature_eval::{
-    config::{CacheConfig, CacheableExpressions, EvaluatorConfig, PerformanceConfig},
     Evaluator,
+    config::{CacheConfig, CacheableExpressions, EvaluatorConfig, PerformanceConfig},
 };
-use ligature_parser::parse_program;
 
 fn main() {
     println!("Testing Expression Caching Implementation");
@@ -36,9 +35,9 @@ fn main() {
     let result2 = evaluator.evaluate_expression(&expr).unwrap();
     let result3 = evaluator.evaluate_expression(&expr).unwrap();
 
-    println!("   Result 1: {:?}", result1);
-    println!("   Result 2: {:?}", result2);
-    println!("   Result 3: {:?}", result3);
+    println!("   Result 1: {result1:?}");
+    println!("   Result 2: {result2:?}");
+    println!("   Result 3: {result3:?}");
     println!(
         "   All results equal: {}",
         result1 == result2 && result2 == result3

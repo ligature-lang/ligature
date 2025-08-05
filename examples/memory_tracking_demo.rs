@@ -3,7 +3,7 @@
 //! This example demonstrates how to use the memory tracking functionality
 //! to monitor memory usage during program evaluation.
 
-use ligature_eval::{get_current_memory_stats, Evaluator, MemoryTracker};
+use ligature_eval::{Evaluator, MemoryTracker, get_current_memory_stats};
 use ligature_parser::parse_program;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

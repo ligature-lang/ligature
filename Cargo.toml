@@ -3,18 +3,21 @@ resolver = "2"
 
 
 members = [
+    "apps/cacophony",
     "apps/keywork",
     "apps/performance-monitor",
-    "apps/cacophony",
+    "apps/reed",
+    "crates/cacophony-core",
+    "crates/cacophony-config",
+    "crates/cacophony-plugin",
     "crates/ligature-ast",
     "crates/ligature-parser", 
     "crates/ligature-types",
     "crates/ligature-eval",
-    "apps/reed",
     "crates/ligature-lsp",
     "crates/ligature-xdg",
     "examples",
-    "krox/krox-rs",
+            "krox",
     "tests/performance_validation",
 ]
 
@@ -23,7 +26,7 @@ exclude = [
 
 [workspace.package]
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 authors = ["Ligature Language Team"]
 description = "A Turing-incomplete configuration and data management language"
 license = "Apache-2.0"

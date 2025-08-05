@@ -1,13 +1,13 @@
 //! Executors for different Ligature program execution modes.
 
 use crate::{
-    error::{Error, Result},
     ClientConfig,
+    error::{Error, Result},
 };
 use ligature_ast::Program;
 use ligature_eval::Value;
 use ligature_parser::parse_program;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use std::path::Path;
 use tracing::{debug, warn};
 
@@ -69,7 +69,7 @@ impl NativeExecutor {
         .map_err(|_| Error::timeout("Command execution timed out".to_string(), self.timeout))?
         .map_err(|e| {
             Error::process_execution(
-                format!("Failed to execute command: {}", e),
+                format!("Failed to execute command: {e}"),
                 Some(format!("{} {:?}", self.cli_path, args)),
                 None,
             )
@@ -93,7 +93,7 @@ impl NativeExecutor {
 impl Executor for NativeExecutor {
     async fn execute_file(&self, path: &Path) -> Result<Value> {
         let path_str = path.to_string_lossy();
-        let output = self.execute_command(&["eval", &path_str]).await?;
+        let _output = self.execute_command(&["eval", &path_str]).await?;
 
         // For now, we'll return a simple unit value since we can't deserialize Value
         // In a real implementation, you'd need a custom serialization format
@@ -106,12 +106,12 @@ impl Executor for NativeExecutor {
 
         // Create a temporary file with the source code
         let mut temp_file = NamedTempFile::new().map_err(|e| {
-            Error::file_system(format!("Failed to create temporary file: {}", e), None)
+            Error::file_system(format!("Failed to create temporary file: {e}"), None)
         })?;
 
         temp_file.write_all(source.as_bytes()).map_err(|e| {
             Error::file_system(
-                format!("Failed to write to temporary file: {}", e),
+                format!("Failed to write to temporary file: {e}"),
                 Some(temp_file.path().to_string_lossy().to_string()),
             )
         })?;
@@ -121,7 +121,7 @@ impl Executor for NativeExecutor {
 
         // Clean up the temporary file
         if let Err(e) = temp_file.close() {
-            warn!("Failed to close temporary file: {}", e);
+            warn!("Failed to close temporary file: {e}");
         }
 
         result
@@ -130,7 +130,7 @@ impl Executor for NativeExecutor {
     async fn execute_program(&self, program: &Program) -> Result<Value> {
         // For now, serialize the program to source and execute it
         // In the future, we could add a direct AST execution mode
-        let source = format!("{:?}", program); // This is a placeholder
+        let source = format!("{program:?}"); // This is a placeholder
         self.execute_source(&source).await
     }
 }
@@ -139,6 +139,7 @@ impl Executor for NativeExecutor {
 pub struct HttpExecutor {
     client: reqwest::Client,
     endpoint: String,
+    #[allow(dead_code)]
     timeout: std::time::Duration,
 }
 
@@ -152,7 +153,7 @@ impl HttpExecutor {
         let client = reqwest::Client::builder()
             .timeout(timeout)
             .build()
-            .map_err(|e| Error::Http(e))?;
+            .map_err(Error::Http)?;
 
         Ok(Self {
             client,
@@ -169,14 +170,14 @@ impl HttpExecutor {
             .json(request)
             .send()
             .await
-            .map_err(|e| Error::Http(e))?;
+            .map_err(Error::Http)?;
 
         if !response.status().is_success() {
             let status = response.status().as_u16();
             let body = response.text().await.unwrap_or_default();
             return Err(Error::http_server(
                 status,
-                format!("HTTP request failed with status {}", status),
+                format!("HTTP request failed with status {status}"),
                 Some(body),
             ));
         }
@@ -208,7 +209,7 @@ impl Executor for HttpExecutor {
 
     async fn execute_program(&self, program: &Program) -> Result<Value> {
         let request = ExecutionRequest::Program {
-            program: serde_json::to_string(program).map_err(|e| Error::JsonSerialization(e))?,
+            program: serde_json::to_string(program).map_err(Error::JsonSerialization)?,
         };
 
         self.send_request(&request).await
@@ -225,24 +226,28 @@ impl InProcessExecutor {
     }
 }
 
+impl Default for InProcessExecutor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[async_trait::async_trait]
 impl Executor for InProcessExecutor {
     async fn execute_file(&self, path: &Path) -> Result<Value> {
-        let source = tokio::fs::read_to_string(path)
-            .await
-            .map_err(|e| Error::Io(e))?;
+        let source = tokio::fs::read_to_string(path).await.map_err(Error::Io)?;
 
         self.execute_source(&source).await
     }
 
     async fn execute_source(&self, source: &str) -> Result<Value> {
-        let program = parse_program(source).map_err(|e| Error::Parse(e))?;
+        let program = parse_program(source).map_err(Error::Parse)?;
 
         self.execute_program(&program).await
     }
 
     async fn execute_program(&self, program: &Program) -> Result<Value> {
-        ligature_eval::evaluate_program(program).map_err(|e| Error::Parse(e))
+        ligature_eval::evaluate_program(program).map_err(Error::Parse)
     }
 }
 
@@ -260,6 +265,7 @@ enum ExecutionRequest {
 
 /// Response from HTTP execution server.
 #[derive(Debug)]
+#[allow(dead_code)]
 struct ExecutionResponse {
     result: Option<Value>,
     error: Option<String>,

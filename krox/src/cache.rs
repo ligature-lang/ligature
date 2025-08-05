@@ -57,7 +57,7 @@ impl Cache {
         if !cache_dir.exists() {
             fs::create_dir_all(&cache_dir).await.map_err(|e| {
                 Error::file_system(
-                    format!("Failed to create cache directory: {}", e),
+                    format!("Failed to create cache directory: {e}"),
                     Some(cache_dir.to_string_lossy().to_string()),
                 )
             })?;
@@ -152,7 +152,7 @@ impl Cache {
     /// Get a cached result for source content.
     pub async fn get_by_content(&mut self, content: &str) -> Result<Option<Value>> {
         let content_hash = self.hash_content(content);
-        let cache_key = format!("content_{}", content_hash);
+        let cache_key = format!("content_{content_hash}");
         let cache_file = self.cache_dir.join(&cache_key);
 
         if !cache_file.exists() {
@@ -210,7 +210,7 @@ impl Cache {
         let cache_file = self.cache_dir.join(&cache_key);
 
         let entry = CacheEntry {
-            value_json: format!("{:?}", value), // Simple debug format for now
+            value_json: format!("{value:?}"), // Simple debug format for now
             created_at: SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .unwrap()
@@ -223,12 +223,12 @@ impl Cache {
             content_hash: None,
         };
 
-        let content = serde_json::to_string(&entry).map_err(|e| Error::JsonSerialization(e))?;
+        let content = serde_json::to_string(&entry).map_err(Error::JsonSerialization)?;
 
         let content_len = content.len();
         fs::write(&cache_file, content).await.map_err(|e| {
             Error::file_system(
-                format!("Failed to write cache file: {}", e),
+                format!("Failed to write cache file: {e}"),
                 Some(cache_file.to_string_lossy().to_string()),
             )
         })?;
@@ -243,11 +243,11 @@ impl Cache {
     /// Set a cached result for source content.
     pub async fn set_by_content(&mut self, content: &str, value: &Value) -> Result<()> {
         let content_hash = self.hash_content(content);
-        let cache_key = format!("content_{}", content_hash);
+        let cache_key = format!("content_{content_hash}");
         let cache_file = self.cache_dir.join(&cache_key);
 
         let entry = CacheEntry {
-            value_json: format!("{:?}", value), // Simple debug format for now
+            value_json: format!("{value:?}"), // Simple debug format for now
             created_at: SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .unwrap()
@@ -260,12 +260,12 @@ impl Cache {
             content_hash: Some(content_hash),
         };
 
-        let content = serde_json::to_string(&entry).map_err(|e| Error::JsonSerialization(e))?;
+        let content = serde_json::to_string(&entry).map_err(Error::JsonSerialization)?;
 
         let content_len = content.len();
         fs::write(&cache_file, content).await.map_err(|e| {
             Error::file_system(
-                format!("Failed to write cache file: {}", e),
+                format!("Failed to write cache file: {e}"),
                 Some(cache_file.to_string_lossy().to_string()),
             )
         })?;
@@ -281,14 +281,14 @@ impl Cache {
     pub async fn clear(&mut self) -> Result<()> {
         let mut entries = fs::read_dir(&self.cache_dir).await.map_err(|e| {
             Error::file_system(
-                format!("Failed to read cache directory: {}", e),
+                format!("Failed to read cache directory: {e}"),
                 Some(self.cache_dir.to_string_lossy().to_string()),
             )
         })?;
 
         while let Some(entry) = entries.next_entry().await.map_err(|e| {
             Error::file_system(
-                format!("Failed to read cache directory entry: {}", e),
+                format!("Failed to read cache directory entry: {e}"),
                 Some(self.cache_dir.to_string_lossy().to_string()),
             )
         })? {

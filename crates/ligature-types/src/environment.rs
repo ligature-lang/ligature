@@ -3,6 +3,9 @@
 use indexmap::IndexMap;
 use ligature_ast::{InstanceDeclaration, Type, TypeAlias, TypeClassDeclaration, TypeConstructor};
 
+/// Type alias for conflict error
+type ConflictError = (String, Type, Type);
+
 /// Strategy for resolving binding conflicts.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ConflictResolutionStrategy {
@@ -67,7 +70,11 @@ impl TypeEnvironment {
     }
 
     /// Bind a name to a type in the current scope, checking for conflicts.
-    pub fn bind_with_conflict_check(&mut self, name: String, type_: Type) -> Result<(), (String, Type, Type)> {
+    pub fn bind_with_conflict_check(
+        &mut self,
+        name: String,
+        type_: Type,
+    ) -> Result<(), ConflictError> {
         if let Some(existing_type) = self.bindings.get(&name) {
             Err((name, existing_type.clone(), type_))
         } else {
@@ -82,15 +89,14 @@ impl TypeEnvironment {
         name: String,
         type_: Type,
         strategy: ConflictResolutionStrategy,
-    ) -> Result<(), (String, Type, Type)> {
+    ) -> Result<(), ConflictError> {
         match strategy {
             ConflictResolutionStrategy::Error => self.bind_with_conflict_check(name, type_),
             ConflictResolutionStrategy::Warn => {
                 if let Some(existing_type) = self.bindings.get(&name) {
                     // Add warning mechanism
                     self.emit_warning(&format!(
-                        "Binding conflict for '{}': existing={:?}, new={:?}",
-                        name, existing_type, type_
+                        "Binding conflict for '{name}': existing={existing_type:?}, new={type_:?}",
                     ));
                 }
                 self.bindings.insert(name, type_);
@@ -131,7 +137,7 @@ impl TypeEnvironment {
     pub fn emit_warning(&mut self, message: &str) {
         self.warnings.push(message.to_string());
         // Also print to stderr for immediate feedback
-        eprintln!("Warning: {}", message);
+        eprintln!("Warning: {message}");
     }
 
     /// Get all collected warnings.
@@ -199,10 +205,7 @@ impl TypeEnvironment {
 
     /// Bind a type class instance.
     pub fn bind_instance(&mut self, class_name: String, instance: InstanceDeclaration) {
-        self.instances
-            .entry(class_name)
-            .or_default()
-            .push(instance);
+        self.instances.entry(class_name).or_default().push(instance);
     }
 
     /// Look up type class instances for a given class.
@@ -211,13 +214,17 @@ impl TypeEnvironment {
     }
 
     /// Look up type class instances with depth tracking to prevent infinite recursion.
-    fn lookup_instances_with_depth(&self, class_name: &str, depth: usize) -> Option<&[InstanceDeclaration]> {
+    fn lookup_instances_with_depth(
+        &self,
+        class_name: &str,
+        depth: usize,
+    ) -> Option<&[InstanceDeclaration]> {
         const MAX_DEPTH: usize = 100; // Prevent infinite recursion
-        
+
         if depth > MAX_DEPTH {
             return None; // Return None to prevent stack overflow
         }
-        
+
         if let Some(instances) = self.instances.get(class_name) {
             Some(instances.as_slice())
         } else if let Some(parent) = &self.parent {
@@ -234,7 +241,7 @@ impl TypeEnvironment {
         type_arguments: &[Type],
     ) -> Option<&InstanceDeclaration> {
         let result = self.find_matching_instance_with_depth(class_name, type_arguments, 0);
-        
+
         // Debug logging (can be enabled/disabled as needed)
         if result.is_none() {
             // Log available instances for debugging
@@ -242,7 +249,7 @@ impl TypeEnvironment {
                 // This could be expanded to provide more detailed debugging information
             }
         }
-        
+
         result
     }
 
@@ -254,11 +261,11 @@ impl TypeEnvironment {
         depth: usize,
     ) -> Option<&InstanceDeclaration> {
         const MAX_DEPTH: usize = 100; // Prevent infinite recursion
-        
+
         if depth > MAX_DEPTH {
             return None; // Return None to prevent stack overflow
         }
-        
+
         if let Some(instances) = self.lookup_instances(class_name) {
             // Find all matching instances
             let mut matching_instances = Vec::new();
@@ -267,12 +274,12 @@ impl TypeEnvironment {
                     matching_instances.push(instance);
                 }
             }
-            
+
             // If we found exactly one match, return it
             if matching_instances.len() == 1 {
                 return Some(matching_instances[0]);
             }
-            
+
             // If we found multiple matches, try to select the most specific one
             if matching_instances.len() > 1 {
                 return self.select_most_specific_instance(matching_instances, type_arguments);
@@ -296,16 +303,16 @@ impl TypeEnvironment {
         if instances.is_empty() {
             return None;
         }
-        
+
         if instances.len() == 1 {
             return Some(instances[0]);
         }
-        
+
         // For now, we'll use a simple heuristic: prefer instances with fewer type variables
         // In a more sophisticated implementation, we'd use proper specificity ordering
         let mut best_instance = instances[0];
         let mut best_score = self.calculate_instance_specificity(best_instance, type_arguments);
-        
+
         for instance in instances.iter().skip(1) {
             let score = self.calculate_instance_specificity(instance, type_arguments);
             if score > best_score {
@@ -313,7 +320,7 @@ impl TypeEnvironment {
                 best_instance = instance;
             }
         }
-        
+
         Some(best_instance)
     }
 
@@ -324,9 +331,11 @@ impl TypeEnvironment {
         type_arguments: &[Type],
     ) -> usize {
         let mut score = 0;
-        
+
         // Count non-variable type arguments (more specific)
-        for (instance_arg, _provided_arg) in instance.type_arguments.iter().zip(type_arguments.iter()) {
+        for (instance_arg, _provided_arg) in
+            instance.type_arguments.iter().zip(type_arguments.iter())
+        {
             match &instance_arg.kind {
                 ligature_ast::TypeKind::Variable(_) => {
                     // Variables are less specific
@@ -338,40 +347,43 @@ impl TypeEnvironment {
                 }
             }
         }
-        
+
         score
     }
 
     /// Debug method to get information about why instance matching failed.
-    pub fn debug_instance_matching(
-        &self,
-        class_name: &str,
-        type_arguments: &[Type],
-    ) -> String {
+    pub fn debug_instance_matching(&self, class_name: &str, type_arguments: &[Type]) -> String {
         let mut debug_info = format!("Debug info for class '{class_name}' with type arguments:\n");
-        
+
         for (i, arg) in type_arguments.iter().enumerate() {
             debug_info.push_str(&format!("  Arg {i}: {arg:?}\n"));
         }
-        
+
         if let Some(instances) = self.lookup_instances(class_name) {
             debug_info.push_str(&format!("Found {} instances:\n", instances.len()));
-            
+
             for (i, instance) in instances.iter().enumerate() {
                 debug_info.push_str(&format!("  Instance {i}:\n"));
                 debug_info.push_str(&format!("    Type arguments: {instance:?}\n"));
-                
+
                 let matches = self.instance_matches(instance, type_arguments);
                 debug_info.push_str(&format!("    Matches: {matches}\n"));
-                
+
                 if !matches {
                     // Try to identify why it doesn't match
                     if instance.type_arguments.len() != type_arguments.len() {
-                        debug_info.push_str(&format!("    Reason: Argument count mismatch (expected {}, got {})\n", 
-                            instance.type_arguments.len(), type_arguments.len()));
+                        debug_info.push_str(&format!(
+                            "    Reason: Argument count mismatch (expected {}, got {})\n",
+                            instance.type_arguments.len(),
+                            type_arguments.len()
+                        ));
                     } else {
-                        for (j, (instance_arg, provided_arg)) in 
-                            instance.type_arguments.iter().zip(type_arguments.iter()).enumerate() {
+                        for (j, (instance_arg, provided_arg)) in instance
+                            .type_arguments
+                            .iter()
+                            .zip(type_arguments.iter())
+                            .enumerate()
+                        {
                             if !self.types_compatible(instance_arg, provided_arg) {
                                 debug_info.push_str(&format!("    Reason: Argument {j} incompatible: {instance_arg:?} vs {provided_arg:?}\n"));
                             }
@@ -382,7 +394,7 @@ impl TypeEnvironment {
         } else {
             debug_info.push_str("No instances found for this class.\n");
         }
-        
+
         debug_info
     }
 
@@ -403,13 +415,13 @@ impl TypeEnvironment {
         depth: usize,
     ) -> Vec<&InstanceDeclaration> {
         const MAX_DEPTH: usize = 100; // Prevent infinite recursion
-        
+
         if depth > MAX_DEPTH {
             return Vec::new(); // Return empty result to prevent stack overflow
         }
-        
+
         let mut matches = Vec::new();
-        
+
         if let Some(instances) = self.lookup_instances(class_name) {
             for instance in instances {
                 if self.instance_matches(instance, type_arguments) {
@@ -420,14 +432,22 @@ impl TypeEnvironment {
 
         // Check parent environment with depth tracking
         if let Some(parent) = &self.parent {
-            matches.extend(parent.find_all_matching_instances_with_depth(class_name, type_arguments, depth + 1));
+            matches.extend(parent.find_all_matching_instances_with_depth(
+                class_name,
+                type_arguments,
+                depth + 1,
+            ));
         }
 
         matches
     }
 
     /// Check for type class instance conflicts.
-    pub fn check_instance_conflicts(&self, class_name: &str, type_arguments: &[Type]) -> Result<(), Vec<&InstanceDeclaration>> {
+    pub fn check_instance_conflicts(
+        &self,
+        class_name: &str,
+        type_arguments: &[Type],
+    ) -> Result<(), Vec<&InstanceDeclaration>> {
         let matches = self.find_all_matching_instances(class_name, type_arguments);
         if matches.len() > 1 {
             Err(matches)
@@ -442,15 +462,19 @@ impl TypeEnvironment {
     }
 
     /// Check for type class instance overlaps with depth tracking to prevent infinite recursion.
-    fn check_instance_overlaps_with_depth(&self, class_name: &str, depth: usize) -> Vec<(String, String)> {
+    fn check_instance_overlaps_with_depth(
+        &self,
+        class_name: &str,
+        depth: usize,
+    ) -> Vec<(String, String)> {
         const MAX_DEPTH: usize = 100; // Prevent infinite recursion
-        
+
         if depth > MAX_DEPTH {
             return Vec::new(); // Return empty result to prevent stack overflow
         }
-        
+
         let mut overlaps = Vec::new();
-        
+
         if let Some(instances) = self.lookup_instances(class_name) {
             for i in 0..instances.len() {
                 for j in (i + 1)..instances.len() {
@@ -472,7 +496,11 @@ impl TypeEnvironment {
     }
 
     /// Check if two instances overlap (can match the same type).
-    fn instances_overlap(&self, instance1: &InstanceDeclaration, instance2: &InstanceDeclaration) -> bool {
+    fn instances_overlap(
+        &self,
+        instance1: &InstanceDeclaration,
+        instance2: &InstanceDeclaration,
+    ) -> bool {
         // This is a simplified overlap check
         // In a full implementation, this would use proper type unification
         if instance1.type_arguments.len() != instance2.type_arguments.len() {
@@ -480,7 +508,11 @@ impl TypeEnvironment {
         }
 
         // Check if the instances could potentially match the same type
-        for (arg1, arg2) in instance1.type_arguments.iter().zip(instance2.type_arguments.iter()) {
+        for (arg1, arg2) in instance1
+            .type_arguments
+            .iter()
+            .zip(instance2.type_arguments.iter())
+        {
             if !self.types_could_unify(arg1, arg2) {
                 return false;
             }
@@ -491,15 +523,21 @@ impl TypeEnvironment {
 
     /// Check if two types could potentially unify.
     fn types_could_unify(&self, type1: &Type, type2: &Type) -> bool {
-        match (&type1.kind, &type2.kind) {
-            (ligature_ast::TypeKind::Variable(_), _) => true,
-            (_, ligature_ast::TypeKind::Variable(_)) => true,
-            (ligature_ast::TypeKind::Integer, ligature_ast::TypeKind::Integer) => true,
-            (ligature_ast::TypeKind::String, ligature_ast::TypeKind::String) => true,
-            (ligature_ast::TypeKind::Bool, ligature_ast::TypeKind::Bool) => true,
-            (ligature_ast::TypeKind::Unit, ligature_ast::TypeKind::Unit) => true,
-            _ => false,
-        }
+        matches!(
+            (&type1.kind, &type2.kind),
+            (ligature_ast::TypeKind::Variable(_), _)
+                | (_, ligature_ast::TypeKind::Variable(_))
+                | (
+                    ligature_ast::TypeKind::Integer,
+                    ligature_ast::TypeKind::Integer
+                )
+                | (
+                    ligature_ast::TypeKind::String,
+                    ligature_ast::TypeKind::String
+                )
+                | (ligature_ast::TypeKind::Bool, ligature_ast::TypeKind::Bool)
+                | (ligature_ast::TypeKind::Unit, ligature_ast::TypeKind::Unit)
+        )
     }
 
     /// Check if an instance matches the given type arguments.
@@ -510,7 +548,7 @@ impl TypeEnvironment {
 
         // Create a substitution map for type variables
         let mut substitution = std::collections::HashMap::new();
-        
+
         // Try to match instance arguments with provided arguments
         for (instance_arg, provided_arg) in
             instance.type_arguments.iter().zip(type_arguments.iter())
@@ -542,11 +580,11 @@ impl TypeEnvironment {
         depth: usize,
     ) -> bool {
         const MAX_DEPTH: usize = 50; // Prevent infinite recursion
-        
+
         if depth > MAX_DEPTH {
             return false; // Return false to prevent stack overflow
         }
-        
+
         match (&pattern.kind, &target.kind) {
             // Type variables - handle substitution
             (ligature_ast::TypeKind::Variable(var_name), _) => {
@@ -559,14 +597,14 @@ impl TypeEnvironment {
                     true
                 }
             }
-            
+
             // If target is a variable but pattern is not, we can't match
             (_, ligature_ast::TypeKind::Variable(_)) => {
                 // This is a conservative approach - we could be more permissive
                 // but for now, we require the pattern to be more specific
                 false
             }
-            
+
             // For all other cases, use the regular compatibility check
             _ => self.types_compatible_with_depth(pattern, target, depth + 1),
         }
@@ -578,51 +616,73 @@ impl TypeEnvironment {
     }
 
     /// Check if two types are compatible with depth tracking to prevent infinite recursion.
+    #[allow(clippy::only_used_in_recursion)]
     fn types_compatible_with_depth(&self, type1: &Type, type2: &Type, depth: usize) -> bool {
         const MAX_DEPTH: usize = 50; // Prevent infinite recursion
-        
+
         if depth > MAX_DEPTH {
             return false; // Return false to prevent stack overflow
         }
-        
+
         match (&type1.kind, &type2.kind) {
             // Type variables
             (ligature_ast::TypeKind::Variable(var1), ligature_ast::TypeKind::Variable(var2)) => {
                 var1 == var2
             }
-            
+
             // Primitive types
             (ligature_ast::TypeKind::Integer, ligature_ast::TypeKind::Integer) => true,
             (ligature_ast::TypeKind::String, ligature_ast::TypeKind::String) => true,
             (ligature_ast::TypeKind::Bool, ligature_ast::TypeKind::Bool) => true,
             (ligature_ast::TypeKind::Unit, ligature_ast::TypeKind::Unit) => true,
             (ligature_ast::TypeKind::Float, ligature_ast::TypeKind::Float) => true,
-            
+
             // Function types
             (
-                ligature_ast::TypeKind::Function { parameter: param1, return_type: ret1 },
-                ligature_ast::TypeKind::Function { parameter: param2, return_type: ret2 }
+                ligature_ast::TypeKind::Function {
+                    parameter: param1,
+                    return_type: ret1,
+                },
+                ligature_ast::TypeKind::Function {
+                    parameter: param2,
+                    return_type: ret2,
+                },
             ) => {
-                self.types_compatible_with_depth(param1, param2, depth + 1) && 
-                self.types_compatible_with_depth(ret1, ret2, depth + 1)
+                self.types_compatible_with_depth(param1, param2, depth + 1)
+                    && self.types_compatible_with_depth(ret1, ret2, depth + 1)
             }
-            
+
             // Record types
-            (ligature_ast::TypeKind::Record { fields: fields1 }, ligature_ast::TypeKind::Record { fields: fields2 }) => {
+            (
+                ligature_ast::TypeKind::Record { fields: fields1 },
+                ligature_ast::TypeKind::Record { fields: fields2 },
+            ) => {
                 if fields1.len() != fields2.len() {
                     return false;
                 }
                 for (field1, field2) in fields1.iter().zip(fields2.iter()) {
-                    if field1.name != field2.name || 
-                       !self.types_compatible_with_depth(&field1.type_, &field2.type_, depth + 1) {
+                    if field1.name != field2.name
+                        || !self.types_compatible_with_depth(
+                            &field1.type_,
+                            &field2.type_,
+                            depth + 1,
+                        )
+                    {
                         return false;
                     }
                 }
                 true
             }
-            
+
             // Union types
-            (ligature_ast::TypeKind::Union { variants: variants1 }, ligature_ast::TypeKind::Union { variants: variants2 }) => {
+            (
+                ligature_ast::TypeKind::Union {
+                    variants: variants1,
+                },
+                ligature_ast::TypeKind::Union {
+                    variants: variants2,
+                },
+            ) => {
                 if variants1.len() != variants2.len() {
                     return false;
                 }
@@ -642,83 +702,123 @@ impl TypeEnvironment {
                 }
                 true
             }
-            
+
             // List types
             (ligature_ast::TypeKind::List(element1), ligature_ast::TypeKind::List(element2)) => {
                 self.types_compatible_with_depth(element1, element2, depth + 1)
             }
-            
+
             // Universal quantification
             (
-                ligature_ast::TypeKind::ForAll { parameter: param1, body: body1 },
-                ligature_ast::TypeKind::ForAll { parameter: param2, body: body2 }
-            ) => {
-                param1 == param2 && self.types_compatible_with_depth(body1, body2, depth + 1)
-            }
-            
+                ligature_ast::TypeKind::ForAll {
+                    parameter: param1,
+                    body: body1,
+                },
+                ligature_ast::TypeKind::ForAll {
+                    parameter: param2,
+                    body: body2,
+                },
+            ) => param1 == param2 && self.types_compatible_with_depth(body1, body2, depth + 1),
+
             // Existential quantification
             (
-                ligature_ast::TypeKind::Exists { parameter: param1, body: body1 },
-                ligature_ast::TypeKind::Exists { parameter: param2, body: body2 }
-            ) => {
-                param1 == param2 && self.types_compatible_with_depth(body1, body2, depth + 1)
-            }
-            
+                ligature_ast::TypeKind::Exists {
+                    parameter: param1,
+                    body: body1,
+                },
+                ligature_ast::TypeKind::Exists {
+                    parameter: param2,
+                    body: body2,
+                },
+            ) => param1 == param2 && self.types_compatible_with_depth(body1, body2, depth + 1),
+
             // Dependent function types (Pi types)
             (
-                ligature_ast::TypeKind::Pi { parameter: param1, parameter_type: param_type1, return_type: ret1 },
-                ligature_ast::TypeKind::Pi { parameter: param2, parameter_type: param_type2, return_type: ret2 }
+                ligature_ast::TypeKind::Pi {
+                    parameter: param1,
+                    parameter_type: param_type1,
+                    return_type: ret1,
+                },
+                ligature_ast::TypeKind::Pi {
+                    parameter: param2,
+                    parameter_type: param_type2,
+                    return_type: ret2,
+                },
             ) => {
-                param1 == param2 && 
-                self.types_compatible_with_depth(param_type1, param_type2, depth + 1) && 
-                self.types_compatible_with_depth(ret1, ret2, depth + 1)
+                param1 == param2
+                    && self.types_compatible_with_depth(param_type1, param_type2, depth + 1)
+                    && self.types_compatible_with_depth(ret1, ret2, depth + 1)
             }
-            
+
             // Dependent pair types (Sigma types)
             (
-                ligature_ast::TypeKind::Sigma { parameter: param1, parameter_type: param_type1, return_type: ret1 },
-                ligature_ast::TypeKind::Sigma { parameter: param2, parameter_type: param_type2, return_type: ret2 }
+                ligature_ast::TypeKind::Sigma {
+                    parameter: param1,
+                    parameter_type: param_type1,
+                    return_type: ret1,
+                },
+                ligature_ast::TypeKind::Sigma {
+                    parameter: param2,
+                    parameter_type: param_type2,
+                    return_type: ret2,
+                },
             ) => {
-                param1 == param2 && 
-                self.types_compatible_with_depth(param_type1, param_type2, depth + 1) && 
-                self.types_compatible_with_depth(ret1, ret2, depth + 1)
+                param1 == param2
+                    && self.types_compatible_with_depth(param_type1, param_type2, depth + 1)
+                    && self.types_compatible_with_depth(ret1, ret2, depth + 1)
             }
-            
+
             // Type application
             (
-                ligature_ast::TypeKind::Application { function: func1, argument: arg1 },
-                ligature_ast::TypeKind::Application { function: func2, argument: arg2 }
+                ligature_ast::TypeKind::Application {
+                    function: func1,
+                    argument: arg1,
+                },
+                ligature_ast::TypeKind::Application {
+                    function: func2,
+                    argument: arg2,
+                },
             ) => {
-                self.types_compatible_with_depth(func1, func2, depth + 1) && 
-                self.types_compatible_with_depth(arg1, arg2, depth + 1)
+                self.types_compatible_with_depth(func1, func2, depth + 1)
+                    && self.types_compatible_with_depth(arg1, arg2, depth + 1)
             }
-            
+
             // Module types
-            (ligature_ast::TypeKind::Module { name: name1 }, ligature_ast::TypeKind::Module { name: name2 }) => {
-                name1 == name2
-            }
-            
+            (
+                ligature_ast::TypeKind::Module { name: name1 },
+                ligature_ast::TypeKind::Module { name: name2 },
+            ) => name1 == name2,
+
             // Constrained types
             (
-                ligature_ast::TypeKind::Constrained { constraint: constraint1, type_: type1 },
-                ligature_ast::TypeKind::Constrained { constraint: constraint2, type_: type2 }
+                ligature_ast::TypeKind::Constrained {
+                    constraint: constraint1,
+                    type_: type1,
+                },
+                ligature_ast::TypeKind::Constrained {
+                    constraint: constraint2,
+                    type_: type2,
+                },
             ) => {
                 // For constrained types, we need to check both the constraint and the underlying type
                 // This is a simplified check - in a full implementation, we'd need to handle
                 // type class constraint compatibility more carefully
-                self.types_compatible_with_depth(type1, type2, depth + 1) && 
-                constraint1.class_name == constraint2.class_name &&
-                constraint1.type_arguments.len() == constraint2.type_arguments.len() &&
-                constraint1.type_arguments.iter().zip(constraint2.type_arguments.iter())
-                    .all(|(arg1, arg2)| self.types_compatible_with_depth(arg1, arg2, depth + 1))
+                self.types_compatible_with_depth(type1, type2, depth + 1)
+                    && constraint1.class_name == constraint2.class_name
+                    && constraint1.type_arguments.len() == constraint2.type_arguments.len()
+                    && constraint1
+                        .type_arguments
+                        .iter()
+                        .zip(constraint2.type_arguments.iter())
+                        .all(|(arg1, arg2)| self.types_compatible_with_depth(arg1, arg2, depth + 1))
             }
-            
+
             // Type variables are compatible with any type (for now)
             // In a more sophisticated implementation, this would involve unification
             (ligature_ast::TypeKind::Variable(_), _) | (_, ligature_ast::TypeKind::Variable(_)) => {
                 true
             }
-            
+
             // Default case - types are not compatible
             _ => false,
         }
@@ -754,24 +854,24 @@ impl TypeEnvironment {
     {
         // Create a new environment without cloning the parent
         let mut new_env = TypeEnvironment::new();
-        
+
         // Temporarily store the current bindings
         let current_bindings = std::mem::take(&mut self.bindings);
         let current_type_aliases = std::mem::take(&mut self.type_aliases);
         let current_type_constructors = std::mem::take(&mut self.type_constructors);
         let current_type_classes = std::mem::take(&mut self.type_classes);
         let current_instances = std::mem::take(&mut self.instances);
-        
+
         // Execute the function with the new environment
         let result = f(&mut new_env);
-        
+
         // Restore the original bindings
         self.bindings = current_bindings;
         self.type_aliases = current_type_aliases;
         self.type_constructors = current_type_constructors;
         self.type_classes = current_type_classes;
         self.instances = current_instances;
-        
+
         // Merge any new bindings from the temporary environment
         for (name, type_) in new_env.bindings {
             self.bindings.insert(name, type_);

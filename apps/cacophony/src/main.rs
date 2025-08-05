@@ -3,14 +3,8 @@ use tracing::{error, info, Level};
 use tracing_subscriber::FmtSubscriber;
 
 mod cli;
-mod collection;
 mod config;
-mod environment;
 mod error;
-mod ligature_loader;
-mod operation;
-mod plugin;
-mod xdg_config;
 
 use cli::Commands;
 use error::CacophonyError;
@@ -46,7 +40,7 @@ async fn main() -> Result<(), CacophonyError> {
 
     tracing::info!("Setting log level to: {:?}", log_level);
 
-    let _subscriber = FmtSubscriber::builder()
+    FmtSubscriber::builder()
         .with_max_level(log_level)
         .with_target(false)
         .with_thread_ids(true)
@@ -64,7 +58,7 @@ async fn main() -> Result<(), CacophonyError> {
             Ok(())
         }
         Err(e) => {
-            println!("DEBUG: Command failed: {}", e);
+            println!("DEBUG: Command failed: {e}");
             error!("Command failed: {}", e);
             Err(e)
         }

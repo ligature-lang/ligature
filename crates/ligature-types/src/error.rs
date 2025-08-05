@@ -116,7 +116,9 @@ pub enum TypeError {
         span: Span,
     },
 
-    #[error("Type class constraint unsatisfied: {type_} does not implement {class}. Available instances: {available_instances}")]
+    #[error(
+        "Type class constraint unsatisfied: {type_} does not implement {class}. Available instances: {available_instances}"
+    )]
     TypeClassConstraintUnsatisfiedWithInstances {
         type_: String,
         class: String,
@@ -141,10 +143,7 @@ pub enum TypeError {
     },
 
     #[error("Type class context unsatisfied: {context}")]
-    TypeClassContextUnsatisfied {
-        context: String,
-        span: Span,
-    },
+    TypeClassContextUnsatisfied { context: String, span: Span },
 
     #[error("Type class overlap: instances for {class} on {type1} and {type2} overlap")]
     TypeClassOverlap {
@@ -240,7 +239,12 @@ impl TypeError {
     }
 
     /// Create a binding conflict error.
-    pub fn binding_conflict(name: String, existing_type: String, new_type: String, span: Span) -> Self {
+    pub fn binding_conflict(
+        name: String,
+        existing_type: String,
+        new_type: String,
+        span: Span,
+    ) -> Self {
         TypeError::BindingConflict {
             name,
             existing_type,
@@ -250,7 +254,12 @@ impl TypeError {
     }
 
     /// Create an import binding conflict error.
-    pub fn import_binding_conflict(name: String, existing_type: String, imported_type: String, span: Span) -> Self {
+    pub fn import_binding_conflict(
+        name: String,
+        existing_type: String,
+        imported_type: String,
+        span: Span,
+    ) -> Self {
         TypeError::ImportBindingConflict {
             name,
             existing_type,
@@ -290,16 +299,8 @@ impl TypeError {
     }
 
     /// Create a type class constraint unsatisfied error.
-    pub fn type_class_constraint_unsatisfied(
-        type_: String,
-        class: String,
-        span: Span,
-    ) -> Self {
-        TypeError::TypeClassConstraintUnsatisfied {
-            type_,
-            class,
-            span,
-        }
+    pub fn type_class_constraint_unsatisfied(type_: String, class: String, span: Span) -> Self {
+        TypeError::TypeClassConstraintUnsatisfied { type_, class, span }
     }
 
     /// Create an ambiguous type class resolution error.
@@ -431,9 +432,7 @@ impl TypeError {
                 imported_type: _,
                 span,
             } => AstError::InternalError {
-                message: format!(
-                    "Import binding conflict: {name} conflicts with existing binding"
-                ),
+                message: format!("Import binding conflict: {name} conflicts with existing binding"),
                 span,
             },
             TypeError::TypeClassInstanceConflict {

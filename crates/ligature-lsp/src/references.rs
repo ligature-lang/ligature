@@ -8,6 +8,7 @@ use std::collections::HashMap;
 #[derive(Clone)]
 pub struct ReferencesProvider {
     /// Cache of symbol references by document URI.
+    #[allow(clippy::type_complexity)]
     references_cache: HashMap<String, HashMap<String, Vec<Location>>>,
 }
 
@@ -91,10 +92,7 @@ impl ReferencesProvider {
         }
 
         // Cache the references
-        let cache = self
-            .references_cache
-            .entry(uri.to_string())
-            .or_insert_with(HashMap::new);
+        let cache = self.references_cache.entry(uri.to_string()).or_default();
         cache.insert(symbol_name.clone(), references.clone());
 
         references
@@ -309,11 +307,16 @@ impl ReferencesProvider {
             ExprKind::FieldAccess { record, field: _ } => {
                 references.extend(self.find_references_in_expression(record, symbol_name, uri));
             }
-            ExprKind::Union { variant: _, value } => {
-                if let Some(val) = value {
-                    references.extend(self.find_references_in_expression(val, symbol_name, uri));
-                }
+            ExprKind::Union {
+                variant: _,
+                value: Some(val),
+            } => {
+                references.extend(self.find_references_in_expression(val, symbol_name, uri));
             }
+            ExprKind::Union {
+                variant: _,
+                value: None,
+            } => {}
             ExprKind::Match { scrutinee, cases } => {
                 references.extend(self.find_references_in_expression(scrutinee, symbol_name, uri));
                 for case in cases {
@@ -374,6 +377,7 @@ impl ReferencesProvider {
     }
 
     /// Find references to a symbol in a pattern.
+    #[allow(clippy::only_used_in_recursion)]
     fn find_references_in_pattern(
         &self,
         pattern: &ligature_ast::Pattern,
@@ -398,11 +402,16 @@ impl ReferencesProvider {
                     ));
                 }
             }
-            ligature_ast::Pattern::Union { variant: _, value } => {
-                if let Some(val) = value {
-                    references.extend(self.find_references_in_pattern(val, symbol_name, uri));
-                }
+            ligature_ast::Pattern::Union {
+                variant: _,
+                value: Some(val),
+            } => {
+                references.extend(self.find_references_in_pattern(val, symbol_name, uri));
             }
+            ligature_ast::Pattern::Union {
+                variant: _,
+                value: None,
+            } => {}
             ligature_ast::Pattern::List { elements } => {
                 for element in elements {
                     references.extend(self.find_references_in_pattern(element, symbol_name, uri));
@@ -592,7 +601,7 @@ impl ReferencesProvider {
             && line
                 .chars()
                 .nth(start - 1)
-                .map_or(false, |c| c.is_alphanumeric() || c == '_')
+                .is_some_and(|c| c.is_alphanumeric() || c == '_')
         {
             start -= 1;
         }
@@ -603,7 +612,7 @@ impl ReferencesProvider {
             && line
                 .chars()
                 .nth(end)
-                .map_or(false, |c| c.is_alphanumeric() || c == '_')
+                .is_some_and(|c| c.is_alphanumeric() || c == '_')
         {
             end += 1;
         }

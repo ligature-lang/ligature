@@ -5,18 +5,21 @@ The Ligature LSP server now includes comprehensive import resolution and module 
 ## Features
 
 ### Import Resolution
+
 - **Relative imports**: Support for `./` and `../` path resolution
 - **Register-based imports**: Support for imports from Ligature registers (e.g., `std.collections.list`)
 - **Workspace imports**: Automatic resolution of modules within workspace folders
 - **Nested module support**: Support for nested module structures with `mod.lig` files
 
 ### Module Loading
+
 - **Automatic module discovery**: Recursively loads all `.lig` files in workspace folders
 - **Module caching**: Efficient caching of loaded modules with file modification detection
 - **Dependency tracking**: Maintains a dependency graph for cross-module references
 - **Import cycle detection**: Prevents infinite recursion in import chains
 
 ### LSP Integration
+
 - **Cross-module completion**: Provides completion suggestions from imported modules
 - **Go to definition**: Navigate to symbol definitions across module boundaries
 - **Find references**: Find all references to symbols across the entire workspace
@@ -26,7 +29,7 @@ The Ligature LSP server now includes comprehensive import resolution and module 
 
 ### Basic Import Syntax
 
-```ligature
+```ocaml
 // Relative imports
 import "./utils"
 import "../shared/types"
@@ -55,7 +58,7 @@ my_module/
 
 ### Export Syntax
 
-```ligature
+```ocaml
 // Export individual items
 export let my_function = \x -> x + 1
 export type MyType = { name: String, value: Int }
@@ -139,4 +142,4 @@ See the `examples/` directory for working examples of import resolution:
 - Module loading is asynchronous and non-blocking
 - Workspace module loading occurs in the background after server initialization
 - Cache size is limited by available memory
-- File system operations are minimized through intelligent caching 
+- File system operations are minimized through intelligent caching

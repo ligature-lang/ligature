@@ -1,6 +1,7 @@
 //! Configuration file management using XDG base directories.
 
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{Serialize, de::DeserializeOwned};
+use std::path::Path;
 use std::path::PathBuf;
 
 use crate::error::{Result, XdgError};
@@ -120,12 +121,12 @@ impl XdgConfig {
         let config_path = self.paths.config_file(filename)?;
         let content = self.serialize_content(config, &config_path)?;
 
-        tokio::fs::write(&config_path, content).await.map_err(|e| {
-            XdgError::WriteFileError {
+        tokio::fs::write(&config_path, content)
+            .await
+            .map_err(|e| XdgError::WriteFileError {
                 path: config_path.display().to_string(),
                 source: e,
-            }
-        })?;
+            })?;
 
         Ok(config_path)
     }
@@ -153,7 +154,7 @@ impl XdgConfig {
     /// Deserialize content based on file extension.
     ///
     /// Supports JSON and YAML formats.
-    fn deserialize_content<T>(&self, content: &str, path: &PathBuf) -> Result<T>
+    fn deserialize_content<T>(&self, content: &str, path: &Path) -> Result<T>
     where
         T: DeserializeOwned,
     {
@@ -163,22 +164,13 @@ impl XdgConfig {
             .unwrap_or("json");
 
         match extension {
-            "json" => {
-                serde_json::from_str(content).map_err(XdgError::DeserializationError)
-            }
-            "yaml" | "yml" => {
-                serde_yaml::from_str(content).map_err(|e| {
-                    XdgError::InvalidConfig(format!("YAML deserialization error: {}", e))
-                })
-            }
-            "toml" => {
-                toml::from_str(content).map_err(|e| {
-                    XdgError::InvalidConfig(format!("TOML deserialization error: {}", e))
-                })
-            }
+            "json" => serde_json::from_str(content).map_err(XdgError::DeserializationError),
+            "yaml" | "yml" => serde_yaml::from_str(content)
+                .map_err(|e| XdgError::InvalidConfig(format!("YAML deserialization error: {e}"))),
+            "toml" => toml::from_str(content)
+                .map_err(|e| XdgError::InvalidConfig(format!("TOML deserialization error: {e}"))),
             _ => Err(XdgError::InvalidConfig(format!(
-                "Unsupported file extension: {}",
-                extension
+                "Unsupported file extension: {extension}",
             ))),
         }
     }
@@ -186,7 +178,7 @@ impl XdgConfig {
     /// Serialize content based on file extension.
     ///
     /// Supports JSON and YAML formats.
-    fn serialize_content<T>(&self, config: &T, path: &PathBuf) -> Result<String>
+    fn serialize_content<T>(&self, config: &T, path: &Path) -> Result<String>
     where
         T: Serialize,
     {
@@ -196,22 +188,13 @@ impl XdgConfig {
             .unwrap_or("json");
 
         match extension {
-            "json" => {
-                serde_json::to_string_pretty(config).map_err(XdgError::SerializationError)
-            }
-            "yaml" | "yml" => {
-                serde_yaml::to_string(config).map_err(|e| {
-                    XdgError::InvalidConfig(format!("YAML serialization error: {}", e))
-                })
-            }
-            "toml" => {
-                toml::to_string_pretty(config).map_err(|e| {
-                    XdgError::InvalidConfig(format!("TOML serialization error: {}", e))
-                })
-            }
+            "json" => serde_json::to_string_pretty(config).map_err(XdgError::SerializationError),
+            "yaml" | "yml" => serde_yaml::to_string(config)
+                .map_err(|e| XdgError::InvalidConfig(format!("YAML serialization error: {e}"))),
+            "toml" => toml::to_string_pretty(config)
+                .map_err(|e| XdgError::InvalidConfig(format!("TOML serialization error: {e}"))),
             _ => Err(XdgError::InvalidConfig(format!(
-                "Unsupported file extension: {}",
-                extension
+                "Unsupported file extension: {extension}",
             ))),
         }
     }
@@ -314,4 +297,4 @@ mod tests {
         let toml_config = toml_config_for_component("test").unwrap();
         assert_eq!(toml_config.default_filename(), "config.toml");
     }
-} 
+}

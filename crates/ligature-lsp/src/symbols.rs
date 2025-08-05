@@ -1,5 +1,6 @@
 //! Symbols provider for the Ligature LSP server.
 
+#[allow(deprecated)]
 use ligature_ast::{Declaration, DeclarationKind, Program, Span, ValueDeclaration};
 use lsp_types::{
     DocumentSymbol, Location, Position, Range, SymbolInformation, SymbolKind, SymbolTag, Url,
@@ -76,7 +77,7 @@ impl SymbolsProvider {
         let mut symbols = Vec::new();
         let query_lower = query.to_lowercase();
 
-        for (_uri, symbol_infos) in &self.workspace_symbols {
+        for symbol_infos in self.workspace_symbols.values() {
             for symbol_info in symbol_infos {
                 if symbol_info.name.to_lowercase().contains(&query_lower) {
                     symbols.push(symbol_info.clone());
@@ -99,7 +100,7 @@ impl SymbolsProvider {
         let query_lower = query.to_lowercase();
 
         // Get symbols from current workspace symbols cache
-        for (_uri, symbol_infos) in &self.workspace_symbols {
+        for symbol_infos in self.workspace_symbols.values() {
             for symbol_info in symbol_infos {
                 if symbol_info.name.to_lowercase().contains(&query_lower) {
                     symbols.push(symbol_info.clone());
@@ -111,7 +112,8 @@ impl SymbolsProvider {
         let loaded_modules = import_resolution.get_loaded_modules().await;
         for module_uri in loaded_modules {
             if let Some(module) = import_resolution.get_cached_module(&module_uri).await {
-                let module_symbols = self.extract_symbols_from_module(&module, &module_uri, &query_lower);
+                let module_symbols =
+                    self.extract_symbols_from_module(&module, &module_uri, &query_lower);
                 symbols.extend(module_symbols);
             }
         }
@@ -123,6 +125,7 @@ impl SymbolsProvider {
                 name: ws.name,
                 kind: ws.kind,
                 tags: Some(ws.tags),
+                #[allow(deprecated)]
                 deprecated: None,
                 location: ws.location,
                 container_name: ws.container_name,
@@ -168,6 +171,7 @@ impl SymbolsProvider {
                         name: symbol_name.clone(),
                         kind,
                         tags: None,
+                        #[allow(deprecated)]
                         deprecated: None,
                         location: Location::new(
                             url,
@@ -178,7 +182,8 @@ impl SymbolsProvider {
                                 ),
                                 Position::new(
                                     declaration.span.line as u32 - 1,
-                                    declaration.span.column as u32 - 1 + declaration.span.len() as u32,
+                                    declaration.span.column as u32 - 1
+                                        + declaration.span.len() as u32,
                                 ),
                             ),
                         ),
@@ -196,7 +201,7 @@ impl SymbolsProvider {
         let mut symbols = Vec::new();
         let query_lower = query.to_lowercase();
 
-        for (_uri, symbol_infos) in &self.workspace_symbols {
+        for symbol_infos in self.workspace_symbols.values() {
             for symbol_info in symbol_infos {
                 if symbol_info.name.to_lowercase().contains(&query_lower) {
                     symbols.push(WorkspaceSymbol {
@@ -222,6 +227,7 @@ impl SymbolsProvider {
                 detail: self.get_value_detail(value_decl),
                 kind: SymbolKind::VARIABLE,
                 tags: None,
+                #[allow(deprecated)]
                 deprecated: None,
                 range: self.span_to_range(value_decl.span),
                 selection_range: self.span_to_range(value_decl.span),
@@ -232,6 +238,7 @@ impl SymbolsProvider {
                 detail: Some(format!("type alias = {:?}", type_alias.type_)),
                 kind: SymbolKind::TYPE_PARAMETER,
                 tags: None,
+                #[allow(deprecated)]
                 deprecated: None,
                 range: self.span_to_range(type_alias.span),
                 selection_range: self.span_to_range(type_alias.span),
@@ -242,6 +249,7 @@ impl SymbolsProvider {
                 detail: Some("data type".to_string()),
                 kind: SymbolKind::CLASS,
                 tags: None,
+                #[allow(deprecated)]
                 deprecated: None,
                 range: self.span_to_range(type_ctor.span),
                 selection_range: self.span_to_range(type_ctor.span),
@@ -255,6 +263,7 @@ impl SymbolsProvider {
                         detail: Some(format!(": {:?}", method.type_)),
                         kind: SymbolKind::METHOD,
                         tags: None,
+                        #[allow(deprecated)]
                         deprecated: None,
                         range: self.span_to_range(method.span),
                         selection_range: self.span_to_range(method.span),
@@ -267,6 +276,7 @@ impl SymbolsProvider {
                     detail: Some("type class".to_string()),
                     kind: SymbolKind::INTERFACE,
                     tags: None,
+                    #[allow(deprecated)]
                     deprecated: None,
                     range: self.span_to_range(type_class.span),
                     selection_range: self.span_to_range(type_class.span),
@@ -281,13 +291,14 @@ impl SymbolsProvider {
                         instance
                             .type_arguments
                             .iter()
-                            .map(|t| format!("{:?}", t))
+                            .map(|t| format!("{t:?}"))
                             .collect::<Vec<_>>()
                             .join(" ")
                     ),
                     detail: Some("type class instance".to_string()),
                     kind: SymbolKind::CLASS,
                     tags: Some(vec![SymbolTag::DEPRECATED]), // Instances are typically not shown in outline
+                    #[allow(deprecated)]
                     deprecated: None,
                     range: self.span_to_range(instance.span),
                     selection_range: self.span_to_range(instance.span),
@@ -296,9 +307,10 @@ impl SymbolsProvider {
             }
             DeclarationKind::Import(import) => Some(DocumentSymbol {
                 name: format!("import {}", import.path),
-                detail: import.alias.as_ref().map(|alias| format!("as {}", alias)),
+                detail: import.alias.as_ref().map(|alias| format!("as {alias}")),
                 kind: SymbolKind::NAMESPACE,
                 tags: None,
+                #[allow(deprecated)]
                 deprecated: None,
                 range: self.span_to_range(import.span),
                 selection_range: self.span_to_range(import.span),
@@ -309,6 +321,7 @@ impl SymbolsProvider {
                 detail: Some(format!("{} items", export.items.len())),
                 kind: SymbolKind::NAMESPACE,
                 tags: None,
+                #[allow(deprecated)]
                 deprecated: None,
                 range: self.span_to_range(export.span),
                 selection_range: self.span_to_range(export.span),
@@ -320,7 +333,7 @@ impl SymbolsProvider {
     /// Get detail information for a value declaration.
     fn get_value_detail(&self, value_decl: &ValueDeclaration) -> Option<String> {
         if let Some(ref type_ann) = value_decl.type_annotation {
-            Some(format!(": {:?}", type_ann))
+            Some(format!(": {type_ann:?}"))
         } else {
             Some(": <inferred>".to_string())
         }
@@ -352,6 +365,7 @@ impl SymbolsProvider {
                         name: value_decl.name.clone(),
                         kind: SymbolKind::VARIABLE,
                         tags: None,
+                        #[allow(deprecated)]
                         deprecated: None,
                         location: Location {
                             uri: url,
@@ -369,6 +383,7 @@ impl SymbolsProvider {
                         name: type_alias.name.clone(),
                         kind: SymbolKind::TYPE_PARAMETER,
                         tags: None,
+                        #[allow(deprecated)]
                         deprecated: None,
                         location: Location {
                             uri: url,
@@ -386,6 +401,7 @@ impl SymbolsProvider {
                         name: type_ctor.name.clone(),
                         kind: SymbolKind::CLASS,
                         tags: None,
+                        #[allow(deprecated)]
                         deprecated: None,
                         location: Location {
                             uri: url,
@@ -403,6 +419,7 @@ impl SymbolsProvider {
                         name: type_class.name.clone(),
                         kind: SymbolKind::INTERFACE,
                         tags: None,
+                        #[allow(deprecated)]
                         deprecated: None,
                         location: Location {
                             uri: url,
@@ -423,12 +440,13 @@ impl SymbolsProvider {
                             instance
                                 .type_arguments
                                 .iter()
-                                .map(|t| format!("{:?}", t))
+                                .map(|t| format!("{t:?}"))
                                 .collect::<Vec<_>>()
                                 .join(" ")
                         ),
                         kind: SymbolKind::CLASS,
                         tags: Some(vec![SymbolTag::DEPRECATED]),
+                        #[allow(deprecated)]
                         deprecated: None,
                         location: Location {
                             uri: url,
@@ -446,6 +464,7 @@ impl SymbolsProvider {
                         name: format!("import {}", import.path),
                         kind: SymbolKind::NAMESPACE,
                         tags: None,
+                        #[allow(deprecated)]
                         deprecated: None,
                         location: Location {
                             uri: url,
@@ -463,6 +482,7 @@ impl SymbolsProvider {
                         name: "exports".to_string(),
                         kind: SymbolKind::NAMESPACE,
                         tags: None,
+                        #[allow(deprecated)]
                         deprecated: None,
                         location: Location {
                             uri: url,

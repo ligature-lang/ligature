@@ -69,8 +69,10 @@ pub enum OptimizationStrategy {
 /// Performance monitor that tracks metrics and manages adaptive optimization
 pub struct PerformanceMonitor {
     metrics: Arc<Mutex<Vec<PerformanceMetrics>>>,
+    #[allow(clippy::type_complexity)]
     profiles: Arc<Mutex<HashMap<String, ExpressionProfile>>>,
     regression_alerts: Arc<Mutex<Vec<RegressionAlert>>>,
+    #[allow(dead_code)]
     optimization_strategies: Arc<Mutex<Vec<OptimizationStrategy>>>,
     config: PerformanceConfig,
 }
@@ -97,6 +99,12 @@ impl Default for PerformanceConfig {
             cache_size_limit: 1000,
             memory_usage_limit: 100 * 1024 * 1024, // 100MB
         }
+    }
+}
+
+impl Default for PerformanceMonitor {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -412,20 +420,18 @@ impl PerformanceReport {
                         complexity_threshold,
                     } => {
                         println!(
-                            "Enable expression caching for expressions with complexity > {}",
-                            complexity_threshold
+                            "Enable expression caching for expressions with complexity > {complexity_threshold}",
                         );
                     }
                     OptimizationStrategy::OptimizeMemoryAllocation {
                         target_memory_usage,
                     } => {
                         println!(
-                            "Optimize memory allocation to target {} bytes",
-                            target_memory_usage
+                            "Optimize memory allocation to target {target_memory_usage} bytes",
                         );
                     }
                     OptimizationStrategy::DisableOptimization { optimization_name } => {
-                        println!("Consider disabling optimization: {}", optimization_name);
+                        println!("Consider disabling optimization: {optimization_name}");
                     }
                     OptimizationStrategy::NoOptimization => {
                         println!("No optimizations recommended at this time");

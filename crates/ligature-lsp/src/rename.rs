@@ -8,6 +8,7 @@ use std::collections::HashMap;
 #[derive(Clone)]
 pub struct RenameProvider {
     /// Cache of symbol locations by document URI.
+    #[allow(clippy::type_complexity)]
     symbol_cache: HashMap<String, HashMap<String, Vec<Range>>>,
 }
 
@@ -158,7 +159,7 @@ impl RenameProvider {
     /// Find all references to a symbol and create text edits.
     fn find_all_references(
         &self,
-        program: &Program,
+        _program: &Program,
         symbol_name: &str,
         new_name: &str,
         uri: &str,
@@ -327,6 +328,7 @@ impl RenameProvider {
     }
 
     /// Find all references to a symbol in the AST.
+    #[allow(dead_code)]
     fn find_references_in_ast(&self, program: &Program, symbol_name: &str) -> Vec<Range> {
         let mut references = Vec::new();
 
@@ -403,6 +405,7 @@ impl RenameProvider {
     }
 
     /// Find references to a symbol in an expression.
+    #[allow(dead_code)]
     fn find_references_in_expr(&self, expr: &Expr, symbol_name: &str) -> Vec<Range> {
         let mut references = Vec::new();
 
@@ -498,6 +501,7 @@ impl RenameProvider {
     }
 
     /// Find references to a symbol in a type.
+    #[allow(dead_code)]
     fn find_references_in_type(&self, type_: &ligature_ast::Type, symbol_name: &str) -> Vec<Range> {
         let mut references = Vec::new();
 
@@ -586,6 +590,7 @@ impl RenameProvider {
     }
 
     /// Find references to a symbol in a type class constraint.
+    #[allow(dead_code)]
     fn find_references_in_type_class_constraint(
         &self,
         constraint: &ligature_ast::TypeClassConstraint,
@@ -605,6 +610,7 @@ impl RenameProvider {
     }
 
     /// Find references to a symbol in a pattern.
+    #[allow(clippy::only_used_in_recursion)]
     fn find_references_in_pattern(
         &self,
         pattern: &ligature_ast::Pattern,
@@ -644,6 +650,7 @@ impl RenameProvider {
     }
 
     /// Convert a span to a range.
+    #[allow(dead_code)]
     fn span_to_range(&self, span: Span) -> Range {
         Range {
             start: Position {
@@ -663,6 +670,7 @@ impl RenameProvider {
     }
 
     /// Get cached symbol locations for a document.
+    #[allow(clippy::type_complexity)]
     pub fn get_cached_symbols(&self, uri: &str) -> Option<&HashMap<String, Vec<Range>>> {
         self.symbol_cache.get(uri)
     }

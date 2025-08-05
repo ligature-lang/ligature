@@ -333,7 +333,15 @@ impl ConfigurationManager {
             workspace_overrides: HashMap::new(),
         }
     }
+}
 
+impl Default for ConfigurationManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl ConfigurationManager {
     /// Create a configuration manager from a file
     pub async fn from_file(path: PathBuf) -> std::io::Result<Self> {
         let content = tokio::fs::read_to_string(&path).await?;

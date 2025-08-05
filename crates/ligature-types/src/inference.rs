@@ -1072,7 +1072,7 @@ impl TypeInference {
         // Parse the import path to get module identifiers
         let (register_name, module_name) = self.parse_import_path(&import.path)?;
         let current_module_id = self.get_current_module_id();
-        let target_module_id = format!("{}:{}", register_name, module_name);
+        let target_module_id = format!("{register_name}:{module_name}");
 
         // Add dependency to the graph
         if let Some(current_id) = current_module_id {
@@ -1104,7 +1104,7 @@ impl TypeInference {
 
         // Parse the import path to get the module identifier
         let module_id = match self.parse_import_path(&import.path) {
-            Ok((register, module)) => format!("{}:{}", register, module),
+            Ok((register, module)) => format!("{register}:{module}"),
             Err(_) => return false, // Invalid path, let other error handling deal with it
         };
 
@@ -1156,7 +1156,7 @@ impl TypeInference {
     pub fn add_dependency(&mut self, from_module: &str, to_module: &str) {
         self.dependency_graph
             .entry(from_module.to_string())
-            .or_insert_with(HashSet::new)
+            .or_default()
             .insert(to_module.to_string());
     }
 
@@ -1337,12 +1337,12 @@ impl TypeInference {
         use toml::Value;
 
         let content = fs::read_to_string(manifest_path).map_err(|e| AstError::ParseError {
-            message: format!("Failed to read register.toml: {}", e),
+            message: format!("Failed to read register.toml: {e}"),
             span: ligature_ast::Span::default(),
         })?;
 
         let value: Value = toml::from_str(&content).map_err(|e| AstError::ParseError {
-            message: format!("Failed to parse register.toml: {}", e),
+            message: format!("Failed to parse register.toml: {e}"),
             span: ligature_ast::Span::default(),
         })?;
 
@@ -1411,7 +1411,7 @@ impl TypeInference {
                         for item in &export.items {
                             let binding_name = item.alias.as_ref().unwrap_or(&item.name);
                             // Get the actual type from the exported item
-                            let item_type = self.get_exported_item_type(&module, &item.name)?;
+                            let item_type = self.get_exported_item_type(module, &item.name)?;
                             self.environment.bind(binding_name.clone(), item_type);
                         }
                     }

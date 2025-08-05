@@ -211,14 +211,13 @@ impl Cli {
 
         match format {
             ConfigFormat::Json => {
-                let json = serde_json::to_string_pretty(config_data)
-                    .map_err(|e| Error::JsonSerialization(e))?;
-                println!("{}", json);
+                let json =
+                    serde_json::to_string_pretty(config_data).map_err(Error::JsonSerialization)?;
+                println!("{json}");
             }
             ConfigFormat::Yaml => {
-                let yaml =
-                    serde_yaml::to_string(config_data).map_err(|e| Error::YamlSerialization(e))?;
-                println!("{}", yaml);
+                let yaml = serde_yaml::to_string(config_data).map_err(Error::YamlSerialization)?;
+                println!("{yaml}");
             }
         }
         Ok(())
@@ -244,7 +243,7 @@ impl Cli {
                 if !result.metadata.warnings.is_empty() {
                     println!("  Warnings:");
                     for warning in &result.metadata.warnings {
-                        println!("    - {}", warning);
+                        println!("    - {warning}");
                     }
                 }
             }
@@ -254,6 +253,7 @@ impl Cli {
 }
 
 /// Main entry point for the CLI.
+#[allow(dead_code)]
 #[tokio::main]
 async fn main() {
     if let Err(e) = Cli::run().await {

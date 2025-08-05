@@ -1,7 +1,7 @@
 //! Registry operations for remote package management.
 
 use crate::xdg_config::KeyworkXdgConfig;
-use miette::{miette, IntoDiagnostic, Result};
+use miette::{IntoDiagnostic, Result, miette};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -109,13 +109,10 @@ impl Registry {
             .user_agent("keywork/1.0.0");
 
         // Add auth token if available
-        if let Some(token) = xdg_config.auth_token(&xdg_config.registry_url()) {
+        if let Some(token) = xdg_config.auth_token(xdg_config.registry_url()) {
             client_builder = client_builder.default_headers({
                 let mut headers = reqwest::header::HeaderMap::new();
-                headers.insert(
-                    "Authorization",
-                    format!("Bearer {}", token).parse().unwrap(),
-                );
+                headers.insert("Authorization", format!("Bearer {token}").parse().unwrap());
                 headers
             });
         }
@@ -360,10 +357,8 @@ impl Registry {
         output_path: &std::path::Path,
     ) -> Result<()> {
         // Create a mock package file for development
-        let mock_content = format!(
-            "# Mock package: {}@{}\n# This is a development mock file\n",
-            name, version
-        );
+        let mock_content =
+            format!("# Mock package: {name}@{version}\n# This is a development mock file\n");
 
         fs::write(output_path, mock_content)
             .await
@@ -376,7 +371,7 @@ impl Registry {
     pub async fn download_package_cached(&self, name: &str, version: &str) -> Result<PathBuf> {
         self.ensure_cache_dir().await?;
 
-        let cache_key = format!("{}-{}.tar.gz", name, version);
+        let cache_key = format!("{name}-{version}.tar.gz");
         let cache_path = self.cache_dir.join(&cache_key);
 
         // Check if already cached
@@ -416,7 +411,7 @@ impl Registry {
         let response = self
             .client
             .post(&url)
-            .header("Authorization", format!("Bearer {}", auth_token))
+            .header("Authorization", format!("Bearer {auth_token}"))
             .header("Content-Type", "application/octet-stream")
             .body(package_data.to_vec())
             .send()

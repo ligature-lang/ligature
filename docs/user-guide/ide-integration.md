@@ -121,7 +121,7 @@ Ligature's LSP implementation provides professional-grade symbol finding capabil
 
 #### Cross-File Symbol Finding
 
-```ligature
+```ocaml
 -- In file: user.lig
 type User = {
     name: String,
@@ -145,7 +145,7 @@ let admin = user.create_user "Admin" 30 "admin@example.com";
 
 #### Import Resolution Integration
 
-```ligature
+```ocaml
 -- Automatic module loading and symbol resolution
 import std.collections.list;
 import std.core.string;
@@ -158,7 +158,7 @@ let greeting = string.concat "Hello, " "World!";
 
 #### Workspace Symbol Search
 
-```ligature
+```ocaml
 -- Search for any symbol across the entire workspace
 -- Ctrl+T: Search for "User" finds:
 -- - type User in user.lig
@@ -170,7 +170,7 @@ let greeting = string.concat "Hello, " "World!";
 
 #### Enhanced References Provider
 
-```ligature
+```ocaml
 -- Find all references to a symbol across the entire workspace
 let config = { port = 8080, host = "localhost" };
 
@@ -182,7 +182,7 @@ let client_config = { ...config, timeout = 10 };
 
 #### Enhanced Definition Provider
 
-```ligature
+```ocaml
 -- Go to definition works across module boundaries
 import user;
 
@@ -192,7 +192,7 @@ let user = user.create_user "Alice" 25 "alice@example.com";
 
 #### Enhanced Symbol Provider
 
-```ligature
+```ocaml
 -- Workspace symbols include symbols from imported modules
 -- Ctrl+T shows symbols from:
 -- - Current file
@@ -204,7 +204,7 @@ let user = user.create_user "Alice" 25 "alice@example.com";
 
 #### Import Resolution
 
-```ligature
+```ocaml
 -- Automatic module discovery and loading
 import std.collections.list;
 import std.core.string;
@@ -219,7 +219,7 @@ import my_module.types;
 
 #### Dependency Tracking
 
-```ligature
+```ocaml
 -- LSP tracks dependencies between modules
 -- When a module changes:
 -- - Dependent modules are re-analyzed
@@ -278,7 +278,7 @@ Configure the VS Code extension through `settings.json`:
 
 ### Symbol Caching
 
-```ligature
+```ocaml
 -- LSP caches symbol information for performance
 -- Cache includes:
 -- - Symbol definitions
@@ -291,7 +291,7 @@ Configure the VS Code extension through `settings.json`:
 
 ### Real-time Updates
 
-```ligature
+```ocaml
 -- Symbol information updates in real-time
 -- When you modify a file:
 -- - Symbol information is immediately updated
@@ -306,7 +306,7 @@ Configure the VS Code extension through `settings.json`:
 
 #### Symbol Not Found
 
-```ligature
+```ocaml
 -- Problem: Symbol not found in imported module
 import my_module;
 
@@ -319,7 +319,7 @@ let result = my_module.some_function;  -- Error: symbol not found
 
 #### Import Resolution Issues
 
-```ligature
+```ocaml
 -- Problem: Import not resolving
 import std.collections.list;  -- Error: module not found
 
@@ -330,7 +330,7 @@ import std.collections.list;  -- Error: module not found
 
 #### Performance Issues
 
-```ligature
+```ocaml
 -- Problem: Slow symbol finding
 -- Solution: Adjust cache settings
 -- Increase cache size
@@ -354,7 +354,7 @@ Enable debug logging for troubleshooting:
 
 ### Module Organization
 
-```ligature
+```ocaml
 -- Organize modules for optimal LSP performance
 -- Use clear module hierarchies
 -- Export only necessary symbols
@@ -372,7 +372,7 @@ module a;      -- Too short
 
 ### Import Management
 
-```ligature
+```ocaml
 -- Use selective imports for better performance
 import std.collections.{ list, map };  -- Only import needed symbols
 
@@ -382,7 +382,7 @@ import std.*;  -- Imports everything, slower performance
 
 ### Symbol Naming
 
-```ligature
+```ocaml
 -- Use descriptive symbol names for better search
 let create_user_with_validation = \name age email -> {
   -- Implementation

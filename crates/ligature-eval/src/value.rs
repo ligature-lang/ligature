@@ -89,7 +89,7 @@ impl Value {
         Self::new(
             ValueKind::Union {
                 variant: Arc::new(variant),
-                value: value.map(|v| Arc::new(v)),
+                value: value.map(Arc::new),
             },
             span,
         )
@@ -259,6 +259,7 @@ impl Value {
     }
 
     /// Get the closure components if this is a closure value.
+    #[allow(clippy::type_complexity)]
     pub fn as_closure(&self) -> Option<(&str, &Expr, &EvaluationEnvironment)> {
         match &self.kind {
             ValueKind::Closure {
@@ -271,6 +272,7 @@ impl Value {
     }
 
     /// Get the union components if this is a union value.
+    #[allow(clippy::type_complexity)]
     pub fn as_union(&self) -> Option<(&str, Option<&Value>)> {
         match &self.kind {
             ValueKind::Union { variant, value } => {
@@ -554,7 +556,7 @@ impl Value {
 
             // String concatenation
             (ligature_ast::BinaryOperator::Concat, ValueKind::String(a), ValueKind::String(b)) => {
-                Ok(Value::string(format!("{}{}", a, b), self.span))
+                Ok(Value::string(format!("{a}{b}"), self.span))
             }
 
             // Unsupported combinations
@@ -678,6 +680,7 @@ pub struct ValueInterner {
     /// Interned booleans
     booleans: HashMap<bool, Arc<bool>>,
     /// Interned lists (using structural hashing)
+    #[allow(clippy::type_complexity)]
     lists: HashMap<u64, Arc<Vec<Value>>>,
     /// Statistics
     stats: ValueInternerStats,
@@ -774,7 +777,7 @@ impl ValueInterner {
     /// Hash a list for structural comparison.
     fn hash_list(&self, elements: &[Value]) -> u64 {
         use std::collections::hash_map::DefaultHasher;
-        use std::hash::{Hash, Hasher};
+        use std::hash::Hasher;
 
         let mut hasher = DefaultHasher::new();
         hasher.write_usize(elements.len());
@@ -831,25 +834,13 @@ impl Default for ValueInterner {
 }
 
 /// Statistics for the value interner.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct ValueInternerStats {
     pub string_count: usize,
     pub integer_count: usize,
     pub float_count: usize,
     pub boolean_count: usize,
     pub list_count: usize,
-}
-
-impl Default for ValueInternerStats {
-    fn default() -> Self {
-        Self {
-            string_count: 0,
-            integer_count: 0,
-            float_count: 0,
-            boolean_count: 0,
-            list_count: 0,
-        }
-    }
 }
 
 /// Comprehensive statistics for value optimization.

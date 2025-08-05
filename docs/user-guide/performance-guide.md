@@ -85,7 +85,7 @@ Ligature implements a multi-tier optimization approach for function calls:
 
 Direct evaluation for simple function applications:
 
-```ligature
+```ocaml
 -- This function will use the fast path
 let add_one = \x -> x + 1;
 
@@ -97,7 +97,7 @@ let result = add_one 5;  -- Fast path: 0.925µs
 
 Efficient parent environment linking:
 
-```ligature
+```ocaml
 -- Environment sharing reduces overhead
 let outer = \x -> {
   let inner = \y -> x + y;  -- Shares parent environment
@@ -112,7 +112,7 @@ let result = add_five 3;  -- Efficient environment access
 
 Parameter substitution for simple functions:
 
-```ligature
+```ocaml
 -- Direct evaluation bypasses environment overhead
 let simple_add = \x y -> x + y;
 let result = simple_add 3 4;  -- Direct evaluation: 0.925µs
@@ -141,7 +141,7 @@ config.performance.caching.ttl_seconds = 300;
 
 #### Value Interning
 
-```ligature
+```ocaml
 -- Values are automatically interned for memory efficiency
 let repeated_string = "hello world";
 let another_string = "hello world";
@@ -150,7 +150,7 @@ let another_string = "hello world";
 
 #### List Literal Conversion
 
-```ligature
+```ocaml
 -- List literals are optimized for memory usage
 let optimized_list = [1, 2, 3, 4, 5];
 -- Uses efficient memory representation
@@ -160,7 +160,7 @@ let optimized_list = [1, 2, 3, 4, 5];
 
 #### Early Termination
 
-```ligature
+```ocaml
 -- Pattern matching with early termination
 let process_data = \data -> match data {
     Empty => "empty",
@@ -172,7 +172,7 @@ let process_data = \data -> match data {
 
 #### Efficient Binding
 
-```ligature
+```ocaml
 -- Optimized variable binding in patterns
 let extract_user = \record -> match record {
     { name = n, age = a, email = e } => { name = n, age = a },
@@ -237,7 +237,7 @@ optimizer.apply_optimizations(&monitor);
 
 ### 1. Function Design
 
-```ligature
+```ocaml
 -- Prefer small, pure functions for better optimization
 let add = \x y -> x + y;  -- Optimized automatically
 
@@ -251,7 +251,7 @@ let complex_function = \x -> {
 
 ### 2. Pattern Matching
 
-```ligature
+```ocaml
 -- Use exhaustive pattern matching
 let process_option = \opt -> match opt {
     Some value => "found: " ++ toString value,
@@ -268,7 +268,7 @@ let process_data = \data -> match data {
 
 ### 3. Memory Management
 
-```ligature
+```ocaml
 -- Reuse values when possible
 let config = { port = 8080, host = "localhost" };
 let server_config = { ...config, timeout = 30 };
@@ -281,7 +281,7 @@ let large_list = build_list 1000;  -- Optimized for large lists
 
 ### 4. Caching Strategy
 
-```ligature
+```ocaml
 -- Cache expensive computations
 let expensive_calculation = \input -> {
   -- Complex computation here

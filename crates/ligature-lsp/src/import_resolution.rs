@@ -3,6 +3,7 @@
 //! This module provides functionality for resolving imports, loading modules,
 //! and managing module dependencies in the LSP server context.
 
+#[allow(deprecated)]
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -32,14 +33,17 @@ pub struct ModuleCacheEntry {
 /// Import resolution and module loading service for the LSP server.
 pub struct ImportResolutionService {
     /// Cache of loaded modules.
+    #[allow(clippy::type_complexity)]
     modules: Arc<RwLock<HashMap<String, ModuleCacheEntry>>>,
     /// Module resolver for finding and loading modules.
     resolver: Arc<RwLock<ModuleResolver>>,
     /// Workspace root paths for module resolution.
     workspace_roots: Arc<RwLock<Vec<PathBuf>>>,
     /// Import dependency graph for tracking module relationships.
+    #[allow(clippy::type_complexity)]
     dependencies: Arc<RwLock<HashMap<String, Vec<String>>>>,
     /// Reverse dependencies for finding modules that import a given module.
+    #[allow(clippy::type_complexity)]
     reverse_dependencies: Arc<RwLock<HashMap<String, Vec<String>>>>,
 }
 
@@ -224,7 +228,7 @@ impl ImportResolutionService {
 
         // Parse the relative path
         let relative_path = if import_path.starts_with("./") {
-            source_dir.join(&import_path[2..])
+            source_dir.join(import_path.strip_prefix("./").unwrap())
         } else if import_path.starts_with("../") {
             // Handle parent directory traversal
             let mut current_dir = source_dir;
@@ -277,7 +281,7 @@ impl ImportResolutionService {
                     for register_path in register_paths {
                         let potential_path = register_path
                             .join(register_name)
-                            .join(format!("{}.lig", module_name));
+                            .join(format!("{module_name}.lig"));
                         if potential_path.exists() {
                             return Ok(Some(self.path_to_uri(&potential_path).await?));
                         }
@@ -307,10 +311,10 @@ impl ImportResolutionService {
 
         for root in &*workspace_roots {
             let potential_paths = [
-                root.join(format!("{}.lig", import_path)),
+                root.join(format!("{import_path}.lig")),
                 root.join(import_path).join("mod.lig"),
-                root.join("src").join(format!("{}.lig", import_path)),
-                root.join("lib").join(format!("{}.lig", import_path)),
+                root.join("src").join(format!("{import_path}.lig")),
+                root.join("lib").join(format!("{import_path}.lig")),
             ];
 
             for path in &potential_paths {
@@ -507,6 +511,7 @@ impl ImportResolutionService {
                         name: symbol_name.clone(),
                         kind,
                         tags: None,
+                        #[allow(deprecated)]
                         deprecated: None,
                         location: Location::new(
                             url,
@@ -649,7 +654,7 @@ impl ImportResolutionService {
         })?;
 
         url.to_file_path().map_err(|_| AstError::ParseError {
-            message: format!("Cannot convert URI to file path: {}", uri),
+            message: format!("Cannot convert URI to file path: {uri}"),
             span: Span::default(),
         })
     }
@@ -657,7 +662,7 @@ impl ImportResolutionService {
     /// Convert a file path to a URI.
     pub async fn path_to_uri(&self, path: &Path) -> AstResult<String> {
         let url = Url::from_file_path(path).map_err(|_| AstError::ParseError {
-            message: format!("Cannot convert path to URI: {:?}", path),
+            message: format!("Cannot convert path to URI: {path:?}"),
             span: Span::default(),
         })?;
 

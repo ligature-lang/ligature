@@ -20,7 +20,8 @@ Parse errors occur when the Ligature parser cannot understand your code syntax.
 **Error**: `Unexpected token '}' at line 5, column 10`
 
 **Example**:
-```ligature
+
+```ocaml
 let x = 42;
 let y = {
     value = x
@@ -34,7 +35,8 @@ let y = {
 **Error**: `Expected ';' after declaration at line 3, column 15`
 
 **Example**:
-```ligature
+
+```ocaml
 let x = 42
 let y = x + 1; // Missing semicolon after x declaration
 ```
@@ -46,7 +48,8 @@ let y = x + 1; // Missing semicolon after x declaration
 **Error**: `Invalid identifier '123abc' at line 2, column 5`
 
 **Example**:
-```ligature
+
+```ocaml
 let 123abc = 42; // Identifiers cannot start with numbers
 ```
 
@@ -57,7 +60,8 @@ let 123abc = 42; // Identifiers cannot start with numbers
 **Error**: `Unterminated string literal at line 1, column 10`
 
 **Example**:
-```ligature
+
+```ocaml
 let message = "Hello, world; // Missing closing quote
 ```
 
@@ -72,7 +76,8 @@ Type errors occur when the type checker finds inconsistencies in your code.
 **Error**: `Type mismatch: expected Integer, found String at line 3, column 15`
 
 **Example**:
-```ligature
+
+```ocaml
 let x: Integer = "hello"; // Cannot assign String to Integer
 ```
 
@@ -83,7 +88,8 @@ let x: Integer = "hello"; // Cannot assign String to Integer
 **Error**: `Function expects Integer -> Integer, but received Integer -> String at line 5, column 10`
 
 **Example**:
-```ligature
+
+```ocaml
 let add: Integer -> Integer -> Integer = \x y -> x + y;
 let result = add 5 "hello"; // Second argument should be Integer
 ```
@@ -95,10 +101,11 @@ let result = add 5 "hello"; // Second argument should be Integer
 **Error**: `Cannot infer type for 'complex_expression' at line 10, column 5`
 
 **Example**:
-```ligature
-let complex_expression = \x -> 
-    if x > 0 then "positive" 
-    else if x < 0 then "negative" 
+
+```ocaml
+let complex_expression = \x ->
+    if x > 0 then "positive"
+    else if x < 0 then "negative"
     else "zero"; // Type checker cannot determine return type
 ```
 
@@ -109,7 +116,8 @@ let complex_expression = \x ->
 **Error**: `Record missing required field 'age' at line 8, column 5`
 
 **Example**:
-```ligature
+
+```ocaml
 type User = {
     name: String,
     age: Integer
@@ -131,7 +139,8 @@ Evaluation errors occur during program execution.
 **Error**: `Division by zero at line 5, column 15`
 
 **Example**:
-```ligature
+
+```ocaml
 let x = 10;
 let y = 0;
 let result = x / y; // Division by zero
@@ -144,7 +153,8 @@ let result = x / y; // Division by zero
 **Error**: `Undefined variable 'undefined_var' at line 7, column 10`
 
 **Example**:
-```ligature
+
+```ocaml
 let x = 42;
 let y = x + undefined_var; // Variable not defined
 ```
@@ -156,7 +166,8 @@ let y = x + undefined_var; // Variable not defined
 **Error**: `Record has no field 'nonexistent' at line 4, column 10`
 
 **Example**:
-```ligature
+
+```ocaml
 let user = {
     name = "Alice",
     age = 30
@@ -171,7 +182,8 @@ let field = user.nonexistent; // Field doesn't exist
 **Error**: `Pattern match is not exhaustive at line 8, column 5`
 
 **Example**:
-```ligature
+
+```ocaml
 type Option = Some a | None;
 
 let get_value = \option -> match option of
@@ -189,7 +201,8 @@ Module errors occur when working with imports, exports, and module definitions.
 **Error**: `Module 'NonExistentModule' not found at line 3, column 8`
 
 **Example**:
-```ligature
+
+```ocaml
 import NonExistentModule; // Module doesn't exist
 ```
 
@@ -200,7 +213,8 @@ import NonExistentModule; // Module doesn't exist
 **Error**: `Cannot import 'private_function' from module 'Math' at line 5, column 8`
 
 **Example**:
-```ligature
+
+```ocaml
 import Math { private_function }; // Function not exported
 ```
 
@@ -211,11 +225,12 @@ import Math { private_function }; // Function not exported
 **Error**: `Circular import detected: ModuleA -> ModuleB -> ModuleA at line 1, column 1`
 
 **Example**:
-```ligature
+
+```ocaml
 // ModuleA.lig
 import ModuleB;
 
-// ModuleB.lig  
+// ModuleB.lig
 import ModuleA; // Circular dependency
 ```
 
@@ -226,7 +241,8 @@ import ModuleA; // Circular dependency
 **Error**: `Cannot export 'undefined_item' at line 10, column 5`
 
 **Example**:
-```ligature
+
+```ocaml
 module MyModule {
     let public_function = \x -> x + 1;
     export { public_function, undefined_item }; // Item not defined
@@ -244,7 +260,8 @@ Pattern matching errors occur when patterns are invalid or incomplete.
 **Error**: `Pattern guard must evaluate to Boolean at line 6, column 15`
 
 **Example**:
-```ligature
+
+```ocaml
 let classify = \x -> match x of
     n when n + 1 => "positive", // Guard should return Boolean
     _ => "other";
@@ -257,7 +274,8 @@ let classify = \x -> match x of
 **Error**: `Variable 'x' bound multiple times in pattern at line 4, column 10`
 
 **Example**:
-```ligature
+
+```ocaml
 let duplicate = \pair -> match pair of
     (x, x) => x, // Variable x bound twice
     _ => 0;
@@ -270,7 +288,8 @@ let duplicate = \pair -> match pair of
 **Error**: `Union pattern 'Some' expects 1 argument at line 5, column 10`
 
 **Example**:
-```ligature
+
+```ocaml
 type Option = Some a | None;
 
 let get_value = \option -> match option of
@@ -286,7 +305,7 @@ let get_value = \option -> match option of
 
 Add explicit type annotations to help identify type issues:
 
-```ligature
+```ocaml
 // Instead of:
 let add = \x y -> x + y;
 
@@ -298,7 +317,7 @@ let add: Integer -> Integer -> Integer = \x y -> x + y;
 
 Split complex expressions into smaller parts:
 
-```ligature
+```ocaml
 // Instead of:
 let result = complex_function (another_function (third_function x));
 
@@ -312,7 +331,7 @@ let result = complex_function step2;
 
 Add pattern guards to understand data flow:
 
-```ligature
+```ocaml
 let debug_function = \x -> match x of
     value when trace "Debug value" value => process value,
     _ => default_value;
@@ -322,7 +341,7 @@ let debug_function = \x -> match x of
 
 Verify module imports are correct:
 
-```ligature
+```ocaml
 // Check that the module exists and exports the function
 import Math { add, subtract }; // Ensure add and subtract are exported
 ```
@@ -331,7 +350,7 @@ import Math { add, subtract }; // Ensure add and subtract are exported
 
 Ensure record structures match their types:
 
-```ligature
+```ocaml
 type User = {
     name: String,
     age: Integer,
@@ -350,7 +369,7 @@ let user: User = {
 
 Add wildcard patterns to catch missing cases:
 
-```ligature
+```ocaml
 let safe_match = \option -> match option of
     Some value => value,
     None => 0,
@@ -366,6 +385,7 @@ Error Type: Description at line X, column Y
 ```
 
 Where:
+
 - **Error Type**: The category of error (Parse, Type, Evaluation, etc.)
 - **Description**: Human-readable explanation of the problem
 - **Line X, column Y**: Exact location of the error in the source code
@@ -384,7 +404,7 @@ If you encounter an error not covered in this guide:
 
 ### Safe Division
 
-```ligature
+```ocaml
 let safe_divide = \x y -> match y of
     0 => None,
     _ => Some (x / y);
@@ -392,7 +412,7 @@ let safe_divide = \x y -> match y of
 
 ### Safe Record Access
 
-```ligature
+```ocaml
 let get_field = \record field_name -> match field_name of
     "name" => Some record.name,
     "age" => Some record.age,
@@ -401,11 +421,11 @@ let get_field = \record field_name -> match field_name of
 
 ### Exhaustive Pattern Matching
 
-```ligature
+```ocaml
 let handle_result = \result -> match result of
     Success value => "Success: " ++ toString value,
     Error message => "Error: " ++ message,
     _ => "Unknown result"; // Always include catch-all
 ```
 
-These patterns help prevent common runtime errors and make your code more robust. 
+These patterns help prevent common runtime errors and make your code more robust.

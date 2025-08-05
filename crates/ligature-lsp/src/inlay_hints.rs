@@ -52,7 +52,7 @@ impl InlayHintsProvider {
     pub fn get_inlay_hints(
         &mut self,
         range: Range,
-        content: &str,
+        _content: &str,
         ast: Option<&Program>,
     ) -> Vec<InlayHint> {
         let mut hints = Vec::new();
@@ -179,7 +179,11 @@ impl InlayHintsProvider {
                 //     }
                 // }
             }
-            ExprKind::Let { name, value, body } => {
+            ExprKind::Let {
+                name: _,
+                value,
+                body,
+            } => {
                 // Let expressions might need type hints for bindings
                 self.walk_expression_for_type_hints(value, hints, range);
 
@@ -295,29 +299,25 @@ impl InlayHintsProvider {
     }
 
     /// Get parameter name hints for function calls.
-    fn get_parameter_hints(&self, program: &Program, range: Range) -> Vec<InlayHint> {
-        let mut hints = Vec::new();
-
+    fn get_parameter_hints(&self, _program: &Program, _range: Range) -> Vec<InlayHint> {
         // This is a simplified implementation
         // In a full implementation, you would:
         // 1. Find function applications in the AST
         // 2. Look up the function definition to get parameter names
         // 3. Add parameter name hints for each argument
 
-        hints
+        Vec::new()
     }
 
     /// Get variable type hints.
-    fn get_variable_type_hints(&self, program: &Program, range: Range) -> Vec<InlayHint> {
-        let mut hints = Vec::new();
-
+    fn get_variable_type_hints(&self, _program: &Program, _range: Range) -> Vec<InlayHint> {
         // This is a simplified implementation
         // In a full implementation, you would:
         // 1. Find variable declarations without type annotations
         // 2. Infer their types from usage
         // 3. Add type hints where helpful
 
-        hints
+        Vec::new()
     }
 
     /// Check if an expression is within the given range.
@@ -347,6 +347,7 @@ impl InlayHintsProvider {
     }
 
     /// Convert a type to a string representation.
+    #[allow(clippy::only_used_in_recursion)]
     fn type_to_string(&self, type_: &Type) -> String {
         match &type_.kind {
             TypeKind::Integer => "Int".to_string(),
@@ -385,17 +386,18 @@ impl InlayHintsProvider {
                         }
                     })
                     .collect();
-                format!("{}", variant_strings.join(" | "))
+                variant_strings.join(" | ").to_string()
             }
             _ => format!("{:?}", type_.kind),
         }
     }
 
     /// Infer parameter type from function body usage.
+    #[allow(dead_code)]
     fn infer_parameter_type(
         &self,
         param: &str,
-        body: &Expr,
+        _body: &Expr,
     ) -> Result<Type, ligature_ast::AstError> {
         // This is a simplified implementation
         // In a full implementation, you would:
@@ -411,7 +413,7 @@ impl InlayHintsProvider {
     fn infer_parameter_type_from_usage(
         &self,
         parameter: &str,
-        body: &Expr,
+        _body: &Expr,
     ) -> Result<Type, ligature_ast::AstError> {
         // This is a simplified implementation
         // In a full implementation, you would:

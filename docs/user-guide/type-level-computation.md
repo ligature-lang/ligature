@@ -17,7 +17,7 @@ Type-level computation provides several benefits:
 
 ### Basic Type-Level Functions
 
-```ligature
+```ocaml
 -- Import the type-level standard library
 import TypeLevel;
 
@@ -34,7 +34,7 @@ let testCompose: Compose List Option Int = [Some(1), None, Some(3)];
 
 ### Type-Level Pattern Matching
 
-```ligature
+```ocaml
 -- Record field projection
 type ProjectField 'FieldName 'RecordType =
   match 'RecordType {
@@ -52,7 +52,7 @@ let testName: NameType = "Alice";
 
 ### Dependent Type Operations
 
-```ligature
+```ocaml
 -- Pi type application
 type ApplyPi 'F 'A =
   match 'F {
@@ -136,7 +136,7 @@ The type-level standard library is available in `registers/stdlib/type-level/mod
 
 ### Basic Functions
 
-```ligature
+```ocaml
 -- Identity function
 type Id 'T = 'T;
 
@@ -155,7 +155,7 @@ type Apply 'F 'A = 'F 'A;
 
 ### Pattern Matching Functions
 
-```ligature
+```ocaml
 -- Record operations
 type ProjectField 'FieldName 'RecordType = ...;
 type AddField 'FieldName 'FieldType 'RecordType = ...;
@@ -170,7 +170,7 @@ type RemoveVariant 'VariantName 'UnionType = ...;
 
 ### Dependent Type Operations
 
-```ligature
+```ocaml
 -- Pi type operations
 type ApplyPi 'F 'A = ...;
 type MakePi 'Param 'ParamType 'ReturnType = ...;
@@ -184,7 +184,7 @@ type MakeSigma 'Param 'ParamType 'ReturnType = ...;
 
 ### Utility Functions
 
-```ligature
+```ocaml
 -- Conditional logic
 type If 'Cond 'Then 'Else = ...;
 
@@ -200,7 +200,7 @@ type Validate 'T = ...;
 
 ### Configuration Management
 
-```ligature
+```ocaml
 -- Define a configuration schema with type-level validation
 type ConfigSchema = {
   database: { host: String, port: Int },
@@ -221,7 +221,7 @@ let config: ConfigSchema = {
 
 ### Data Transformation Pipeline
 
-```ligature
+```ocaml
 -- Define a data transformation pipeline using type-level functions
 type TransformPipeline 'Input 'Transform 'Output =
   Compose 'Transform 'Input 'Output;
@@ -237,7 +237,7 @@ let optionalUser: OptionalUser = Some({ name = "Alice", age = 30 });
 
 ### API Design
 
-```ligature
+```ocaml
 -- Define API endpoint types with type-level validation
 type ApiEndpoint 'Method 'Path 'Request 'Response = {
   method: 'Method,
@@ -288,7 +288,7 @@ Type-level computation is designed to be efficient:
 
 Type-level computation provides clear error messages:
 
-```ligature
+```ocaml
 -- This will produce a clear type error
 let invalid: Compose List Int String = [1, 2, 3];  -- Error: Int is not a type function
 ```

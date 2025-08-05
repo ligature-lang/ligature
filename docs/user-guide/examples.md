@@ -17,7 +17,7 @@ This guide provides practical examples of how to use Ligature for real-world con
 
 ### Basic App Configuration
 
-```ligature
+```ocaml
 // app-config.lig
 type Environment = Development | Staging | Production;
 
@@ -62,11 +62,11 @@ let production_config = {
 
 ### Environment-Specific Configuration
 
-```ligature
+```ocaml
 // config/environment.lig
 module Environment {
     type Environment = Development | Staging | Production;
-    
+
     let get_config = \env -> match env of
         Development => {
             debug = true,
@@ -86,10 +86,10 @@ module Environment {
             port = 80,
             host = "api.example.com"
         };
-    
+
     let validate_config = \config -> match config of
-        { debug = d, log_level = l, port = p } when 
-            (d == true && l == Debug) || 
+        { debug = d, log_level = l, port = p } when
+            (d == true && l == Debug) ||
             (d == false && (l == Info || l == Warn || l == Error)) &&
             p > 0 && p <= 65535 => Valid,
         _ => Invalid "Invalid configuration"
@@ -100,40 +100,40 @@ module Environment {
 
 ### User Data Validation
 
-```ligature
+```ocaml
 // validation/user.lig
 module UserValidation {
     type ValidationResult = Valid | Invalid String;
-    
+
     type User = {
         name: String,
         age: Integer,
         email: String,
         role: UserRole
     };
-    
+
     type UserRole = Admin | User | Guest;
-    
+
     let validate_name = \name -> match name of
         n when length n == 0 => Invalid "Name cannot be empty",
         n when length n > 50 => Invalid "Name too long",
         _ => Valid;
-    
+
     let validate_age = \age -> match age of
         a when a < 0 => Invalid "Age cannot be negative",
         a when a > 150 => Invalid "Age seems unrealistic",
         _ => Valid;
-    
+
     let validate_email = \email -> match email of
         e when contains e "@" && contains e "." => Valid,
         _ => Invalid "Invalid email format";
-    
+
     let validate_role = \role -> match role of
         Admin | User | Guest => Valid,
         _ => Invalid "Invalid user role";
-    
+
     let validate_user = \user -> match user of
-        { name = n, age = a, email = e, role = r } => 
+        { name = n, age = a, email = e, role = r } =>
             case validate_name n of
                 Valid => case validate_age a of
                     Valid => case validate_email e of
@@ -146,25 +146,25 @@ module UserValidation {
 
 ### Configuration Validation
 
-```ligature
+```ocaml
 // validation/config.lig
 module ConfigValidation {
     type ValidationResult = Valid | Invalid String;
-    
+
     let validate_port = \port -> match port of
         p when p > 0 && p <= 65535 => Valid,
         _ => Invalid "Port must be between 1 and 65535";
-    
+
     let validate_host = \host -> match host of
         h when length h > 0 => Valid,
         _ => Invalid "Host cannot be empty";
-    
+
     let validate_timeout = \timeout -> match timeout of
         t when t > 0 && t <= 3600 => Valid,
         _ => Invalid "Timeout must be between 1 and 3600 seconds";
-    
+
     let validate_config = \config -> match config of
-        { port = p, host = h, timeout = t } => 
+        { port = p, host = h, timeout = t } =>
             case validate_port p of
                 Valid => case validate_host h of
                     Valid => validate_timeout t,
@@ -177,46 +177,46 @@ module ConfigValidation {
 
 ### Basic Type Classes
 
-```ligature
+```ocaml
 // typeclasses/basic.lig
 module BasicTypeClasses {
     // Type class for equality
     typeclass Eq 'a where
         eq : 'a -> 'a -> Bool;
-    
+
     // Type class for ordering
     typeclass Ord 'a where
         superclass Eq 'a;
         compare : 'a -> 'a -> Ordering;
-    
+
     // Type class for string representation
     typeclass Show 'a where
         show : 'a -> String;
-    
+
     // Implement Eq for basic types
     instance Eq Int where
         eq = \x y -> x == y;
-    
+
     instance Eq Bool where
         eq = \x y -> x == y;
-    
+
     instance Eq String where
         eq = \x y -> x == y;
-    
+
     // Implement Ord for basic types
     instance Ord Int where
         compare = \x y -> if x < y then LT else if x == y then EQ else GT;
-    
+
     instance Ord Bool where
         compare = \x y -> if x == y then EQ else if x then GT else LT;
-    
+
     // Implement Show for basic types
     instance Show Int where
         show = \x -> toString x;
-    
+
     instance Show Bool where
         show = \b -> if b then "true" else "false";
-    
+
     instance Show String where
         show = \s -> s;
 }
@@ -224,31 +224,31 @@ module BasicTypeClasses {
 
 ### Custom Type Instances
 
-```ligature
+```ocaml
 // typeclasses/custom.lig
 module CustomTypeClasses {
     import "./basic" { Eq, Ord, Show };
-    
+
     // Custom types
     type Point = { x: Integer, y: Integer };
     type Color = Red | Green | Blue;
     type Pair = { first: 'a, second: 'b };
-    
+
     // Implement Eq for Point
     instance Eq Point where
         eq = \p1 p2 -> eq p1.x p2.x && eq p1.y p2.y;
-    
+
     // Implement Ord for Point (lexicographic ordering)
     instance Ord Point where
-        compare = \p1 p2 -> 
+        compare = \p1 p2 ->
             case compare p1.x p2.x of
                 EQ => compare p1.y p2.y,
                 result => result;
-    
+
     // Implement Show for Point
     instance Show Point where
         show = \p -> "Point(" ++ show p.x ++ ", " ++ show p.y ++ ")";
-    
+
     // Implement Eq for Color
     instance Eq Color where
         eq = \c1 c2 -> match (c1, c2) of
@@ -256,18 +256,18 @@ module CustomTypeClasses {
             (Green, Green) => true,
             (Blue, Blue) => true,
             _ => false;
-    
+
     // Implement Show for Color
     instance Show Color where
         show = \c -> match c of
             Red => "Red",
             Green => "Green",
             Blue => "Blue";
-    
+
     // Constrained instance for Pair
     instance (Eq 'a, Eq 'b) => Eq (Pair 'a 'b) where
         eq = \p1 p2 -> eq p1.first p2.first && eq p1.second p2.second;
-    
+
     // Constrained instance for Show
     instance (Show 'a, Show 'b) => Show (Pair 'a 'b) where
         show = \p -> "Pair(" ++ show p.first ++ ", " ++ show p.second ++ ")";
@@ -276,79 +276,79 @@ module CustomTypeClasses {
 
 ### Advanced Type Classes
 
-```ligature
+```ocaml
 // typeclasses/advanced.lig
 module AdvancedTypeClasses {
     import "./basic" { Eq, Show };
-    
+
     // Type class for numeric operations
     typeclass Num 'a where
         add : 'a -> 'a -> 'a;
         multiply : 'a -> 'a -> 'a;
         zero : 'a;
         one : 'a;
-    
+
     // Type class for collections
     typeclass Collection 'a 'b where
         empty : 'a 'b;
         insert : 'b -> 'a 'b -> 'a 'b;
         contains : 'b -> 'a 'b -> Bool;
         size : 'a 'b -> Integer;
-    
+
     // Implement Num for Integer
     instance Num Integer where
         add = \x y -> x + y;
         multiply = \x y -> x * y;
         zero = 0;
         one = 1;
-    
+
     // Implement Num for Float
     instance Num Float where
         add = \x y -> x + y;
         multiply = \x y -> x * y;
         zero = 0.0;
         one = 1.0;
-    
+
     // Generic functions using type classes
-    let sum : Num 'a => List 'a -> 'a = \list -> 
+    let sum : Num 'a => List 'a -> 'a = \list ->
         fold add zero list;
-    
-    let product : Num 'a => List 'a -> 'a = \list -> 
+
+    let product : Num 'a => List 'a -> 'a = \list ->
         fold multiply one list;
-    
-    let max : Ord 'a => 'a -> 'a -> 'a = \x y -> 
+
+    let max : Ord 'a => 'a -> 'a -> 'a = \x y ->
         if compare x y == GT then x else y;
-    
-    let min : Ord 'a => 'a -> 'a -> 'a = \x y -> 
+
+    let min : Ord 'a => 'a -> 'a -> 'a = \x y ->
         if compare x y == LT then x else y;
 }
 ```
 
 ### Type Class Constraints in Functions
 
-```ligature
+```ocaml
 // typeclasses/constraints.lig
 module TypeClassConstraints {
     import "./basic" { Eq, Ord, Show };
     import "./advanced" { Num };
-    
+
     // Functions with type class constraints
-    let is_sorted : Ord 'a => List 'a -> Bool = \list -> 
+    let is_sorted : Ord 'a => List 'a -> Bool = \list ->
         case list of
             [] => true,
             [x] => true,
-            Cons x (Cons y rest) => 
-                if compare x y == GT then false 
+            Cons x (Cons y rest) =>
+                if compare x y == GT then false
                 else is_sorted (Cons y rest);
-    
-    let remove_duplicates : Eq 'a => List 'a -> List 'a = \list -> 
+
+    let remove_duplicates : Eq 'a => List 'a -> List 'a = \list ->
         case list of
             [] => [],
-            Cons x rest => 
+            Cons x rest =>
                 if contains x rest then remove_duplicates rest
                 else Cons x (remove_duplicates rest);
-    
-    let format_list : Show 'a => List 'a -> String = \list -> 
+
+    let format_list : Show 'a => List 'a -> String = \list ->
         case list of
             [] => "[]",
             Cons x rest => "[" ++ show x ++ format_rest rest
@@ -356,9 +356,9 @@ module TypeClassConstraints {
             format_rest = \rest -> case rest of
                 [] => "]",
                 Cons x rest => ", " ++ show x ++ format_rest rest;
-    
+
     // Complex constraint example
-    let sort_and_show : (Ord 'a, Show 'a) => List 'a -> String = \list -> 
+    let sort_and_show : (Ord 'a, Show 'a) => List 'a -> String = \list ->
         let sorted = sort list;
         format_list sorted;
 }
@@ -368,11 +368,11 @@ module TypeClassConstraints {
 
 ### REST API Configuration
 
-```ligature
+```ocaml
 // api/rest.lig
 module RestApi {
     type HttpMethod = GET | POST | PUT | DELETE | PATCH;
-    
+
     type Endpoint = {
         path: String,
         method: HttpMethod,
@@ -380,7 +380,7 @@ module RestApi {
         auth_required: Boolean,
         rate_limit: Integer
     };
-    
+
     type ApiConfig = {
         base_url: String,
         port: Integer,
@@ -388,18 +388,18 @@ module RestApi {
         cors_enabled: Boolean,
         cors_origins: List String
     };
-    
+
     let validate_endpoint = \endpoint -> match endpoint of
         { path = p, method = m, handler = h, rate_limit = r } when
-            length p > 0 && 
-            length h > 0 && 
+            length p > 0 &&
+            length h > 0 &&
             r >= 0 => Valid,
         _ => Invalid "Invalid endpoint configuration";
-    
+
     let validate_api_config = \config -> match config of
         { base_url = url, port = p, endpoints = eps } when
-            length url > 0 && 
-            p > 0 && p <= 65535 => 
+            length url > 0 &&
+            p > 0 && p <= 65535 =>
                 all validate_endpoint eps,
         _ => Invalid "Invalid API configuration";
 }
@@ -407,7 +407,7 @@ module RestApi {
 
 ### GraphQL Configuration
 
-```ligature
+```ocaml
 // api/graphql.lig
 module GraphQL {
     type GraphQLType = {
@@ -415,14 +415,14 @@ module GraphQL {
         fields: List GraphQLField,
         description: String
     };
-    
+
     type GraphQLField = {
         name: String,
         type: String,
         nullable: Boolean,
         description: String
     };
-    
+
     type GraphQLConfig = {
         schema_path: String,
         introspection_enabled: Boolean,
@@ -430,10 +430,10 @@ module GraphQL {
         max_query_depth: Integer,
         max_query_complexity: Integer
     };
-    
+
     let validate_graphql_config = \config -> match config of
         { max_query_depth = d, max_query_complexity = c } when
-            d > 0 && d <= 20 && 
+            d > 0 && d <= 20 &&
             c > 0 && c <= 1000 => Valid,
         _ => Invalid "Invalid GraphQL configuration";
 }
@@ -443,7 +443,7 @@ module GraphQL {
 
 ### PostgreSQL Configuration
 
-```ligature
+```ocaml
 // database/postgres.lig
 module Postgres {
     type PostgresConfig = {
@@ -456,15 +456,15 @@ module Postgres {
         max_connections: Integer,
         connection_timeout: Integer
     };
-    
+
     type SSLMode = Disable | Allow | Prefer | Require | VerifyCA | VerifyFull;
-    
+
     let validate_postgres_config = \config -> match config of
         { host = h, port = p, database = db, username = u, max_connections = mc } when
-            length h > 0 && 
-            p > 0 && p <= 65535 && 
-            length db > 0 && 
-            length u > 0 && 
+            length h > 0 &&
+            p > 0 && p <= 65535 &&
+            length db > 0 &&
+            length u > 0 &&
             mc > 0 && mc <= 100 => Valid,
         _ => Invalid "Invalid PostgreSQL configuration";
 }
@@ -472,7 +472,7 @@ module Postgres {
 
 ### Redis Configuration
 
-```ligature
+```ocaml
 // database/redis.lig
 module Redis {
     type RedisConfig = {
@@ -483,12 +483,12 @@ module Redis {
         max_connections: Integer,
         timeout: Integer
     };
-    
+
     let validate_redis_config = \config -> match config of
         { host = h, port = p, database = db, max_connections = mc } when
-            length h > 0 && 
-            p > 0 && p <= 65535 && 
-            db >= 0 && db <= 15 && 
+            length h > 0 &&
+            p > 0 && p <= 65535 &&
+            db >= 0 && db <= 15 &&
             mc > 0 && mc <= 50 => Valid,
         _ => Invalid "Invalid Redis configuration";
 }
@@ -498,11 +498,11 @@ module Redis {
 
 ### Build Configuration
 
-```ligature
+```ocaml
 // build/config.lig
 module BuildConfig {
     type BuildTarget = Debug | Release | Profile;
-    
+
     type BuildConfig = {
         target: BuildTarget,
         optimization_level: Integer,
@@ -510,9 +510,9 @@ module BuildConfig {
         warnings_as_errors: Boolean,
         parallel_builds: Integer
     };
-    
+
     let get_build_flags = \config -> match config of
-        { target = t, optimization_level = opt, debug_symbols = debug } => 
+        { target = t, optimization_level = opt, debug_symbols = debug } =>
             case t of
                 Debug => ["--debug", "--no-optimize"],
                 Release => ["--release", "--optimize=" ++ toString opt],
@@ -524,7 +524,7 @@ module BuildConfig {
 
 ### Service Discovery
 
-```ligature
+```ocaml
 // microservices/discovery.lig
 module ServiceDiscovery {
     type ServiceInfo = {
@@ -535,7 +535,7 @@ module ServiceDiscovery {
         health_check: String,
         tags: List String
     };
-    
+
     type DiscoveryConfig = {
         registry_url: String,
         service_name: String,
@@ -543,12 +543,12 @@ module ServiceDiscovery {
         health_check_interval: Integer,
         deregister_after: Integer
     };
-    
+
     let validate_service_info = \service -> match service of
         { name = n, host = h, port = p, health_check = hc } when
-            length n > 0 && 
-            length h > 0 && 
-            p > 0 && p <= 65535 && 
+            length n > 0 &&
+            length h > 0 &&
+            p > 0 && p <= 65535 &&
             length hc > 0 => Valid,
         _ => Invalid "Invalid service information";
 }
@@ -558,11 +558,11 @@ module ServiceDiscovery {
 
 ### Test Configuration
 
-```ligature
+```ocaml
 // testing/config.lig
 module TestConfig {
     type TestFramework = Unit | Integration | E2E;
-    
+
     type TestConfig = {
         framework: TestFramework,
         timeout: Integer,
@@ -570,9 +570,9 @@ module TestConfig {
         coverage_enabled: Boolean,
         coverage_threshold: Float
     };
-    
+
     let get_test_command = \config -> match config of
-        { framework = f, timeout = t, parallel = p } => 
+        { framework = f, timeout = t, parallel = p } =>
             case f of
                 Unit => "cargo test --unit",
                 Integration => "cargo test --integration",
@@ -582,37 +582,37 @@ module TestConfig {
 
 ## Complete Example: Web Application
 
-```ligature
+```ocaml
 // app/main.lig
 module WebApp {
     import "./config/environment" { Environment, get_config };
     import "./validation/config" { validate_config };
     import "./api/rest" { ApiConfig, validate_api_config };
     import "./database/postgres" { PostgresConfig, validate_postgres_config };
-    
+
     type AppConfig = {
         environment: Environment,
         api: ApiConfig,
         database: PostgresConfig,
         logging: LogConfig
     };
-    
+
     type LogConfig = {
         level: LogLevel,
         format: LogFormat,
         output: LogOutput
     };
-    
+
     type LogLevel = Debug | Info | Warn | Error;
     type LogFormat = JSON | Text;
     type LogOutput = Console | File String;
-    
+
     let validate_app_config = \config -> match config of
-        { api = api_config, database = db_config } => 
+        { api = api_config, database = db_config } =>
             case validate_api_config api_config of
                 Valid => validate_postgres_config db_config,
                 Invalid msg => Invalid msg;
-    
+
     let production_config = {
         environment = Production,
         api = {
@@ -638,8 +638,8 @@ module WebApp {
             output = File "/var/log/app.log"
         }
     };
-    
-    let validate_and_get_config = \env -> 
+
+    let validate_and_get_config = \env ->
         let config = get_config env;
         case validate_app_config config of
             Valid => Some config,
@@ -647,4 +647,4 @@ module WebApp {
 }
 ```
 
-This comprehensive set of examples demonstrates how to use Ligature for real-world configuration management, data validation, and type system features. The examples show both basic and advanced usage patterns that are commonly needed in production systems. 
+This comprehensive set of examples demonstrates how to use Ligature for real-world configuration management, data validation, and type system features. The examples show both basic and advanced usage patterns that are commonly needed in production systems.

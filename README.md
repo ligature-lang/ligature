@@ -1,6 +1,7 @@
 # Ligature Language
 
 [![Ligature CI](https://img.shields.io/badge/Ligature%20CI-passing-brightgreen)](https://github.com/ligature-lang/ligature/actions)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 A Turing-incomplete configuration and data management language with a dependently-typed foundation.
 
@@ -15,14 +16,6 @@ Ligature is a configuration language designed with correctness and safety as pri
 - **Strong correctness guarantees** - Total functions with comprehensive error reporting
 - **Professional-grade IDE integration** - Complete LSP symbol finding and development tools
 - **Advanced type-level computation** - Type-level programming with dependent types and subtyping
-
-## Recent Achievements (January 2025) 🎉
-
-- ✅ **Professional-Grade IDE Integration** - Complete LSP symbol finding with cross-file navigation
-- ✅ **Type-Level Computation System** - Advanced type-level programming with dependent types
-- ✅ **Performance Optimization** - 2.7x function call improvement with 1M+ ops/sec
-- ✅ **Configuration Management** - Schema-based validation and hot-reloading
-- ✅ **Performance Monitoring** - Real-time metrics and adaptive optimization
 
 ## Language Philosophy
 
@@ -51,7 +44,7 @@ Ligature is designed to be:
 
 Ligature has a complete and correct operator precedence system:
 
-```ligature
+```ocaml
 // Arithmetic precedence: multiplication before addition
 let result = 2 + 3 * 4;  // Evaluates to 14, not 20
 
@@ -70,7 +63,7 @@ let field = record.field + 5;  // Evaluates as (record.field) + 5
 
 ### Basic Types
 
-```ligature
+```ocaml
 // Basic literals
 let answer = 42;
 let pi = 3.14159;
@@ -85,7 +78,7 @@ let message: String = "Hello";
 
 ### Records
 
-```ligature
+```ocaml
 // Record construction
 let user = {
     name = "Alice",
@@ -106,7 +99,7 @@ type User = {
 
 ### Functions
 
-```ligature
+```ocaml
 // Function definition
 let add = \x y -> x + y;
 
@@ -119,7 +112,7 @@ let multiply: Integer -> Integer -> Integer = \x y -> x * y;
 
 ### Pattern Matching
 
-```ligature
+```ocaml
 // Pattern matching on records
 let greet = \user -> match user {
     { name = n } => "Hello, " ++ n,
@@ -137,7 +130,7 @@ let handle_result = \result -> match result {
 
 ### Type System
 
-```ligature
+```ocaml
 // Union types
 type Option = Some a | None;
 
@@ -157,7 +150,7 @@ instance Show Integer {
 
 ### Type-Level Computation
 
-```ligature
+```ocaml
 // Type-level functions
 type Id 'T = 'T;
 type Compose 'F 'G 'A = 'F ('G 'A);
@@ -189,35 +182,32 @@ type If 'Cond 'Then 'Else;
 
 ### Command Line Interface
 
-```bash
-# Install Ligature
-cargo install --path .
-
-# Check a file
-reed check config.lig
-
-# Type check a file
-reed typecheck config.lig
-
-# Evaluate a file
-reed eval config.lig
-
-# Format a file
-reed fmt config.lig
-```
-
-### Package Management
+The workspace includes a comprehensive `justfile` for streamlined development:
 
 ```bash
-# Initialize a register
-keywork init my-register
+# Install just (if not already installed)
+cargo install just
 
-# Build a register
-keywork build my-register
+# Install all Ligature apps
+just install
 
-# Install a register
-keywork install stdlib
+# Run reed CLI
+just reed parse --file config.lig
+just reed typecheck --file config.lig
+just reed eval --file config.lig
+
+# Run cacophony (orchestration)
+just cacophony run --config my-config.lig
+
+# Run keywork (package manager)
+just keywork init my-register
+just keywork install stdlib
+
+# See all available commands
+just --list
 ```
+
+For detailed development workflows, see [Justfile Development Guide](docs/.development/justfile-guide.md).
 
 ## Performance
 
@@ -252,7 +242,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ## License
 
-This project is licensed under the Apache License, Version 2.0 - see the [LICENSE-APACHE](LICENSE-APACHE) file or https://www.apache.org/licenses/LICENSE-2.0 for details.
+This project is licensed under the Apache License, Version 2.0 - see the [LICENSE](LICENSE) file or https://www.apache.org/licenses/LICENSE-2.0 for details.
 
 ## References and Inspiration
 

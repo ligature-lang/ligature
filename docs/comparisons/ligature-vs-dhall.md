@@ -7,6 +7,7 @@ This document provides a detailed comparison between Ligature and Dhall, two con
 ## Core Philosophy & Design Goals
 
 ### Ligature
+
 - **Dependently-typed foundation** based on Lean 4 type theory
 - **Configuration-native** design with strong validation focus
 - **Correctness over performance** - prioritizes formal verification
@@ -14,6 +15,7 @@ This document provides a detailed comparison between Ligature and Dhall, two con
 - **Verification-ready** - foundation for formal proofs
 
 ### Dhall
+
 - **Non-dependent type system** based on System Fω
 - **General-purpose configuration** with emphasis on safety
 - **Performance-conscious** design
@@ -26,7 +28,7 @@ This document provides a detailed comparison between Ligature and Dhall, two con
 
 Ligature provides a sophisticated type system with features typically found in advanced functional programming languages:
 
-```ligature
+```ocaml
 // Dependent types (Pi and Sigma)
 type Vector n = { length: n, elements: List n }
 
@@ -66,16 +68,16 @@ let Result = < Success: Text | Error: Text >
 
 ## Language Features Comparison
 
-| Feature | Ligature | Dhall |
-|---------|----------|-------|
-| **Dependent Types** | ✅ Full support (Pi/Sigma) | ❌ Not supported |
-| **Type Classes** | ✅ Complete implementation | ❌ Not supported |
-| **Higher-Kinded Types** | ✅ Supported | ❌ Not supported |
-| **Pattern Matching** | ✅ Advanced with guards | ✅ Basic support |
-| **Union Types** | ✅ Complex with payloads | ✅ Simple unions |
-| **Module System** | ✅ Imports/exports/aliases | ✅ Import system |
-| **Formal Verification** | ✅ Lean 4 integration | ❌ Not supported |
-| **JSON/YAML Integration** | 🔄 Planned | ✅ Primary focus |
+| Feature                   | Ligature                   | Dhall            |
+| ------------------------- | -------------------------- | ---------------- |
+| **Dependent Types**       | ✅ Full support (Pi/Sigma) | ❌ Not supported |
+| **Type Classes**          | ✅ Complete implementation | ❌ Not supported |
+| **Higher-Kinded Types**   | ✅ Supported               | ❌ Not supported |
+| **Pattern Matching**      | ✅ Advanced with guards    | ✅ Basic support |
+| **Union Types**           | ✅ Complex with payloads   | ✅ Simple unions |
+| **Module System**         | ✅ Imports/exports/aliases | ✅ Import system |
+| **Formal Verification**   | ✅ Lean 4 integration      | ❌ Not supported |
+| **JSON/YAML Integration** | 🔄 Planned                 | ✅ Primary focus |
 
 ## Configuration Focus
 
@@ -83,7 +85,7 @@ let Result = < Success: Text | Error: Text >
 
 Ligature is designed specifically for configuration with advanced validation capabilities:
 
-```ligature
+```ocaml
 // Schema-based validation with constraints
 type UserConfig = {
   name: String where length > 0,
@@ -122,6 +124,7 @@ let defaultConfig = { timeout: Natural = 30, retries: Natural = 3 }
 ## Termination Guarantees
 
 ### Ligature
+
 - **Turing-incomplete by design**
 - **No arbitrary recursion**
 - **Strong normalization** property
@@ -129,6 +132,7 @@ let defaultConfig = { timeout: Natural = 30, retries: Natural = 3 }
 - **All programs guaranteed to terminate**
 
 ### Dhall
+
 - **Turing-incomplete by design**
 - **Limited recursion** patterns
 - **Termination via structural recursion**
@@ -141,7 +145,7 @@ let defaultConfig = { timeout: Natural = 30, retries: Natural = 3 }
 
 Ligature uses ML-inspired syntax that's familiar to functional programmers:
 
-```ligature
+```ocaml
 // ML-inspired syntax
 let add = \x -> \y -> x + y
 
@@ -153,7 +157,7 @@ let result = match value {
 }
 
 // Type annotations
-let processUser: User -> String = \user -> 
+let processUser: User -> String = \user ->
   match user {
     Admin { name } => "Admin: " ++ name,
     Regular { name, role } => "User: " ++ name ++ " (" ++ role ++ ")"
@@ -179,6 +183,7 @@ let userName = user.name
 ## Integration & Ecosystem
 
 ### Ligature
+
 - **Package management** via `keywork` system
 - **Client SDKs** via `krox` framework
 - **Language server** for IDE support
@@ -187,6 +192,7 @@ let userName = user.name
 - **Comprehensive test suite** (100+ tests)
 
 ### Dhall
+
 - **Direct JSON/YAML integration**
 - **Multiple language bindings** (Haskell, Python, Go, etc.)
 - **Standard library** of functions
@@ -197,6 +203,7 @@ let userName = user.name
 ## Error Handling & Safety
 
 ### Ligature
+
 - **Comprehensive error reporting** with source locations
 - **Type-level error prevention** via dependent types
 - **Formal error semantics** defined in Lean 4
@@ -204,6 +211,7 @@ let userName = user.name
 - **Advanced type inference** with constraint solving
 
 ### Dhall
+
 - **Good error messages** with type information
 - **Type safety** via static typing
 - **Import safety** with hash verification
@@ -213,6 +221,7 @@ let userName = user.name
 ## Performance & Scalability
 
 ### Ligature
+
 - **Correctness over performance** design
 - **Formal verification** overhead
 - **Rich type system** complexity
@@ -220,6 +229,7 @@ let userName = user.name
 - **Early development** stage
 
 ### Dhall
+
 - **Performance-conscious** design
 - **Efficient evaluation** strategies
 - **Optimized for large configurations**
@@ -229,6 +239,7 @@ let userName = user.name
 ## Use Cases
 
 ### Ligature Best For
+
 - **Critical configuration** requiring formal verification
 - **Complex validation** with dependent types
 - **Research and academic** applications
@@ -238,6 +249,7 @@ let userName = user.name
 - **Systems requiring formal proofs**
 
 ### Dhall Best For
+
 - **General configuration** management
 - **JSON/YAML replacement** with type safety
 - **DevOps and infrastructure** configuration
@@ -249,6 +261,7 @@ let userName = user.name
 ## Development Status
 
 ### Ligature
+
 - **Early development** stage
 - **Core infrastructure** in place
 - **Comprehensive test suite** (100+ tests, 100% pass rate)
@@ -256,6 +269,7 @@ let userName = user.name
 - **Active development** with clear roadmap
 
 ### Dhall
+
 - **Mature and stable** language
 - **Production-ready** with extensive usage
 - **Well-documented** with tutorials and examples
@@ -265,12 +279,14 @@ let userName = user.name
 ## Learning Curve
 
 ### Ligature
+
 - **Steeper learning curve** due to advanced type system
 - **Requires understanding** of dependent types
 - **Formal verification** concepts may be unfamiliar
 - **More powerful** but more complex
 
 ### Dhall
+
 - **Gentler learning curve** for functional programmers
 - **Familiar concepts** from Haskell/ML
 - **Practical focus** makes it easier to get started
@@ -279,6 +295,7 @@ let userName = user.name
 ## Future Directions
 
 ### Ligature
+
 - **Formal verification** integration
 - **Advanced type system** features
 - **Configuration-specific** optimizations
@@ -286,6 +303,7 @@ let userName = user.name
 - **Safety-critical** system adoption
 
 ### Dhall
+
 - **Ecosystem expansion** with more language bindings
 - **Performance improvements**
 - **Enhanced tooling** and IDE support
@@ -310,4 +328,4 @@ let userName = user.name
 
 5. **Use Cases**: Ligature targets safety-critical and research applications, while Dhall targets general configuration management.
 
-The choice between Ligature and Dhall depends on your specific needs: if you require advanced type system features and formal verification, Ligature is the better choice. If you need a practical, production-ready configuration language with good type safety, Dhall is the better choice. 
+The choice between Ligature and Dhall depends on your specific needs: if you require advanced type system features and formal verification, Ligature is the better choice. If you need a practical, production-ready configuration language with good type safety, Dhall is the better choice.

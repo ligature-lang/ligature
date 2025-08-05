@@ -7,6 +7,7 @@ This document provides a detailed comparison between Ligature and Jsonnet, two c
 ## Core Philosophy & Design Goals
 
 ### Ligature
+
 - **Dependently-typed foundation** based on Lean 4 type theory
 - **Configuration-native** design with strong validation focus
 - **Correctness over performance** - prioritizes formal verification
@@ -14,6 +15,7 @@ This document provides a detailed comparison between Ligature and Jsonnet, two c
 - **Verification-ready** - foundation for formal proofs
 
 ### Jsonnet
+
 - **JSON templating** with powerful code generation capabilities
 - **Data-oriented** design focused on configuration generation
 - **Performance-conscious** design for large-scale templating
@@ -26,7 +28,7 @@ This document provides a detailed comparison between Ligature and Jsonnet, two c
 
 Ligature provides a sophisticated functional programming type system:
 
-```ligature
+```ocaml
 // Dependent types (Pi and Sigma)
 type Vector n = { length: n, elements: List n }
 
@@ -84,18 +86,18 @@ local userTemplate = {
 
 ## Language Features Comparison
 
-| Feature | Ligature | Jsonnet |
-|---------|----------|---------|
-| **Dependent Types** | ✅ Full support (Pi/Sigma) | ❌ Not supported |
-| **Type Classes** | ✅ Complete implementation | ❌ Not supported |
-| **Higher-Kinded Types** | ✅ Supported | ❌ Not supported |
-| **Pattern Matching** | ✅ Advanced with guards | ❌ Not supported |
-| **Union Types** | ✅ Complex with payloads | ❌ Not supported |
-| **Module System** | ✅ Imports/exports/aliases | ✅ Import system |
-| **Formal Verification** | ✅ Lean 4 integration | ❌ Not supported |
-| **JSON/YAML Integration** | 🔄 Planned | ✅ Native support |
-| **Code Generation** | 🔄 Basic support | ✅ Advanced system |
-| **Templating** | 🔄 Basic support | ✅ Primary focus |
+| Feature                   | Ligature                   | Jsonnet            |
+| ------------------------- | -------------------------- | ------------------ |
+| **Dependent Types**       | ✅ Full support (Pi/Sigma) | ❌ Not supported   |
+| **Type Classes**          | ✅ Complete implementation | ❌ Not supported   |
+| **Higher-Kinded Types**   | ✅ Supported               | ❌ Not supported   |
+| **Pattern Matching**      | ✅ Advanced with guards    | ❌ Not supported   |
+| **Union Types**           | ✅ Complex with payloads   | ❌ Not supported   |
+| **Module System**         | ✅ Imports/exports/aliases | ✅ Import system   |
+| **Formal Verification**   | ✅ Lean 4 integration      | ❌ Not supported   |
+| **JSON/YAML Integration** | 🔄 Planned                 | ✅ Native support  |
+| **Code Generation**       | 🔄 Basic support           | ✅ Advanced system |
+| **Templating**            | 🔄 Basic support           | ✅ Primary focus   |
 
 ## Configuration Focus
 
@@ -103,7 +105,7 @@ local userTemplate = {
 
 Ligature is designed for configuration with advanced type-level validation:
 
-```ligature
+```ocaml
 // Schema-based validation with constraints
 type UserConfig = {
   name: String where length > 0,
@@ -202,7 +204,7 @@ local createDeployment(name, image, replicas) = k8sDeployment {
 
 Ligature uses its type system for generation:
 
-```ligature
+```ocaml
 // Type-level code generation
 type ConfigTemplate = {
   name: String,
@@ -214,7 +216,7 @@ type Environment = Dev | Staging | Prod
 
 // Pattern matching for generation
 let generateConfig = \env -> match env {
-  Dev => { 
+  Dev => {
     name = "dev-config",
     version = "1.0.0",
     environment = Dev,
@@ -222,7 +224,7 @@ let generateConfig = \env -> match env {
     logLevel = "debug"
   },
   Staging => {
-    name = "staging-config", 
+    name = "staging-config",
     version = "1.0.0",
     environment = Staging,
     debug = false,
@@ -230,7 +232,7 @@ let generateConfig = \env -> match env {
   },
   Prod => {
     name = "prod-config",
-    version = "1.0.0", 
+    version = "1.0.0",
     environment = Prod,
     debug = false,
     logLevel = "error"
@@ -279,7 +281,7 @@ local prodConfig = baseConfig {
 };
 
 // Conditional generation
-local generateConfig(environment) = 
+local generateConfig(environment) =
   if environment == "dev" then devConfig
   else if environment == "prod" then prodConfig
   else baseConfig;
@@ -298,7 +300,7 @@ local generateConfig(environment) =
 
 Ligature uses functional programming syntax:
 
-```ligature
+```ocaml
 // ML-inspired syntax
 let add = \x -> \y -> x + y
 
@@ -310,7 +312,7 @@ let result = match value {
 }
 
 // Type annotations
-let processUser: User -> String = \user -> 
+let processUser: User -> String = \user ->
   match user {
     Admin { name } => "Admin: " ++ name,
     Regular { name, role } => "User: " ++ name ++ " (" ++ role ++ ")"
@@ -331,16 +333,16 @@ Jsonnet uses JSON-like syntax with extensions:
       permissions: ["read", "write", "delete"]
     },
     {
-      name: "Bob", 
+      name: "Bob",
       role: "user",
       permissions: ["read"]
     }
   ],
-  
+
   // Computed values
   totalUsers: std.length(self.users),
   adminUsers: std.filter(function(u) u.role == "admin", self.users),
-  
+
   // Conditional fields
   metadata: {
     generated: std.now(),
@@ -355,6 +357,7 @@ Jsonnet uses JSON-like syntax with extensions:
 ## Integration & Ecosystem
 
 ### Ligature
+
 - **Package management** via `keywork` system
 - **Client SDKs** via `krox` framework
 - **Language server** for IDE support
@@ -363,6 +366,7 @@ Jsonnet uses JSON-like syntax with extensions:
 - **Comprehensive test suite** (100+ tests)
 
 ### Jsonnet
+
 - **Kubernetes integration** with native tooling
 - **JSON/YAML output** with validation
 - **CLI tools** for generation and validation
@@ -373,6 +377,7 @@ Jsonnet uses JSON-like syntax with extensions:
 ## Error Handling & Safety
 
 ### Ligature
+
 - **Comprehensive error reporting** with source locations
 - **Type-level error prevention** via dependent types
 - **Formal error semantics** defined in Lean 4
@@ -380,6 +385,7 @@ Jsonnet uses JSON-like syntax with extensions:
 - **Advanced type inference** with constraint solving
 
 ### Jsonnet
+
 - **Runtime error reporting** with stack traces
 - **Type safety** through runtime checking
 - **Import safety** with file verification
@@ -389,6 +395,7 @@ Jsonnet uses JSON-like syntax with extensions:
 ## Performance & Scalability
 
 ### Ligature
+
 - **Correctness over performance** design
 - **Formal verification** overhead
 - **Rich type system** complexity
@@ -396,6 +403,7 @@ Jsonnet uses JSON-like syntax with extensions:
 - **Early development** stage
 
 ### Jsonnet
+
 - **Performance-optimized** for large templates
 - **Efficient JSON generation** algorithms
 - **Fast template processing**
@@ -405,6 +413,7 @@ Jsonnet uses JSON-like syntax with extensions:
 ## Use Cases
 
 ### Ligature Best For
+
 - **Critical configuration** requiring formal verification
 - **Complex validation** with dependent types
 - **Research and academic** applications
@@ -414,6 +423,7 @@ Jsonnet uses JSON-like syntax with extensions:
 - **Systems requiring formal proofs**
 
 ### Jsonnet Best For
+
 - **Kubernetes configuration** generation
 - **Large-scale JSON/YAML** templating
 - **Configuration code generation** and automation
@@ -425,6 +435,7 @@ Jsonnet uses JSON-like syntax with extensions:
 ## Development Status
 
 ### Ligature
+
 - **Early development** stage
 - **Core infrastructure** in place
 - **Comprehensive test suite** (100+ tests, 100% pass rate)
@@ -432,6 +443,7 @@ Jsonnet uses JSON-like syntax with extensions:
 - **Active development** with clear roadmap
 
 ### Jsonnet
+
 - **Mature and stable** language
 - **Production-ready** with extensive usage
 - **Well-documented** with tutorials and examples
@@ -441,12 +453,14 @@ Jsonnet uses JSON-like syntax with extensions:
 ## Learning Curve
 
 ### Ligature
+
 - **Steeper learning curve** due to advanced type system
 - **Requires understanding** of dependent types
 - **Formal verification** concepts may be unfamiliar
 - **More powerful** but more complex
 
 ### Jsonnet
+
 - **Gentler learning curve** for JSON developers
 - **Familiar syntax** for configuration management
 - **Practical focus** on templating and generation
@@ -455,6 +469,7 @@ Jsonnet uses JSON-like syntax with extensions:
 ## Future Directions
 
 ### Ligature
+
 - **Formal verification** integration
 - **Advanced type system** features
 - **Configuration-specific** optimizations
@@ -462,6 +477,7 @@ Jsonnet uses JSON-like syntax with extensions:
 - **Safety-critical** system adoption
 
 ### Jsonnet
+
 - **Enhanced Kubernetes** integration
 - **Performance improvements** for large templates
 - **Extended templating** capabilities
@@ -486,4 +502,4 @@ Jsonnet uses JSON-like syntax with extensions:
 
 5. **Maturity**: Jsonnet is production-ready with Google backing, while Ligature is in early development with ambitious goals.
 
-The choice between Ligature and Jsonnet depends on your specific needs: if you require advanced type system features and formal verification, Ligature is the better choice. If you need powerful JSON templating, code generation, and Kubernetes configuration management, Jsonnet is the better choice. 
+The choice between Ligature and Jsonnet depends on your specific needs: if you require advanced type system features and formal verification, Ligature is the better choice. If you need powerful JSON templating, code generation, and Kubernetes configuration management, Jsonnet is the better choice.

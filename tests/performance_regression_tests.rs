@@ -4,10 +4,8 @@
 // optimizations are working correctly over time.
 
 use ligature_eval::evaluate_program;
-use ligature_eval::performance::{
-    OptimizationStrategy, PerformanceConfig, PerformanceMonitor, RegressionSeverity,
-};
-use ligature_eval::Value;
+use ligature_eval::performance::{PerformanceConfig, PerformanceMonitor, RegressionSeverity};
+
 use ligature_parser::parse_program;
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
@@ -15,17 +13,17 @@ use std::time::{Duration, Instant};
 /// Performance baseline for regression testing
 #[derive(Debug, Clone)]
 pub struct PerformanceBaseline {
-    pub test_name: String,
+    pub _test_name: String,
     pub avg_execution_time: Duration,
     pub avg_memory_usage: usize,
     pub cache_efficiency: f64,
-    pub complexity_score: f64,
-    pub sample_count: usize,
+    pub _complexity_score: f64,
+    pub _sample_count: usize,
 }
 
 /// Performance regression test suite
 pub struct PerformanceRegressionTests {
-    monitor: PerformanceMonitor,
+    _monitor: PerformanceMonitor,
     baselines: HashMap<String, PerformanceBaseline>,
     regression_threshold: f64,
 }
@@ -42,7 +40,7 @@ impl PerformanceRegressionTests {
         };
 
         Self {
-            monitor: PerformanceMonitor::with_config(config),
+            _monitor: PerformanceMonitor::with_config(config),
             baselines: HashMap::new(),
             regression_threshold: 0.15,
         }
@@ -149,13 +147,13 @@ impl PerformanceRegressionTests {
 
         if successful_runs > 0 {
             let baseline = PerformanceBaseline {
-                test_name: test_name.to_string(),
+                _test_name: test_name.to_string(),
                 avg_execution_time: total_time / successful_runs as u32,
                 avg_memory_usage: total_memory / successful_runs,
                 cache_efficiency: total_cache_hits as f64
                     / (total_cache_hits + total_cache_misses) as f64,
-                complexity_score: total_complexity as f64 / successful_runs as f64,
-                sample_count: successful_runs,
+                _complexity_score: total_complexity as f64 / successful_runs as f64,
+                _sample_count: successful_runs,
             };
 
             self.baselines.insert(test_name.to_string(), baseline);
@@ -258,10 +256,8 @@ impl PerformanceRegressionTests {
             RegressionSeverity::High
         } else if max_degradation > 0.15 {
             RegressionSeverity::Medium
-        } else if max_degradation > 0.05 {
-            RegressionSeverity::Low
         } else {
-            RegressionSeverity::Low // No regression
+            RegressionSeverity::Low // No regression or low regression
         };
 
         let passed = max_degradation <= self.regression_threshold;
@@ -320,18 +316,16 @@ impl PerformanceRegressionTests {
     pub fn test_adaptive_optimizations(&self) -> Vec<OptimizationTestResult> {
         println!("Testing adaptive optimization strategies...");
 
-        let mut results = Vec::new();
+        vec![
+            // Test cache size optimization
+            self.test_cache_optimization(),
 
-        // Test cache size optimization
-        results.push(self.test_cache_optimization());
+            // Test memory allocation optimization
+            self.test_memory_optimization(),
 
-        // Test memory allocation optimization
-        results.push(self.test_memory_optimization());
-
-        // Test expression caching optimization
-        results.push(self.test_expression_caching_optimization());
-
-        results
+            // Test expression caching optimization
+            self.test_expression_caching_optimization(),
+        ]
     }
 
     /// Test cache optimization strategy
@@ -529,7 +523,7 @@ impl PerformanceRegressionReport {
                         result.performance_degradation * 100.0
                     );
                     if let Some(error) = &result.error_message {
-                        println!("  Error: {}", error);
+                        println!("  Error: {error}");
                     }
                 }
             }

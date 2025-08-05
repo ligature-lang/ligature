@@ -45,6 +45,12 @@ pub enum ConfigChangeEvent {
 pub type ConfigReloadCallback =
     Box<dyn Fn(ConfigChangeEvent, serde_json::Value) -> Result<(), String> + Send + Sync>;
 
+/// Type alias for config reload callbacks
+type ConfigReloadCallbackMap = Arc<Mutex<HashMap<String, ConfigReloadCallback>>>;
+
+/// Type alias for config cache
+type ConfigCacheMap = Arc<Mutex<HashMap<PathBuf, serde_json::Value>>>;
+
 /// Hot reload configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HotReloadConfig {
@@ -93,8 +99,8 @@ pub struct ConfigHotReloader {
     config: HotReloadConfig,
     validator: Arc<ConfigValidator>,
     watcher: Option<RecommendedWatcher>,
-    callbacks: Arc<Mutex<HashMap<String, ConfigReloadCallback>>>,
-    config_cache: Arc<Mutex<HashMap<PathBuf, serde_json::Value>>>,
+    callbacks: ConfigReloadCallbackMap,
+    config_cache: ConfigCacheMap,
     event_sender: Option<mpsc::Sender<ConfigChangeEvent>>,
     event_receiver: Option<mpsc::Receiver<ConfigChangeEvent>>,
     running: Arc<Mutex<bool>>,
@@ -150,7 +156,7 @@ impl ConfigHotReloader {
                             }
                         }
                     }
-                    Err(e) => eprintln!("Watch error: {:?}", e),
+                    Err(e) => eprintln!("Watch error: {e:?}"),
                 }
             }
         });
@@ -260,6 +266,7 @@ impl ConfigHotReloader {
     }
 
     /// Check if a file should be watched
+    #[allow(dead_code)]
     fn should_watch_file(&self, path: &Path) -> bool {
         Self::should_watch_file_static(path, &self.config)
     }
@@ -329,6 +336,7 @@ impl ConfigHotReloader {
     }
 
     /// Convert notify event to our event type
+    #[allow(dead_code)]
     fn convert_notify_event(&self, event: notify::Event) -> HotReloadResult<ConfigChangeEvent> {
         Self::convert_notify_event_static(event, &self.config)
     }
@@ -342,14 +350,13 @@ impl ConfigHotReloader {
 
         match extension.to_lowercase().as_str() {
             "toml" => toml::from_str(content)
-                .map_err(|e| HotReloadError::ParsingError(format!("TOML parsing error: {}", e))),
+                .map_err(|e| HotReloadError::ParsingError(format!("TOML parsing error: {e}"))),
             "json" => serde_json::from_str(content)
-                .map_err(|e| HotReloadError::ParsingError(format!("JSON parsing error: {}", e))),
+                .map_err(|e| HotReloadError::ParsingError(format!("JSON parsing error: {e}"))),
             "yaml" | "yml" => serde_yaml::from_str(content)
-                .map_err(|e| HotReloadError::ParsingError(format!("YAML parsing error: {}", e))),
+                .map_err(|e| HotReloadError::ParsingError(format!("YAML parsing error: {e}"))),
             _ => Err(HotReloadError::ParsingError(format!(
-                "Unsupported file extension: {}",
-                extension
+                "Unsupported file extension: {extension}",
             ))),
         }
     }
@@ -361,7 +368,7 @@ impl ConfigHotReloader {
 
         self.validator
             .validate_config(config, &schema_name)
-            .map_err(|e| HotReloadError::ValidationError(format!("Validation error: {}", e)))
+            .map_err(|e| HotReloadError::ValidationError(format!("Validation error: {e}")))
     }
 
     /// Determine schema name based on file path
@@ -408,7 +415,7 @@ impl ConfigHotReloader {
                             )
                             .await
                             {
-                                eprintln!("Error processing config event: {:?}", e);
+                                eprintln!("Error processing config event: {e:?}");
                             }
                         }
                         debounce_timer = tokio::time::Instant::now();
@@ -421,8 +428,8 @@ impl ConfigHotReloader {
     /// Process a configuration change event
     async fn process_config_event(
         event: &ConfigChangeEvent,
-        callbacks: &Arc<Mutex<HashMap<String, ConfigReloadCallback>>>,
-        config_cache: &Arc<Mutex<HashMap<PathBuf, serde_json::Value>>>,
+        callbacks: &ConfigReloadCallbackMap,
+        config_cache: &ConfigCacheMap,
         validator: &Arc<ConfigValidator>,
         config: &HotReloadConfig,
     ) -> HotReloadResult<()> {
@@ -435,7 +442,7 @@ impl ConfigHotReloader {
                 let callbacks = callbacks.lock().unwrap();
                 for (name, callback) in callbacks.iter() {
                     if let Err(e) = callback(event.clone(), config_value.clone()) {
-                        eprintln!("Callback '{}' failed: {}", name, e);
+                        eprintln!("Callback '{name}' failed: {e}");
                     }
                 }
             }
@@ -448,7 +455,7 @@ impl ConfigHotReloader {
                 let callbacks = callbacks.lock().unwrap();
                 for (name, callback) in callbacks.iter() {
                     if let Err(e) = callback(event.clone(), serde_json::Value::Null) {
-                        eprintln!("Callback '{}' failed: {}", name, e);
+                        eprintln!("Callback '{name}' failed: {e}");
                     }
                 }
             }
@@ -462,7 +469,7 @@ impl ConfigHotReloader {
                     let callbacks = callbacks.lock().unwrap();
                     for (name, callback) in callbacks.iter() {
                         if let Err(e) = callback(event.clone(), config_value.clone()) {
-                            eprintln!("Callback '{}' failed: {}", name, e);
+                            eprintln!("Callback '{name}' failed: {e}");
                         }
                     }
                 }
@@ -519,7 +526,7 @@ impl ConfigHotReloader {
         let schema_name = Self::determine_schema_name_internal(path);
         validator
             .validate_config(&config, &schema_name)
-            .map_err(|e| HotReloadError::ValidationError(format!("Validation error: {}", e)))?;
+            .map_err(|e| HotReloadError::ValidationError(format!("Validation error: {e}")))?;
 
         Ok(config)
     }
@@ -536,14 +543,13 @@ impl ConfigHotReloader {
 
         match extension.to_lowercase().as_str() {
             "toml" => toml::from_str(content)
-                .map_err(|e| HotReloadError::ParsingError(format!("TOML parsing error: {}", e))),
+                .map_err(|e| HotReloadError::ParsingError(format!("TOML parsing error: {e}"))),
             "json" => serde_json::from_str(content)
-                .map_err(|e| HotReloadError::ParsingError(format!("JSON parsing error: {}", e))),
+                .map_err(|e| HotReloadError::ParsingError(format!("JSON parsing error: {e}"))),
             "yaml" | "yml" => serde_yaml::from_str(content)
-                .map_err(|e| HotReloadError::ParsingError(format!("YAML parsing error: {}", e))),
+                .map_err(|e| HotReloadError::ParsingError(format!("YAML parsing error: {e}"))),
             _ => Err(HotReloadError::ParsingError(format!(
-                "Unsupported file extension: {}",
-                extension
+                "Unsupported file extension: {extension}",
             ))),
         }
     }
@@ -601,7 +607,7 @@ value = "test"
             .register_callback(
                 "test",
                 Box::new(|event, config| {
-                    println!("Config changed: {:?}, config: {:?}", event, config);
+                    println!("Config changed: {event:?}, config: {config:?}");
                     Ok(())
                 }),
             )

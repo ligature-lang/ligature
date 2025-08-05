@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
 /// Configuration for the Ligature evaluator with cache tuning options.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct EvaluatorConfig {
     /// Cache configuration
     #[serde(default)]
@@ -23,17 +23,6 @@ pub struct EvaluatorConfig {
     /// Debugging and monitoring settings
     #[serde(default)]
     pub debug: DebugConfig,
-}
-
-impl Default for EvaluatorConfig {
-    fn default() -> Self {
-        Self {
-            cache: CacheConfig::default(),
-            performance: PerformanceConfig::default(),
-            memory: MemoryConfig::default(),
-            debug: DebugConfig::default(),
-        }
-    }
 }
 
 /// Cache-specific configuration options.
@@ -433,18 +422,14 @@ impl Default for DebugConfig {
 /// Log level for debug output.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
+#[derive(Default)]
 pub enum LogLevel {
     Error,
     Warn,
+    #[default]
     Info,
     Debug,
     Trace,
-}
-
-impl Default for LogLevel {
-    fn default() -> Self {
-        LogLevel::Info
-    }
 }
 
 /// Configuration manager for the evaluator.

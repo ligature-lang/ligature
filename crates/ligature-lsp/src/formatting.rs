@@ -1,8 +1,8 @@
 //! Formatting provider for the Ligature LSP server.
 
+use crate::config::FormattingConfig;
 use ligature_ast::{Declaration, DeclarationKind, Expr, ExprKind, Program};
 use lsp_types::{Position, Range, TextEdit};
-use crate::config::FormattingConfig;
 
 /// Provider for code formatting.
 #[derive(Clone)]
@@ -126,8 +126,8 @@ impl FormattingProvider {
         let end_line = range.end.line as usize;
 
         for decl in &program.declarations {
-            let decl_start_line = decl.span.line as usize;
-            let decl_end_line = decl.span.line as usize;
+            let decl_start_line = decl.span.line;
+            let decl_end_line = decl.span.line;
 
             if decl_start_line >= start_line && decl_end_line <= end_line {
                 let formatted_decl = self.format_declaration(decl, 0);
@@ -213,7 +213,7 @@ impl FormattingProvider {
         result.push_str(&type_alias.name);
 
         if !type_alias.parameters.is_empty() {
-            result.push_str(" ");
+            result.push(' ');
             result.push_str(&type_alias.parameters.join(" "));
         }
 
@@ -237,7 +237,7 @@ impl FormattingProvider {
         result.push_str(&type_constructor.name);
 
         if !type_constructor.parameters.is_empty() {
-            result.push_str(" ");
+            result.push(' ');
             result.push_str(&type_constructor.parameters.join(" "));
         }
 
@@ -261,7 +261,7 @@ impl FormattingProvider {
         result.push_str(&type_class.name);
 
         if !type_class.parameters.is_empty() {
-            result.push_str(" ");
+            result.push(' ');
             result.push_str(&type_class.parameters.join(" "));
         }
 
@@ -303,7 +303,7 @@ impl FormattingProvider {
         result.push_str(&indent);
         result.push_str("instance ");
         result.push_str(&instance_decl.class_name);
-        result.push_str(" ");
+        result.push(' ');
         result.push_str(
             &instance_decl
                 .type_arguments
@@ -400,14 +400,14 @@ impl FormattingProvider {
             ExprKind::Application { function, argument } => {
                 let func_str = self.format_expression(function, indent_level);
                 let arg_str = self.format_expression(argument, indent_level);
-                format!("{} {}", func_str, arg_str)
+                format!("{func_str} {arg_str}")
             }
             ExprKind::Abstraction {
                 parameter,
                 parameter_type,
                 body,
             } => {
-                let mut result = format!("fun {} ", parameter);
+                let mut result = format!("fun {parameter} ");
                 if let Some(param_type) = parameter_type {
                     result.push_str(&format!(": {} ", self.format_type(param_type)));
                 }
@@ -441,7 +441,7 @@ impl FormattingProvider {
             }
             ExprKind::FieldAccess { record, field } => {
                 let record_str = self.format_expression(record, indent_level);
-                format!("{}.{}", record_str, field)
+                format!("{record_str}.{field}")
             }
             ExprKind::Union { variant, value } => {
                 let mut result = variant.clone();
@@ -493,12 +493,12 @@ impl FormattingProvider {
                 let left_str = self.format_expression(left, indent_level);
                 let right_str = self.format_expression(right, indent_level);
                 let op_str = self.format_binary_operator(operator);
-                format!("{} {} {}", left_str, op_str, right_str)
+                format!("{left_str} {op_str} {right_str}")
             }
             ExprKind::UnaryOp { operator, operand } => {
                 let operand_str = self.format_expression(operand, indent_level);
                 let op_str = self.format_unary_operator(operator);
-                format!("{}{}", op_str, operand_str)
+                format!("{op_str}{operand_str}")
             }
             ExprKind::Annotated {
                 expression,
@@ -506,7 +506,7 @@ impl FormattingProvider {
             } => {
                 let expr_str = self.format_expression(expression, indent_level);
                 let type_str = self.format_type(type_annotation);
-                format!("{} : {}", expr_str, type_str)
+                format!("{expr_str} : {type_str}")
             }
         }
     }
@@ -516,7 +516,7 @@ impl FormattingProvider {
         match literal {
             ligature_ast::Literal::Integer(n) => n.to_string(),
             ligature_ast::Literal::Float(f) => f.to_string(),
-            ligature_ast::Literal::String(s) => format!("\"{}\"", s),
+            ligature_ast::Literal::String(s) => format!("\"{s}\""),
             ligature_ast::Literal::Boolean(b) => b.to_string(),
             ligature_ast::Literal::Unit => "()".to_string(),
             ligature_ast::Literal::List(_) => "[...]".to_string(), // Placeholder for list formatting
@@ -538,7 +538,7 @@ impl FormattingProvider {
             } => {
                 let param_str = self.format_type(parameter);
                 let return_str = self.format_type(return_type);
-                format!("{} -> {}", param_str, return_str)
+                format!("{param_str} -> {return_str}")
             }
             ligature_ast::TypeKind::Record { fields } => {
                 let mut result = String::new();
@@ -562,7 +562,7 @@ impl FormattingProvider {
                     }
                     result.push_str(&variant.name);
                     if let Some(type_) = &variant.type_ {
-                        result.push_str(" ");
+                        result.push(' ');
                         result.push_str(&self.format_type(type_));
                     }
                 }
@@ -570,15 +570,15 @@ impl FormattingProvider {
             }
             ligature_ast::TypeKind::List(element_type) => {
                 let element_str = self.format_type(element_type);
-                format!("[{}]", element_str)
+                format!("[{element_str}]")
             }
             ligature_ast::TypeKind::ForAll { parameter, body } => {
                 let body_str = self.format_type(body);
-                format!("forall {}. {}", parameter, body_str)
+                format!("forall {parameter}. {body_str}")
             }
             ligature_ast::TypeKind::Exists { parameter, body } => {
                 let body_str = self.format_type(body);
-                format!("exists {}. {}", parameter, body_str)
+                format!("exists {parameter}. {body_str}")
             }
             ligature_ast::TypeKind::Pi {
                 parameter,
@@ -587,7 +587,7 @@ impl FormattingProvider {
             } => {
                 let param_type_str = self.format_type(parameter_type);
                 let return_str = self.format_type(return_type);
-                format!("Pi {} : {}. {}", parameter, param_type_str, return_str)
+                format!("Pi {parameter} : {param_type_str}. {return_str}")
             }
             ligature_ast::TypeKind::Sigma {
                 parameter,
@@ -596,18 +596,18 @@ impl FormattingProvider {
             } => {
                 let param_type_str = self.format_type(parameter_type);
                 let return_str = self.format_type(return_type);
-                format!("Sigma {} : {}. {}", parameter, param_type_str, return_str)
+                format!("Sigma {parameter} : {param_type_str}. {return_str}")
             }
             ligature_ast::TypeKind::Application { function, argument } => {
                 let func_str = self.format_type(function);
                 let arg_str = self.format_type(argument);
-                format!("{} {}", func_str, arg_str)
+                format!("{func_str} {arg_str}")
             }
-            ligature_ast::TypeKind::Module { name } => format!("Module {}", name),
+            ligature_ast::TypeKind::Module { name } => format!("Module {name}"),
             ligature_ast::TypeKind::Constrained { constraint, type_ } => {
                 let constraint_str = self.format_type_class_constraint(constraint);
                 let type_str = self.format_type(type_);
-                format!("{} => {}", constraint_str, type_str)
+                format!("{constraint_str} => {type_str}")
             }
         }
     }
@@ -619,7 +619,7 @@ impl FormattingProvider {
     ) -> String {
         let mut result = constraint.class_name.clone();
         if !constraint.type_arguments.is_empty() {
-            result.push_str(" ");
+            result.push(' ');
             result.push_str(
                 &constraint
                     .type_arguments
@@ -729,6 +729,7 @@ impl FormattingProvider {
         let end_line = range.end.line as usize;
 
         let mut formatted = String::new();
+        #[allow(clippy::needless_range_loop)]
         for i in start_line..=end_line.min(lines.len() - 1) {
             let trimmed = lines[i].trim();
             if !trimmed.is_empty() {

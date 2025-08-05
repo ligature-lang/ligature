@@ -17,10 +17,10 @@ fn main() -> AstResult<()> {
     match parser.parse_program(simple_union) {
         Ok(program) => {
             println!("✓ Simple union pattern parsed successfully");
-            println!("  AST: {:?}", program);
+            println!("  AST: {program:?}");
         }
         Err(e) => {
-            println!("✗ Simple union pattern failed: {:?}", e);
+            println!("✗ Simple union pattern failed: {e:?}");
         }
     }
 
@@ -35,10 +35,10 @@ fn main() -> AstResult<()> {
     match parser.parse_program(binding_union) {
         Ok(program) => {
             println!("✓ Union pattern with binding parsed successfully");
-            println!("  AST: {:?}", program);
+            println!("  AST: {program:?}");
         }
         Err(e) => {
-            println!("✗ Union pattern with binding failed: {:?}", e);
+            println!("✗ Union pattern with binding failed: {e:?}");
         }
     }
 
@@ -48,20 +48,20 @@ fn main() -> AstResult<()> {
     // Test parsing "Some" as a pattern
     match parser.parse_expression("Some") {
         Ok(expr) => {
-            println!("✓ 'Some' parsed as expression: {:?}", expr);
+            println!("✓ 'Some' parsed as expression: {expr:?}");
         }
         Err(e) => {
-            println!("✗ 'Some' failed to parse as expression: {:?}", e);
+            println!("✗ 'Some' failed to parse as expression: {e:?}");
         }
     }
 
     // Test parsing "Some(n)" as a pattern
     match parser.parse_expression("Some(n)") {
         Ok(expr) => {
-            println!("✓ 'Some(n)' parsed as expression: {:?}", expr);
+            println!("✓ 'Some(n)' parsed as expression: {expr:?}");
         }
         Err(e) => {
-            println!("✗ 'Some(n)' failed to parse as expression: {:?}", e);
+            println!("✗ 'Some(n)' failed to parse as expression: {e:?}");
         }
     }
 

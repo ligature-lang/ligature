@@ -11,14 +11,14 @@ fn main() -> AstResult<()> {
     let pattern_source = "Some(n)";
 
     // Try to parse it as a pattern by wrapping it in a simple context
-    let test_program = format!("let x = match 42 {{ {} => 0 }};", pattern_source);
+    let test_program = format!("let x = match 42 {{ {pattern_source} => 0 }};");
 
     match parser.parse_program(&test_program) {
         Ok(program) => {
-            println!("✓ Successfully parsed: {:?}", program);
+            println!("✓ Successfully parsed: {program:?}");
         }
         Err(e) => {
-            println!("✗ Failed to parse: {:?}", e);
+            println!("✗ Failed to parse: {e:?}");
         }
     }
 
@@ -34,13 +34,13 @@ fn main() -> AstResult<()> {
     ];
 
     for pattern in patterns {
-        let test_program = format!("let x = match 42 {{ {} => 0 }};", pattern);
+        let test_program = format!("let x = match 42 {{ {pattern} => 0 }};");
         match parser.parse_program(&test_program) {
             Ok(_) => {
-                println!("✓ {} - Success", pattern);
+                println!("✓ {pattern} - Success");
             }
             Err(e) => {
-                println!("✗ {} - Failed: {}", pattern, e);
+                println!("✗ {pattern} - Failed: {e}");
             }
         }
     }
@@ -57,10 +57,10 @@ fn main() -> AstResult<()> {
     for test in match_tests {
         match parser.parse_program(test) {
             Ok(_) => {
-                println!("✓ Success: {}", test);
+                println!("✓ Success: {test}");
             }
             Err(e) => {
-                println!("✗ Failed: {} - {}", test, e);
+                println!("✗ Failed: {test} - {e}");
             }
         }
     }
@@ -71,13 +71,13 @@ fn main() -> AstResult<()> {
     let simple_patterns = vec!["_", "x", "42", "(x)", "Some"];
 
     for pattern in simple_patterns {
-        let test_program = format!("let x = match 42 {{ {} => 0 }};", pattern);
+        let test_program = format!("let x = match 42 {{ {pattern} => 0 }};");
         match parser.parse_program(&test_program) {
             Ok(_) => {
-                println!("✓ {} - Success", pattern);
+                println!("✓ {pattern} - Success");
             }
             Err(e) => {
-                println!("✗ {} - Failed: {}", pattern, e);
+                println!("✗ {pattern} - Failed: {e}");
             }
         }
     }
@@ -95,10 +95,10 @@ fn main() -> AstResult<()> {
     for test in union_tests {
         match parser.parse_program(test) {
             Ok(_) => {
-                println!("✓ Success: {}", test);
+                println!("✓ Success: {test}");
             }
             Err(e) => {
-                println!("✗ Failed: {} - {}", test, e);
+                println!("✗ Failed: {test} - {e}");
             }
         }
     }

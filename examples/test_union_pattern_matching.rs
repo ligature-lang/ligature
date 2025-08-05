@@ -23,10 +23,10 @@ fn main() -> AstResult<()> {
     };
 
     let matches_some = evaluator.pattern_matches(&some_pattern, &some_value)?;
-    println!("✓ Some pattern matches Some(42): {}", matches_some);
+    println!("✓ Some pattern matches Some(42): {matches_some}");
 
     let matches_none = evaluator.pattern_matches(&some_pattern, &none_value)?;
-    println!("✓ Some pattern matches None: {}", matches_none);
+    println!("✓ Some pattern matches None: {matches_none}");
 
     // Test None pattern
     let none_pattern = Pattern::Union {
@@ -35,10 +35,10 @@ fn main() -> AstResult<()> {
     };
 
     let matches_some_none = evaluator.pattern_matches(&none_pattern, &some_value)?;
-    println!("✓ None pattern matches Some(42): {}", matches_some_none);
+    println!("✓ None pattern matches Some(42): {matches_some_none}");
 
     let matches_none_none = evaluator.pattern_matches(&none_pattern, &none_value)?;
-    println!("✓ None pattern matches None: {}", matches_none_none);
+    println!("✓ None pattern matches None: {matches_none_none}");
 
     // Test 2: Union pattern matching with variable binding
     println!("\n=== Test 2: Union Pattern Matching with Variable Binding ===");
@@ -54,10 +54,7 @@ fn main() -> AstResult<()> {
         &some_value,
         &mut bindings,
     )?;
-    println!(
-        "✓ Some(n) pattern matches Some(42): {}",
-        matches_with_binding
-    );
+    println!("✓ Some(n) pattern matches Some(42): {matches_with_binding}",);
     println!("✓ Variable binding 'n' = {:?}", bindings.get("n"));
 
     // Test 3: Nested union pattern matching
@@ -85,10 +82,7 @@ fn main() -> AstResult<()> {
         &nested_some,
         &mut nested_bindings,
     )?;
-    println!(
-        "✓ Some(Some(x)) pattern matches Some(Some(42)): {}",
-        matches_nested
-    );
+    println!("✓ Some(Some(x)) pattern matches Some(Some(42)): {matches_nested}",);
     println!("✓ Variable binding 'x' = {:?}", nested_bindings.get("x"));
 
     // Test 4: Complex pattern matching with multiple variables
@@ -134,7 +128,7 @@ fn main() -> AstResult<()> {
         &record_value,
         &mut complex_bindings,
     )?;
-    println!("✓ Complex pattern matches record: {}", matches_complex);
+    println!("✓ Complex pattern matches record: {matches_complex}");
     println!(
         "✓ Variable binding 'code' = {:?}",
         complex_bindings.get("code")
@@ -161,13 +155,10 @@ fn main() -> AstResult<()> {
     };
 
     let matches_literal = evaluator.pattern_matches(&literal_pattern, &some_five)?;
-    println!("✓ Some(5) pattern matches Some(5): {}", matches_literal);
+    println!("✓ Some(5) pattern matches Some(5): {matches_literal}");
 
     let matches_literal_false = evaluator.pattern_matches(&literal_pattern, &some_value)?;
-    println!(
-        "✓ Some(5) pattern matches Some(42): {}",
-        matches_literal_false
-    );
+    println!("✓ Some(5) pattern matches Some(42): {matches_literal_false}",);
 
     // Test 6: Error cases and edge cases
     println!("\n=== Test 6: Error Cases and Edge Cases ===");
@@ -175,10 +166,7 @@ fn main() -> AstResult<()> {
     // Test matching union against non-union value
     let non_union_value = Value::integer(42, Span::default());
     let matches_non_union = evaluator.pattern_matches(&some_pattern, &non_union_value)?;
-    println!(
-        "✓ Union pattern matches non-union value: {}",
-        matches_non_union
-    );
+    println!("✓ Union pattern matches non-union value: {matches_non_union}",);
 
     // Test matching wrong variant
     let wrong_variant_pattern = Pattern::Union {
@@ -186,10 +174,7 @@ fn main() -> AstResult<()> {
         value: None,
     };
     let matches_wrong_variant = evaluator.pattern_matches(&wrong_variant_pattern, &some_value)?;
-    println!(
-        "✓ Wrong variant pattern matches Some(42): {}",
-        matches_wrong_variant
-    );
+    println!("✓ Wrong variant pattern matches Some(42): {matches_wrong_variant}",);
 
     println!("\n✓ All union pattern matching tests completed successfully!");
     Ok(())

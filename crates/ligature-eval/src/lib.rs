@@ -3,8 +3,8 @@
 //! This crate provides normalization-based evaluation for Ligature programs,
 //! ensuring termination through the Turing-incomplete design.
 
-pub mod advanced_optimizations;
 pub mod adaptive_optimizer;
+pub mod advanced_optimizations;
 pub mod benchmarks;
 pub mod config;
 pub mod environment;
@@ -15,15 +15,21 @@ pub mod performance;
 pub mod resolver;
 pub mod value;
 
+pub use adaptive_optimizer::{
+    AdaptiveOptimizer, AdaptiveOptimizerConfig, OptimizationDecision, OptimizationReport,
+    PerformanceState, SystemLoad,
+};
 pub use advanced_optimizations::*;
-pub use adaptive_optimizer::{AdaptiveOptimizer, AdaptiveOptimizerConfig, OptimizationDecision, PerformanceState, SystemLoad, OptimizationReport};
 pub use benchmarks::*;
 pub use config::*;
 pub use environment::*;
 pub use error::*;
 pub use evaluator::*;
 pub use memory::*;
-pub use performance::{PerformanceMonitor, PerformanceConfig, PerformanceMetrics, PerformanceGuard, PerformanceReport, RegressionAlert, RegressionSeverity, OptimizationStrategy, ExpressionProfile};
+pub use performance::{
+    ExpressionProfile, OptimizationStrategy, PerformanceConfig, PerformanceGuard,
+    PerformanceMetrics, PerformanceMonitor, PerformanceReport, RegressionAlert, RegressionSeverity,
+};
 pub use resolver::*;
 pub use value::*;
 
@@ -546,7 +552,7 @@ mod tests {
         println!("Module declarations: {}", module.declarations.len());
 
         for (i, decl) in module.declarations.iter().enumerate() {
-            println!("Declaration {}: {:?}", i, decl);
+            println!("Declaration {i}: {decl:?}");
         }
 
         let result = evaluator.evaluate_module(&module).unwrap();
@@ -561,7 +567,7 @@ mod tests {
             // Debug: Print all bindings in the environment
             println!("All bindings in module environment:");
             for (binding_name, binding_value) in env.current_bindings() {
-                println!("  {} = {:?}", binding_name, binding_value);
+                println!("  {binding_name} = {binding_value:?}");
             }
 
             // The environment should contain the bindings from the module
@@ -570,11 +576,11 @@ mod tests {
 
             // Check the actual values
             let x_value = env.lookup("x").unwrap();
-            println!("x_value: {:?}", x_value);
+            println!("x_value: {x_value:?}");
             assert_eq!(x_value.as_integer(), Some(42));
 
             let y_value = env.lookup("y").unwrap();
-            println!("y_value: {:?}", y_value);
+            println!("y_value: {y_value:?}");
 
             // The issue is that y is getting 42 instead of 43
             // This suggests that x is not being found when evaluating y = x + 1
@@ -675,7 +681,7 @@ mod tests {
         let source = "x + 1";
         let expr = ligature_parser::parse_expression(source).unwrap();
 
-        println!("Parsed expression: {:?}", expr);
+        println!("Parsed expression: {expr:?}");
 
         // Test evaluation
         let mut evaluator = Evaluator::new();
@@ -723,7 +729,7 @@ mod tests {
         ];
 
         for (name, program, iterations) in test_cases {
-            println!("Running benchmark: {}", name);
+            println!("Running benchmark: {name}");
             match suite.run_benchmark(name, program, iterations) {
                 Ok(result) => {
                     println!(
@@ -732,7 +738,7 @@ mod tests {
                     );
                 }
                 Err(e) => {
-                    println!("  {}: ERROR - {}", name, e);
+                    println!("  {name}: ERROR - {e}");
                 }
             }
         }

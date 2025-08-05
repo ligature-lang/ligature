@@ -49,4 +49,4 @@ fn main() -> AstResult<()> {
     test_expression("5 == 5 == true");
 
     Ok(())
-} 
+}

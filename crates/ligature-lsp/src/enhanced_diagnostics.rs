@@ -4,8 +4,7 @@ use ligature_ast::{Program, Span};
 use ligature_parser::parse_program;
 use ligature_types::{checker::TypeChecker, type_check_program};
 use lsp_types::{
-    Diagnostic, DiagnosticSeverity, Position, Range, DiagnosticRelatedInformation,
-    NumberOrString,
+    Diagnostic, DiagnosticRelatedInformation, DiagnosticSeverity, NumberOrString, Position, Range,
 };
 use std::collections::HashMap;
 
@@ -14,6 +13,7 @@ pub struct EnhancedDiagnosticsProvider {
     /// Cache of diagnostics by document URI.
     diagnostics_cache: HashMap<String, Vec<Diagnostic>>,
     /// Type checker for type-aware diagnostics.
+    #[allow(dead_code)]
     type_checker: TypeChecker,
     /// Configuration for enhanced diagnostics.
     config: EnhancedDiagnosticsConfig,
@@ -126,12 +126,10 @@ impl EnhancedDiagnosticsProvider {
         let mut diagnostics = Vec::new();
 
         match error {
-            ligature_ast::AstError::ParseError { message, span } => {
-                let message = format!("Unexpected token: {}", message);
+            ligature_ast::AstError::ParseError { message: _, span } => {
                 let message = if self.config.enable_detailed_explanations {
-                    format!(
-                        "Unexpected token. This token doesn't fit the expected syntax at this position."
-                    )
+                    "Unexpected token. This token doesn't fit the expected syntax at this position."
+                        .to_string()
                 } else {
                     "Unexpected token".to_string()
                 };
@@ -143,7 +141,7 @@ impl EnhancedDiagnosticsProvider {
                 };
 
                 let full_message = if let Some(suggestion) = suggestion {
-                    format!("{}\n\nSuggestion: {}", message, suggestion)
+                    format!("{message}\n\nSuggestion: {suggestion}")
                 } else {
                     message
                 };
@@ -160,70 +158,6 @@ impl EnhancedDiagnosticsProvider {
                     data: None,
                 });
             }
-            ligature_ast::AstError::ParseError { message, span } => {
-                let message = format!("Expected token: {}", message);
-                let message = if self.config.enable_detailed_explanations {
-                    "Expected a different token. The parser was expecting a different token to complete the current expression.".to_string()
-                } else {
-                    "Expected a different token".to_string()
-                };
-
-                let suggestion = if self.config.enable_fix_suggestions {
-                    "Check the syntax and ensure all tokens are properly placed".to_string()
-                } else {
-                    String::new()
-                };
-
-                let full_message = if !suggestion.is_empty() {
-                    format!("{}\n\nSuggestion: {}", message, suggestion)
-                } else {
-                    message
-                };
-
-                diagnostics.push(Diagnostic {
-                    range: self.span_to_range(*span),
-                    severity: Some(DiagnosticSeverity::ERROR),
-                    code: Some(NumberOrString::String("P002".to_string())),
-                    code_description: None,
-                    source: Some("ligature-parser".to_string()),
-                    message: full_message,
-                    related_information: self.get_related_information_for_parse_error(error, uri),
-                    tags: None,
-                    data: None,
-                });
-            }
-            ligature_ast::AstError::ParseError { message, span } => {
-                let message = format!("Unexpected end of input: {}", message);
-                let message = if self.config.enable_detailed_explanations {
-                    "Unexpected end of input. The file appears to be incomplete and is missing required syntax elements."
-                } else {
-                    "Unexpected end of input"
-                };
-
-                let suggestion = if self.config.enable_fix_suggestions {
-                    "Check if you're missing closing braces, parentheses, or other syntax elements"
-                } else {
-                    ""
-                };
-
-                let full_message = if !suggestion.is_empty() {
-                    format!("{}\n\nSuggestion: {}", message, suggestion)
-                } else {
-                    message.to_string()
-                };
-
-                diagnostics.push(Diagnostic {
-                    range: self.span_to_range(*span),
-                    severity: Some(DiagnosticSeverity::ERROR),
-                    code: Some(NumberOrString::String("P003".to_string())),
-                    code_description: None,
-                    source: Some("ligature-parser".to_string()),
-                    message: full_message,
-                    related_information: self.get_related_information_for_parse_error(error, uri),
-                    tags: None,
-                    data: None,
-                });
-            }
             _ => {
                 // Handle other parse errors with basic conversion
                 diagnostics.push(Diagnostic {
@@ -232,7 +166,7 @@ impl EnhancedDiagnosticsProvider {
                     code: Some(NumberOrString::String("P000".to_string())),
                     code_description: None,
                     source: Some("ligature-parser".to_string()),
-                    message: format!("Parse error: {:?}", error),
+                    message: format!("Parse error: {error:?}"),
                     related_information: None,
                     tags: None,
                     data: None,
@@ -279,24 +213,22 @@ impl EnhancedDiagnosticsProvider {
             } => {
                 let message = if self.config.enable_detailed_explanations {
                     format!(
-                        "Type mismatch in method '{}': expected type '{:?}', but found type '{:?}'. This usually means the arguments don't match the function's expected parameter types.",
-                        method, expected, found
+                        "Type mismatch in method '{method}': expected type '{expected:?}', but found type '{found:?}'. This usually means the arguments don't match the function's expected parameter types."
                     )
                 } else {
                     format!(
-                        "Type mismatch in method {}: expected {:?}, got {:?}",
-                        method, expected, found
+                        "Type mismatch in method {method}: expected {expected:?}, got {found:?}"
                     )
                 };
 
                 let suggestion = if self.config.enable_fix_suggestions {
-                    self.suggest_type_fix(&format!("{:?}", expected), &format!("{:?}", found))
+                    self.suggest_type_fix(&format!("{expected:?}"), &format!("{found:?}"))
                 } else {
                     None
                 };
 
                 let full_message = if let Some(suggestion) = suggestion {
-                    format!("{}\n\nSuggestion: {}", message, suggestion)
+                    format!("{message}\n\nSuggestion: {suggestion}")
                 } else {
                     message
                 };
@@ -316,11 +248,10 @@ impl EnhancedDiagnosticsProvider {
             ligature_ast::AstError::UndefinedIdentifier { name, span } => {
                 let message = if self.config.enable_detailed_explanations {
                     format!(
-                        "Undefined identifier '{}'. This variable or function hasn't been declared or imported. Check if you need to add an import statement or declare this identifier.",
-                        name
+                        "Undefined identifier '{name}'. This variable or function hasn't been declared or imported. Check if you need to add an import statement or declare this identifier."
                     )
                 } else {
-                    format!("Undefined identifier: {}", name)
+                    format!("Undefined identifier: {name}")
                 };
 
                 let suggestion = if self.config.enable_fix_suggestions {
@@ -330,7 +261,7 @@ impl EnhancedDiagnosticsProvider {
                 };
 
                 let full_message = if let Some(suggestion) = suggestion {
-                    format!("{}\n\nSuggestion: {}", message, suggestion)
+                    format!("{message}\n\nSuggestion: {suggestion}")
                 } else {
                     message
                 };
@@ -355,7 +286,7 @@ impl EnhancedDiagnosticsProvider {
                     code: Some(NumberOrString::String("T000".to_string())),
                     code_description: None,
                     source: Some("ligature-types".to_string()),
-                    message: format!("Type error: {:?}", error),
+                    message: format!("Type error: {error:?}"),
                     related_information: None,
                     tags: None,
                     data: None,
@@ -383,7 +314,7 @@ impl EnhancedDiagnosticsProvider {
     }
 
     /// Check for unused imports with enhanced reporting.
-    fn check_unused_imports_enhanced(&self, content: &str, uri: &str) -> Vec<Diagnostic> {
+    fn check_unused_imports_enhanced(&self, content: &str, _uri: &str) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
         let lines: Vec<&str> = content.lines().collect();
 
@@ -398,11 +329,10 @@ impl EnhancedDiagnosticsProvider {
                 if !import_name.is_empty() && !self.is_import_used(import_name, content) {
                     let message = if self.config.enable_detailed_explanations {
                         format!(
-                            "Unused import '{}'. This import statement brings in functionality that isn't being used in the current file. Consider removing it to keep your code clean.",
-                            import_name
+                            "Unused import '{import_name}'. This import statement brings in functionality that isn't being used in the current file. Consider removing it to keep your code clean."
                         )
                     } else {
-                        format!("Unused import: {}", import_name)
+                        format!("Unused import: {import_name}")
                     };
 
                     let suggestion = if self.config.enable_fix_suggestions {
@@ -412,7 +342,7 @@ impl EnhancedDiagnosticsProvider {
                     };
 
                     let full_message = if !suggestion.is_empty() {
-                        format!("{}\n\nSuggestion: {}", message, suggestion)
+                        format!("{message}\n\nSuggestion: {suggestion}")
                     } else {
                         message
                     };
@@ -445,7 +375,7 @@ impl EnhancedDiagnosticsProvider {
     }
 
     /// Check for unused variables with enhanced reporting.
-    fn check_unused_variables_enhanced(&self, content: &str, uri: &str) -> Vec<Diagnostic> {
+    fn check_unused_variables_enhanced(&self, content: &str, _uri: &str) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
         // This is a simplified implementation
@@ -454,17 +384,16 @@ impl EnhancedDiagnosticsProvider {
 
         for (line_num, line) in lines.iter().enumerate() {
             if line.trim().starts_with("let ") {
-                let parts: Vec<&str> = line.trim().split_whitespace().collect();
+                let parts: Vec<&str> = line.split_whitespace().collect();
                 if parts.len() >= 2 {
                     let var_name = parts[1];
                     if !self.is_variable_used(var_name, content) {
                         let message = if self.config.enable_detailed_explanations {
                             format!(
-                                "Unused variable '{}'. This variable is declared but never used. Consider removing it or using it in your code.",
-                                var_name
+                                "Unused variable '{var_name}'. This variable is declared but never used. Consider removing it or using it in your code."
                             )
                         } else {
-                            format!("Unused variable: {}", var_name)
+                            format!("Unused variable: {var_name}")
                         };
 
                         let suggestion = if self.config.enable_fix_suggestions {
@@ -474,7 +403,7 @@ impl EnhancedDiagnosticsProvider {
                         };
 
                         let full_message = if !suggestion.is_empty() {
-                            format!("{}\n\nSuggestion: {}", message, suggestion)
+                            format!("{message}\n\nSuggestion: {suggestion}")
                         } else {
                             message
                         };
@@ -508,7 +437,7 @@ impl EnhancedDiagnosticsProvider {
     }
 
     /// Check for potential issues with enhanced reporting.
-    fn check_potential_issues_enhanced(&self, content: &str, uri: &str) -> Vec<Diagnostic> {
+    fn check_potential_issues_enhanced(&self, content: &str, _uri: &str) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
         // Check for long lines
@@ -528,7 +457,7 @@ impl EnhancedDiagnosticsProvider {
                 };
 
                 let full_message = if !suggestion.is_empty() {
-                    format!("{}\n\nSuggestion: {}", message, suggestion)
+                    format!("{message}\n\nSuggestion: {suggestion}")
                 } else {
                     message.to_string()
                 };
@@ -572,7 +501,7 @@ impl EnhancedDiagnosticsProvider {
                 };
 
                 let full_message = if !suggestion.is_empty() {
-                    format!("{}\n\nSuggestion: {}", message, suggestion)
+                    format!("{message}\n\nSuggestion: {suggestion}")
                 } else {
                     message.to_string()
                 };
@@ -604,7 +533,7 @@ impl EnhancedDiagnosticsProvider {
     }
 
     /// Check for security issues.
-    fn check_security_issues(&self, content: &str, uri: &str) -> Vec<Diagnostic> {
+    fn check_security_issues(&self, content: &str, _uri: &str) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
         // Check for potential security issues
@@ -625,7 +554,7 @@ impl EnhancedDiagnosticsProvider {
                 };
 
                 let full_message = if !suggestion.is_empty() {
-                    format!("{}\n\nSuggestion: {}", message, suggestion)
+                    format!("{message}\n\nSuggestion: {suggestion}")
                 } else {
                     message.to_string()
                 };
@@ -657,22 +586,20 @@ impl EnhancedDiagnosticsProvider {
     }
 
     /// Check for performance issues.
-    fn check_performance_issues(&self, program: &Program, uri: &str) -> Vec<Diagnostic> {
-        let mut diagnostics = Vec::new();
-
+    fn check_performance_issues(&self, _program: &Program, _uri: &str) -> Vec<Diagnostic> {
         // This is a simplified implementation
         // In a full implementation, you would analyze the AST for performance issues
 
-        diagnostics
+        Vec::new()
     }
 
     /// Check for style issues.
-    fn check_style_issues(&self, content: &str, uri: &str) -> Vec<Diagnostic> {
+    fn check_style_issues(&self, content: &str, _uri: &str) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
         // Check for inconsistent indentation
         let lines: Vec<&str> = content.lines().collect();
-        let mut expected_indent = 0;
+        let _expected_indent = 0;
 
         for (line_num, line) in lines.iter().enumerate() {
             let trimmed = line.trim();
@@ -695,7 +622,7 @@ impl EnhancedDiagnosticsProvider {
                 };
 
                 let full_message = if !suggestion.is_empty() {
-                    format!("{}\n\nSuggestion: {}", message, suggestion)
+                    format!("{message}\n\nSuggestion: {suggestion}")
                 } else {
                     message.to_string()
                 };
@@ -740,23 +667,23 @@ impl EnhancedDiagnosticsProvider {
     }
 
     /// Check for unused variables in the AST.
-    fn check_unused_variables_in_ast(&self, program: &Program, uri: &str) -> Vec<Diagnostic> {
-        let mut diagnostics = Vec::new();
-
+    fn check_unused_variables_in_ast(&self, _program: &Program, _uri: &str) -> Vec<Diagnostic> {
         // This is a simplified implementation
         // In a full implementation, you would traverse the AST to find unused variables
 
-        diagnostics
+        Vec::new()
     }
 
     /// Check for potential type issues in the AST.
-    fn check_potential_type_issues_in_ast(&self, program: &Program, uri: &str) -> Vec<Diagnostic> {
-        let mut diagnostics = Vec::new();
-
+    fn check_potential_type_issues_in_ast(
+        &self,
+        _program: &Program,
+        _uri: &str,
+    ) -> Vec<Diagnostic> {
         // This is a simplified implementation
         // In a full implementation, you would analyze the AST for potential type issues
 
-        diagnostics
+        Vec::new()
     }
 
     // Helper methods
@@ -774,10 +701,18 @@ impl EnhancedDiagnosticsProvider {
     /// Suggest a fix for a type error.
     fn suggest_type_fix(&self, expected: &str, found: &str) -> Option<String> {
         match (expected, found) {
-            ("Int", "String") => Some("Convert the string to an integer using a conversion function".to_string()),
-            ("String", "Int") => Some("Convert the integer to a string using toString()".to_string()),
-            ("Bool", "Int") => Some("Convert the integer to a boolean using a comparison".to_string()),
-            ("Int", "Bool") => Some("Convert the boolean to an integer using if-then-else".to_string()),
+            ("Int", "String") => {
+                Some("Convert the string to an integer using a conversion function".to_string())
+            }
+            ("String", "Int") => {
+                Some("Convert the integer to a string using toString()".to_string())
+            }
+            ("Bool", "Int") => {
+                Some("Convert the integer to a boolean using a comparison".to_string())
+            }
+            ("Int", "Bool") => {
+                Some("Convert the boolean to an integer using if-then-else".to_string())
+            }
             _ => None,
         }
     }
@@ -790,9 +725,13 @@ impl EnhancedDiagnosticsProvider {
         ];
 
         if builtins.contains(&name) {
-            Some(format!("Add 'import {} from \"stdlib/core\";' at the top of your file", name))
+            Some(format!(
+                "Add 'import {name} from \"stdlib/core\";' at the top of your file"
+            ))
         } else {
-            Some(format!("Declare '{}' using 'let {} = ...;' or add an appropriate import", name, name))
+            Some(format!(
+                "Declare '{name}' using 'let {name} = ...;' or add an appropriate import"
+            ))
         }
     }
 
@@ -878,4 +817,4 @@ impl Default for EnhancedDiagnosticsProvider {
     fn default() -> Self {
         Self::new()
     }
-} 
+}

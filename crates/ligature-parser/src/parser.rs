@@ -14,7 +14,7 @@ use ligature_ast::{
     RecordPatternField, Span, Type, TypeAlias, TypeConstructor, TypeKind, TypeVariant,
     UnaryOperator,
 };
-use pest::{iterators::Pairs, Parser as PestParser};
+use pest::{Parser as PestParser, iterators::Pairs};
 
 use crate::grammar::LigatureParser;
 use crate::grammar::Rule;
@@ -600,12 +600,10 @@ impl Parser {
             Rule::application => self.parse_application(pair.into_inner()),
             Rule::field_access => self.parse_field_access(pair.into_inner()),
             Rule::primary => self.parse_primary(pair.into_inner()),
-            _ => {
-                return Err(AstError::ParseError {
-                    message: format!("Unsupported value expression: {:?}", pair.as_rule()),
-                    span: Span::default(),
-                });
-            }
+            _ => Err(AstError::ParseError {
+                message: format!("Unsupported value expression: {:?}", pair.as_rule()),
+                span: Span::default(),
+            }),
         }
     }
 
@@ -943,7 +941,7 @@ impl Parser {
                         return Err(AstError::ParseError {
                             message: format!("Unknown comparison operator: {}", pair.as_str()),
                             span: Span::default(),
-                        })
+                        });
                     }
                 };
 
@@ -996,7 +994,7 @@ impl Parser {
                     BinaryOperator::Subtract
                 } else {
                     return Err(AstError::ParseError {
-                        message: format!("Unknown additive operator: {}", operator),
+                        message: format!("Unknown additive operator: {operator}"),
                         span: Span::default(),
                     });
                 };
@@ -1036,7 +1034,7 @@ impl Parser {
                         return Err(AstError::ParseError {
                             message: format!("Unknown multiplicative operator: {}", pair.as_str()),
                             span: Span::default(),
-                        })
+                        });
                     }
                 };
 
@@ -1295,6 +1293,7 @@ impl Parser {
     }
 
     // Fixed binary operator chain parsing with proper precedence
+    #[allow(dead_code)]
     fn parse_binary_chain_simple(
         &mut self,
         pairs: Pairs<Rule>,
@@ -1853,6 +1852,7 @@ impl Parser {
         })
     }
 
+    #[allow(dead_code)]
     fn parse_binary_operator(&self, op: &str) -> BinaryOperator {
         match op {
             "+" => BinaryOperator::Add,

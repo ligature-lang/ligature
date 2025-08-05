@@ -51,19 +51,22 @@ pub struct WorkspaceManager {
     /// Workspace configuration
     config: Arc<RwLock<LspConfiguration>>,
     /// Workspace files
+    #[allow(clippy::type_complexity)]
     files: Arc<RwLock<HashMap<String, WorkspaceFile>>>,
     /// Workspace symbols
+    #[allow(clippy::type_complexity)]
     symbols: Arc<RwLock<HashMap<String, Vec<WorkspaceSymbol>>>>,
     /// Workspace folders
     pub folders: Arc<RwLock<Vec<WorkspaceFolder>>>,
     /// File watchers
+    #[allow(clippy::type_complexity)]
     watchers: Arc<RwLock<HashMap<String, tokio::task::JoinHandle<()>>>>,
     /// Indexing status
     indexing_status: Arc<RwLock<IndexingStatus>>,
 }
 
 /// Indexing status
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct IndexingStatus {
     /// Whether indexing is in progress
     pub indexing: bool,
@@ -75,18 +78,6 @@ pub struct IndexingStatus {
     pub errors: Vec<String>,
     /// Last indexing time
     pub last_indexed: Option<std::time::SystemTime>,
-}
-
-impl Default for IndexingStatus {
-    fn default() -> Self {
-        Self {
-            indexing: false,
-            files_indexed: 0,
-            total_files: 0,
-            errors: Vec::new(),
-            last_indexed: None,
-        }
-    }
 }
 
 impl WorkspaceManager {
@@ -122,7 +113,7 @@ impl WorkspaceManager {
             current_folders.retain(|f| f.uri != folder.uri);
 
             // Remove files from this folder
-            if let Ok(folder_path) = folder.uri.to_file_path() {
+            if let Ok(_folder_path) = folder.uri.to_file_path() {
                 let folder_uri = folder.uri.to_string();
                 files.retain(|uri, _| !uri.starts_with(&folder_uri));
                 symbols.retain(|uri, _| !uri.starts_with(&folder_uri));
@@ -438,7 +429,12 @@ impl WorkspaceManager {
         for file_symbols in symbols.values() {
             for symbol in file_symbols {
                 // Look for type-related symbols (type aliases, constructors, classes)
-                if symbol.name == symbol_name && matches!(symbol.kind, SymbolKind::TYPE_PARAMETER | SymbolKind::CLASS | SymbolKind::INTERFACE) {
+                if symbol.name == symbol_name
+                    && matches!(
+                        symbol.kind,
+                        SymbolKind::TYPE_PARAMETER | SymbolKind::CLASS | SymbolKind::INTERFACE
+                    )
+                {
                     return Some(symbol.location.clone());
                 }
             }
@@ -455,7 +451,9 @@ impl WorkspaceManager {
         for file_symbols in symbols.values() {
             for symbol in file_symbols {
                 // Look for instance declarations (implementations of type classes)
-                if symbol.name.contains(&format!("instance {} for", symbol_name)) && symbol.kind == SymbolKind::CLASS {
+                if symbol.name.contains(&format!("instance {symbol_name} for"))
+                    && symbol.kind == SymbolKind::CLASS
+                {
                     implementations.push(symbol.location.clone());
                 }
             }

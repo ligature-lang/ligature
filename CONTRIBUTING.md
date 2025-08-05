@@ -39,23 +39,52 @@ ligature/
 │   ├── ligature-types/        # Type system implementation
 │   ├── ligature-eval/         # Evaluation engine
 │   ├── ligature-lsp/          # Language server
-│   └── krox/                  # Client SDKs for side effects
+│   ├── ligature-xdg/          # XDG base directory support
+│   ├── cacophony-core/        # Core types and traits for Cacophony
+│   ├── cacophony-config/      # Configuration management for Cacophony
+│   └── cacophony-plugin/      # Plugin system for Cacophony
 ├── apps/
 │   ├── reed/                  # Command-line interface
 │   ├── keywork/               # Package manager for registers
-│   └── cacophony/             # CLI orchestration tool
+│   ├── performance-monitor/   # Performance monitoring tool
+│   └── cacophony/             # CLI orchestration tool (simplified)
 ├── .lang/spec/                # Lean specifications
 ├── tests/
 │   ├── property/              # Property-based tests
 │   ├── differential/          # Tests against Lean reference
 │   └── integration/           # End-to-end tests
 ├── examples/                  # Example configurations
-└── registers/                 # Standard library and examples
+├── registers/                 # Standard library and examples
+└── docs/
+    └── architecture/          # Architecture documentation
 ```
 
 ## Building and Testing
 
-### Building
+### Quick Start with Justfile (Recommended)
+
+The workspace includes a comprehensive `justfile` for streamlined development workflows:
+
+```bash
+# Install just (if not already installed)
+cargo install just
+
+# See all available commands
+just --list
+
+# Install all apps
+just install
+
+# Run development setup
+just dev-setup
+
+# Quick development cycle
+just dev
+```
+
+For detailed justfile documentation, see [Justfile Development Guide](docs/.development/justfile-guide.md).
+
+### Manual Building
 
 ```bash
 # Clone the repository
@@ -85,11 +114,12 @@ cargo build --bin krox
 To run the same checks locally that the CI performs:
 
 ```bash
-# Code quality checks
+# Using justfile (recommended)
+just check-all
+
+# Manual commands
 cargo fmt --all -- --check
 cargo clippy --all-targets --all-features -- -D warnings
-
-# Run all tests
 cargo test
 
 # Build all crates
@@ -137,53 +167,45 @@ This project uses GitHub Actions for continuous integration. The following workf
 
 ## Tools and Commands
 
-### Using the CLI (reed)
+### Using the CLI Tools (Recommended)
 
-The main CLI tool is called `reed`:
+The workspace includes several CLI tools. You can run them using the justfile:
 
 ```bash
-# Check if a file is valid Ligature
-cargo run --bin reed -- check examples/basic.lig
+# Run reed (Ligature language CLI)
+just reed parse --file examples/basic.lig
+just reed typecheck --file examples/basic.lig
+just reed eval --file examples/basic.lig
 
-# Type check a file
-cargo run --bin reed -- typecheck examples/basic.lig
+# Run cacophony (orchestration CLI)
+just cacophony run --config my-config.lig
 
-# Evaluate a file
-cargo run --bin reed -- eval examples/basic.lig
+# Run keywork (package manager)
+just keywork init my-register
+just keywork install stdlib
+just keywork list
 
-# Format a file
-cargo run --bin reed -- fmt examples/basic.lig
-
-# Lint a file
-cargo run --bin reed -- lint examples/basic.lig
-
-# Generate documentation
-cargo run --bin reed -- doc examples/basic.lig
+# Run performance monitor
+just perf-monitor --benchmark
 ```
 
-### Package Management (keywork)
+### Manual CLI Usage
+
+You can also run the CLI tools directly:
 
 ```bash
-# Initialize a new register
+# Reed CLI
+cargo run --bin reed -- parse --file examples/basic.lig
+cargo run --bin reed -- typecheck --file examples/basic.lig
+cargo run --bin reed -- eval --file examples/basic.lig
+
+# Keywork CLI
 cargo run --bin keywork -- init my-register
-
-# Build a register
-cargo run --bin keywork -- build my-register
-
-# Install a register
 cargo run --bin keywork -- install stdlib
-
-# List installed registers
 cargo run --bin keywork -- list
 
-# Search for registers
-cargo run --bin keywork -- search validation
-
-# Validate a register
-cargo run --bin keywork -- validate my-register
-
-# Show register information
-cargo run --bin keywork -- info stdlib
+# Cacophony CLI
+cargo run --bin cacophony -- run --config my-config.lig
 ```
 
 ### Client SDK (krox)

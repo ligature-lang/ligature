@@ -86,7 +86,7 @@ impl ModuleResolver {
         // Load and parse the module
         let module_content =
             std::fs::read_to_string(&module_path).map_err(|e| AstError::ParseError {
-                message: format!("Failed to read module file: {}", e),
+                message: format!("Failed to read module file: {e}"),
                 span: ligature_ast::Span::default(),
             })?;
 
@@ -104,6 +104,7 @@ impl ModuleResolver {
 
     /// Parse an import path to extract register and module names.
     /// Now supports nested module paths like "std.collections.list"
+    #[allow(clippy::type_complexity)]
     fn parse_import_path(&self, path: &str) -> AstResult<(String, Vec<String>)> {
         let parts: Vec<&str> = path.split('.').collect();
         match parts.as_slice() {
@@ -116,7 +117,7 @@ impl ModuleResolver {
                 Ok((register_name.to_string(), module_path))
             }
             _ => Err(AstError::ParseError {
-                message: format!("Invalid import path format: {}", path),
+                message: format!("Invalid import path format: {path}"),
                 span: ligature_ast::Span::default(),
             }),
         }
@@ -138,7 +139,11 @@ impl ModuleResolver {
 
     /// Find a nested module within a register.
     /// Recursively traverses the module path to find the target module.
-    fn find_nested_in_register(&self, register_path: &Path, module_path: &[String]) -> AstResult<PathBuf> {
+    fn find_nested_in_register(
+        &self,
+        register_path: &Path,
+        module_path: &[String],
+    ) -> AstResult<PathBuf> {
         if module_path.is_empty() {
             return Err(AstError::ParseError {
                 message: "Empty module path".to_string(),
@@ -154,7 +159,7 @@ impl ModuleResolver {
         // Recursive case: find the intermediate module and continue
         let intermediate_module = &module_path[0];
         let intermediate_path = self.find_in_register(register_path, intermediate_module, true)?;
-        
+
         // Check if the intermediate module is a directory (submodule)
         if intermediate_path.is_dir() {
             // Continue searching in the submodule directory
@@ -162,13 +167,16 @@ impl ModuleResolver {
         } else {
             // The intermediate module is a file, not a directory
             Err(AstError::ParseError {
-                message: format!("Module '{}' is not a directory, cannot contain submodules", intermediate_module),
+                message: format!(
+                    "Module '{intermediate_module}' is not a directory, cannot contain submodules"
+                ),
                 span: ligature_ast::Span::default(),
             })
         }
     }
 
     /// Find a module within a specific register.
+    #[allow(dead_code)]
     fn find_module_in_register(
         &self,
         register_name: &str,
@@ -240,20 +248,25 @@ impl ModuleResolver {
     }
 
     /// Find a module within a register.
-    fn find_in_register(&self, register_path: &Path, module_name: &str, for_nested: bool) -> AstResult<PathBuf> {
+    fn find_in_register(
+        &self,
+        register_path: &Path,
+        module_name: &str,
+        for_nested: bool,
+    ) -> AstResult<PathBuf> {
         // Look for register.toml to understand the register structure
         let register_manifest = register_path.join("register.toml");
         if register_manifest.exists() {
             // Parse register.toml and check exports
             let manifest_content =
                 std::fs::read_to_string(&register_manifest).map_err(|e| AstError::ParseError {
-                    message: format!("Failed to read register manifest: {}", e),
+                    message: format!("Failed to read register manifest: {e}"),
                     span: ligature_ast::Span::default(),
                 })?;
 
             let manifest: RegisterManifest =
                 toml::from_str(&manifest_content).map_err(|e| AstError::ParseError {
-                    message: format!("Failed to parse register manifest: {}", e),
+                    message: format!("Failed to parse register manifest: {e}"),
                     span: ligature_ast::Span::default(),
                 })?;
 
@@ -278,13 +291,11 @@ impl ModuleResolver {
 
             // If not found in exports, try common locations
             let common_paths = [
-                register_path
-                    .join("src")
-                    .join(format!("{}.lig", module_name)),
-                register_path.join(format!("{}.lig", module_name)),
+                register_path.join("src").join(format!("{module_name}.lig")),
+                register_path.join(format!("{module_name}.lig")),
                 register_path
                     .join("modules")
-                    .join(format!("{}.lig", module_name)),
+                    .join(format!("{module_name}.lig")),
             ];
 
             for path in &common_paths {
@@ -296,16 +307,18 @@ impl ModuleResolver {
 
         // Fallback: look for .lig files in the register directory
         if let Ok(entries) = std::fs::read_dir(register_path) {
+            #[allow(clippy::manual_flatten)]
             for entry in entries {
                 if let Ok(entry) = entry {
                     let path = entry.path();
+                    #[allow(clippy::unnecessary_map_or)]
                     if path.is_file() && path.extension().map_or(false, |ext| ext == "lig") {
                         let stem = path.file_stem().unwrap().to_string_lossy();
                         if stem == module_name {
                             return Ok(path);
                         }
                     }
-                    
+
                     // Check for directories (for nested modules)
                     if path.is_dir() {
                         let dir_name = path.file_name().unwrap().to_string_lossy();
@@ -321,7 +334,9 @@ impl ModuleResolver {
                             }
                             // If no mod.lig, this is not a valid module
                             return Err(AstError::ParseError {
-                                message: format!("Directory '{}' does not contain a mod.lig file", module_name),
+                                message: format!(
+                                    "Directory '{module_name}' does not contain a mod.lig file"
+                                ),
                                 span: ligature_ast::Span::default(),
                             });
                         }

@@ -190,7 +190,7 @@ code --install-extension vscode-ligature-*.vsix
 
 #### Code Navigation
 
-```ligature
+```ocaml
 // Use Ctrl+Click to go to definition
 fun add(x: Int, y: Int) -> Int = x + y
 let result = add(10, 20)  // Ctrl+Click on 'add' to go to definition
@@ -198,7 +198,7 @@ let result = add(10, 20)  // Ctrl+Click on 'add' to go to definition
 
 #### Code Actions
 
-```ligature
+```ocaml
 // Use quick fixes for common errors
 let x = 42  // Warning: unused variable
 // Quick fix: Remove unused variable or use it
@@ -206,7 +206,7 @@ let x = 42  // Warning: unused variable
 
 #### Snippets
 
-```ligature
+```ocaml
 // Type 'fun' and press Tab for function template
 fun myFunction(x: Int) -> Int =
   // Function body here

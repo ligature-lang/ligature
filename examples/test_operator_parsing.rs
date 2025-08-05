@@ -10,7 +10,7 @@ fn main() -> AstResult<()> {
     let source1 = "let x = 5 <= 10;";
     println!("Test 1: Simple <= operator");
     match parser.parse_program(source1) {
-        Ok(program) => println!("✓ Simple <= operator test passed"),
+        Ok(_program) => println!("✓ Simple <= operator test passed"),
         Err(e) => println!("✗ Error: {:?}", e),
     }
 
@@ -18,7 +18,7 @@ fn main() -> AstResult<()> {
     let source2 = "let x = 5 <= 10 && 10 > 5;";
     println!("Test 2: <= in comparison");
     match parser.parse_program(source2) {
-        Ok(program) => println!("✓ <= in comparison test passed"),
+        Ok(_program) => println!("✓ <= in comparison test passed"),
         Err(e) => println!("✗ Error: {:?}", e),
     }
 
@@ -31,7 +31,7 @@ fn main() -> AstResult<()> {
     "#;
     println!("Test 3: <= in pattern guard");
     match parser.parse_program(source3) {
-        Ok(program) => println!("✓ <= in pattern guard test passed"),
+        Ok(_program) => println!("✓ <= in pattern guard test passed"),
         Err(e) => println!("✗ Error: {:?}", e),
     }
 
@@ -44,7 +44,7 @@ fn main() -> AstResult<()> {
     "#;
     println!("Test 4: Complex <= expression");
     match parser.parse_program(source4) {
-        Ok(program) => println!("✓ Complex <= expression test passed"),
+        Ok(_program) => println!("✓ Complex <= expression test passed"),
         Err(e) => println!("✗ Error: {:?}", e),
     }
 
@@ -57,7 +57,7 @@ fn main() -> AstResult<()> {
     "#;
     println!("Test 5: Multiple <= operators");
     match parser.parse_program(source5) {
-        Ok(program) => println!("✓ Multiple <= operators test passed"),
+        Ok(_program) => println!("✓ Multiple <= operators test passed"),
         Err(e) => println!("✗ Error: {:?}", e),
     }
 

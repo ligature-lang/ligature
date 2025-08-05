@@ -99,7 +99,7 @@ impl FunctionCallCache {
         env: &EvaluationEnvironment,
     ) -> FunctionCallKey {
         use std::collections::hash_map::DefaultHasher;
-        use std::hash::{Hash, Hasher};
+        use std::hash::Hasher;
 
         let mut hasher = DefaultHasher::new();
         Self::hash_expr(function, &mut hasher);
@@ -268,6 +268,7 @@ impl OptimizedEvaluator {
         }
     }
 
+    #[allow(clippy::only_used_in_recursion)]
     fn expression_complexity(&self, expr: &Expr) -> usize {
         match &expr.kind {
             ExprKind::Literal(_) => 1,
@@ -342,7 +343,7 @@ impl OptimizedEvaluator {
             ExprKind::Literal(literal) => self.evaluate_literal(literal),
             ExprKind::Variable(name) => env
                 .lookup(name)
-                .ok_or_else(|| format!("Undefined variable: {}", name)),
+                .ok_or_else(|| format!("Undefined variable: {name}")),
             ExprKind::Application { function, argument } => {
                 let arg_value = self.evaluate_expression_optimized(argument, env)?;
                 self.apply_function_optimized(function, &arg_value, env)
@@ -378,7 +379,7 @@ impl OptimizedEvaluator {
 
     fn hash_expression(&self, expr: &Expr) -> u64 {
         use std::collections::hash_map::DefaultHasher;
-        use std::hash::{Hash, Hasher};
+        use std::hash::Hasher;
 
         let mut hasher = DefaultHasher::new();
         FunctionCallCache::hash_expr(expr, &mut hasher);
@@ -388,6 +389,12 @@ impl OptimizedEvaluator {
     pub fn stats(&self) -> (f64, usize, usize) {
         let (hits, misses) = self.function_cache.stats();
         (self.function_cache.hit_rate(), hits, misses)
+    }
+}
+
+impl Default for OptimizedEvaluator {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -446,6 +453,12 @@ impl AdvancedTailCallDetector {
     }
 }
 
+impl Default for AdvancedTailCallDetector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Function inliner for reducing function call overhead
 #[derive(Debug, Clone)]
 pub struct FunctionInliner {
@@ -494,6 +507,7 @@ impl FunctionInliner {
         }
     }
 
+    #[allow(clippy::only_used_in_recursion)]
     fn expression_size(&self, expr: &Expr) -> usize {
         match &expr.kind {
             ExprKind::Literal(_) => 1,
@@ -509,28 +523,43 @@ impl FunctionInliner {
     }
 }
 
+impl Default for FunctionInliner {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Closure capture optimizer for reducing environment cloning
 #[derive(Debug, Clone)]
 pub struct ClosureCaptureOptimizer {
     /// Whether optimization is enabled
     enabled: bool,
     /// Optimized closure representations
+    #[allow(dead_code)]
     optimized_closures: HashMap<u64, OptimizedClosure>,
 }
 
 #[derive(Debug, Clone)]
-struct OptimizedClosure {
+pub struct OptimizedClosure {
     /// Minimal captured environment
+    #[allow(dead_code)]
     captured_vars: Vec<String>,
     /// Optimized closure representation
+    #[allow(dead_code)]
     representation: ClosureRepresentation,
 }
 
 #[derive(Debug, Clone)]
 enum ClosureRepresentation {
     /// Direct function with minimal captures
-    Direct { parameter: String, body: Expr },
+    Direct {
+        #[allow(dead_code)]
+        parameter: String,
+        #[allow(dead_code)]
+        body: Expr,
+    },
     /// Partial application with captured values
+    #[allow(dead_code)]
     Partial { captured: HashMap<String, Value> },
 }
 
@@ -574,7 +603,7 @@ impl ClosureCaptureOptimizer {
         let mut used_vars = Vec::new();
         let available_vars = env.current_bindings();
 
-        for (name, _) in available_vars {
+        for name in available_vars.keys() {
             if self.variable_is_used(expr, name) {
                 used_vars.push(name.clone());
             }
@@ -583,6 +612,7 @@ impl ClosureCaptureOptimizer {
         used_vars
     }
 
+    #[allow(clippy::only_used_in_recursion)]
     fn variable_is_used(&self, expr: &Expr, var_name: &str) -> bool {
         match &expr.kind {
             ExprKind::Variable(name) => name == var_name,
@@ -601,14 +631,23 @@ impl ClosureCaptureOptimizer {
     }
 }
 
+impl Default for ClosureCaptureOptimizer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Parallel evaluator for concurrent expression evaluation
 #[derive(Debug, Clone)]
 pub struct ParallelEvaluator {
     /// Whether parallel evaluation is enabled
+    #[allow(dead_code)]
     enabled: bool,
     /// Number of worker threads
+    #[allow(dead_code)]
     worker_threads: usize,
     /// Thread pool for parallel execution (placeholder for future implementation)
+    #[allow(dead_code)]
     thread_pool: Option<()>,
 }
 
@@ -705,5 +744,11 @@ impl GenerationalGC {
             self.young_gen.len() + self.old_gen.len(),
             self.total_time,
         )
+    }
+}
+
+impl Default for GenerationalGC {
+    fn default() -> Self {
+        Self::new()
     }
 }

@@ -70,14 +70,13 @@ pub struct DocumentState {
 
 /// Create the LSP service.
 pub fn create_lsp_service() -> (LspService<LigatureLspServer>, tower_lsp::ClientSocket) {
-    LspService::new(|client| LigatureLspServer::new(client))
+    LspService::new(LigatureLspServer::new)
 }
 
 /// Create the enhanced LSP service.
 // pub fn create_enhanced_lsp_service() -> (LspService<EnhancedLigatureLspServer>, tower_lsp::ClientSocket) {
 //     LspService::new(|client| EnhancedLigatureLspServer::new(client))
 // }
-
 /// Run the LSP server.
 pub async fn run_server() {
     server::run_server().await;
@@ -87,7 +86,6 @@ pub async fn run_server() {
 // pub async fn run_enhanced_server() {
 //     enhanced_server::run_enhanced_server().await;
 // }
-
 /// Re-export commonly used LSP types for convenience.
 pub use lsp_types;
 
@@ -130,7 +128,6 @@ pub async fn start_server() {
 // pub async fn start_enhanced_server() {
 //     run_enhanced_server().await;
 // }
-
 /// Create a new Ligature LSP server instance.
 ///
 /// This function creates a new server instance that can be used for testing
@@ -170,77 +167,77 @@ mod tests {
 
     #[test]
     fn test_completion_provider_creation() {
-        let provider = CompletionProvider::new();
+        let _provider = CompletionProvider::new();
         // Just test that it can be created
         assert!(true);
     }
 
     // #[test]
     // fn test_enhanced_completion_provider_creation() {
-    //     let provider = EnhancedCompletionProvider::new();
+    //     let _provider = EnhancedCompletionProvider::new();
     //     // Just test that it can be created
     //     assert!(true);
     // }
 
     #[test]
     fn test_hover_provider_creation() {
-        let provider = HoverProvider::new();
+        let _provider = HoverProvider::new();
         // Just test that it can be created
         assert!(true);
     }
 
     #[test]
     fn test_diagnostics_provider_creation() {
-        let provider = DiagnosticsProvider::new();
+        let _provider = DiagnosticsProvider::new();
         // Just test that it can be created
         assert!(true);
     }
 
     // #[test]
     // fn test_enhanced_diagnostics_provider_creation() {
-    //     let provider = EnhancedDiagnosticsProvider::new();
+    //     let _provider = EnhancedDiagnosticsProvider::new();
     //     // Just test that it can be created
     //     assert!(true);
     // }
 
     #[test]
     fn test_references_provider_creation() {
-        let provider = ReferencesProvider::new();
+        let _provider = ReferencesProvider::new();
         // Just test that it can be created
         assert!(true);
     }
 
     #[test]
     fn test_symbols_provider_creation() {
-        let provider = SymbolsProvider::new();
+        let _provider = SymbolsProvider::new();
         // Just test that it can be created
         assert!(true);
     }
 
     #[test]
     fn test_definition_provider_creation() {
-        let provider = DefinitionProvider::new();
+        let _provider = DefinitionProvider::new();
         // Just test that it can be created
         assert!(true);
     }
 
     #[test]
     fn test_code_actions_provider_creation() {
-        let provider = CodeActionsProvider::new();
+        let _provider = CodeActionsProvider::new();
         // Just test that it can be created
         assert!(true);
     }
 
     #[test]
     fn test_formatting_provider_creation() {
-        let provider = FormattingProvider::new();
+        let _provider = FormattingProvider::new();
         // Just test that it can be created
         assert!(true);
     }
 
     #[test]
     fn test_rename_provider_creation() {
-        let provider = RenameProvider::new();
+        let _provider = RenameProvider::new();
         // Just test that it can be created
         assert!(true);
     }
@@ -305,9 +302,11 @@ mod tests {
         assert!(config.enable_cross_file_symbols);
         assert_eq!(config.max_workspace_files, 1000);
         assert!(config.include_patterns.contains(&"**/*.lig".to_string()));
-        assert!(config
-            .exclude_patterns
-            .contains(&"**/target/**".to_string()));
+        assert!(
+            config
+                .exclude_patterns
+                .contains(&"**/target/**".to_string())
+        );
 
         // Test enhanced workspace configuration (temporarily disabled)
         // let enhanced_config = EnhancedWorkspaceConfiguration::default();

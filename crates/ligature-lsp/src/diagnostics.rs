@@ -11,6 +11,7 @@ pub struct DiagnosticsProvider {
     /// Cache of diagnostics by document URI.
     diagnostics_cache: HashMap<String, Vec<Diagnostic>>,
     /// Type checker for type-aware diagnostics.
+    #[allow(dead_code)]
     type_checker: TypeChecker,
 }
 
@@ -85,8 +86,7 @@ impl DiagnosticsProvider {
                     code_description: None,
                     source: Some("ligature-types".to_string()),
                     message: format!(
-                        "Type mismatch in method {}: expected {:?}, got {:?}",
-                        method, expected, found
+                        "Type mismatch in method {method}: expected {expected:?}, got {found:?}"
                     ),
                     related_information: None,
                     tags: None,
@@ -100,7 +100,7 @@ impl DiagnosticsProvider {
                     code: Some(lsp_types::NumberOrString::String("T002".to_string())),
                     code_description: None,
                     source: Some("ligature-types".to_string()),
-                    message: format!("Undefined identifier: {}", name),
+                    message: format!("Undefined identifier: {name}"),
                     related_information: None,
                     tags: None,
                     data: None,
@@ -113,7 +113,7 @@ impl DiagnosticsProvider {
                     code: Some(lsp_types::NumberOrString::String("T003".to_string())),
                     code_description: None,
                     source: Some("ligature-types".to_string()),
-                    message: format!("Duplicate identifier: {}", name),
+                    message: format!("Duplicate identifier: {name}"),
                     related_information: None,
                     tags: None,
                     data: None,
@@ -140,7 +140,7 @@ impl DiagnosticsProvider {
                     code: Some(lsp_types::NumberOrString::String("T999".to_string())),
                     code_description: None,
                     source: Some("ligature-types".to_string()),
-                    message: format!("Type error: {:?}", error),
+                    message: format!("Type error: {error:?}"),
                     related_information: None,
                     tags: None,
                     data: None,
@@ -165,29 +165,25 @@ impl DiagnosticsProvider {
     }
 
     /// Check for unused variables.
-    fn check_unused_variables(&self, program: &Program) -> Vec<Diagnostic> {
-        let mut diagnostics = Vec::new();
-
+    fn check_unused_variables(&self, _program: &Program) -> Vec<Diagnostic> {
         // This is a simplified implementation
         // In a full implementation, you would:
         // 1. Track variable usage across the program
         // 2. Identify variables that are declared but never used
         // 3. Generate warnings for unused variables
 
-        diagnostics
+        Vec::new()
     }
 
     /// Check for potential type issues.
-    fn check_potential_type_issues(&self, program: &Program) -> Vec<Diagnostic> {
-        let mut diagnostics = Vec::new();
-
+    fn check_potential_type_issues(&self, _program: &Program) -> Vec<Diagnostic> {
         // This is a simplified implementation
         // In a full implementation, you would:
         // 1. Analyze patterns for potential type mismatches
         // 2. Check for common type-related issues
         // 3. Generate warnings for potential problems
 
-        diagnostics
+        Vec::new()
     }
 
     /// Convert parse errors to LSP diagnostics.
@@ -215,7 +211,7 @@ impl DiagnosticsProvider {
                     code: Some(lsp_types::NumberOrString::String("E002".to_string())),
                     code_description: None,
                     source: Some("ligature-parser".to_string()),
-                    message: format!("Invalid identifier: {}", name),
+                    message: format!("Invalid identifier: {name}"),
                     related_information: None,
                     tags: None,
                     data: None,
@@ -228,7 +224,7 @@ impl DiagnosticsProvider {
                     code: Some(lsp_types::NumberOrString::String("E003".to_string())),
                     code_description: None,
                     source: Some("ligature-parser".to_string()),
-                    message: format!("Duplicate identifier: {}", name),
+                    message: format!("Duplicate identifier: {name}"),
                     related_information: None,
                     tags: None,
                     data: None,
@@ -241,7 +237,7 @@ impl DiagnosticsProvider {
                     code: Some(lsp_types::NumberOrString::String("E004".to_string())),
                     code_description: None,
                     source: Some("ligature-parser".to_string()),
-                    message: format!("Undefined identifier: {}", name),
+                    message: format!("Undefined identifier: {name}"),
                     related_information: None,
                     tags: None,
                     data: None,
@@ -254,7 +250,7 @@ impl DiagnosticsProvider {
                     code: Some(lsp_types::NumberOrString::String("E005".to_string())),
                     code_description: None,
                     source: Some("ligature-parser".to_string()),
-                    message: format!("Invalid import path: {}", path),
+                    message: format!("Invalid import path: {path}"),
                     related_information: None,
                     tags: None,
                     data: None,
@@ -267,7 +263,7 @@ impl DiagnosticsProvider {
                     code: Some(lsp_types::NumberOrString::String("E006".to_string())),
                     code_description: None,
                     source: Some("ligature-parser".to_string()),
-                    message: format!("Module not found: {}", module),
+                    message: format!("Module not found: {module}"),
                     related_information: None,
                     tags: None,
                     data: None,
@@ -280,7 +276,7 @@ impl DiagnosticsProvider {
                     code: Some(lsp_types::NumberOrString::String("E007".to_string())),
                     code_description: None,
                     source: Some("ligature-parser".to_string()),
-                    message: format!("Import cycle detected: {}", path),
+                    message: format!("Import cycle detected: {path}"),
                     related_information: None,
                     tags: None,
                     data: None,
@@ -294,7 +290,7 @@ impl DiagnosticsProvider {
                     code: Some(lsp_types::NumberOrString::String("E008".to_string())),
                     code_description: None,
                     source: Some("ligature-types".to_string()),
-                    message: format!("Duplicate type class: {}", name),
+                    message: format!("Duplicate type class: {name}"),
                     related_information: None,
                     tags: None,
                     data: None,
@@ -307,7 +303,7 @@ impl DiagnosticsProvider {
                     code: Some(lsp_types::NumberOrString::String("E009".to_string())),
                     code_description: None,
                     source: Some("ligature-types".to_string()),
-                    message: format!("Undefined type class: {}", name),
+                    message: format!("Undefined type class: {name}"),
                     related_information: None,
                     tags: None,
                     data: None,
@@ -320,7 +316,7 @@ impl DiagnosticsProvider {
                     code: Some(lsp_types::NumberOrString::String("E010".to_string())),
                     code_description: None,
                     source: Some("ligature-types".to_string()),
-                    message: format!("Unused type parameter: {}", parameter),
+                    message: format!("Unused type parameter: {parameter}"),
                     related_information: None,
                     tags: None,
                     data: None,
@@ -337,10 +333,7 @@ impl DiagnosticsProvider {
                     code: Some(lsp_types::NumberOrString::String("E011".to_string())),
                     code_description: None,
                     source: Some("ligature-types".to_string()),
-                    message: format!(
-                        "Type argument mismatch: expected {}, found {}",
-                        expected, found
-                    ),
+                    message: format!("Type argument mismatch: expected {expected}, found {found}"),
                     related_information: None,
                     tags: None,
                     data: None,
@@ -357,7 +350,7 @@ impl DiagnosticsProvider {
                     code: Some(lsp_types::NumberOrString::String("E012".to_string())),
                     code_description: None,
                     source: Some("ligature-types".to_string()),
-                    message: format!("Missing method: {} in class {}", method, class),
+                    message: format!("Missing method: {method} in class {class}"),
                     related_information: None,
                     tags: None,
                     data: None,
@@ -374,7 +367,7 @@ impl DiagnosticsProvider {
                     code: Some(lsp_types::NumberOrString::String("E013".to_string())),
                     code_description: None,
                     source: Some("ligature-types".to_string()),
-                    message: format!("Undefined method: {} in class {}", method, class),
+                    message: format!("Undefined method: {method} in class {class}"),
                     related_information: None,
                     tags: None,
                     data: None,
@@ -393,8 +386,7 @@ impl DiagnosticsProvider {
                     code_description: None,
                     source: Some("ligature-types".to_string()),
                     message: format!(
-                        "Method type mismatch: {}, expected {:?}, found {:?}",
-                        method, expected, found
+                        "Method type mismatch: {method}, expected {expected:?}, found {found:?}"
                     ),
                     related_information: None,
                     tags: None,
@@ -408,7 +400,7 @@ impl DiagnosticsProvider {
                     code: Some(lsp_types::NumberOrString::String("E015".to_string())),
                     code_description: None,
                     source: Some("ligature-types".to_string()),
-                    message: format!("No instance found for type {:?} in class {}", type_, class),
+                    message: format!("No instance found for type {type_:?} in class {class}"),
                     related_information: None,
                     tags: None,
                     data: None,
@@ -474,7 +466,7 @@ impl DiagnosticsProvider {
                     code: Some(lsp_types::NumberOrString::String("E011".to_string())),
                     code_description: None,
                     source: Some("ligature-parser".to_string()),
-                    message: format!("Internal error: {}", message),
+                    message: format!("Internal error: {message}"),
                     related_information: None,
                     tags: None,
                     data: None,

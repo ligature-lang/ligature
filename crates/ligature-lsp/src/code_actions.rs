@@ -13,6 +13,7 @@ pub struct CodeActionsProvider {
     /// Cache of code actions by document URI.
     actions_cache: HashMap<String, Vec<CodeAction>>,
     /// Type checker for type-aware code actions.
+    #[allow(dead_code)]
     type_checker: TypeChecker,
     /// Configuration for code actions.
     config: CodeActionsConfig,
@@ -187,7 +188,7 @@ impl CodeActionsProvider {
         uri: &str,
         diagnostic: &Diagnostic,
         content: &str,
-        ast: Option<&Program>,
+        _ast: Option<&Program>,
     ) -> Option<CodeAction> {
         // Check if this is a parse error that we can fix
         if let Some(code) = &diagnostic.code {
@@ -226,7 +227,7 @@ impl CodeActionsProvider {
                         Url::parse(uri).unwrap_or_else(|_| Url::parse("file:///").unwrap()),
                         vec![TextEdit {
                             range: diagnostic.range,
-                            new_text: format!("{};", content),
+                            new_text: format!("{content};"),
                         }],
                     )])),
                     document_changes: None,
@@ -270,13 +271,14 @@ impl CodeActionsProvider {
         diagnostic: &Diagnostic,
         content: &str,
     ) -> Option<CodeAction> {
+        let _content = content; // Suppress unused variable warning
         // Extract the invalid identifier from the error message
         if let Some(invalid_name) = diagnostic.message.strip_prefix("Invalid identifier: ") {
             // Suggest a valid identifier name
             let valid_name = self.suggest_valid_identifier(invalid_name);
 
             Some(CodeAction {
-                title: format!("Rename to '{}'", valid_name),
+                title: format!("Rename to '{valid_name}'"),
                 kind: Some(CodeActionKind::QUICKFIX),
                 diagnostics: Some(vec![diagnostic.clone()]),
                 edit: Some(WorkspaceEdit {
@@ -307,12 +309,13 @@ impl CodeActionsProvider {
         diagnostic: &Diagnostic,
         content: &str,
     ) -> Option<CodeAction> {
+        let _content = content; // Suppress unused variable warning
         if let Some(duplicate_name) = diagnostic.message.strip_prefix("Duplicate identifier: ") {
             // Suggest renaming the duplicate
-            let new_name = format!("{}_new", duplicate_name);
+            let new_name = format!("{duplicate_name}_new");
 
             Some(CodeAction {
-                title: format!("Rename to '{}'", new_name),
+                title: format!("Rename to '{new_name}'"),
                 kind: Some(CodeActionKind::QUICKFIX),
                 diagnostics: Some(vec![diagnostic.clone()]),
                 edit: Some(WorkspaceEdit {
@@ -343,40 +346,42 @@ impl CodeActionsProvider {
         diagnostic: &Diagnostic,
         content: &str,
     ) -> Option<CodeAction> {
-        if let Some(undefined_name) = diagnostic.message.strip_prefix("Undefined identifier: ") {
-            // Suggest adding an import or declaration
-            Some(CodeAction {
-                title: format!("Add declaration for '{}'", undefined_name),
-                kind: Some(CodeActionKind::QUICKFIX),
-                diagnostics: Some(vec![diagnostic.clone()]),
-                edit: Some(WorkspaceEdit {
-                    changes: Some(HashMap::from([(
-                        Url::parse(uri).unwrap_or_else(|_| Url::parse("file:///").unwrap()),
-                        vec![TextEdit {
-                            range: Range {
-                                start: Position {
-                                    line: 0,
-                                    character: 0,
+        let _content = content; // Suppress unused variable warning
+        diagnostic
+            .message
+            .strip_prefix("Undefined identifier: ")
+            .map(|undefined_name| {
+                // Suggest adding an import or declaration
+                CodeAction {
+                    title: format!("Add declaration for '{undefined_name}'"),
+                    kind: Some(CodeActionKind::QUICKFIX),
+                    diagnostics: Some(vec![diagnostic.clone()]),
+                    edit: Some(WorkspaceEdit {
+                        changes: Some(HashMap::from([(
+                            Url::parse(uri).unwrap_or_else(|_| Url::parse("file:///").unwrap()),
+                            vec![TextEdit {
+                                range: Range {
+                                    start: Position {
+                                        line: 0,
+                                        character: 0,
+                                    },
+                                    end: Position {
+                                        line: 0,
+                                        character: 0,
+                                    },
                                 },
-                                end: Position {
-                                    line: 0,
-                                    character: 0,
-                                },
-                            },
-                            new_text: format!("let {} = undefined;\n", undefined_name),
-                        }],
-                    )])),
-                    document_changes: None,
-                    change_annotations: None,
-                }),
-                command: None,
-                is_preferred: Some(false),
-                disabled: None,
-                data: None,
+                                new_text: format!("let {undefined_name} = undefined;\n"),
+                            }],
+                        )])),
+                        document_changes: None,
+                        change_annotations: None,
+                    }),
+                    command: None,
+                    is_preferred: Some(false),
+                    disabled: None,
+                    data: None,
+                }
             })
-        } else {
-            None
-        }
     }
 
     /// Create type-aware fixes based on type checking results.
@@ -421,8 +426,8 @@ impl CodeActionsProvider {
             } => {
                 if let Some(fix) = self.fix_type_mismatch(
                     _uri,
-                    &format!("{:?}", expected),
-                    &format!("{:?}", found),
+                    &format!("{expected:?}"),
+                    &format!("{found:?}"),
                     *span,
                     _content,
                 ) {
@@ -447,7 +452,7 @@ impl CodeActionsProvider {
         expected: &str,
         actual: &str,
         span: Span,
-        content: &str,
+        _content: &str,
     ) -> Option<CodeAction> {
         let range = self.span_to_range(span);
 
@@ -512,7 +517,7 @@ impl CodeActionsProvider {
         if builtins.contains(&name) {
             // Suggest adding an import for built-in functions
             Some(CodeAction {
-                title: format!("Import built-in function '{}'", name),
+                title: format!("Import built-in function '{name}'"),
                 kind: Some(CodeActionKind::QUICKFIX),
                 diagnostics: None,
                 edit: Some(WorkspaceEdit {
@@ -529,7 +534,7 @@ impl CodeActionsProvider {
                                     character: 0,
                                 },
                             },
-                            new_text: format!("import {} from \"stdlib/core\";\n", name),
+                            new_text: format!("import {name} from \"stdlib/core\";\n"),
                         }],
                     )])),
                     document_changes: None,
@@ -543,7 +548,7 @@ impl CodeActionsProvider {
         } else {
             // Suggest creating a definition
             Some(CodeAction {
-                title: format!("Create definition for '{}'", name),
+                title: format!("Create definition for '{name}'"),
                 kind: Some(CodeActionKind::QUICKFIX),
                 diagnostics: None,
                 edit: Some(WorkspaceEdit {
@@ -560,7 +565,7 @@ impl CodeActionsProvider {
                                     character: 0,
                                 },
                             },
-                            new_text: format!("let {} = $1;\n", name),
+                            new_text: format!("let {name} = $1;\n"),
                         }],
                     )])),
                     document_changes: None,
@@ -578,8 +583,8 @@ impl CodeActionsProvider {
     fn suggest_type_annotations(
         &self,
         uri: &str,
-        range: Range,
-        content: &str,
+        _range: Range,
+        _content: &str,
         program: &Program,
     ) -> Vec<CodeActionOrCommand> {
         let mut actions = Vec::new();
@@ -591,7 +596,7 @@ impl CodeActionsProvider {
                     // Try to infer the type
                     if let Some(inferred_type) = self.infer_expression_type(&value_decl.value) {
                         let action = CodeAction {
-                            title: format!("Add type annotation: {}", inferred_type),
+                            title: format!("Add type annotation: {inferred_type}"),
                             kind: Some(CodeActionKind::REFACTOR),
                             diagnostics: None,
                             edit: Some(WorkspaceEdit {
@@ -601,8 +606,9 @@ impl CodeActionsProvider {
                                     vec![TextEdit {
                                         range: self.span_to_range(value_decl.value.span),
                                         new_text: format!(
-                                            "let {}: {} = ",
-                                            value_decl.name, inferred_type
+                                            "let {name}: {inferred_type} = ",
+                                            name = value_decl.name,
+                                            inferred_type = inferred_type
                                         ),
                                     }],
                                 )])),
@@ -627,7 +633,7 @@ impl CodeActionsProvider {
     fn suggest_type_conversions(
         &self,
         uri: &str,
-        range: Range,
+        _range: Range,
         content: &str,
         program: &Program,
     ) -> Vec<CodeActionOrCommand> {
@@ -637,7 +643,7 @@ impl CodeActionsProvider {
         for declaration in &program.declarations {
             if let ligature_ast::DeclarationKind::Value(value_decl) = &declaration.kind {
                 if let Some(type_annotation) = &value_decl.type_annotation {
-                    let expected_type = format!("{:?}", type_annotation);
+                    let expected_type = format!("{type_annotation:?}");
                     let actual_type = self.infer_expression_type(&value_decl.value);
 
                     if let Some(actual) = actual_type {
@@ -646,7 +652,7 @@ impl CodeActionsProvider {
                             let conversion = self.suggest_type_conversion(&actual, &expected_type);
                             if let Some(conv) = conversion {
                                 let action = CodeAction {
-                                    title: format!("Convert {} to {}", actual, expected_type),
+                                    title: format!("Convert {actual} to {expected_type}"),
                                     kind: Some(CodeActionKind::REFACTOR),
                                     diagnostics: None,
                                     edit: Some(WorkspaceEdit {
@@ -656,7 +662,7 @@ impl CodeActionsProvider {
                                             }),
                                             vec![TextEdit {
                                                 range: self.span_to_range(value_decl.value.span),
-                                                new_text: format!("{}({})", conv, content),
+                                                new_text: format!("{conv}({content})"),
                                             }],
                                         )])),
                                         document_changes: None,
@@ -707,54 +713,51 @@ impl CodeActionsProvider {
         range: Range,
         _content: &str,
     ) -> Vec<CodeActionOrCommand> {
-        let mut actions = Vec::new();
-
-        // Generate function template
-        actions.push(CodeActionOrCommand::CodeAction(CodeAction {
-            title: "Generate function template".to_string(),
-            kind: Some(CodeActionKind::REFACTOR_EXTRACT),
-            diagnostics: None,
-            edit: Some(WorkspaceEdit {
-                changes: Some(HashMap::from([(
-                    Url::parse(uri).ok().unwrap(),
-                    vec![TextEdit {
-                        range,
-                        new_text: "fun ${1:name}(${2:params}) : ${3:return_type} = ${4:body}"
-                            .to_string(),
-                    }],
-                )])),
-                document_changes: None,
-                change_annotations: None,
+        vec![
+            // Generate function template
+            CodeActionOrCommand::CodeAction(CodeAction {
+                title: "Generate function template".to_string(),
+                kind: Some(CodeActionKind::REFACTOR_EXTRACT),
+                diagnostics: None,
+                edit: Some(WorkspaceEdit {
+                    changes: Some(HashMap::from([(
+                        Url::parse(uri).ok().unwrap(),
+                        vec![TextEdit {
+                            range,
+                            new_text: "fun ${1:name}(${2:params}) : ${3:return_type} = ${4:body}"
+                                .to_string(),
+                        }],
+                    )])),
+                    document_changes: None,
+                    change_annotations: None,
+                }),
+                command: None,
+                is_preferred: Some(false),
+                disabled: None,
+                data: None,
             }),
-            command: None,
-            is_preferred: Some(false),
-            disabled: None,
-            data: None,
-        }));
-
-        // Generate type definition
-        actions.push(CodeActionOrCommand::CodeAction(CodeAction {
-            title: "Generate type definition".to_string(),
-            kind: Some(CodeActionKind::REFACTOR_EXTRACT),
-            diagnostics: None,
-            edit: Some(WorkspaceEdit {
-                changes: Some(HashMap::from([(
-                    Url::parse(uri).ok().unwrap(),
-                    vec![TextEdit {
-                        range,
-                        new_text: "type ${1:TypeName} = ${2:definition}".to_string(),
-                    }],
-                )])),
-                document_changes: None,
-                change_annotations: None,
+            // Generate type definition
+            CodeActionOrCommand::CodeAction(CodeAction {
+                title: "Generate type definition".to_string(),
+                kind: Some(CodeActionKind::REFACTOR_EXTRACT),
+                diagnostics: None,
+                edit: Some(WorkspaceEdit {
+                    changes: Some(HashMap::from([(
+                        Url::parse(uri).ok().unwrap(),
+                        vec![TextEdit {
+                            range,
+                            new_text: "type ${1:TypeName} = ${2:definition}".to_string(),
+                        }],
+                    )])),
+                    document_changes: None,
+                    change_annotations: None,
+                }),
+                command: None,
+                is_preferred: Some(false),
+                disabled: None,
+                data: None,
             }),
-            command: None,
-            is_preferred: Some(false),
-            disabled: None,
-            data: None,
-        }));
-
-        actions
+        ]
     }
 
     /// Create constructor generation actions.
@@ -765,32 +768,30 @@ impl CodeActionsProvider {
         _content: &str,
         _ast: Option<&Program>,
     ) -> Vec<CodeActionOrCommand> {
-        let mut actions = Vec::new();
-
-        // Generate data type with constructors
-        actions.push(CodeActionOrCommand::CodeAction(CodeAction {
-            title: "Generate data type with constructors".to_string(),
-            kind: Some(CodeActionKind::REFACTOR_EXTRACT),
-            diagnostics: None,
-            edit: Some(WorkspaceEdit {
-                changes: Some(HashMap::from([(
-                    Url::parse(uri).ok().unwrap(),
-                    vec![TextEdit {
-                        range,
-                        new_text: "data ${1:TypeName} = ${2:Constructor1} | ${3:Constructor2}"
-                            .to_string(),
-                    }],
-                )])),
-                document_changes: None,
-                change_annotations: None,
+        vec![
+            // Generate data type with constructors
+            CodeActionOrCommand::CodeAction(CodeAction {
+                title: "Generate data type with constructors".to_string(),
+                kind: Some(CodeActionKind::REFACTOR_EXTRACT),
+                diagnostics: None,
+                edit: Some(WorkspaceEdit {
+                    changes: Some(HashMap::from([(
+                        Url::parse(uri).ok().unwrap(),
+                        vec![TextEdit {
+                            range,
+                            new_text: "data ${1:TypeName} = ${2:Constructor1} | ${3:Constructor2}"
+                                .to_string(),
+                        }],
+                    )])),
+                    document_changes: None,
+                    change_annotations: None,
+                }),
+                command: None,
+                is_preferred: Some(false),
+                disabled: None,
+                data: None,
             }),
-            command: None,
-            is_preferred: Some(false),
-            disabled: None,
-            data: None,
-        }));
-
-        actions
+        ]
     }
 
     /// Create pattern matching generation actions.
@@ -801,10 +802,8 @@ impl CodeActionsProvider {
         _content: &str,
         _ast: Option<&Program>,
     ) -> Vec<CodeActionOrCommand> {
-        let mut actions = Vec::new();
-
-        // Generate match expression
-        actions.push(CodeActionOrCommand::CodeAction(CodeAction {
+        let actions = vec![
+            CodeActionOrCommand::CodeAction(CodeAction {
             title: "Generate match expression".to_string(),
             kind: Some(CodeActionKind::REFACTOR_EXTRACT),
             diagnostics: None,
@@ -823,7 +822,7 @@ impl CodeActionsProvider {
             is_preferred: Some(false),
             disabled: None,
             data: None,
-        }));
+        })];
 
         actions
     }
@@ -907,49 +906,44 @@ impl CodeActionsProvider {
         })
     }
 
-
-
     /// Create source actions.
     fn create_source_actions(
         &self,
         uri: &str,
-        range: Range,
+        _range: Range,
         _content: &str,
         _ast: Option<&Program>,
     ) -> Vec<CodeActionOrCommand> {
-        let mut actions = Vec::new();
-
-        // Organize imports action
-        actions.push(CodeActionOrCommand::CodeAction(CodeAction {
-            title: "Organize imports".to_string(),
-            kind: Some(CodeActionKind::SOURCE_ORGANIZE_IMPORTS),
-            diagnostics: None,
-            edit: None,
-            command: Some(Command {
+        let actions = vec![
+            CodeActionOrCommand::CodeAction(CodeAction {
                 title: "Organize imports".to_string(),
-                command: "ligature.organizeImports".to_string(),
-                arguments: Some(vec![serde_json::json!(uri)]),
+                kind: Some(CodeActionKind::SOURCE_ORGANIZE_IMPORTS),
+                diagnostics: None,
+                edit: None,
+                command: Some(Command {
+                    title: "Organize imports".to_string(),
+                    command: "ligature.organizeImports".to_string(),
+                    arguments: Some(vec![serde_json::json!(uri)]),
+                }),
+                is_preferred: None,
+                disabled: None,
+                data: None,
             }),
-            is_preferred: None,
-            disabled: None,
-            data: None,
-        }));
-
-        // Fix all auto-fixable problems
-        actions.push(CodeActionOrCommand::CodeAction(CodeAction {
-            title: "Fix all auto-fixable problems".to_string(),
-            kind: Some(CodeActionKind::QUICKFIX),
-            diagnostics: None,
-            edit: None,
-            command: Some(Command {
+            CodeActionOrCommand::CodeAction(CodeAction {
                 title: "Fix all auto-fixable problems".to_string(),
-                command: "ligature.fixAll".to_string(),
-                arguments: Some(vec![serde_json::json!(uri)]),
+                kind: Some(CodeActionKind::QUICKFIX),
+                diagnostics: None,
+                edit: None,
+                command: Some(Command {
+                    title: "Fix all auto-fixable problems".to_string(),
+                    command: "ligature.fixAll".to_string(),
+                    arguments: Some(vec![serde_json::json!(uri)]),
+                }),
+                is_preferred: Some(true),
+                disabled: None,
+                data: None,
             }),
-            is_preferred: Some(true),
-            disabled: None,
-            data: None,
-        }));
+        ];
 
         actions
     }
@@ -977,7 +971,7 @@ impl CodeActionsProvider {
         if valid_name.is_empty()
             || (!valid_name.chars().next().unwrap().is_alphabetic() && !valid_name.starts_with('_'))
         {
-            valid_name = format!("_{}", valid_name);
+            valid_name = format!("_{valid_name}");
         }
 
         valid_name
@@ -1008,6 +1002,7 @@ impl CodeActionsProvider {
     }
 
     /// Infer the type of an expression.
+    #[allow(clippy::only_used_in_recursion)]
     fn infer_expression_type(&self, expr: &ligature_ast::Expr) -> Option<String> {
         match &expr.kind {
             ligature_ast::ExprKind::Literal(literal) => match literal {
@@ -1026,7 +1021,7 @@ impl CodeActionsProvider {
                 // Try to infer function return type
                 self.infer_expression_type(function)
             }
-            ligature_ast::ExprKind::Let { value, body, .. } => {
+            ligature_ast::ExprKind::Let { body, .. } => {
                 // Return the type of the body
                 self.infer_expression_type(body)
             }
@@ -1087,7 +1082,9 @@ impl CodeActionsProvider {
                     "E004" => self.fix_undefined_identifier(uri, diagnostic, content),
                     "T001" => {
                         // Extract type information from diagnostic message
-                        if let Some((expected, actual)) = self.extract_type_info(&diagnostic.message) {
+                        if let Some((expected, actual)) =
+                            self.extract_type_info(&diagnostic.message)
+                        {
                             // Create a default span from the diagnostic range
                             let span = ligature_ast::Span {
                                 line: diagnostic.range.start.line as usize,
@@ -1133,7 +1130,7 @@ impl CodeActionsProvider {
                         Url::parse(uri).unwrap_or_else(|_| Url::parse("file:///").unwrap()),
                         vec![TextEdit {
                             range: diagnostic.range,
-                            new_text: format!("{};", content),
+                            new_text: format!("{content};"),
                         }],
                     )])),
                     document_changes: None,
@@ -1179,7 +1176,7 @@ impl CodeActionsProvider {
 
             if !closing_char.is_empty() {
                 Some(CodeAction {
-                    title: format!("Add missing closing {}", closing_char),
+                    title: format!("Add missing closing {closing_char}"),
                     kind: Some(CodeActionKind::QUICKFIX),
                     diagnostics: Some(vec![diagnostic.clone()]),
                     edit: Some(WorkspaceEdit {
@@ -1187,7 +1184,7 @@ impl CodeActionsProvider {
                             Url::parse(uri).unwrap_or_else(|_| Url::parse("file:///").unwrap()),
                             vec![TextEdit {
                                 range: diagnostic.range,
-                                new_text: format!("{}{}", content, closing_char),
+                                new_text: format!("{content}{closing_char}"),
                             }],
                         )])),
                         document_changes: None,
@@ -1206,15 +1203,13 @@ impl CodeActionsProvider {
         }
     }
 
-
-
     /// Fix undefined types with import suggestions.
     fn fix_undefined_type(
         &self,
         uri: &str,
         diagnostic: &Diagnostic,
-        content: &str,
-        ast: Option<&Program>,
+        _content: &str,
+        _ast: Option<&Program>,
     ) -> Option<CodeAction> {
         let message = &diagnostic.message;
 
@@ -1223,7 +1218,7 @@ impl CodeActionsProvider {
             let builtin_types = ["Int", "Float", "String", "Bool", "List", "Unit"];
             if builtin_types.contains(&type_name) {
                 Some(CodeAction {
-                    title: format!("Import built-in type '{}'", type_name),
+                    title: format!("Import built-in type '{type_name}'"),
                     kind: Some(CodeActionKind::QUICKFIX),
                     diagnostics: Some(vec![diagnostic.clone()]),
                     edit: Some(WorkspaceEdit {
@@ -1240,7 +1235,7 @@ impl CodeActionsProvider {
                                         character: 0,
                                     },
                                 },
-                                new_text: format!("import {} from \"stdlib/core\";\n", type_name),
+                                new_text: format!("import {type_name} from \"stdlib/core\";\n"),
                             }],
                         )])),
                         document_changes: None,
@@ -1254,7 +1249,7 @@ impl CodeActionsProvider {
             } else {
                 // Suggest creating a type definition
                 Some(CodeAction {
-                    title: format!("Create type definition for '{}'", type_name),
+                    title: format!("Create type definition for '{type_name}'"),
                     kind: Some(CodeActionKind::QUICKFIX),
                     diagnostics: Some(vec![diagnostic.clone()]),
                     edit: Some(WorkspaceEdit {
@@ -1271,7 +1266,7 @@ impl CodeActionsProvider {
                                         character: 0,
                                     },
                                 },
-                                new_text: format!("type {} = $1;\n", type_name),
+                                new_text: format!("type {type_name} = $1;\n"),
                             }],
                         )])),
                         document_changes: None,
@@ -1409,8 +1404,8 @@ impl CodeActionsProvider {
     fn suggest_enhanced_type_annotations(
         &self,
         uri: &str,
-        range: Range,
-        content: &str,
+        _range: Range,
+        _content: &str,
         program: &Program,
     ) -> Vec<CodeActionOrCommand> {
         let mut actions = Vec::new();
@@ -1422,7 +1417,7 @@ impl CodeActionsProvider {
                     // Try to infer the type
                     if let Some(inferred_type) = self.infer_expression_type(&value_decl.value) {
                         let action = CodeAction {
-                            title: format!("Add type annotation: {}", inferred_type),
+                            title: format!("Add type annotation: {inferred_type}"),
                             kind: Some(CodeActionKind::REFACTOR),
                             diagnostics: None,
                             edit: Some(WorkspaceEdit {
@@ -1432,8 +1427,9 @@ impl CodeActionsProvider {
                                     vec![TextEdit {
                                         range: self.span_to_range(value_decl.value.span),
                                         new_text: format!(
-                                            "let {}: {} = ",
-                                            value_decl.name, inferred_type
+                                            "let {name}: {inferred_type} = ",
+                                            name = value_decl.name,
+                                            inferred_type = inferred_type
                                         ),
                                     }],
                                 )])),
@@ -1525,7 +1521,7 @@ impl CodeActionsProvider {
         &self,
         uri: &str,
         range: Range,
-        content: &str,
+        _content: &str,
         program: &Program,
     ) -> Vec<CodeActionOrCommand> {
         let mut actions = Vec::new();
@@ -1580,7 +1576,7 @@ impl CodeActionsProvider {
         uri: &str,
         range: Range,
         content: &str,
-        ast: Option<&Program>,
+        _ast: Option<&Program>,
     ) -> Vec<CodeActionOrCommand> {
         let mut actions = Vec::new();
 
@@ -1610,59 +1606,54 @@ impl CodeActionsProvider {
     fn create_enhanced_source_actions(
         &self,
         uri: &str,
-        range: Range,
+        _range: Range,
         _content: &str,
         _ast: Option<&Program>,
     ) -> Vec<CodeActionOrCommand> {
-        let mut actions = Vec::new();
-
-        // Organize imports action
-        actions.push(CodeActionOrCommand::CodeAction(CodeAction {
-            title: "Organize imports".to_string(),
-            kind: Some(CodeActionKind::SOURCE_ORGANIZE_IMPORTS),
-            diagnostics: None,
-            edit: None,
-            command: Some(Command {
+        let actions = vec![
+            CodeActionOrCommand::CodeAction(CodeAction {
                 title: "Organize imports".to_string(),
-                command: "ligature.organizeImports".to_string(),
-                arguments: Some(vec![serde_json::json!(uri)]),
+                kind: Some(CodeActionKind::SOURCE_ORGANIZE_IMPORTS),
+                diagnostics: None,
+                edit: None,
+                command: Some(Command {
+                    title: "Organize imports".to_string(),
+                    command: "ligature.organizeImports".to_string(),
+                    arguments: Some(vec![serde_json::json!(uri)]),
+                }),
+                is_preferred: None,
+                disabled: None,
+                data: None,
             }),
-            is_preferred: None,
-            disabled: None,
-            data: None,
-        }));
-
-        // Fix all auto-fixable problems
-        actions.push(CodeActionOrCommand::CodeAction(CodeAction {
-            title: "Fix all auto-fixable problems".to_string(),
-            kind: Some(CodeActionKind::QUICKFIX),
-            diagnostics: None,
-            edit: None,
-            command: Some(Command {
+            CodeActionOrCommand::CodeAction(CodeAction {
                 title: "Fix all auto-fixable problems".to_string(),
-                command: "ligature.fixAll".to_string(),
-                arguments: Some(vec![serde_json::json!(uri)]),
+                kind: Some(CodeActionKind::QUICKFIX),
+                diagnostics: None,
+                edit: None,
+                command: Some(Command {
+                    title: "Fix all auto-fixable problems".to_string(),
+                    command: "ligature.fixAll".to_string(),
+                    arguments: Some(vec![serde_json::json!(uri)]),
+                }),
+                is_preferred: Some(true),
+                disabled: None,
+                data: None,
             }),
-            is_preferred: Some(true),
-            disabled: None,
-            data: None,
-        }));
-
-        // Add missing exports
-        actions.push(CodeActionOrCommand::CodeAction(CodeAction {
-            title: "Add missing exports".to_string(),
-            kind: Some(CodeActionKind::SOURCE),
-            diagnostics: None,
-            edit: None,
-            command: Some(Command {
+            CodeActionOrCommand::CodeAction(CodeAction {
                 title: "Add missing exports".to_string(),
-                command: "ligature.addMissingExports".to_string(),
-                arguments: Some(vec![serde_json::json!(uri)]),
+                kind: Some(CodeActionKind::SOURCE),
+                diagnostics: None,
+                edit: None,
+                command: Some(Command {
+                    title: "Add missing exports".to_string(),
+                    command: "ligature.addMissingExports".to_string(),
+                    arguments: Some(vec![serde_json::json!(uri)]),
+                }),
+                is_preferred: None,
+                disabled: None,
+                data: None,
             }),
-            is_preferred: None,
-            disabled: None,
-            data: None,
-        }));
+        ];
 
         actions
     }
@@ -1696,7 +1687,7 @@ impl CodeActionsProvider {
         let mut current_line = String::new();
 
         for word in words {
-            if current_line.len() + word.len() + 1 <= width {
+            if current_line.len() + word.len() < width {
                 if !current_line.is_empty() {
                     current_line.push(' ');
                 }
@@ -1721,14 +1712,14 @@ impl CodeActionsProvider {
     }
 
     /// Check if an expression has repeated calculations.
-    fn has_repeated_calculations(&self, expr: &ligature_ast::Expr) -> bool {
+    fn has_repeated_calculations(&self, _expr: &ligature_ast::Expr) -> bool {
         // This is a simplified implementation
         // In a full implementation, you would analyze the AST for repeated sub-expressions
         false
     }
 
     /// Check if an expression has inefficient list operations.
-    fn has_inefficient_list_operations(&self, expr: &ligature_ast::Expr) -> bool {
+    fn has_inefficient_list_operations(&self, _expr: &ligature_ast::Expr) -> bool {
         // This is a simplified implementation
         // In a full implementation, you would analyze the AST for inefficient list patterns
         false
@@ -1768,11 +1759,7 @@ impl CodeActionsProvider {
     }
 
     /// Create extract function action.
-
-
     /// Create inline variable action.
-
-
     /// Create rename symbol action.
     fn create_rename_symbol_action(
         &self,
@@ -1849,77 +1836,73 @@ impl CodeActionsProvider {
         range: Range,
         _content: &str,
     ) -> Vec<CodeActionOrCommand> {
-        let mut actions = Vec::new();
-
-        // Generate function template
-        actions.push(CodeActionOrCommand::CodeAction(CodeAction {
-            title: "Generate function template".to_string(),
-            kind: Some(CodeActionKind::REFACTOR_EXTRACT),
-            diagnostics: None,
-            edit: Some(WorkspaceEdit {
-                changes: Some(HashMap::from([(
-                    Url::parse(uri).ok().unwrap(),
-                    vec![TextEdit {
-                        range,
-                        new_text: "fun ${1:name}(${2:params}) : ${3:return_type} = ${4:body}"
-                            .to_string(),
-                    }],
-                )])),
-                document_changes: None,
-                change_annotations: None,
+        vec![
+            // Generate function template
+            CodeActionOrCommand::CodeAction(CodeAction {
+                title: "Generate function template".to_string(),
+                kind: Some(CodeActionKind::REFACTOR_EXTRACT),
+                diagnostics: None,
+                edit: Some(WorkspaceEdit {
+                    changes: Some(HashMap::from([(
+                        Url::parse(uri).ok().unwrap(),
+                        vec![TextEdit {
+                            range,
+                            new_text: "fun ${1:name}(${2:params}) : ${3:return_type} = ${4:body}"
+                                .to_string(),
+                        }],
+                    )])),
+                    document_changes: None,
+                    change_annotations: None,
+                }),
+                command: None,
+                is_preferred: Some(false),
+                disabled: None,
+                data: None,
             }),
-            command: None,
-            is_preferred: Some(false),
-            disabled: None,
-            data: None,
-        }));
-
-        // Generate type definition
-        actions.push(CodeActionOrCommand::CodeAction(CodeAction {
-            title: "Generate type definition".to_string(),
-            kind: Some(CodeActionKind::REFACTOR_EXTRACT),
-            diagnostics: None,
-            edit: Some(WorkspaceEdit {
-                changes: Some(HashMap::from([(
-                    Url::parse(uri).ok().unwrap(),
-                    vec![TextEdit {
-                        range,
-                        new_text: "type ${1:TypeName} = ${2:definition}".to_string(),
-                    }],
-                )])),
-                document_changes: None,
-                change_annotations: None,
+            // Generate type definition
+            CodeActionOrCommand::CodeAction(CodeAction {
+                title: "Generate type definition".to_string(),
+                kind: Some(CodeActionKind::REFACTOR_EXTRACT),
+                diagnostics: None,
+                edit: Some(WorkspaceEdit {
+                    changes: Some(HashMap::from([(
+                        Url::parse(uri).ok().unwrap(),
+                        vec![TextEdit {
+                            range,
+                            new_text: "type ${1:TypeName} = ${2:definition}".to_string(),
+                        }],
+                    )])),
+                    document_changes: None,
+                    change_annotations: None,
+                }),
+                command: None,
+                is_preferred: Some(false),
+                disabled: None,
+                data: None,
             }),
-            command: None,
-            is_preferred: Some(false),
-            disabled: None,
-            data: None,
-        }));
-
-        // Generate module template
-        actions.push(CodeActionOrCommand::CodeAction(CodeAction {
-            title: "Generate module template".to_string(),
-            kind: Some(CodeActionKind::REFACTOR_EXTRACT),
-            diagnostics: None,
-            edit: Some(WorkspaceEdit {
-                changes: Some(HashMap::from([(
-                    Url::parse(uri).ok().unwrap(),
-                    vec![TextEdit {
-                        range,
-                        new_text: "module ${1:ModuleName} {\n  ${2:// module content}\n}"
-                            .to_string(),
-                    }],
-                )])),
-                document_changes: None,
-                change_annotations: None,
+            // Generate module template
+            CodeActionOrCommand::CodeAction(CodeAction {
+                title: "Generate module template".to_string(),
+                kind: Some(CodeActionKind::REFACTOR_EXTRACT),
+                diagnostics: None,
+                edit: Some(WorkspaceEdit {
+                    changes: Some(HashMap::from([(
+                        Url::parse(uri).ok().unwrap(),
+                        vec![TextEdit {
+                            range,
+                            new_text: "module ${1:ModuleName} {\n  ${2:// module content}\n}"
+                                .to_string(),
+                        }],
+                    )])),
+                    document_changes: None,
+                    change_annotations: None,
+                }),
+                command: None,
+                is_preferred: Some(false),
+                disabled: None,
+                data: None,
             }),
-            command: None,
-            is_preferred: Some(false),
-            disabled: None,
-            data: None,
-        }));
-
-        actions
+        ]
     }
 
     /// Create enhanced constructor actions.
@@ -1930,54 +1913,52 @@ impl CodeActionsProvider {
         _content: &str,
         _ast: Option<&Program>,
     ) -> Vec<CodeActionOrCommand> {
-        let mut actions = Vec::new();
-
-        // Generate data type with constructors
-        actions.push(CodeActionOrCommand::CodeAction(CodeAction {
-            title: "Generate data type with constructors".to_string(),
-            kind: Some(CodeActionKind::REFACTOR_EXTRACT),
-            diagnostics: None,
-            edit: Some(WorkspaceEdit {
-                changes: Some(HashMap::from([(
-                    Url::parse(uri).ok().unwrap(),
-                    vec![TextEdit {
-                        range,
-                        new_text: "data ${1:TypeName} = ${2:Constructor1} | ${3:Constructor2}"
-                            .to_string(),
-                    }],
-                )])),
-                document_changes: None,
-                change_annotations: None,
+        vec![
+            // Generate data type with constructors
+            CodeActionOrCommand::CodeAction(CodeAction {
+                title: "Generate data type with constructors".to_string(),
+                kind: Some(CodeActionKind::REFACTOR_EXTRACT),
+                diagnostics: None,
+                edit: Some(WorkspaceEdit {
+                    changes: Some(HashMap::from([(
+                        Url::parse(uri).ok().unwrap(),
+                        vec![TextEdit {
+                            range,
+                            new_text: "data ${1:TypeName} = ${2:Constructor1} | ${3:Constructor2}"
+                                .to_string(),
+                        }],
+                    )])),
+                    document_changes: None,
+                    change_annotations: None,
+                }),
+                command: None,
+                is_preferred: Some(false),
+                disabled: None,
+                data: None,
             }),
-            command: None,
-            is_preferred: Some(false),
-            disabled: None,
-            data: None,
-        }));
 
-        // Generate type class
-        actions.push(CodeActionOrCommand::CodeAction(CodeAction {
-            title: "Generate type class".to_string(),
-            kind: Some(CodeActionKind::REFACTOR_EXTRACT),
-            diagnostics: None,
-            edit: Some(WorkspaceEdit {
-                changes: Some(HashMap::from([(
-                    Url::parse(uri).ok().unwrap(),
-                    vec![TextEdit {
-                        range,
-                        new_text: "class ${1:ClassName} a where\n  ${2:method1} :: a -> ${3:ResultType}\n  ${4:method2} :: a -> ${5:ResultType}".to_string(),
-                    }],
-                )])),
-                document_changes: None,
-                change_annotations: None,
+            // Generate type class
+            CodeActionOrCommand::CodeAction(CodeAction {
+                title: "Generate type class".to_string(),
+                kind: Some(CodeActionKind::REFACTOR_EXTRACT),
+                diagnostics: None,
+                edit: Some(WorkspaceEdit {
+                    changes: Some(HashMap::from([(
+                        Url::parse(uri).ok().unwrap(),
+                        vec![TextEdit {
+                            range,
+                            new_text: "class ${1:ClassName} a where\n  ${2:method1} :: a -> ${3:ResultType}\n  ${4:method2} :: a -> ${5:ResultType}".to_string(),
+                        }],
+                    )])),
+                    document_changes: None,
+                    change_annotations: None,
+                }),
+                command: None,
+                is_preferred: Some(false),
+                disabled: None,
+                data: None,
             }),
-            command: None,
-            is_preferred: Some(false),
-            disabled: None,
-            data: None,
-        }));
-
-        actions
+        ]
     }
 
     /// Create enhanced pattern matching actions.
@@ -1988,55 +1969,53 @@ impl CodeActionsProvider {
         _content: &str,
         _ast: Option<&Program>,
     ) -> Vec<CodeActionOrCommand> {
-        let mut actions = Vec::new();
-
-        // Generate match expression
-        actions.push(CodeActionOrCommand::CodeAction(CodeAction {
-            title: "Generate match expression".to_string(),
-            kind: Some(CodeActionKind::REFACTOR_EXTRACT),
-            diagnostics: None,
-            edit: Some(WorkspaceEdit {
-                changes: Some(HashMap::from([(
-                    Url::parse(uri).ok().unwrap(),
-                    vec![TextEdit {
-                        range,
-                        new_text: "match ${1:expression} of\n  ${2:pattern1} => ${3:result1}\n  ${4:pattern2} => ${5:result2}".to_string(),
-                    }],
-                )])),
-                document_changes: None,
-                change_annotations: None,
+        vec![
+            // Generate match expression
+            CodeActionOrCommand::CodeAction(CodeAction {
+                title: "Generate match expression".to_string(),
+                kind: Some(CodeActionKind::REFACTOR_EXTRACT),
+                diagnostics: None,
+                edit: Some(WorkspaceEdit {
+                    changes: Some(HashMap::from([(
+                        Url::parse(uri).ok().unwrap(),
+                        vec![TextEdit {
+                            range,
+                            new_text: "match ${1:expression} of\n  ${2:pattern1} => ${3:result1}\n  ${4:pattern2} => ${5:result2}".to_string(),
+                        }],
+                    )])),
+                    document_changes: None,
+                    change_annotations: None,
+                }),
+                command: None,
+                is_preferred: Some(false),
+                disabled: None,
+                data: None,
             }),
-            command: None,
-            is_preferred: Some(false),
-            disabled: None,
-            data: None,
-        }));
 
-        // Generate if-else expression
-        actions.push(CodeActionOrCommand::CodeAction(CodeAction {
-            title: "Generate if-else expression".to_string(),
-            kind: Some(CodeActionKind::REFACTOR_EXTRACT),
-            diagnostics: None,
-            edit: Some(WorkspaceEdit {
-                changes: Some(HashMap::from([(
-                    Url::parse(uri).ok().unwrap(),
-                    vec![TextEdit {
-                        range,
-                        new_text:
-                            "if ${1:condition} then\n  ${2:then_branch}\nelse\n  ${3:else_branch}"
-                                .to_string(),
-                    }],
-                )])),
-                document_changes: None,
-                change_annotations: None,
+            // Generate if-else expression
+            CodeActionOrCommand::CodeAction(CodeAction {
+                title: "Generate if-else expression".to_string(),
+                kind: Some(CodeActionKind::REFACTOR_EXTRACT),
+                diagnostics: None,
+                edit: Some(WorkspaceEdit {
+                    changes: Some(HashMap::from([(
+                        Url::parse(uri).ok().unwrap(),
+                        vec![TextEdit {
+                            range,
+                            new_text:
+                                "if ${1:condition} then\n  ${2:then_branch}\nelse\n  ${3:else_branch}"
+                                    .to_string(),
+                        }],
+                    )])),
+                    document_changes: None,
+                    change_annotations: None,
+                }),
+                command: None,
+                is_preferred: Some(false),
+                disabled: None,
+                data: None,
             }),
-            command: None,
-            is_preferred: Some(false),
-            disabled: None,
-            data: None,
-        }));
-
-        actions
+        ]
     }
 
     /// Create test generation actions.
@@ -2047,55 +2026,53 @@ impl CodeActionsProvider {
         _content: &str,
         _ast: Option<&Program>,
     ) -> Vec<CodeActionOrCommand> {
-        let mut actions = Vec::new();
-
-        // Generate unit test
-        actions.push(CodeActionOrCommand::CodeAction(CodeAction {
-            title: "Generate unit test".to_string(),
-            kind: Some(CodeActionKind::REFACTOR_EXTRACT),
-            diagnostics: None,
-            edit: Some(WorkspaceEdit {
-                changes: Some(HashMap::from([(
-                    Url::parse(uri).ok().unwrap(),
-                    vec![TextEdit {
-                        range,
-                        new_text: "test \"${1:test_name}\" = ${2:test_expression}".to_string(),
-                    }],
-                )])),
-                document_changes: None,
-                change_annotations: None,
+        vec![
+            // Generate unit test
+            CodeActionOrCommand::CodeAction(CodeAction {
+                title: "Generate unit test".to_string(),
+                kind: Some(CodeActionKind::REFACTOR_EXTRACT),
+                diagnostics: None,
+                edit: Some(WorkspaceEdit {
+                    changes: Some(HashMap::from([(
+                        Url::parse(uri).ok().unwrap(),
+                        vec![TextEdit {
+                            range,
+                            new_text: "test \"${1:test_name}\" = ${2:test_expression}".to_string(),
+                        }],
+                    )])),
+                    document_changes: None,
+                    change_annotations: None,
+                }),
+                command: None,
+                is_preferred: Some(false),
+                disabled: None,
+                data: None,
             }),
-            command: None,
-            is_preferred: Some(false),
-            disabled: None,
-            data: None,
-        }));
 
-        // Generate property test
-        actions.push(CodeActionOrCommand::CodeAction(CodeAction {
-            title: "Generate property test".to_string(),
-            kind: Some(CodeActionKind::REFACTOR_EXTRACT),
-            diagnostics: None,
-            edit: Some(WorkspaceEdit {
-                changes: Some(HashMap::from([(
-                    Url::parse(uri).ok().unwrap(),
-                    vec![TextEdit {
-                        range,
-                        new_text:
-                            "property \"${1:property_name}\" = forAll ${2:generator} ${3:property}"
-                                .to_string(),
-                    }],
-                )])),
-                document_changes: None,
-                change_annotations: None,
+            // Generate property test
+            CodeActionOrCommand::CodeAction(CodeAction {
+                title: "Generate property test".to_string(),
+                kind: Some(CodeActionKind::REFACTOR_EXTRACT),
+                diagnostics: None,
+                edit: Some(WorkspaceEdit {
+                    changes: Some(HashMap::from([(
+                        Url::parse(uri).ok().unwrap(),
+                        vec![TextEdit {
+                            range,
+                            new_text:
+                                "property \"${1:property_name}\" = forAll ${2:generator} ${3:property}"
+                                    .to_string(),
+                        }],
+                    )])),
+                    document_changes: None,
+                    change_annotations: None,
+                }),
+                command: None,
+                is_preferred: Some(false),
+                disabled: None,
+                data: None,
             }),
-            command: None,
-            is_preferred: Some(false),
-            disabled: None,
-            data: None,
-        }));
-
-        actions
+        ]
     }
 
     /// Create documentation generation actions.
@@ -2106,60 +2083,58 @@ impl CodeActionsProvider {
         _content: &str,
         _ast: Option<&Program>,
     ) -> Vec<CodeActionOrCommand> {
-        let mut actions = Vec::new();
-
-        // Generate function documentation
-        actions.push(CodeActionOrCommand::CodeAction(CodeAction {
-            title: "Generate function documentation".to_string(),
-            kind: Some(CodeActionKind::REFACTOR_EXTRACT),
-            diagnostics: None,
-            edit: Some(WorkspaceEdit {
-                changes: Some(HashMap::from([(
-                    Url::parse(uri).ok().unwrap(),
-                    vec![TextEdit {
-                        range,
-                        new_text: "/// ${1:Function description}\n/// @param ${2:param_name} ${3:param_description}\n/// @return ${4:return_description}".to_string(),
-                    }],
-                )])),
-                document_changes: None,
-                change_annotations: None,
+        vec![
+            // Generate function documentation
+            CodeActionOrCommand::CodeAction(CodeAction {
+                title: "Generate function documentation".to_string(),
+                kind: Some(CodeActionKind::REFACTOR_EXTRACT),
+                diagnostics: None,
+                edit: Some(WorkspaceEdit {
+                    changes: Some(HashMap::from([(
+                        Url::parse(uri).ok().unwrap(),
+                        vec![TextEdit {
+                            range,
+                            new_text: "/// ${1:Function description}\n/// @param ${2:param_name} ${3:param_description}\n/// @return ${4:return_description}".to_string(),
+                        }],
+                    )])),
+                    document_changes: None,
+                    change_annotations: None,
+                }),
+                command: None,
+                is_preferred: Some(false),
+                disabled: None,
+                data: None,
             }),
-            command: None,
-            is_preferred: Some(false),
-            disabled: None,
-            data: None,
-        }));
 
-        // Generate module documentation
-        actions.push(CodeActionOrCommand::CodeAction(CodeAction {
-            title: "Generate module documentation".to_string(),
-            kind: Some(CodeActionKind::REFACTOR_EXTRACT),
-            diagnostics: None,
-            edit: Some(WorkspaceEdit {
-                changes: Some(HashMap::from([(
-                    Url::parse(uri).ok().unwrap(),
-                    vec![TextEdit {
-                        range,
-                        new_text: "/// ${1:Module description}\n/// @author ${2:author_name}\n/// @version ${3:version}".to_string(),
-                    }],
-                )])),
-                document_changes: None,
-                change_annotations: None,
+            // Generate module documentation
+            CodeActionOrCommand::CodeAction(CodeAction {
+                title: "Generate module documentation".to_string(),
+                kind: Some(CodeActionKind::REFACTOR_EXTRACT),
+                diagnostics: None,
+                edit: Some(WorkspaceEdit {
+                    changes: Some(HashMap::from([(
+                        Url::parse(uri).ok().unwrap(),
+                        vec![TextEdit {
+                            range,
+                            new_text: "/// ${1:Module description}\n/// @author ${2:author_name}\n/// @version ${3:version}".to_string(),
+                        }],
+                    )])),
+                    document_changes: None,
+                    change_annotations: None,
+                }),
+                command: None,
+                is_preferred: Some(false),
+                disabled: None,
+                data: None,
             }),
-            command: None,
-            is_preferred: Some(false),
-            disabled: None,
-            data: None,
-        }));
-
-        actions
+        ]
     }
 
     /// Suggest enhanced type conversions.
     fn suggest_enhanced_type_conversions(
         &self,
         uri: &str,
-        range: Range,
+        _range: Range,
         content: &str,
         program: &Program,
     ) -> Vec<CodeActionOrCommand> {
@@ -2169,7 +2144,7 @@ impl CodeActionsProvider {
         for declaration in &program.declarations {
             if let ligature_ast::DeclarationKind::Value(value_decl) = &declaration.kind {
                 if let Some(type_annotation) = &value_decl.type_annotation {
-                    let expected_type = format!("{:?}", type_annotation);
+                    let expected_type = format!("{type_annotation:?}");
                     let actual_type = self.infer_expression_type(&value_decl.value);
 
                     if let Some(actual) = actual_type {
@@ -2178,7 +2153,7 @@ impl CodeActionsProvider {
                             let conversion = self.suggest_type_conversion(&actual, &expected_type);
                             if let Some(conv) = conversion {
                                 let action = CodeAction {
-                                    title: format!("Convert {} to {}", actual, expected_type),
+                                    title: format!("Convert {actual} to {expected_type}"),
                                     kind: Some(CodeActionKind::REFACTOR),
                                     diagnostics: None,
                                     edit: Some(WorkspaceEdit {
@@ -2188,7 +2163,7 @@ impl CodeActionsProvider {
                                             }),
                                             vec![TextEdit {
                                                 range: self.span_to_range(value_decl.value.span),
-                                                new_text: format!("{}({})", conv, content),
+                                                new_text: format!("{conv}({content})"),
                                             }],
                                         )])),
                                         document_changes: None,
@@ -2213,17 +2188,15 @@ impl CodeActionsProvider {
     /// Suggest type guards.
     fn suggest_type_guards(
         &self,
-        uri: &str,
-        range: Range,
-        content: &str,
-        program: &Program,
+        _uri: &str,
+        _range: Range,
+        _content: &str,
+        _program: &Program,
     ) -> Vec<CodeActionOrCommand> {
-        let mut actions = Vec::new();
-
         // This is a placeholder implementation
         // In a full implementation, you would analyze the program for potential type guard opportunities
 
-        actions
+        Vec::new()
     }
 }
 

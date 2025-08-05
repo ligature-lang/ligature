@@ -1,29 +1,25 @@
 name: CI
-
 on:
   pull_request:
-    branches: [ main, master ]
+    branches: [main]
   push:
-    branches: [ main, master ]
+    branches: [main]
 
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
 
 jobs:
-  # Code quality checks
   code-quality:
     name: Code Quality
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
-
       - name: Cache dependencies
         uses: actions/cache@v3
         with:
@@ -34,24 +30,18 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
-
       - name: Check formatting
         run: cargo fmt --all -- --check
-
       - name: Run clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
-
-  # Unit tests
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
-
       - name: Cache dependencies
         uses: actions/cache@v3
         with:
@@ -62,21 +52,16 @@ jobs:
           key: ${{ runner.os }}-cargo-unit-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-unit-
-
       - name: Run unit tests
         run: cargo test --lib
-
-  # Integration tests
   integration-tests:
     name: Integration Tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
-
       - name: Cache dependencies
         uses: actions/cache@v3
         with:
@@ -87,17 +72,12 @@ jobs:
           key: ${{ runner.os }}-cargo-integration-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-integration-
-
       - name: Run integration tests
         run: cargo test integration
-
       - name: Run property tests
         run: cargo test property
-
       - name: Run differential tests
         run: cargo test differential
-
-  # Build verification for all crates
   build-verification:
     name: Build Verification
     runs-on: ubuntu-latest
@@ -115,10 +95,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
-
       - name: Cache dependencies
         uses: actions/cache@v3
         with:
@@ -129,24 +107,19 @@ jobs:
           key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-build-
-
       - name: Build ${{ matrix.crate }}
         run: cargo build --package ${{ matrix.crate }}
-
       - name: Build ${{ matrix.crate }} (release)
         run: cargo build --release --package ${{ matrix.crate }}
 
-  # Examples build and test
   examples:
     name: Examples
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
-
       - name: Cache dependencies
         uses: actions/cache@v3
         with:
@@ -157,28 +130,22 @@ jobs:
           key: ${{ runner.os }}-cargo-examples-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-examples-
-
       - name: Build examples
         run: cargo build --examples
-
       - name: Run example tests
         run: |
           cargo run --example test_core
           cargo run --example test_parser
           cargo run --example test_type_inference
           cargo run --example test_evaluation
-
-  # LSP tests
   lsp-tests:
     name: LSP Tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
-
       - name: Cache dependencies
         uses: actions/cache@v3
         with:
@@ -189,24 +156,18 @@ jobs:
           key: ${{ runner.os }}-cargo-lsp-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-lsp-
-
       - name: Build LSP
         run: cargo build --package ligature-lsp
-
       - name: Test LSP
         run: cargo test --package ligature-lsp
-
-  # Documentation check
   docs:
     name: Documentation
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
-
       - name: Cache dependencies
         uses: actions/cache@v3
         with:
@@ -217,23 +178,17 @@ jobs:
           key: ${{ runner.os }}-cargo-docs-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-docs-
-
       - name: Check documentation
         run: cargo doc --no-deps --all
-
-  # Security audit
   security:
     name: Security Audit
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
-
       - name: Install cargo-audit
         run: cargo install cargo-audit
-
       - name: Run security audit
-        run: cargo audit --deny warnings 
+        run: cargo audit --deny warnings

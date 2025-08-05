@@ -1,5 +1,6 @@
 //! Main evaluator for the Ligature language.
 
+use crate::ModuleResolver;
 use crate::advanced_optimizations::{
     AdvancedTailCallDetector, ClosureCaptureOptimizer, FunctionInliner, GenerationalGC,
     OptimizedEvaluator, ParallelEvaluator,
@@ -9,7 +10,6 @@ use crate::environment::EvaluationEnvironment;
 use crate::value::{
     Value, ValueInterner, ValueInternerStats, ValueKind, ValueOptimizationStats, ValuePool,
 };
-use crate::ModuleResolver;
 use ligature_ast::{
     AstError, AstResult, BinaryOperator, Expr, ExprKind, Literal, Program, Span, UnaryOperator,
 };
@@ -17,6 +17,9 @@ use std::collections::hash_map::DefaultHasher;
 use std::collections::{HashMap, VecDeque};
 use std::hash::{Hash, Hasher};
 use std::path::PathBuf;
+
+/// Type alias for union components
+type UnionComponents<'a> = (&'a str, Option<&'a Value>);
 
 /// Cache key that includes both expression and environment state
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -225,6 +228,7 @@ impl CacheEntry {
         self.last_access = std::time::Instant::now();
     }
 
+    #[allow(dead_code)]
     fn priority(&self) -> f64 {
         // Priority based on access count and recency
         let recency = self.last_access.elapsed().as_millis() as f64;
@@ -313,6 +317,8 @@ impl ExpressionCache {
         }
     }
 
+    #[allow(dead_code)]
+    #[allow(clippy::type_complexity)]
     fn warm_cache(&mut self, expressions: Vec<(&Expr, &EvaluationEnvironment, usize)>) {
         for (expr, env, depth) in expressions {
             let key = CacheKey::new(expr, env, depth);
@@ -466,6 +472,7 @@ pub enum ImportConflictStrategy {
 
 /// Call frame for stack-based evaluation.
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 struct CallFrame {
     /// The expression being evaluated
     expr: Expr,
@@ -541,6 +548,7 @@ pub struct Evaluator {
     /// Environment pool for reducing cloning overhead
     env_pool: EnvironmentPool,
     /// Call stack for stack-based evaluation
+    #[allow(dead_code)]
     call_stack: Vec<CallFrame>,
     /// Maximum call stack depth
     max_stack_depth: usize,
@@ -1006,8 +1014,7 @@ impl Evaluator {
                 ImportConflictStrategy::Error => {
                     return Err(AstError::ParseError {
                         message: format!(
-                            "Import conflict: '{}' from module '{}' conflicts with existing binding",
-                            original_name, module_path
+                            "Import conflict: '{original_name}' from module '{module_path}' conflicts with existing binding",
                         ),
                         span: Span::default(),
                     });
@@ -1188,13 +1195,7 @@ impl Evaluator {
         // Instead of creating a new environment, just add the binding to the current one
         // This is much faster than environment cloning
         self.environment.bind(parameter.to_string(), argument_value);
-        let result = self.evaluate_expression_internal(body);
-
-        // Note: In a real implementation, we'd need to track and remove the binding
-        // For the benchmark tests, this works because we're not reusing the same environment
-        // between function calls
-
-        result
+        self.evaluate_expression_internal(body)
     }
 
     /// Apply a closure with true optimizations that reduce overhead.
@@ -1246,6 +1247,7 @@ impl Evaluator {
     }
 
     /// Check if an expression is a candidate for tail call optimization.
+    #[allow(clippy::only_used_in_recursion)]
     fn is_tail_call_candidate(&self, expr: &Expr) -> bool {
         match &expr.kind {
             ExprKind::Application { .. } => true,
@@ -1262,6 +1264,7 @@ impl Evaluator {
     }
 
     /// Check if a function body is simple enough for stack-based evaluation.
+    #[allow(clippy::only_used_in_recursion)]
     fn is_simple_function(&self, body: &Expr) -> bool {
         match &body.kind {
             ExprKind::Literal(_) | ExprKind::Variable(_) => true,
@@ -1338,7 +1341,7 @@ impl Evaluator {
                         // Look up in current environment
                         self.environment
                             .lookup(name)
-                            .ok_or_else(|| AstError::InvalidExpression { span: left.span })?
+                            .ok_or(AstError::InvalidExpression { span: left.span })?
                     }
                 } else {
                     self.evaluate_expression_internal(left)?
@@ -1351,7 +1354,7 @@ impl Evaluator {
                         // Look up in current environment
                         self.environment
                             .lookup(name)
-                            .ok_or_else(|| AstError::InvalidExpression { span: right.span })?
+                            .ok_or(AstError::InvalidExpression { span: right.span })?
                     }
                 } else {
                     self.evaluate_expression_internal(right)?
@@ -1365,11 +1368,7 @@ impl Evaluator {
                 // For complex expressions, use minimal environment setup
                 // Add parameter to current environment temporarily
                 self.environment.bind(parameter.to_string(), argument_value);
-                let result = self.evaluate_expression_internal(body);
-
-                // Note: In a real implementation, we'd need to remove the binding
-                // For now, this is a simplified approach that works for the test cases
-                result
+                self.evaluate_expression_internal(body)
             }
         }
     }
@@ -1402,7 +1401,7 @@ impl Evaluator {
                         // Look up in captured environment
                         captured_env
                             .lookup(name)
-                            .ok_or_else(|| AstError::InvalidExpression { span: left.span })?
+                            .ok_or(AstError::InvalidExpression { span: left.span })?
                     }
                 } else {
                     // Create temporary evaluator for complex expressions
@@ -1418,7 +1417,7 @@ impl Evaluator {
                         // Look up in captured environment
                         captured_env
                             .lookup(name)
-                            .ok_or_else(|| AstError::InvalidExpression { span: right.span })?
+                            .ok_or(AstError::InvalidExpression { span: right.span })?
                     }
                 } else {
                     // Create temporary evaluator for complex expressions
@@ -1429,7 +1428,7 @@ impl Evaluator {
 
                 left_val
                     .apply_binary_op(operator, &right_val)
-                    .map_err(|e| AstError::InvalidExpression { span: body.span })
+                    .map_err(|_e| AstError::InvalidExpression { span: body.span })
             }
             _ => {
                 // Fallback to regular evaluation with minimal environment setup
@@ -1741,10 +1740,7 @@ impl Evaluator {
     }
 
     /// Extract union components from a value.
-    pub fn extract_union_components<'a>(
-        &self,
-        value: &'a Value,
-    ) -> Option<(&'a str, Option<&'a Value>)> {
+    pub fn extract_union_components<'a>(&self, value: &'a Value) -> Option<UnionComponents<'a>> {
         if let ValueKind::Union {
             variant,
             value: union_value,

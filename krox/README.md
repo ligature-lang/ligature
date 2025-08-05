@@ -374,7 +374,7 @@ cargo test -p krox executor
 
 ## License
 
-This project is licensed under the Apache License, Version 2.0 - see the [LICENSE-APACHE](LICENSE-APACHE) file or https://www.apache.org/licenses/LICENSE-2.0 for details.
+This project is licensed under the Apache License, Version 2.0 - see the [LICENSE](../LICENSE) file or https://www.apache.org/licenses/LICENSE-2.0 for details.
 
 ## Documentation
 

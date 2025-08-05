@@ -33,7 +33,7 @@ fn main() {
             }
         }
         Err(e) => {
-            println!("Pest expression parsing failed: {:?}", e);
+            println!("Pest expression parsing failed: {e:?}");
         }
     }
 
@@ -54,7 +54,7 @@ fn main() {
             }
         }
         Err(e) => {
-            println!("Pest if_expression parsing failed: {:?}", e);
+            println!("Pest if_expression parsing failed: {e:?}");
         }
     }
 }

@@ -1,10 +1,9 @@
 name: Test Coverage
-
 on:
   pull_request:
-    branches: [ main, master ]
+    branches: [main]
   push:
-    branches: [ main, master ]
+    branches: [main]
   workflow_dispatch: # Allow manual triggering
 
 env:
@@ -12,20 +11,16 @@ env:
   RUST_BACKTRACE: 1
 
 jobs:
-  # Generate coverage report
   coverage:
     name: Test Coverage
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
-
       - name: Install cargo-llvm-cov
         run: cargo install cargo-llvm-cov
-
       - name: Cache dependencies
         uses: actions/cache@v3
         with:
@@ -36,18 +31,16 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
-
       - name: Generate coverage report
         run: |
           # Generate coverage for all crates
           cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
-          
+
           # Generate HTML report
           cargo llvm-cov --all-features --workspace --html --output-dir coverage-html
-          
+
           # Generate coverage summary
           cargo llvm-cov --all-features --workspace --text
-
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
@@ -56,7 +49,6 @@ jobs:
           name: codecov-umbrella
           fail_ci_if_error: false
           verbose: true
-
       - name: Upload coverage artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -65,8 +57,6 @@ jobs:
             lcov.info
             coverage-html/
           retention-days: 30
-
-  # Coverage for individual crates
   crate-coverage:
     name: Crate Coverage
     runs-on: ubuntu-latest
@@ -84,13 +74,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
-
       - name: Install cargo-llvm-cov
         run: cargo install cargo-llvm-cov
-
       - name: Cache dependencies
         uses: actions/cache@v3
         with:
@@ -101,20 +88,16 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ matrix.crate }}-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-${{ matrix.crate }}-
-
       - name: Generate coverage for ${{ matrix.crate }}
         run: |
           cargo llvm-cov --all-features --package ${{ matrix.crate }} --lcov --output-path lcov-${{ matrix.crate }}.info
           cargo llvm-cov --all-features --package ${{ matrix.crate }} --text
-
       - name: Upload crate coverage artifacts
         uses: actions/upload-artifact@v3
         with:
           name: coverage-${{ matrix.crate }}
           path: lcov-${{ matrix.crate }}.info
           retention-days: 30
-
-  # Coverage thresholds
   coverage-thresholds:
     name: Coverage Thresholds
     runs-on: ubuntu-latest
@@ -122,27 +105,21 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
-
       - name: Install cargo-llvm-cov
         run: cargo install cargo-llvm-cov
-
       - name: Download coverage artifacts
         uses: actions/download-artifact@v3
         with:
           name: coverage-report
           path: coverage/
-
       - name: Check coverage thresholds
         run: |
           # Check overall coverage (should be >= 80%)
           cargo llvm-cov --all-features --workspace --text | grep "Total" | awk '{if ($2 < 80) exit 1}'
-          
-          echo "Coverage thresholds passed!"
 
-  # Coverage badges
+          echo "Coverage thresholds passed!"
   coverage-badges:
     name: Coverage Badges
     runs-on: ubuntu-latest
@@ -151,20 +128,16 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
-
       - name: Install cargo-llvm-cov
         run: cargo install cargo-llvm-cov
-
       - name: Generate coverage percentage
         id: coverage
         run: |
           COVERAGE=$(cargo llvm-cov --all-features --workspace --text | grep "Total" | awk '{print $2}' | sed 's/%//')
           echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
           echo "Coverage: $COVERAGE%"
-
       - name: Generate coverage badge
         uses: schneegans/dynamic-badges-action@v1.6.0
         with:
@@ -174,4 +147,4 @@ jobs:
           label: coverage
           message: ${{ steps.coverage.outputs.coverage }}%
           namedLogo: rust
-          color: ${{ steps.coverage.outputs.coverage >= 90 && 'brightgreen' || steps.coverage.outputs.coverage >= 80 && 'green' || steps.coverage.outputs.coverage >= 70 && 'yellow' || 'red' }} 
+          color: ${{ steps.coverage.outputs.coverage >= 90 && 'brightgreen' || steps.coverage.outputs.coverage >= 80 && 'green' || steps.coverage.outputs.coverage >= 70 && 'yellow' || 'red' }}

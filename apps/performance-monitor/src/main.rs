@@ -14,8 +14,10 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::time::Duration;
 
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<()> {
     let matches = App::new("ligature-performance-monitor")
         .version("1.0")
         .about("Performance monitoring and optimization tool for Ligature")
@@ -163,7 +165,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 /// Run real-time performance monitoring
-async fn run_monitoring(args: &clap::ArgMatches) -> Result<(), Box<dyn std::error::Error>> {
+async fn run_monitoring(args: &clap::ArgMatches) -> Result<()> {
     println!("Starting performance monitoring...");
 
     let config = if let Some(config_path) = args.value_of("config") {
@@ -178,7 +180,7 @@ async fn run_monitoring(args: &clap::ArgMatches) -> Result<(), Box<dyn std::erro
     let monitor = PerformanceMonitor::with_config(config);
     let start_time = std::time::Instant::now();
 
-    println!("Monitoring for {} seconds...", duration_seconds);
+    println!("Monitoring for {duration_seconds} seconds...");
     println!("Press Ctrl+C to stop early");
 
     // Set up signal handling for graceful shutdown
@@ -227,7 +229,7 @@ async fn run_monitoring(args: &clap::ArgMatches) -> Result<(), Box<dyn std::erro
 }
 
 /// Run performance regression tests
-async fn run_regression_tests(args: &clap::ArgMatches) -> Result<(), Box<dyn std::error::Error>> {
+async fn run_regression_tests(args: &clap::ArgMatches) -> Result<()> {
     println!("Running performance regression tests...");
 
     // Import the regression test module
@@ -246,14 +248,14 @@ async fn run_regression_tests(args: &clap::ArgMatches) -> Result<(), Box<dyn std
     if let Some(output_path) = args.value_of("output") {
         let output_path = PathBuf::from(output_path);
         save_regression_report(&report, &output_path)?;
-        println!("Regression report saved to: {:?}", output_path);
+        println!("Regression report saved to: {output_path:?}");
     }
 
     Ok(())
 }
 
 /// Run adaptive optimization
-async fn run_optimization(args: &clap::ArgMatches) -> Result<(), Box<dyn std::error::Error>> {
+async fn run_optimization(args: &clap::ArgMatches) -> Result<()> {
     println!("Running adaptive optimization...");
 
     let iterations: usize = args.value_of("iterations").unwrap().parse()?;
@@ -269,7 +271,7 @@ async fn run_optimization(args: &clap::ArgMatches) -> Result<(), Box<dyn std::er
         // Generate some test performance data
         for j in 0..10 {
             let metrics = ligature_eval::PerformanceMetrics {
-                operation_name: format!("test_op_{}", j),
+                operation_name: format!("test_op_{j}"),
                 execution_time: Duration::from_millis(rand::random::<u64>() % 200 + 50),
                 memory_usage_bytes: rand::random::<usize>() % 20000 + 5000,
                 cache_hits: rand::random::<u64>() % 15,
@@ -316,12 +318,12 @@ async fn run_optimization(args: &clap::ArgMatches) -> Result<(), Box<dyn std::er
 }
 
 /// Run performance benchmarks
-async fn run_benchmark(args: &clap::ArgMatches) -> Result<(), Box<dyn std::error::Error>> {
+async fn run_benchmark(args: &clap::ArgMatches) -> Result<()> {
     let expression = args.value_of("expression").unwrap_or("42");
     let iterations: usize = args.value_of("iterations").unwrap().parse()?;
 
-    println!("Running benchmark for expression: {}", expression);
-    println!("Iterations: {}", iterations);
+    println!("Running benchmark for expression: {expression}");
+    println!("Iterations: {iterations}");
 
     // Parse the expression
     let ast = parse_program(expression)?;
@@ -357,7 +359,7 @@ async fn run_benchmark(args: &clap::ArgMatches) -> Result<(), Box<dyn std::error
             Err(e) => {
                 failed_runs += 1;
                 if i == 0 {
-                    eprintln!("Evaluation error: {:?}", e);
+                    eprintln!("Evaluation error: {e:?}");
                 }
             }
         }
@@ -377,16 +379,16 @@ async fn run_benchmark(args: &clap::ArgMatches) -> Result<(), Box<dyn std::error
     };
 
     println!("\n\nBenchmark Results:");
-    println!("Expression: {}", expression);
-    println!("Total iterations: {}", iterations);
-    println!("Successful runs: {}", successful_runs);
-    println!("Failed runs: {}", failed_runs);
+    println!("Expression: {expression}");
+    println!("Total iterations: {iterations}");
+    println!("Successful runs: {successful_runs}");
+    println!("Failed runs: {failed_runs}");
     println!(
         "Success rate: {:.1}%",
         (successful_runs as f64 / iterations as f64) * 100.0
     );
-    println!("Total time: {:?}", total_duration);
-    println!("Average execution time: {:?}", avg_time);
+    println!("Total time: {total_duration:?}");
+    println!("Average execution time: {avg_time:?}");
     println!(
         "Throughput: {:.0} ops/sec",
         if avg_time.as_nanos() > 0 {
@@ -404,14 +406,14 @@ async fn run_benchmark(args: &clap::ArgMatches) -> Result<(), Box<dyn std::error
     if let Some(output_path) = args.value_of("output") {
         let output_path = PathBuf::from(output_path);
         save_benchmark_results(&report, &output_path)?;
-        println!("Benchmark results saved to: {:?}", output_path);
+        println!("Benchmark results saved to: {output_path:?}");
     }
 
     Ok(())
 }
 
 /// Generate performance report
-async fn generate_report(args: &clap::ArgMatches) -> Result<(), Box<dyn std::error::Error>> {
+async fn generate_report(args: &clap::ArgMatches) -> Result<()> {
     let format = args.value_of("format").unwrap();
 
     if let Some(input_path) = args.value_of("input") {
@@ -421,7 +423,7 @@ async fn generate_report(args: &clap::ArgMatches) -> Result<(), Box<dyn std::err
 
         if let Some(output_path) = args.value_of("output") {
             save_report(&report, output_path, format)?;
-            println!("Report saved to: {}", output_path);
+            println!("Report saved to: {output_path}");
         } else {
             report.print_summary();
         }
@@ -432,7 +434,7 @@ async fn generate_report(args: &clap::ArgMatches) -> Result<(), Box<dyn std::err
 
         if let Some(output_path) = args.value_of("output") {
             save_report(&report, output_path, format)?;
-            println!("Report saved to: {}", output_path);
+            println!("Report saved to: {output_path}");
         } else {
             report.print_summary();
         }
@@ -443,7 +445,7 @@ async fn generate_report(args: &clap::ArgMatches) -> Result<(), Box<dyn std::err
 
 // Helper functions
 
-fn load_config(_path: &str) -> Result<PerformanceConfig, Box<dyn std::error::Error>> {
+fn load_config(_path: &str) -> Result<PerformanceConfig> {
     // In a real implementation, this would load from a file
     // For now, return default config
     Ok(PerformanceConfig::default())
@@ -452,26 +454,19 @@ fn load_config(_path: &str) -> Result<PerformanceConfig, Box<dyn std::error::Err
 fn save_regression_report(
     report: &crate::performance_regression_tests::PerformanceRegressionReport,
     path: &PathBuf,
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> Result<()> {
     let json = serde_json::to_string_pretty(report)?;
     std::fs::write(path, json)?;
     Ok(())
 }
 
-fn save_benchmark_results(
-    report: &PerformanceReport,
-    path: &PathBuf,
-) -> Result<(), Box<dyn std::error::Error>> {
+fn save_benchmark_results(report: &PerformanceReport, path: &PathBuf) -> Result<()> {
     let json = serde_json::to_string_pretty(report)?;
     std::fs::write(path, json)?;
     Ok(())
 }
 
-fn save_report(
-    report: &PerformanceReport,
-    path: &str,
-    format: &str,
-) -> Result<(), Box<dyn std::error::Error>> {
+fn save_report(report: &PerformanceReport, path: &str, format: &str) -> Result<()> {
     let content = match format {
         "json" => serde_json::to_string_pretty(report)?,
         "csv" => convert_to_csv(report)?,
@@ -489,7 +484,7 @@ fn save_report(
     Ok(())
 }
 
-fn convert_to_csv(report: &PerformanceReport) -> Result<String, Box<dyn std::error::Error>> {
+fn convert_to_csv(report: &PerformanceReport) -> Result<String> {
     let mut csv = String::new();
     csv.push_str("metric,value\n");
     csv.push_str(&format!("total_operations,{}\n", report.total_operations));
@@ -505,7 +500,7 @@ fn convert_to_csv(report: &PerformanceReport) -> Result<String, Box<dyn std::err
     Ok(csv)
 }
 
-fn load_metrics_from_file(_path: &str) -> Result<PerformanceMonitor, Box<dyn std::error::Error>> {
+fn load_metrics_from_file(_path: &str) -> Result<PerformanceMonitor> {
     // In a real implementation, this would load metrics from a file
     // For now, return a new monitor
     Ok(PerformanceMonitor::new())

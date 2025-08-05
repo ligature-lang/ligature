@@ -71,7 +71,7 @@ pub mod python {
                     return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(format!(
                         "Invalid execution mode: {}",
                         mode
-                    )))
+                    )));
                 }
             };
 
@@ -201,7 +201,7 @@ pub mod node {
                     return Err(napi::Error::from_reason(format!(
                         "Invalid execution mode: {}",
                         mode
-                    )))
+                    )));
                 }
             };
 
@@ -361,9 +361,9 @@ pub mod node {
 #[cfg(feature = "java")]
 pub mod java {
     use super::*;
+    use jni::JNIEnv;
     use jni::objects::{JClass, JObject, JString};
     use jni::sys::jobject;
-    use jni::JNIEnv;
     use serde_json::Value as JsonValue;
 
     pub struct JavaKroxClient {

@@ -6,9 +6,8 @@
 //! 4. Cache Hit Rates: 80-95%
 
 use ligature_ast::{AstResult, BinaryOperator, Expr, ExprKind, Literal, Span};
-use ligature_eval::{CacheStats, Evaluator};
-use std::collections::HashMap;
-use std::time::{Duration, Instant};
+use ligature_eval::Evaluator;
+use std::time::Instant;
 
 fn main() -> AstResult<()> {
     println!("Ligature Performance Validation");
@@ -91,15 +90,9 @@ fn validate_function_call_performance() -> AstResult<()> {
 
     let improvement_factor = optimized_ops_per_sec / baseline_ops_per_sec;
 
-    println!(
-        "Baseline function calls per second: {:.0}",
-        baseline_ops_per_sec
-    );
-    println!(
-        "Optimized function calls per second: {:.0}",
-        optimized_ops_per_sec
-    );
-    println!("Improvement factor: {:.1}x", improvement_factor);
+    println!("Baseline function calls per second: {baseline_ops_per_sec:.0}");
+    println!("Optimized function calls per second: {optimized_ops_per_sec:.0}");
+    println!("Improvement factor: {improvement_factor:.1}x");
     println!("Target improvement: 100x");
     println!(
         "Status: {}",
@@ -154,15 +147,9 @@ fn validate_arithmetic_performance() -> AstResult<()> {
 
     let improvement_factor = optimized_ops_per_sec / baseline_ops_per_sec;
 
-    println!(
-        "Baseline arithmetic ops per second: {:.0}",
-        baseline_ops_per_sec
-    );
-    println!(
-        "Optimized arithmetic ops per second: {:.0}",
-        optimized_ops_per_sec
-    );
-    println!("Improvement factor: {:.1}x", improvement_factor);
+    println!("Baseline arithmetic ops per second: {baseline_ops_per_sec:.0}",);
+    println!("Optimized arithmetic ops per second: {optimized_ops_per_sec:.0}",);
+    println!("Improvement factor: {improvement_factor:.1}x");
     println!("Target improvement: 6x");
     println!(
         "Status: {}",
@@ -217,8 +204,8 @@ fn validate_memory_optimization() -> AstResult<()> {
     let cloning_improvement =
         baseline_clone_duration.as_nanos() as f64 / optimized_clone_duration.as_nanos() as f64;
 
-    println!("Value creation improvement: {:.1}x", creation_improvement);
-    println!("Value cloning improvement: {:.1}x", cloning_improvement);
+    println!("Value creation improvement: {creation_improvement:.1}x");
+    println!("Value cloning improvement: {cloning_improvement:.1}x");
     println!("Target improvement: 1.5x (creation), 3x (cloning)");
     println!(
         "Creation status: {}",
@@ -258,7 +245,7 @@ fn validate_cache_effectiveness() -> AstResult<()> {
         let _result = evaluator.evaluate_expression(&complex_expr)?;
     }
 
-    let stats_after_populate = evaluator.cache_stats();
+    let _stats_after_populate = evaluator.cache_stats();
 
     // Second pass: benefit from cache
     for _ in 0..iterations {
@@ -268,7 +255,7 @@ fn validate_cache_effectiveness() -> AstResult<()> {
     let stats_final = evaluator.cache_stats();
     let cache_hit_rate = stats_final.hit_rate();
 
-    println!("Cache hit rate: {:.2}%", cache_hit_rate);
+    println!("Cache hit rate: {cache_hit_rate:.2}%");
     println!("Cache hits: {}", stats_final.hits);
     println!("Cache misses: {}", stats_final.misses);
     println!("Target hit rate: 80-95%");
@@ -318,9 +305,9 @@ fn validate_comprehensive_performance() -> AstResult<()> {
     let stats = evaluator.cache_stats();
 
     println!("Comprehensive performance test:");
-    println!("Total operations: {}", total_ops);
-    println!("Operations per second: {:.0}", ops_per_sec);
-    println!("Total time: {:?}", duration);
+    println!("Total operations: {total_ops}");
+    println!("Operations per second: {ops_per_sec:.0}");
+    println!("Total time: {duration:?}");
     println!("Cache hit rate: {:.2}%", stats.hit_rate() * 100.0);
     println!("Stack evaluations: {}", stats.stack_evals);
     println!("Tail calls: {}", stats.tail_calls);

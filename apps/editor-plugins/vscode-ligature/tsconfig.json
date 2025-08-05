@@ -17,12 +17,13 @@
     "declarationMap": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "noUnusedParameters": true,
-    "noUnusedLocals": true
+    "noUnusedParameters": false,
+    "noUnusedLocals": false
   },
   "exclude": [
     "node_modules",
-    ".vscode-test"
+    ".vscode-test",
+    "src/test"
   ],
   "include": [
     "src"

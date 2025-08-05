@@ -165,15 +165,15 @@ impl GlobalConfig {
         let path = path.as_ref();
         let content = tokio::fs::read_to_string(path).await.map_err(|e| {
             Error::file_system(
-                format!("Failed to read config file: {}", e),
+                format!("Failed to read config file: {e}"),
                 Some(path.to_string_lossy().to_string()),
             )
         })?;
 
         let config: GlobalConfig = if path.extension().and_then(|s| s.to_str()) == Some("json") {
-            serde_json::from_str(&content).map_err(|e| Error::JsonSerialization(e))?
+            serde_json::from_str(&content).map_err(Error::JsonSerialization)?
         } else {
-            serde_yaml::from_str(&content).map_err(|e| Error::YamlSerialization(e))?
+            serde_yaml::from_str(&content).map_err(Error::YamlSerialization)?
         };
 
         Ok(config)
@@ -183,14 +183,14 @@ impl GlobalConfig {
     pub async fn save_to_file<P: AsRef<Path>>(&self, path: P) -> Result<()> {
         let path = path.as_ref();
         let content = if path.extension().and_then(|s| s.to_str()) == Some("json") {
-            serde_json::to_string_pretty(self).map_err(|e| Error::JsonSerialization(e))?
+            serde_json::to_string_pretty(self).map_err(Error::JsonSerialization)?
         } else {
-            serde_yaml::to_string(self).map_err(|e| Error::YamlSerialization(e))?
+            serde_yaml::to_string(self).map_err(Error::YamlSerialization)?
         };
 
         tokio::fs::write(path, content).await.map_err(|e| {
             Error::file_system(
-                format!("Failed to write config file: {}", e),
+                format!("Failed to write config file: {e}"),
                 Some(path.to_string_lossy().to_string()),
             )
         })?;

@@ -2,7 +2,7 @@
 
 use crate::dependency::{install_dependencies, resolve_dependencies_from_manifest};
 use crate::xdg_config::KeyworkXdgConfig;
-use miette::{miette, IntoDiagnostic, Result};
+use miette::{IntoDiagnostic, Result, miette};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -162,8 +162,7 @@ impl Register {
             let full_path = path.join(module_path);
             if !full_path.exists() {
                 result.errors.push(format!(
-                    "Exported module '{}' not found at path: {}",
-                    name, module_path
+                    "Exported module '{name}' not found at path: {module_path}"
                 ));
                 result.valid = false;
             } else {
@@ -195,7 +194,7 @@ impl Register {
             if !exported_modules.contains(&relative_path_string) {
                 result
                     .warnings
-                    .push(format!("Module {} is not exported", relative_path));
+                    .push(format!("Module {relative_path} is not exported"));
             }
         }
 
@@ -208,7 +207,7 @@ impl Register {
                 Err(e) => {
                     result
                         .errors
-                        .push(format!("Dependency validation failed: {}", e));
+                        .push(format!("Dependency validation failed: {e}"));
                     result.valid = false;
                 }
             }
@@ -379,7 +378,7 @@ impl Register {
         }
 
         let result = hasher.finalize();
-        Ok(format!("{:x}", result))
+        Ok(format!("{result:x}"))
     }
 
     pub async fn package(&self, path: &Path, output_path: &Path) -> Result<()> {
@@ -398,8 +397,8 @@ impl Register {
     }
 
     async fn create_archive(&self, source_dir: &Path, output_path: &Path) -> Result<()> {
-        use flate2::write::GzEncoder;
         use flate2::Compression;
+        use flate2::write::GzEncoder;
         use tar::Builder;
 
         let file = std::fs::File::create(output_path)

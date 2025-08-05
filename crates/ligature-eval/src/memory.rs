@@ -42,7 +42,6 @@ impl MemoryTracker {
         }
     }
 
-
     /// Set the baseline memory usage for delta calculations.
     pub fn set_baseline(&mut self) -> Result<(), MemoryError> {
         self.baseline = Some(get_current_memory_stats()?);
@@ -58,11 +57,10 @@ impl MemoryTracker {
         self.peak_memory = self.peak_memory.max(current.rss);
 
         // Calculate delta from baseline if available
-        let delta = if let Some(baseline) = &self.baseline {
-            Some(current.rss as isize - baseline.rss as isize)
-        } else {
-            None
-        };
+        let delta = self
+            .baseline
+            .as_ref()
+            .map(|baseline| current.rss as isize - baseline.rss as isize);
 
         Ok(MemoryStats {
             rss: current.rss,
@@ -76,11 +74,10 @@ impl MemoryTracker {
     pub fn get_peak_usage(&self) -> Result<MemoryStats, MemoryError> {
         let current = get_current_memory_stats()?;
 
-        let delta = if let Some(baseline) = &self.baseline {
-            Some(self.peak_memory as isize - baseline.rss as isize)
-        } else {
-            None
-        };
+        let delta = self
+            .baseline
+            .as_ref()
+            .map(|baseline| self.peak_memory as isize - baseline.rss as isize);
 
         Ok(MemoryStats {
             rss: current.rss,
@@ -100,7 +97,8 @@ impl Default for MemoryTracker {
     fn default() -> Self {
         Self::new()
     }
-}/// Get current memory usage statistics for the current process.
+}
+/// Get current memory usage statistics for the current process.
 pub fn get_current_memory_stats() -> Result<MemoryStats, MemoryError> {
     use sysinfo::{Pid, ProcessExt, SystemExt};
 

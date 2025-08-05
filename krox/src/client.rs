@@ -1,10 +1,10 @@
 //! Main client for executing Ligature programs.
 
 use crate::{
+    ClientConfig, ExecutionMode, ExecutionResult,
     cache::Cache,
     error::{Error, Result},
     executor::{Executor, HttpExecutor, NativeExecutor},
-    ClientConfig, ExecutionMode, ExecutionResult,
 };
 use ligature_ast::Program;
 use std::path::Path;

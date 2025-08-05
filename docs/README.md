@@ -23,13 +23,17 @@ Welcome to the Ligature documentation. This guide will help you get started with
 
 ## Architecture
 
-- **[Architecture Overview](architecture/)** - System design and components
-- **[Language Specification](language-specification/)** - Formal language definition
+- **[Architecture Overview](architecture/README.md)** - Complete system design and components
+- **[Developer Guide](developer-guide.md)** - Comprehensive guide for contributors and integrators
+- **[API Reference](api-reference.md)** - Complete API documentation for all components
 - **[Technical Analysis](analysis/)** - Deep technical analysis and project tracking
 
 ## Development
 
+- **[Developer Guide](developer-guide.md)** - Comprehensive guide for contributors and integrators
+- **[API Reference](api-reference.md)** - Complete API documentation for all components
 - **[Contributing Guidelines](../../CONTRIBUTING.md)** - How to contribute to Ligature
+- **[Justfile Development Guide](.development/justfile-guide.md)** - Streamlined development workflows
 - **[Development Setup](../../README.md#development-setup)** - Setting up your development environment
 
 ## Language Features
@@ -112,6 +116,8 @@ Welcome to the Ligature documentation. This guide will help you get started with
 
 ## Recent Achievements (January 2025)
 
+- ✅ **Production Readiness**: **COMPLETED** - Complete production deployment guide, API documentation, and operational procedures
+- ✅ **Developer Documentation**: **COMPLETED** - Comprehensive developer guide and architecture documentation
 - ✅ **LSP Symbol Finding Implementation**: **COMPLETED** - Professional-grade cross-file symbol finding, import resolution integration, and workspace symbol search
 - ✅ **LSP Server Code Quality**: **COMPLETED** - Comprehensive code quality improvements, structured error handling, and integration tests
 - ✅ **Type-Level Computation**: **COMPLETED** - Complete type-level programming system with advanced subtyping and dependent types
@@ -136,11 +142,8 @@ Current performance baseline (after optimizations):
 
 ## Getting Help
 
-- Check the **[FAQ](user-guide/faq.md)** for common questions
-- Look at **[Error Messages](user-guide/error-messages.md)** for debugging help
-- Explore **[Real-world Examples](user-guide/examples.md)** for practical guidance
-- Read the **[Performance Guide](user-guide/performance-guide.md)** for optimization tips
-- Learn about **[Cacophony CLI](user-guide/cacophony-cli.md)** for orchestration
-- Discover **[IDE Integration](user-guide/ide-integration.md)** for development tools
-- Explore **[Type-Level Computation](user-guide/type-level-computation.md)** for advanced features
-- Join our [Discussions](https://github.com/ligature-lang/ligature/discussions) for community support
+- **For Users**: Check the **[User Guide](user-guide/)** for complete documentation
+- **For Developers**: Read the **[Developer Guide](developer-guide.md)** for integration and contribution
+- **For API Reference**: See the **[API Reference](api-reference.md)** for all public interfaces
+- **For Architecture**: Explore the **[Architecture Overview](architecture/README.md)** for system design
+- **For Community**: Join our [Discussions](https://github.com/ligature-lang/ligature/discussions) for support

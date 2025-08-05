@@ -31,10 +31,7 @@ fn main() -> AstResult<()> {
         evaluator.pattern_matches_with_bindings(&current_pattern, &current_value, &mut bindings)?;
     let duration = start.elapsed();
 
-    println!(
-        "✓ Deep nested pattern matching: {} (took {:?})",
-        matches_deep, duration
-    );
+    println!("✓ Deep nested pattern matching: {matches_deep} (took {duration:?})");
     println!("✓ Variable binding 'x' = {:?}", bindings.get("x"));
 
     // Test 2: Union pattern matching with complex nested structures
@@ -95,7 +92,7 @@ fn main() -> AstResult<()> {
         &complex_union,
         &mut complex_bindings,
     )?;
-    println!("✓ Complex nested pattern matching: {}", matches_complex);
+    println!("✓ Complex nested pattern matching: {matches_complex}");
     println!(
         "✓ Variable binding 'code' = {:?}",
         complex_bindings.get("code")
@@ -120,7 +117,7 @@ fn main() -> AstResult<()> {
     );
     let loading_value = Value::union("Loading".to_string(), None, Span::default());
 
-    let patterns = vec![
+    let patterns = [
         Pattern::Union {
             variant: "Success".to_string(),
             value: Some(Box::new(Pattern::Variable("msg".to_string()))),
@@ -177,8 +174,8 @@ fn main() -> AstResult<()> {
     let matches_42_42 = evaluator.pattern_matches(&literal_42_pattern, &some_42)?;
     let matches_42_100 = evaluator.pattern_matches(&literal_42_pattern, &some_100)?;
 
-    println!("✓ Some(42) pattern matches Some(42): {}", matches_42_42);
-    println!("✓ Some(42) pattern matches Some(100): {}", matches_42_100);
+    println!("✓ Some(42) pattern matches Some(42): {matches_42_42}");
+    println!("✓ Some(42) pattern matches Some(100): {matches_42_100}");
 
     // Test 5: Union pattern matching with wildcards
     println!("\n=== Test 5: Wildcard Patterns ===");
@@ -195,15 +192,9 @@ fn main() -> AstResult<()> {
         &Value::union("None".to_string(), None, Span::default()),
     )?;
 
-    println!(
-        "✓ Some(_) pattern matches Some(42): {}",
-        matches_wildcard_42
-    );
-    println!(
-        "✓ Some(_) pattern matches Some(100): {}",
-        matches_wildcard_100
-    );
-    println!("✓ Some(_) pattern matches None: {}", matches_wildcard_none);
+    println!("✓ Some(_) pattern matches Some(42): {matches_wildcard_42}");
+    println!("✓ Some(_) pattern matches Some(100): {matches_wildcard_100}");
+    println!("✓ Some(_) pattern matches None: {matches_wildcard_none}");
 
     // Test 6: Union pattern matching with list patterns
     println!("\n=== Test 6: List Pattern Integration ===");
@@ -245,7 +236,7 @@ fn main() -> AstResult<()> {
     let mut list_bindings = std::collections::HashMap::new();
     let matches_list =
         evaluator.pattern_matches_with_bindings(&list_pattern, &list_value, &mut list_bindings)?;
-    println!("✓ List with union patterns matching: {}", matches_list);
+    println!("✓ List with union patterns matching: {matches_list}");
     println!(
         "✓ Variable binding 'first' = {:?}",
         list_bindings.get("first")

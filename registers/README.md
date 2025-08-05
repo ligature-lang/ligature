@@ -23,7 +23,7 @@ registers/
 
 ### Importing Modules
 
-```ligature
+```ocaml
 -- Import entire module
 import stdlib.core
 
