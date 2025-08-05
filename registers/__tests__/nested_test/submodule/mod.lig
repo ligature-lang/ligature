@@ -1,0 +1,6 @@
+module Submodule;
+
+let submodule_value = 42;
+let submodule_string = "Hello from submodule";
+
+export submodule_value, submodule_string; 

@@ -136,7 +136,7 @@ fn demo_function_inlining() {
     println!("   Pure function should be inlined: {}", should_inline);
 
     let stats = inliner.stats();
-    println!("   Inlining statistics: {:?}", stats);
+    println!("   Inlining statistics: {stats:?}");
     println!();
 }
 
@@ -172,16 +172,16 @@ fn demo_closure_capture_optimization() {
 
     let analysis = optimizer.analyze_captures(&closure_expr, &env);
 
-    println!("   Captured variables: {:?}", analysis.captured_vars);
-    println!("   Unused captures: {:?}", analysis.unused_captures);
-    println!("   Free variables: {:?}", analysis.free_vars);
+    println!("   Captured variables: {analysis.captured_vars:?}");
+    println!("   Unused captures: {analysis.unused_captures:?}");
+    println!("   Free variables: {analysis.free_vars:?}");
     println!(
         "   Optimization opportunities: {}",
         analysis.optimization_opportunities.len()
     );
 
     for opportunity in &analysis.optimization_opportunities {
-        println!("     - {:?}", opportunity);
+        println!("     - {opportunity:?}");
     }
     println!();
 }
@@ -264,7 +264,7 @@ fn demo_generational_gc() {
     }
 
     let allocation_time = start.elapsed();
-    println!("   Allocation time: {:?}", allocation_time);
+    println!("   Allocation time: {allocation_time:?}");
 
     let stats = gc.stats();
     println!("   Minor collections: {}", stats.minor_collections);
@@ -320,8 +320,8 @@ fn demo_integrated_performance() {
 
     match result {
         Ok(value) => {
-            println!("   Result: {:?}", value);
-            println!("   Evaluation time: {:?}", evaluation_time);
+            println!("   Result: {value:?}");
+            println!("   Evaluation time: {evaluation_time:?}");
 
             // Print optimization statistics
             let cache_stats = evaluator.cache_stats();
@@ -348,7 +348,7 @@ fn demo_integrated_performance() {
             );
         }
         Err(e) => {
-            println!("   Error: {:?}", e);
+            println!("   Error: {e:?}");
         }
     }
     println!();

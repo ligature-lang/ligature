@@ -36,11 +36,13 @@ async fn example_enhanced_diagnostics() {
     println!("-------------------------------");
 
     // Create enhanced diagnostics provider with custom configuration
-    let mut config = EnhancedDiagnosticsConfig::default();
-    config.enable_detailed_explanations = true;
-    config.enable_fix_suggestions = true;
-    config.enable_security_warnings = true;
-    config.enable_style_suggestions = true;
+    let config = EnhancedDiagnosticsConfig {
+        enable_detailed_explanations: true,
+        enable_fix_suggestions: true,
+        enable_security_warnings: true,
+        enable_style_suggestions: true,
+        ..Default::default()
+    };
 
     let mut diagnostics = EnhancedDiagnosticsProvider::with_config(config);
 
@@ -86,7 +88,7 @@ match someValue of
                 diagnostic
                     .code
                     .as_ref()
-                    .map(|code| format!("{:?}", code))
+                    .map(|code| format!("{code:?}"))
                     .unwrap_or_else(|| "UNKNOWN".to_string()),
                 diagnostic.message
             );
@@ -101,12 +103,14 @@ async fn example_enhanced_completion() {
     println!("-------------------------------");
 
     // Create enhanced completion provider with custom configuration
-    let mut config = EnhancedCompletionConfig::default();
-    config.enable_context_aware = true;
-    config.enable_type_aware = true;
-    config.enable_fuzzy_matching = true;
-    config.enable_auto_import = true;
-    config.enable_snippets = true;
+    let config = EnhancedCompletionConfig {
+        enable_context_aware: true,
+        enable_type_aware: true,
+        enable_fuzzy_matching: true,
+        enable_auto_import: true,
+        enable_snippets: true,
+        ..Default::default()
+    };
 
     let completion = EnhancedCompletionProvider::with_config(config);
 
@@ -153,7 +157,7 @@ match someValue of
     ];
 
     for (context_name, code, position) in contexts {
-        println!("\n  Testing {}:", context_name);
+        println!("\n  Testing {context_name}:");
 
         let completions = completion
             .provide_enhanced_completion("file:///example.lig", code, position, None)

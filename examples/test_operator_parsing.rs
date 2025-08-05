@@ -11,7 +11,7 @@ fn main() -> AstResult<()> {
     println!("Test 1: Simple <= operator");
     match parser.parse_program(source1) {
         Ok(_program) => println!("✓ Simple <= operator test passed"),
-        Err(e) => println!("✗ Error: {:?}", e),
+        Err(e) => println!("✗ Error: {e:?}"),
     }
 
     // Test 2: <= in comparison
@@ -19,7 +19,7 @@ fn main() -> AstResult<()> {
     println!("Test 2: <= in comparison");
     match parser.parse_program(source2) {
         Ok(_program) => println!("✓ <= in comparison test passed"),
-        Err(e) => println!("✗ Error: {:?}", e),
+        Err(e) => println!("✗ Error: {e:?}"),
     }
 
     // Test 3: <= in pattern guard
@@ -32,7 +32,7 @@ fn main() -> AstResult<()> {
     println!("Test 3: <= in pattern guard");
     match parser.parse_program(source3) {
         Ok(_program) => println!("✓ <= in pattern guard test passed"),
-        Err(e) => println!("✗ Error: {:?}", e),
+        Err(e) => println!("✗ Error: {e:?}"),
     }
 
     // Test 4: Complex <= expression
@@ -45,7 +45,7 @@ fn main() -> AstResult<()> {
     println!("Test 4: Complex <= expression");
     match parser.parse_program(source4) {
         Ok(_program) => println!("✓ Complex <= expression test passed"),
-        Err(e) => println!("✗ Error: {:?}", e),
+        Err(e) => println!("✗ Error: {e:?}"),
     }
 
     // Test 5: Multiple <= operators
@@ -58,7 +58,7 @@ fn main() -> AstResult<()> {
     println!("Test 5: Multiple <= operators");
     match parser.parse_program(source5) {
         Ok(_program) => println!("✓ Multiple <= operators test passed"),
-        Err(e) => println!("✗ Error: {:?}", e),
+        Err(e) => println!("✗ Error: {e:?}"),
     }
 
     Ok(())

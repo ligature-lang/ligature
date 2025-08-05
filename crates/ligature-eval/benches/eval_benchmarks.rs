@@ -242,7 +242,7 @@ fn bench_large_eval_expressions(c: &mut Criterion) {
     let large_record = format!(
         "{{{}}}",
         (1..25)
-            .map(|i| format!("x{}: {}", i, i))
+            .map(|i| format!("x{i}: {i}"))
             .collect::<Vec<_>>()
             .join(", ")
     );

@@ -100,19 +100,19 @@ jobs:
           echo "changelog<<EOF" >> $GITHUB_OUTPUT
           echo "$CHANGELOG" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
+  load-crates:
+    name: Load Crate Configuration
+    uses: ./.github/workflows/shared-crates.yml
+
   publish:
     name: Publish to crates.io
     runs-on: ubuntu-latest
-    needs: [pre-release-checks, validate-version, generate-changelog]
+    environment: crates.io
+    needs:
+      [pre-release-checks, validate-version, generate-changelog, load-crates]
     strategy:
       matrix:
-        crate:
-          # CLIs
-          - cacophony
-          - keywork
-          - reed
-          # Rust client
-          - krox
+        crate: ${{ fromJSON(needs.load-crates.outputs.publish-crates) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -166,7 +166,7 @@ jobs:
 
             ```bash
             # Install the CLI
-            cargo install ligature-cli
+            cargo install cacophony
 
             # Or add to your project
             cargo add ligature-ast ligature-parser ligature-types ligature-eval

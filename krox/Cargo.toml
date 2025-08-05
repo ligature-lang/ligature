@@ -49,6 +49,12 @@ tempfile = "3.8"
 # CLI dependencies
 clap = { version = "4.4", features = ["derive"], optional = true }
 
+# Language bindings
+pyo3 = { version = "0.24", features = ["auto-initialize"], optional = true }
+napi = { version = "2.0", optional = true }
+napi-derive = { version = "2.0", optional = true }
+jni = { version = "0.21", optional = true }
+
 [dev-dependencies]
 tokio-test = "0.4"
 tempfile = "3.8"
@@ -58,7 +64,7 @@ default = ["native", "http", "cli"]
 native = []  # Native execution via ligature-cli
 http = ["reqwest"]  # HTTP-based execution
 cli = ["clap"]  # Command-line interface
-python = []  # Python bindings
-node = []  # Node.js bindings
-java = []  # Java bindings
+python = ["pyo3"]  # Python bindings
+node = ["napi", "napi-derive"]  # Node.js bindings
+java = ["jni"]  # Java bindings
 go = []  # Go bindings 

@@ -601,6 +601,7 @@ mod tests {
     use serde_json::json;
 
     // Mock types for testing
+    #[allow(dead_code)]
     pub struct MockCollection {
         name: String,
         programs: Vec<MockProgram>,
@@ -620,25 +621,30 @@ mod tests {
             });
         }
 
+        #[allow(dead_code)]
         fn name(&self) -> &str {
             &self.name
         }
 
+        #[allow(dead_code)]
         fn programs(&self) -> &[MockProgram] {
             &self.programs
         }
     }
 
+    #[allow(dead_code)]
     pub struct MockProgram {
         name: String,
     }
 
     impl MockProgram {
+        #[allow(dead_code)]
         fn name(&self) -> &str {
             &self.name
         }
     }
 
+    #[allow(dead_code)]
     pub struct MockEnvironment {
         name: String,
         variables: HashMap<String, Value>,
@@ -698,7 +704,7 @@ mod tests {
 
         assert_eq!(plugin.config.workspace, Some("test-workspace".to_string()));
         assert_eq!(plugin.config.backend, Some("s3".to_string()));
-        assert_eq!(plugin.config.dry_run, true);
+        assert!(plugin.config.dry_run);
         assert_eq!(plugin.config.timeout, 1200);
         assert_eq!(plugin.config.retries, 5);
         assert_eq!(

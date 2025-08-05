@@ -1,4 +1,3 @@
-use ligature_ast::ExprKind;
 use ligature_parser::parse_expression;
 
 fn main() {
@@ -38,7 +37,7 @@ fn main() {
 
     for (i, (expression, expected)) in test_cases.iter().enumerate() {
         println!("Test {}: {}", i + 1, expression);
-        println!("Expected: {}", expected);
+        println!("Expected: {expected}");
 
         match parse_expression(expression) {
             Ok(expr) => {
@@ -47,7 +46,7 @@ fn main() {
                 passed += 1;
             }
             Err(e) => {
-                println!("✗ Parse error: {}", e);
+                println!("✗ Parse error: {e}");
                 failed += 1;
             }
         }
@@ -55,8 +54,8 @@ fn main() {
     }
 
     println!("Precedence Fixes Summary:");
-    println!("  Passed: {}", passed);
-    println!("  Failed: {}", failed);
+    println!("  Passed: {passed}");
+    println!("  Failed: {failed}");
     println!("  Total: {}", passed + failed);
 
     if failed == 0 {

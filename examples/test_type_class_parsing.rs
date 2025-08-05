@@ -11,7 +11,7 @@ fn main() {
             println!("✅ Parsing successful!");
             println!("Declarations: {}", program.declarations.len());
             for decl in &program.declarations {
-                println!("Declaration: {:?}", decl);
+                println!("Declaration: {decl:?}");
             }
         }
         Err(e) => {

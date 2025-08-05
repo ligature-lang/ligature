@@ -79,8 +79,8 @@ fn main() {
     }
 
     println!("\n📊 Test Results:");
-    println!("   Passed: {}", passed);
-    println!("   Failed: {}", failed);
+    println!("   Passed: {passed}");
+    println!("   Failed: {failed}");
     println!("   Total: {}", passed + failed);
 
     if failed == 0 {
@@ -124,7 +124,7 @@ fn test_basic_type_inference() -> bool {
                                         }
                                     }
                                     Err(e) => {
-                                        println!("     Type inference failed: {:?}", e);
+                                        println!("     Type inference failed: {e:?}");
                                         return false;
                                     }
                                 }
@@ -132,13 +132,13 @@ fn test_basic_type_inference() -> bool {
                         }
                     }
                     Err(e) => {
-                        println!("     Type checking failed: {:?}", e);
+                        println!("     Type checking failed: {e:?}");
                         return false;
                     }
                 }
             }
             Err(e) => {
-                println!("     Parsing failed: {:?}", e);
+                println!("     Parsing failed: {e:?}");
                 return false;
             }
         }
@@ -182,7 +182,7 @@ fn test_enhanced_list_type_inference() -> bool {
                                         }
                                     }
                                     Err(e) => {
-                                        println!("     Type inference failed: {:?}", e);
+                                        println!("     Type inference failed: {e:?}");
                                         return false;
                                     }
                                 }
@@ -190,13 +190,13 @@ fn test_enhanced_list_type_inference() -> bool {
                         }
                     }
                     Err(e) => {
-                        println!("     Type checking failed: {:?}", e);
+                        println!("     Type checking failed: {e:?}");
                         return false;
                     }
                 }
             }
             Err(e) => {
-                println!("     Parsing failed: {:?}", e);
+                println!("     Parsing failed: {e:?}");
                 return false;
             }
         }
@@ -219,13 +219,13 @@ fn test_polymorphic_let_bindings() -> bool {
                         // Polymorphic functions should type check successfully
                     }
                     Err(e) => {
-                        println!("     Type checking failed: {:?}", e);
+                        println!("     Type checking failed: {e:?}");
                         return false;
                     }
                 }
             }
             Err(e) => {
-                println!("     Parsing failed: {:?}", e);
+                println!("     Parsing failed: {e:?}");
                 return false;
             }
         }
@@ -258,16 +258,16 @@ fn test_enhanced_error_reporting() -> bool {
                     Err(e) => {
                         // Check that error messages are enhanced
                         let error_str = e.to_string();
-                        println!("     Got error: {}", error_str);
+                        println!("     Got error: {error_str}");
                         if !error_str.contains("Type mismatch") && !error_str.contains("type") {
-                            println!("     Error message not enhanced: {}", error_str);
+                            println!("     Error message not enhanced: {error_str}");
                             return false;
                         }
                     }
                 }
             }
             Err(e) => {
-                println!("     Parsing failed: {:?}", e);
+                println!("     Parsing failed: {e:?}");
                 return false;
             }
         }
@@ -287,13 +287,13 @@ fn test_complex_type_inference() -> bool {
                         // Complex programs should type check successfully
                     }
                     Err(e) => {
-                        println!("     Type checking failed: {:?}", e);
+                        println!("     Type checking failed: {e:?}");
                         return false;
                     }
                 }
             }
             Err(e) => {
-                println!("     Parsing failed: {:?}", e);
+                println!("     Parsing failed: {e:?}");
                 return false;
             }
         }

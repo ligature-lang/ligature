@@ -138,7 +138,7 @@ type Option = Some a | None;
 type UserId = Integer;
 type Email = String;
 
-// Type classes (future)
+// Type classes
 class Show a {
     show: a -> String;
 }

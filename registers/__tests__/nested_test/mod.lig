@@ -1,0 +1,6 @@
+module NestedTest;
+
+let test_value = 100;
+let test_message = "Hello from nested test";
+
+export test_value, test_message; 

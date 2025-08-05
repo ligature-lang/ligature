@@ -529,7 +529,7 @@ enabled = true
             }
             ConfigChangeEvent::Modified(path) => {
                 println!("   ✏️  Configuration file modified: {}", path.display());
-                println!("      New configuration: {:?}", config);
+                println!("      New configuration: {config:?}");
             }
             ConfigChangeEvent::Deleted(path) => {
                 println!("   🗑️  Configuration file deleted: {}", path.display());

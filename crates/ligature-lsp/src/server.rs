@@ -1702,57 +1702,6 @@ pub async fn run_server() {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::Arc;
-    use tower_lsp::lsp_types::*;
-
-    #[tokio::test]
-    async fn test_server_creation() {
-        // Test server creation without requiring a mock client
-        // This test verifies that the server can be created successfully
-        assert!(true); // Placeholder test
-    }
-
-    #[tokio::test]
-    async fn test_document_management() {
-        // Test document management functionality
-        // This test verifies that document operations work correctly
-        assert!(true); // Placeholder test
-    }
-
-    #[tokio::test]
-    async fn test_configuration_validation() {
-        // Test configuration validation functionality
-        // This test verifies that configuration validation works correctly
-        assert!(true); // Placeholder test
-    }
-
-    #[tokio::test]
-    async fn test_graceful_shutdown() {
-        // Test graceful shutdown functionality
-        // This test verifies that graceful shutdown works correctly
-        assert!(true); // Placeholder test
-    }
-
-    #[tokio::test]
-    async fn test_large_file_performance() {
-        // Test large file performance
-        // This test verifies that large files are handled efficiently
-        assert!(true); // Placeholder test
-    }
-
-    #[tokio::test]
-    async fn test_cache_cleanup() {
-        // Test cache cleanup functionality
-        // This test verifies that document cache cleanup works correctly
-        assert!(true); // Placeholder test
-    }
-
-    #[tokio::test]
-    async fn test_error_handling() {
-        // Test error handling functionality
-        // This test verifies that error handling works correctly
-        assert!(true); // Placeholder test
-    }
 
     #[tokio::test]
     async fn test_xdg_configuration_handling() {

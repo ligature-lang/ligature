@@ -251,7 +251,7 @@ mod tests {
         assert!(loaded_config.is_some());
 
         let loaded = loaded_config.unwrap();
-        assert_eq!(loaded.enable_workspace_diagnostics, true);
+        assert!(loaded.enable_workspace_diagnostics);
         assert_eq!(loaded.max_workspace_files, 1000);
         assert!(loaded.include_patterns.contains(&"**/*.lig".to_string()));
 

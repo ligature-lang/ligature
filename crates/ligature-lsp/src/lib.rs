@@ -160,86 +160,22 @@ pub fn create_server(client: tower_lsp::Client) -> LigatureLspServer {
 // pub fn create_enhanced_server(client: tower_lsp::Client) -> EnhancedLigatureLspServer {
 //     EnhancedLigatureLspServer::new(client)
 // }
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn test_completion_provider_creation() {
-        let _provider = CompletionProvider::new();
-        // Just test that it can be created
-        assert!(true);
-    }
-
-    // #[test]
-    // fn test_enhanced_completion_provider_creation() {
-    //     let _provider = EnhancedCompletionProvider::new();
-    //     // Just test that it can be created
-    //     assert!(true);
-    // }
-
-    #[test]
-    fn test_hover_provider_creation() {
-        let _provider = HoverProvider::new();
-        // Just test that it can be created
-        assert!(true);
-    }
-
-    #[test]
-    fn test_diagnostics_provider_creation() {
-        let _provider = DiagnosticsProvider::new();
-        // Just test that it can be created
-        assert!(true);
-    }
-
-    // #[test]
-    // fn test_enhanced_diagnostics_provider_creation() {
-    //     let _provider = EnhancedDiagnosticsProvider::new();
-    //     // Just test that it can be created
-    //     assert!(true);
-    // }
-
-    #[test]
-    fn test_references_provider_creation() {
-        let _provider = ReferencesProvider::new();
-        // Just test that it can be created
-        assert!(true);
-    }
-
-    #[test]
-    fn test_symbols_provider_creation() {
-        let _provider = SymbolsProvider::new();
-        // Just test that it can be created
-        assert!(true);
-    }
-
-    #[test]
-    fn test_definition_provider_creation() {
-        let _provider = DefinitionProvider::new();
-        // Just test that it can be created
-        assert!(true);
-    }
-
-    #[test]
-    fn test_code_actions_provider_creation() {
-        let _provider = CodeActionsProvider::new();
-        // Just test that it can be created
-        assert!(true);
-    }
-
-    #[test]
-    fn test_formatting_provider_creation() {
-        let _provider = FormattingProvider::new();
-        // Just test that it can be created
-        assert!(true);
-    }
-
-    #[test]
-    fn test_rename_provider_creation() {
-        let _provider = RenameProvider::new();
-        // Just test that it can be created
-        assert!(true);
+    fn test_provider_creation() {
+        // Test that all providers can be created successfully
+        let _completion = CompletionProvider::new();
+        let _hover = HoverProvider::new();
+        let _diagnostics = DiagnosticsProvider::new();
+        let _references = ReferencesProvider::new();
+        let _symbols = SymbolsProvider::new();
+        let _definition = DefinitionProvider::new();
+        let _code_actions = CodeActionsProvider::new();
+        let _formatting = FormattingProvider::new();
+        let _rename = RenameProvider::new();
     }
 
     #[tokio::test]
@@ -274,23 +210,17 @@ mod tests {
         let _code_actions = CodeActionsProvider::new();
         let _formatting = FormattingProvider::new();
         let _rename = RenameProvider::new();
-
-        // Test that the server can be created with a mock client
-        // We'll skip the actual client creation for now since it requires private APIs
-        assert!(true);
     }
 
     #[tokio::test]
     async fn test_workspace_support() {
         // Test workspace folder management
-        use lsp_types::WorkspaceFolder;
 
         // Test that we can create providers that support workspace operations
         let _references = ReferencesProvider::new();
         let _symbols = SymbolsProvider::new();
 
         // Test that providers can be created and used
-        assert!(true);
     }
 
     #[tokio::test]

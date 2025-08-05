@@ -319,7 +319,6 @@ impl KeyworkXdgConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::tempdir;
 
     #[tokio::test]
     async fn test_keywork_config_creation() {
@@ -337,8 +336,7 @@ mod tests {
         let log_level = config.log_level();
         assert!(
             log_level == "info" || log_level == "debug",
-            "Expected 'info' or 'debug', got '{}'",
-            log_level
+            "Expected 'info' or 'debug', got '{log_level}'"
         );
         assert!(config.structured_logging());
     }

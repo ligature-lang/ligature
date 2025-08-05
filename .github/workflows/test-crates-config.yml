@@ -1,0 +1,51 @@
+name: Test Crates Configuration
+
+on:
+  workflow_dispatch: # Manual trigger only for testing
+
+jobs:
+  test-config:
+    name: Test Configuration Loading
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Test YAML parsing
+        run: |
+          echo "Testing YAML configuration parsing..."
+
+          # Test that the file exists and is valid YAML
+          if ! yq eval '.' .github/crates.config.yml > /dev/null; then
+            echo "Error: Invalid YAML in .github/crates.config.yml"
+            exit 1
+          fi
+
+          # Test that all required sections exist
+          if ! yq eval '.crates' .github/crates.config.yml > /dev/null; then
+            echo "Error: Missing 'crates' section"
+            exit 1
+          fi
+
+          if ! yq eval '.publish_crates' .github/crates.config.yml > /dev/null; then
+            echo "Error: Missing 'publish_crates' section"
+            exit 1
+          fi
+
+          if ! yq eval '.coverage_crates' .github/crates.config.yml > /dev/null; then
+            echo "Error: Missing 'coverage_crates' section"
+            exit 1
+          fi
+
+          echo "✅ YAML configuration is valid"
+
+          # Display the parsed configuration
+          echo "📋 Crate Configuration:"
+          echo "Main crates:"
+          yq eval '.crates[]' .github/crates.config.yml
+          echo ""
+          echo "Publish crates:"
+          yq eval '.publish_crates[]' .github/crates.config.yml
+          echo ""
+          echo "Coverage crates:"
+          yq eval '.coverage_crates[]' .github/crates.config.yml

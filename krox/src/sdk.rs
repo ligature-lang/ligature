@@ -8,6 +8,7 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 
 /// A thread-safe wrapper around the Krox client for use in language bindings.
+#[derive(Clone)]
 pub struct SdkClient {
     client: Arc<Mutex<Client>>,
 }
@@ -48,11 +49,12 @@ impl SdkClient {
 
 /// Python bindings for Krox.
 #[cfg(feature = "python")]
+#[allow(unsafe_op_in_unsafe_fn)]
+#[allow(non_local_definitions)]
 pub mod python {
     use super::*;
     use pyo3::prelude::*;
     use pyo3::types::PyDict;
-    use serde_json::Value as JsonValue;
 
     #[pyclass]
     pub struct PyKroxClient {
@@ -60,8 +62,12 @@ pub mod python {
     }
 
     #[pymethods]
+    #[allow(non_local_definitions)]
+    #[allow(clippy::missing_safety_doc)]
+    #[allow(unsafe_op_in_unsafe_fn)]
     impl PyKroxClient {
         #[new]
+        #[allow(unsafe_op_in_unsafe_fn)]
         fn new(mode: &str) -> PyResult<Self> {
             let execution_mode = match mode {
                 "native" => ExecutionMode::Native,
@@ -69,8 +75,7 @@ pub mod python {
                 "in-process" => ExecutionMode::InProcess,
                 _ => {
                     return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(format!(
-                        "Invalid execution mode: {}",
-                        mode
+                        "Invalid execution mode: {mode}"
                     )));
                 }
             };
@@ -83,6 +88,8 @@ pub mod python {
             Ok(Self { client })
         }
 
+        #[allow(unsafe_op_in_unsafe_fn)]
+        #[allow(deprecated)]
         fn execute_file(&self, path: String) -> PyResult<PyObject> {
             let client = self.client.clone();
             let result = tokio::runtime::Runtime::new()
@@ -91,23 +98,23 @@ pub mod python {
                 .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
 
             // Convert result to Python dict
-            let gil = Python::acquire_gil();
-            let py = gil.python();
-            let dict = PyDict::new(py);
+            Python::with_gil(|py| {
+                let dict = PyDict::new(py);
 
-            // Convert value to JSON for Python
-            let json_value: JsonValue = serde_json::to_value(&result.value)
-                .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+                // Convert value to a simple string representation for now
+                let value_str = format!("{:?}", result.value);
+                dict.set_item("value", value_str)?;
+                dict.set_item("duration", result.metadata.duration.as_secs_f64())?;
+                dict.set_item("cached", result.metadata.cached)?;
+                dict.set_item("mode", format!("{}", result.metadata.mode))?;
+                dict.set_item("warnings", result.metadata.warnings)?;
 
-            dict.set_item("value", json_value)?;
-            dict.set_item("duration", result.metadata.duration.as_secs_f64())?;
-            dict.set_item("cached", result.metadata.cached)?;
-            dict.set_item("mode", format!("{}", result.metadata.mode))?;
-            dict.set_item("warnings", result.metadata.warnings)?;
-
-            Ok(dict.to_object(py))
+                Ok(dict.to_object(py))
+            })
         }
 
+        #[allow(unsafe_op_in_unsafe_fn)]
+        #[allow(deprecated)]
         fn execute_source(&self, source: String) -> PyResult<PyObject> {
             let client = self.client.clone();
             let result = tokio::runtime::Runtime::new()
@@ -116,23 +123,22 @@ pub mod python {
                 .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
 
             // Convert result to Python dict
-            let gil = Python::acquire_gil();
-            let py = gil.python();
-            let dict = PyDict::new(py);
+            Python::with_gil(|py| {
+                let dict = PyDict::new(py);
 
-            // Convert value to JSON for Python
-            let json_value: JsonValue = serde_json::to_value(&result.value)
-                .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
+                // Convert value to a simple string representation for now
+                let value_str = format!("{:?}", result.value);
+                dict.set_item("value", value_str)?;
+                dict.set_item("duration", result.metadata.duration.as_secs_f64())?;
+                dict.set_item("cached", result.metadata.cached)?;
+                dict.set_item("mode", format!("{}", result.metadata.mode))?;
+                dict.set_item("warnings", result.metadata.warnings)?;
 
-            dict.set_item("value", json_value)?;
-            dict.set_item("duration", result.metadata.duration.as_secs_f64())?;
-            dict.set_item("cached", result.metadata.cached)?;
-            dict.set_item("mode", format!("{}", result.metadata.mode))?;
-            dict.set_item("warnings", result.metadata.warnings)?;
-
-            Ok(dict.to_object(py))
+                Ok(dict.to_object(py))
+            })
         }
 
+        #[allow(deprecated)]
         fn cache_stats(&self) -> PyResult<Option<PyObject>> {
             let client = self.client.clone();
             let stats = tokio::runtime::Runtime::new()
@@ -141,18 +147,18 @@ pub mod python {
                 .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
 
             if let Some(stats) = stats {
-                let gil = Python::acquire_gil();
-                let py = gil.python();
-                let dict = PyDict::new(py);
+                Python::with_gil(|py| {
+                    let dict = PyDict::new(py);
 
-                dict.set_item("total_entries", stats.total_entries)?;
-                dict.set_item("hits", stats.hits)?;
-                dict.set_item("misses", stats.misses)?;
-                dict.set_item("hit_rate", stats.hit_rate)?;
-                dict.set_item("total_size", stats.total_size)?;
-                dict.set_item("cache_dir", stats.cache_dir)?;
+                    dict.set_item("total_entries", stats.total_entries)?;
+                    dict.set_item("hits", stats.hits)?;
+                    dict.set_item("misses", stats.misses)?;
+                    dict.set_item("hit_rate", stats.hit_rate)?;
+                    dict.set_item("total_size", stats.total_size)?;
+                    dict.set_item("cache_dir", stats.cache_dir)?;
 
-                Ok(Some(dict.to_object(py)))
+                    Ok(Some(dict.to_object(py)))
+                })
             } else {
                 Ok(None)
             }
@@ -171,7 +177,7 @@ pub mod python {
 
     /// Python module definition.
     #[pymodule]
-    fn krox(_py: Python, m: &PyModule) -> PyResult<()> {
+    fn krox(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
         m.add_class::<PyKroxClient>()?;
         Ok(())
     }
@@ -182,7 +188,6 @@ pub mod python {
 pub mod node {
     use super::*;
     use napi_derive::napi;
-    use serde_json::Value as JsonValue;
 
     #[napi]
     pub struct NodeKroxClient {
@@ -192,15 +197,14 @@ pub mod node {
     #[napi]
     impl NodeKroxClient {
         #[napi(constructor)]
-        pub fn new(mode: String) -> Result<Self, napi::Error> {
+        pub fn new(mode: String) -> std::result::Result<Self, napi::Error> {
             let execution_mode = match mode.as_str() {
                 "native" => ExecutionMode::Native,
                 "http" => ExecutionMode::Http,
                 "in-process" => ExecutionMode::InProcess,
                 _ => {
                     return Err(napi::Error::from_reason(format!(
-                        "Invalid execution mode: {}",
-                        mode
+                        "Invalid execution mode: {mode}"
                     )));
                 }
             };
@@ -214,142 +218,70 @@ pub mod node {
         }
 
         #[napi]
-        pub async fn execute_file(&self, path: String) -> Result<serde_json::Value, napi::Error> {
-            let result = self
-                .client
-                .execute_file(path)
-                .await
+        pub fn execute_file(&self, path: String) -> std::result::Result<String, napi::Error> {
+            let result = tokio::runtime::Runtime::new()
+                .unwrap()
+                .block_on(self.client.execute_file(path))
                 .map_err(|e| napi::Error::from_reason(e.to_string()))?;
 
-            // Convert result to JSON
-            let json_value: JsonValue = serde_json::to_value(&result.value)
-                .map_err(|e| napi::Error::from_reason(e.to_string()))?;
+            // Convert result to JSON string
+            let result_obj = serde_json::json!({
+                "value": format!("{:?}", result.value),
+                "duration": result.metadata.duration.as_secs_f64(),
+                "cached": result.metadata.cached,
+                "mode": format!("{}", result.metadata.mode),
+                "warnings": result.metadata.warnings
+            });
 
-            let mut result_obj = serde_json::Map::new();
-            result_obj.insert("value".to_string(), json_value);
-            result_obj.insert(
-                "duration".to_string(),
-                serde_json::Value::Number(
-                    serde_json::Number::from_f64(result.metadata.duration.as_secs_f64()).unwrap(),
-                ),
-            );
-            result_obj.insert(
-                "cached".to_string(),
-                serde_json::Value::Bool(result.metadata.cached),
-            );
-            result_obj.insert(
-                "mode".to_string(),
-                serde_json::Value::String(format!("{}", result.metadata.mode)),
-            );
-            result_obj.insert(
-                "warnings".to_string(),
-                serde_json::Value::Array(
-                    result
-                        .metadata
-                        .warnings
-                        .into_iter()
-                        .map(|w| serde_json::Value::String(w))
-                        .collect(),
-                ),
-            );
-
-            Ok(serde_json::Value::Object(result_obj))
+            Ok(result_obj.to_string())
         }
 
         #[napi]
-        pub async fn execute_source(
-            &self,
-            source: String,
-        ) -> Result<serde_json::Value, napi::Error> {
-            let result = self
-                .client
-                .execute_source(source)
-                .await
+        pub fn execute_source(&self, source: String) -> std::result::Result<String, napi::Error> {
+            let result = tokio::runtime::Runtime::new()
+                .unwrap()
+                .block_on(self.client.execute_source(source))
                 .map_err(|e| napi::Error::from_reason(e.to_string()))?;
 
-            // Convert result to JSON
-            let json_value: JsonValue = serde_json::to_value(&result.value)
-                .map_err(|e| napi::Error::from_reason(e.to_string()))?;
+            // Convert result to JSON string
+            let result_obj = serde_json::json!({
+                "value": format!("{:?}", result.value),
+                "duration": result.metadata.duration.as_secs_f64(),
+                "cached": result.metadata.cached,
+                "mode": format!("{}", result.metadata.mode),
+                "warnings": result.metadata.warnings
+            });
 
-            let mut result_obj = serde_json::Map::new();
-            result_obj.insert("value".to_string(), json_value);
-            result_obj.insert(
-                "duration".to_string(),
-                serde_json::Value::Number(
-                    serde_json::Number::from_f64(result.metadata.duration.as_secs_f64()).unwrap(),
-                ),
-            );
-            result_obj.insert(
-                "cached".to_string(),
-                serde_json::Value::Bool(result.metadata.cached),
-            );
-            result_obj.insert(
-                "mode".to_string(),
-                serde_json::Value::String(format!("{}", result.metadata.mode)),
-            );
-            result_obj.insert(
-                "warnings".to_string(),
-                serde_json::Value::Array(
-                    result
-                        .metadata
-                        .warnings
-                        .into_iter()
-                        .map(|w| serde_json::Value::String(w))
-                        .collect(),
-                ),
-            );
-
-            Ok(serde_json::Value::Object(result_obj))
+            Ok(result_obj.to_string())
         }
 
         #[napi]
-        pub async fn cache_stats(&self) -> Result<Option<serde_json::Value>, napi::Error> {
-            let stats = self
-                .client
-                .cache_stats()
-                .await
+        pub fn cache_stats(&self) -> std::result::Result<Option<String>, napi::Error> {
+            let stats = tokio::runtime::Runtime::new()
+                .unwrap()
+                .block_on(self.client.cache_stats())
                 .map_err(|e| napi::Error::from_reason(e.to_string()))?;
 
             if let Some(stats) = stats {
-                let mut stats_obj = serde_json::Map::new();
-                stats_obj.insert(
-                    "total_entries".to_string(),
-                    serde_json::Value::Number(serde_json::Number::from(stats.total_entries)),
-                );
-                stats_obj.insert(
-                    "hits".to_string(),
-                    serde_json::Value::Number(serde_json::Number::from(stats.hits)),
-                );
-                stats_obj.insert(
-                    "misses".to_string(),
-                    serde_json::Value::Number(serde_json::Number::from(stats.misses)),
-                );
-                stats_obj.insert(
-                    "hit_rate".to_string(),
-                    serde_json::Value::Number(
-                        serde_json::Number::from_f64(stats.hit_rate).unwrap(),
-                    ),
-                );
-                stats_obj.insert(
-                    "total_size".to_string(),
-                    serde_json::Value::Number(serde_json::Number::from(stats.total_size)),
-                );
-                stats_obj.insert(
-                    "cache_dir".to_string(),
-                    serde_json::Value::String(stats.cache_dir),
-                );
-
-                Ok(Some(serde_json::Value::Object(stats_obj)))
+                let stats_obj = serde_json::json!({
+                    "total_entries": stats.total_entries,
+                    "hits": stats.hits,
+                    "misses": stats.misses,
+                    "hit_rate": stats.hit_rate,
+                    "total_size": stats.total_size,
+                    "cache_dir": stats.cache_dir
+                });
+                Ok(Some(stats_obj.to_string()))
             } else {
                 Ok(None)
             }
         }
 
         #[napi]
-        pub async fn clear_cache(&self) -> Result<(), napi::Error> {
-            self.client
-                .clear_cache()
-                .await
+        pub fn clear_cache(&self) -> std::result::Result<(), napi::Error> {
+            tokio::runtime::Runtime::new()
+                .unwrap()
+                .block_on(self.client.clear_cache())
                 .map_err(|e| napi::Error::from_reason(e.to_string()))?;
 
             Ok(())
@@ -364,25 +296,32 @@ pub mod java {
     use jni::JNIEnv;
     use jni::objects::{JClass, JObject, JString};
     use jni::sys::jobject;
-    use serde_json::Value as JsonValue;
 
     pub struct JavaKroxClient {
         client: SdkClient,
     }
 
     impl JavaKroxClient {
-        pub fn new(mode: &str) -> Result<Self, jni::errors::Error> {
+        pub fn new(mode: &str) -> std::result::Result<Self, jni::errors::Error> {
             let execution_mode = match mode {
                 "native" => ExecutionMode::Native,
                 "http" => ExecutionMode::Http,
                 "in-process" => ExecutionMode::InProcess,
-                _ => return Err(jni::errors::Error::InvalidArguments),
+                _ => {
+                    return Err(jni::errors::Error::InvalidArgList(
+                        jni::signature::TypeSignature::from_str("Ljava/lang/String;").unwrap(),
+                    ));
+                }
             };
 
             let client = tokio::runtime::Runtime::new()
                 .unwrap()
                 .block_on(SdkClient::new(execution_mode))
-                .map_err(|_| jni::errors::Error::InvalidArguments)?;
+                .map_err(|_| {
+                    jni::errors::Error::InvalidArgList(
+                        jni::signature::TypeSignature::from_str("Ljava/lang/String;").unwrap(),
+                    )
+                })?;
 
             Ok(Self { client })
         }
@@ -390,16 +329,71 @@ pub mod java {
         pub async fn execute_file(
             &self,
             path: String,
-        ) -> Result<serde_json::Value, jni::errors::Error> {
-            let result = self
-                .client
-                .execute_file(path)
-                .await
-                .map_err(|_| jni::errors::Error::InvalidArguments)?;
+        ) -> std::result::Result<serde_json::Value, jni::errors::Error> {
+            let result = self.client.execute_file(path).await.map_err(|_| {
+                jni::errors::Error::InvalidArgList(
+                    jni::signature::TypeSignature::from_str("Ljava/lang/String;").unwrap(),
+                )
+            })?;
 
-            // Convert result to JSON
-            let json_value: JsonValue = serde_json::to_value(&result.value)
-                .map_err(|_| jni::errors::Error::InvalidArguments)?;
+            // Convert result to JSON - create a simple representation
+            let json_value = match &result.value.kind {
+                ligature_eval::ValueKind::Unit => serde_json::Value::Null,
+                ligature_eval::ValueKind::Boolean(b) => serde_json::Value::Bool(**b),
+                ligature_eval::ValueKind::String(s) => serde_json::Value::String((**s).clone()),
+                ligature_eval::ValueKind::Integer(i) => {
+                    serde_json::Value::Number(serde_json::Number::from(**i))
+                }
+                ligature_eval::ValueKind::Float(f) => serde_json::Value::Number(
+                    serde_json::Number::from_f64(**f).unwrap_or(serde_json::Number::from(0)),
+                ),
+                ligature_eval::ValueKind::Record(fields) => {
+                    let mut obj = serde_json::Map::new();
+                    for (k, v) in fields.iter() {
+                        // Recursively convert nested values
+                        let v_json = match &v.kind {
+                            ligature_eval::ValueKind::Unit => serde_json::Value::Null,
+                            ligature_eval::ValueKind::Boolean(b) => serde_json::Value::Bool(**b),
+                            ligature_eval::ValueKind::String(s) => {
+                                serde_json::Value::String((**s).clone())
+                            }
+                            ligature_eval::ValueKind::Integer(i) => {
+                                serde_json::Value::Number(serde_json::Number::from(**i))
+                            }
+                            ligature_eval::ValueKind::Float(f) => serde_json::Value::Number(
+                                serde_json::Number::from_f64(**f)
+                                    .unwrap_or(serde_json::Number::from(0)),
+                            ),
+                            _ => serde_json::Value::String(format!("{:?}", v.kind)),
+                        };
+                        obj.insert(k.clone(), v_json);
+                    }
+                    serde_json::Value::Object(obj)
+                }
+                ligature_eval::ValueKind::List(elements) => {
+                    let mut arr = Vec::new();
+                    for element in elements.iter() {
+                        let elem_json = match &element.kind {
+                            ligature_eval::ValueKind::Unit => serde_json::Value::Null,
+                            ligature_eval::ValueKind::Boolean(b) => serde_json::Value::Bool(**b),
+                            ligature_eval::ValueKind::String(s) => {
+                                serde_json::Value::String((**s).clone())
+                            }
+                            ligature_eval::ValueKind::Integer(i) => {
+                                serde_json::Value::Number(serde_json::Number::from(**i))
+                            }
+                            ligature_eval::ValueKind::Float(f) => serde_json::Value::Number(
+                                serde_json::Number::from_f64(**f)
+                                    .unwrap_or(serde_json::Number::from(0)),
+                            ),
+                            _ => serde_json::Value::String(format!("{:?}", element.kind)),
+                        };
+                        arr.push(elem_json);
+                    }
+                    serde_json::Value::Array(arr)
+                }
+                _ => serde_json::Value::String(format!("{:?}", result.value.kind)),
+            };
 
             let mut result_obj = serde_json::Map::new();
             result_obj.insert("value".to_string(), json_value);
@@ -424,7 +418,7 @@ pub mod java {
                         .metadata
                         .warnings
                         .into_iter()
-                        .map(|w| serde_json::Value::String(w))
+                        .map(serde_json::Value::String)
                         .collect(),
                 ),
             );
@@ -435,16 +429,71 @@ pub mod java {
         pub async fn execute_source(
             &self,
             source: String,
-        ) -> Result<serde_json::Value, jni::errors::Error> {
-            let result = self
-                .client
-                .execute_source(source)
-                .await
-                .map_err(|_| jni::errors::Error::InvalidArguments)?;
+        ) -> std::result::Result<serde_json::Value, jni::errors::Error> {
+            let result = self.client.execute_source(source).await.map_err(|_| {
+                jni::errors::Error::InvalidArgList(
+                    jni::signature::TypeSignature::from_str("Ljava/lang/String;").unwrap(),
+                )
+            })?;
 
-            // Convert result to JSON
-            let json_value: JsonValue = serde_json::to_value(&result.value)
-                .map_err(|_| jni::errors::Error::InvalidArguments)?;
+            // Convert result to JSON - create a simple representation
+            let json_value = match &result.value.kind {
+                ligature_eval::ValueKind::Unit => serde_json::Value::Null,
+                ligature_eval::ValueKind::Boolean(b) => serde_json::Value::Bool(**b),
+                ligature_eval::ValueKind::String(s) => serde_json::Value::String((**s).clone()),
+                ligature_eval::ValueKind::Integer(i) => {
+                    serde_json::Value::Number(serde_json::Number::from(**i))
+                }
+                ligature_eval::ValueKind::Float(f) => serde_json::Value::Number(
+                    serde_json::Number::from_f64(**f).unwrap_or(serde_json::Number::from(0)),
+                ),
+                ligature_eval::ValueKind::Record(fields) => {
+                    let mut obj = serde_json::Map::new();
+                    for (k, v) in fields.iter() {
+                        // Recursively convert nested values
+                        let v_json = match &v.kind {
+                            ligature_eval::ValueKind::Unit => serde_json::Value::Null,
+                            ligature_eval::ValueKind::Boolean(b) => serde_json::Value::Bool(**b),
+                            ligature_eval::ValueKind::String(s) => {
+                                serde_json::Value::String((**s).clone())
+                            }
+                            ligature_eval::ValueKind::Integer(i) => {
+                                serde_json::Value::Number(serde_json::Number::from(**i))
+                            }
+                            ligature_eval::ValueKind::Float(f) => serde_json::Value::Number(
+                                serde_json::Number::from_f64(**f)
+                                    .unwrap_or(serde_json::Number::from(0)),
+                            ),
+                            _ => serde_json::Value::String(format!("{:?}", v.kind)),
+                        };
+                        obj.insert(k.clone(), v_json);
+                    }
+                    serde_json::Value::Object(obj)
+                }
+                ligature_eval::ValueKind::List(elements) => {
+                    let mut arr = Vec::new();
+                    for element in elements.iter() {
+                        let elem_json = match &element.kind {
+                            ligature_eval::ValueKind::Unit => serde_json::Value::Null,
+                            ligature_eval::ValueKind::Boolean(b) => serde_json::Value::Bool(**b),
+                            ligature_eval::ValueKind::String(s) => {
+                                serde_json::Value::String((**s).clone())
+                            }
+                            ligature_eval::ValueKind::Integer(i) => {
+                                serde_json::Value::Number(serde_json::Number::from(**i))
+                            }
+                            ligature_eval::ValueKind::Float(f) => serde_json::Value::Number(
+                                serde_json::Number::from_f64(**f)
+                                    .unwrap_or(serde_json::Number::from(0)),
+                            ),
+                            _ => serde_json::Value::String(format!("{:?}", element.kind)),
+                        };
+                        arr.push(elem_json);
+                    }
+                    serde_json::Value::Array(arr)
+                }
+                _ => serde_json::Value::String(format!("{:?}", result.value.kind)),
+            };
 
             let mut result_obj = serde_json::Map::new();
             result_obj.insert("value".to_string(), json_value);
@@ -469,7 +518,7 @@ pub mod java {
                         .metadata
                         .warnings
                         .into_iter()
-                        .map(|w| serde_json::Value::String(w))
+                        .map(serde_json::Value::String)
                         .collect(),
                 ),
             );
@@ -478,17 +527,17 @@ pub mod java {
         }
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "system" fn Java_com_krox_KroxClient_new(
         _env: JNIEnv,
         _class: JClass,
-        mode: JString,
+        _mode: JString,
     ) -> jobject {
         // Implementation would go here
         std::ptr::null_mut()
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "system" fn Java_com_krox_KroxClient_executeFile(
         _env: JNIEnv,
         _class: JClass,
@@ -512,12 +561,18 @@ pub mod go {
     }
 
     impl GoKroxClient {
-        pub fn new(mode: &str) -> Result<Self, Box<dyn std::error::Error>> {
+        #[allow(clippy::type_complexity)]
+        pub fn new(mode: &str) -> std::result::Result<Self, Box<dyn std::error::Error>> {
             let execution_mode = match mode {
                 "native" => ExecutionMode::Native,
                 "http" => ExecutionMode::Http,
                 "in-process" => ExecutionMode::InProcess,
-                _ => return Err("Invalid execution mode".into()),
+                _ => {
+                    return Err(Box::new(std::io::Error::new(
+                        std::io::ErrorKind::InvalidInput,
+                        "Invalid execution mode",
+                    )));
+                }
             };
 
             let client = tokio::runtime::Runtime::new()
@@ -530,11 +585,67 @@ pub mod go {
         pub async fn execute_file(
             &self,
             path: String,
-        ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+        ) -> std::result::Result<serde_json::Value, Box<dyn std::error::Error>> {
             let result = self.client.execute_file(path).await?;
 
-            // Convert result to JSON
-            let json_value: serde_json::Value = serde_json::to_value(&result.value)?;
+            // Convert result to JSON - create a simple representation
+            let json_value = match &result.value.kind {
+                ligature_eval::ValueKind::Unit => serde_json::Value::Null,
+                ligature_eval::ValueKind::Boolean(b) => serde_json::Value::Bool(**b),
+                ligature_eval::ValueKind::String(s) => serde_json::Value::String((**s).clone()),
+                ligature_eval::ValueKind::Integer(i) => {
+                    serde_json::Value::Number(serde_json::Number::from(**i))
+                }
+                ligature_eval::ValueKind::Float(f) => serde_json::Value::Number(
+                    serde_json::Number::from_f64(**f).unwrap_or(serde_json::Number::from(0)),
+                ),
+                ligature_eval::ValueKind::Record(fields) => {
+                    let mut obj = serde_json::Map::new();
+                    for (k, v) in fields.iter() {
+                        // Recursively convert nested values
+                        let v_json = match &v.kind {
+                            ligature_eval::ValueKind::Unit => serde_json::Value::Null,
+                            ligature_eval::ValueKind::Boolean(b) => serde_json::Value::Bool(**b),
+                            ligature_eval::ValueKind::String(s) => {
+                                serde_json::Value::String((**s).clone())
+                            }
+                            ligature_eval::ValueKind::Integer(i) => {
+                                serde_json::Value::Number(serde_json::Number::from(**i))
+                            }
+                            ligature_eval::ValueKind::Float(f) => serde_json::Value::Number(
+                                serde_json::Number::from_f64(**f)
+                                    .unwrap_or(serde_json::Number::from(0)),
+                            ),
+                            _ => serde_json::Value::String(format!("{:?}", v.kind)),
+                        };
+                        obj.insert(k.clone(), v_json);
+                    }
+                    serde_json::Value::Object(obj)
+                }
+                ligature_eval::ValueKind::List(elements) => {
+                    let mut arr = Vec::new();
+                    for element in elements.iter() {
+                        let elem_json = match &element.kind {
+                            ligature_eval::ValueKind::Unit => serde_json::Value::Null,
+                            ligature_eval::ValueKind::Boolean(b) => serde_json::Value::Bool(**b),
+                            ligature_eval::ValueKind::String(s) => {
+                                serde_json::Value::String((**s).clone())
+                            }
+                            ligature_eval::ValueKind::Integer(i) => {
+                                serde_json::Value::Number(serde_json::Number::from(**i))
+                            }
+                            ligature_eval::ValueKind::Float(f) => serde_json::Value::Number(
+                                serde_json::Number::from_f64(**f)
+                                    .unwrap_or(serde_json::Number::from(0)),
+                            ),
+                            _ => serde_json::Value::String(format!("{:?}", element.kind)),
+                        };
+                        arr.push(elem_json);
+                    }
+                    serde_json::Value::Array(arr)
+                }
+                _ => serde_json::Value::String(format!("{:?}", result.value.kind)),
+            };
 
             let mut result_obj = serde_json::Map::new();
             result_obj.insert("value".to_string(), json_value);
@@ -559,7 +670,7 @@ pub mod go {
                         .metadata
                         .warnings
                         .into_iter()
-                        .map(|w| serde_json::Value::String(w))
+                        .map(serde_json::Value::String)
                         .collect(),
                 ),
             );
@@ -570,11 +681,67 @@ pub mod go {
         pub async fn execute_source(
             &self,
             source: String,
-        ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+        ) -> std::result::Result<serde_json::Value, Box<dyn std::error::Error>> {
             let result = self.client.execute_source(source).await?;
 
-            // Convert result to JSON
-            let json_value: serde_json::Value = serde_json::to_value(&result.value)?;
+            // Convert result to JSON - create a simple representation
+            let json_value = match &result.value.kind {
+                ligature_eval::ValueKind::Unit => serde_json::Value::Null,
+                ligature_eval::ValueKind::Boolean(b) => serde_json::Value::Bool(**b),
+                ligature_eval::ValueKind::String(s) => serde_json::Value::String((**s).clone()),
+                ligature_eval::ValueKind::Integer(i) => {
+                    serde_json::Value::Number(serde_json::Number::from(**i))
+                }
+                ligature_eval::ValueKind::Float(f) => serde_json::Value::Number(
+                    serde_json::Number::from_f64(**f).unwrap_or(serde_json::Number::from(0)),
+                ),
+                ligature_eval::ValueKind::Record(fields) => {
+                    let mut obj = serde_json::Map::new();
+                    for (k, v) in fields.iter() {
+                        // Recursively convert nested values
+                        let v_json = match &v.kind {
+                            ligature_eval::ValueKind::Unit => serde_json::Value::Null,
+                            ligature_eval::ValueKind::Boolean(b) => serde_json::Value::Bool(**b),
+                            ligature_eval::ValueKind::String(s) => {
+                                serde_json::Value::String((**s).clone())
+                            }
+                            ligature_eval::ValueKind::Integer(i) => {
+                                serde_json::Value::Number(serde_json::Number::from(**i))
+                            }
+                            ligature_eval::ValueKind::Float(f) => serde_json::Value::Number(
+                                serde_json::Number::from_f64(**f)
+                                    .unwrap_or(serde_json::Number::from(0)),
+                            ),
+                            _ => serde_json::Value::String(format!("{:?}", v.kind)),
+                        };
+                        obj.insert(k.clone(), v_json);
+                    }
+                    serde_json::Value::Object(obj)
+                }
+                ligature_eval::ValueKind::List(elements) => {
+                    let mut arr = Vec::new();
+                    for element in elements.iter() {
+                        let elem_json = match &element.kind {
+                            ligature_eval::ValueKind::Unit => serde_json::Value::Null,
+                            ligature_eval::ValueKind::Boolean(b) => serde_json::Value::Bool(**b),
+                            ligature_eval::ValueKind::String(s) => {
+                                serde_json::Value::String((**s).clone())
+                            }
+                            ligature_eval::ValueKind::Integer(i) => {
+                                serde_json::Value::Number(serde_json::Number::from(**i))
+                            }
+                            ligature_eval::ValueKind::Float(f) => serde_json::Value::Number(
+                                serde_json::Number::from_f64(**f)
+                                    .unwrap_or(serde_json::Number::from(0)),
+                            ),
+                            _ => serde_json::Value::String(format!("{:?}", element.kind)),
+                        };
+                        arr.push(elem_json);
+                    }
+                    serde_json::Value::Array(arr)
+                }
+                _ => serde_json::Value::String(format!("{:?}", result.value.kind)),
+            };
 
             let mut result_obj = serde_json::Map::new();
             result_obj.insert("value".to_string(), json_value);
@@ -599,7 +766,7 @@ pub mod go {
                         .metadata
                         .warnings
                         .into_iter()
-                        .map(|w| serde_json::Value::String(w))
+                        .map(serde_json::Value::String)
                         .collect(),
                 ),
             );
@@ -608,8 +775,11 @@ pub mod go {
         }
     }
 
-    #[no_mangle]
-    pub extern "C" fn krox_client_new(mode: *const c_char) -> *mut GoKroxClient {
+    /// # Safety
+    ///
+    /// The `mode` pointer must be a valid C string pointer.
+    #[unsafe(no_mangle)]
+    pub unsafe extern "C" fn krox_client_new(mode: *const c_char) -> *mut GoKroxClient {
         let mode_str = unsafe { CStr::from_ptr(mode).to_str().unwrap_or("native") };
 
         match GoKroxClient::new(mode_str) {
@@ -618,8 +788,12 @@ pub mod go {
         }
     }
 
-    #[no_mangle]
-    pub extern "C" fn krox_client_execute_file(
+    /// # Safety
+    ///
+    /// The `client` pointer must be a valid pointer to a `GoKroxClient` instance.
+    /// The `path` pointer must be a valid C string pointer.
+    #[unsafe(no_mangle)]
+    pub unsafe extern "C" fn krox_client_execute_file(
         client: *mut GoKroxClient,
         path: *const c_char,
     ) -> *mut c_char {
@@ -644,8 +818,11 @@ pub mod go {
         }
     }
 
-    #[no_mangle]
-    pub extern "C" fn krox_client_free(client: *mut GoKroxClient) {
+    /// # Safety
+    ///
+    /// The `client` pointer must be a valid pointer to a `GoKroxClient` instance.
+    #[unsafe(no_mangle)]
+    pub unsafe extern "C" fn krox_client_free(client: *mut GoKroxClient) {
         if !client.is_null() {
             unsafe {
                 drop(Box::from_raw(client));

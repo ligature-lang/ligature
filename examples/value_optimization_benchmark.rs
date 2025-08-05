@@ -20,7 +20,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     let stats_enabled = evaluator_enabled.value_optimization_stats();
     
-    println!("   ✓ Completed in {:?}", duration_enabled);
+    println!("   ✓ Completed in {duration_enabled:?}");
     println!("   ✓ Total interned values: {}", stats_enabled.total_interned_values());
     println!("   ✓ Memory savings: {} bytes", stats_enabled.total_memory_saved);
     println!("   ✓ Memory savings: {:.2}%", stats_enabled.memory_savings_percentage());
@@ -37,7 +37,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     let stats_disabled = evaluator_disabled.value_optimization_stats();
     
-    println!("   ✓ Completed in {:?}", duration_disabled);
+    println!("   ✓ Completed in {duration_disabled:?}");
     println!("   ✓ Total interned values: {}", stats_disabled.total_interned_values());
     println!("   ✓ Memory savings: {} bytes", stats_disabled.total_memory_saved);
     
@@ -45,7 +45,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\n3. Performance Comparison:");
     let speedup = duration_disabled.as_nanos() as f64 / duration_enabled.as_nanos() as f64;
     println!("   ✓ Speedup: {:.2}x", speedup);
-    println!("   ✓ Time saved: {:?}", duration_disabled - duration_enabled);
+    println!("   ✓ Time saved: {duration_disabled - duration_enabled:?}");
     
     // Memory efficiency comparison
     let memory_efficiency = stats_enabled.total_memory_saved as f64 / stats_disabled.total_memory_saved as f64;

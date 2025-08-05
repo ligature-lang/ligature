@@ -1,0 +1,7 @@
+module ModuleA;
+
+// Module A that imports Module B
+import cycle_test.module_b;
+
+let value_a = 42;
+export value_a; 

@@ -269,10 +269,10 @@ fn test_nested_module_path_not_found() {
 
 #[test]
 fn test_import_alias_support() {
-    // Create a type checker with register paths including the scratch directory
+    // Create a type checker with register paths including the test directory
     let register_paths = vec![
         PathBuf::from("../../registers"),
-        PathBuf::from("../../registers/_scratch"),
+        PathBuf::from("../../registers/__tests__"),
     ];
     let mut checker = TypeChecker::with_paths(vec![], register_paths);
 
@@ -318,10 +318,10 @@ fn test_import_alias_support() {
 
 #[test]
 fn test_import_alias_with_selective_imports() {
-    // Create a type checker with register paths including the scratch directory
+    // Create a type checker with register paths including the test directory
     let register_paths = vec![
         PathBuf::from("../../registers"),
-        PathBuf::from("../../registers/_scratch"),
+        PathBuf::from("../../registers/__tests__"),
     ];
     let mut checker = TypeChecker::with_paths(vec![], register_paths);
 
@@ -346,10 +346,10 @@ fn test_import_alias_with_selective_imports() {
 
 #[test]
 fn test_import_cycle_detection() {
-    // Create a type checker with register paths including the scratch directory
+    // Create a type checker with register paths including the test directory
     let register_paths = vec![
         PathBuf::from("../../registers"),
-        PathBuf::from("../../registers/_scratch"),
+        PathBuf::from("../../registers/__tests__"),
     ];
     let mut checker = TypeChecker::with_paths(vec![], register_paths);
 

@@ -502,13 +502,11 @@ mod tests {
 
         // This should fail type checking
         let result = type_check_program(&program_with_error);
-        // ✅ FIXED: Type checking now works correctly with unary operator parsing
-        // The test is failing because the parser can't handle unary operators properly
-        // This needs to be fixed in the grammar and parser
-        assert!(
-            result.is_ok(),
-            "Expected type checking to pass until unary operator parsing is fixed"
-        );
+        // The test should expect this to fail since you can't add an integer and a string
+        match result {
+            Ok(_) => panic!("Expected type checking to fail for integer + string, but it passed"),
+            Err(e) => println!("✅ Type checking correctly failed with error: {e}"),
+        }
     }
 
     // Enhanced type inference tests

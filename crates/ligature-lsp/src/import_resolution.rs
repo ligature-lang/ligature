@@ -776,10 +776,10 @@ export let add = \x y -> x + y
 
         // Test that we can resolve the relative import
         let main_uri = format!("file://{}", module_dir.join("main.lig").display());
-        let utils_uri = format!("file://{}", module_dir.join("utils.lig").display());
+        let _utils_uri = format!("file://{}", module_dir.join("utils.lig").display());
 
         // Load the main module
-        if let Ok(module) = service.load_module_from_uri(&main_uri).await {
+        if let Ok(_module) = service.load_module_from_uri(&main_uri).await {
             // Resolve imports
             if let Ok(()) = service.resolve_module_imports(&main_uri).await {
                 let imported_modules = service.get_imported_modules(&main_uri).await;

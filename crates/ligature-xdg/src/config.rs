@@ -76,6 +76,11 @@ impl XdgConfig {
                 }
             })?;
 
+            // Skip empty files
+            if content.trim().is_empty() {
+                return Ok(None);
+            }
+
             let config: T = self.deserialize_content(&content, &config_path)?;
             Ok(Some(config))
         } else {
@@ -284,6 +289,25 @@ mod tests {
         let config_manager = XdgConfig::new("test", "nonexistent.json").unwrap();
         let loaded_config = config_manager.load::<TestConfig>().await.unwrap();
         assert!(loaded_config.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_config_load_empty_file() {
+        let config_manager = XdgConfig::new("test", "empty.json").unwrap();
+
+        // Create an empty config file
+        let config_path = config_manager.default_config_path().unwrap();
+        tokio::fs::create_dir_all(config_path.parent().unwrap())
+            .await
+            .unwrap();
+        tokio::fs::write(&config_path, "").await.unwrap();
+
+        // Load configuration - should return None for empty files
+        let loaded_config = config_manager.load::<TestConfig>().await.unwrap();
+        assert!(loaded_config.is_none());
+
+        // Clean up
+        let _ = tokio::fs::remove_file(config_path).await;
     }
 
     #[test]

@@ -1,0 +1,40 @@
+# Configuration file for Ligature crates
+# This file contains the list of crates that are part of the Ligature project
+# and need to be built, tested, and published.
+
+# All crates that should be built and tested in CI
+crates:
+  - cacophony
+  - ligature-ast
+  - ligature-lsp
+  - ligature-parser
+  - ligature-types
+  - ligature-eval
+  - keywork
+  - krox
+  - reed
+
+# Crates that should be published to crates.io
+# This is the same as the main crates list for now
+publish_crates:
+  - cacophony
+  - ligature-ast
+  - ligature-lsp
+  - ligature-parser
+  - ligature-types
+  - ligature-eval
+  - keywork
+  - krox
+  - reed
+
+# Crates that should be included in coverage reporting
+# Note: krox is excluded due to cross-language support issues
+coverage_crates:
+  - cacophony
+  - ligature-ast
+  - ligature-lsp
+  - ligature-parser
+  - ligature-types
+  - ligature-eval
+  - keywork
+  - reed 

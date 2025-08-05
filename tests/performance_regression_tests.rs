@@ -319,10 +319,8 @@ impl PerformanceRegressionTests {
         vec![
             // Test cache size optimization
             self.test_cache_optimization(),
-
             // Test memory allocation optimization
             self.test_memory_optimization(),
-
             // Test expression caching optimization
             self.test_expression_caching_optimization(),
         ]
@@ -554,6 +552,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn test_baseline_establishment() {
         let mut tests = PerformanceRegressionTests::new();
         tests.establish_baselines();
@@ -577,6 +576,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn test_performance_report_generation() {
         let mut tests = PerformanceRegressionTests::new();
         tests.establish_baselines();

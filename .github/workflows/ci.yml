@@ -78,20 +78,17 @@ jobs:
         run: cargo test property
       - name: Run differential tests
         run: cargo test differential
+  load-crates:
+    name: Load Crate Configuration
+    uses: ./.github/workflows/shared-crates.yml
+
   build-verification:
     name: Build Verification
     runs-on: ubuntu-latest
+    needs: [load-crates]
     strategy:
       matrix:
-        crate:
-          - ligature-ast
-          - ligature-parser
-          - ligature-types
-          - ligature-eval
-          - ligature-cli
-          - ligature-lsp
-          - krox
-          - keywork
+        crate: ${{ fromJSON(needs.load-crates.outputs.crates) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

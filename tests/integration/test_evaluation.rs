@@ -129,8 +129,8 @@ fn main() {
     }
 
     println!("\n📊 Test Results:");
-    println!("   Passed: {}", passed);
-    println!("   Failed: {}", failed);
+    println!("   Passed: {passed}");
+    println!("   Failed: {failed}");
     println!("   Total:  {}", passed + failed);
 
     if failed == 0 {
@@ -181,37 +181,25 @@ fn test_basic_literal_evaluation() -> bool {
             Ok(value) => {
                 if let Some(expected) = expected_int {
                     if value.as_integer() != Some(expected) {
-                        println!(
-                            "     Failed {}: expected {}, got {:?}",
-                            description, expected, value
-                        );
+                        println!("     Failed {description}: expected {expected}, got {value:?}",);
                         return false;
                     }
                 } else {
                     // For non-integer literals, just check they evaluate successfully
                     if description == "string literal" && value.as_string() != Some("hello") {
-                        println!(
-                            "     Failed {}: expected 'hello', got {:?}",
-                            description, value
-                        );
+                        println!("     Failed {description}: expected 'hello', got {value:?}",);
                         return false;
                     } else if description == "boolean literal" && value.as_boolean() != Some(true) {
-                        println!(
-                            "     Failed {}: expected true, got {:?}",
-                            description, value
-                        );
+                        println!("     Failed {description}: expected true, got {value:?}",);
                         return false;
                     } else if description == "unit literal" && !value.is_unit() {
-                        println!(
-                            "     Failed {}: expected unit, got {:?}",
-                            description, value
-                        );
+                        println!("     Failed {description}: expected unit, got {value:?}",);
                         return false;
                     }
                 }
             }
             Err(e) => {
-                println!("     Failed {}: evaluation error: {:?}", description, e);
+                println!("     Failed {description}: evaluation error: {e:?}");
                 return false;
             }
         }
@@ -248,15 +236,12 @@ fn test_arithmetic_operations() -> bool {
         match evaluate_expression(&expr) {
             Ok(value) => {
                 if value.as_integer() != Some(expected) {
-                    println!(
-                        "     Failed {}: expected {}, got {:?}",
-                        description, expected, value
-                    );
+                    println!("     Failed {description}: expected {expected}, got {value:?}",);
                     return false;
                 }
             }
             Err(e) => {
-                println!("     Failed {}: evaluation error: {:?}", description, e);
+                println!("     Failed {description}: evaluation error: {e:?}");
                 return false;
             }
         }
@@ -308,15 +293,12 @@ fn test_comparison_operations() -> bool {
         match evaluate_expression(&expr) {
             Ok(value) => {
                 if value.as_boolean() != Some(expected) {
-                    println!(
-                        "     Failed {}: expected {}, got {:?}",
-                        description, expected, value
-                    );
+                    println!("     Failed {description}: expected {expected}, got {value:?}",);
                     return false;
                 }
             }
             Err(e) => {
-                println!("     Failed {}: evaluation error: {:?}", description, e);
+                println!("     Failed {description}: evaluation error: {e:?}");
                 return false;
             }
         }
@@ -362,15 +344,12 @@ fn test_logical_operations() -> bool {
         match evaluate_expression(&expr) {
             Ok(value) => {
                 if value.as_boolean() != Some(expected) {
-                    println!(
-                        "     Failed {}: expected {}, got {:?}",
-                        description, expected, value
-                    );
+                    println!("     Failed {description}: expected {expected}, got {value:?}",);
                     return false;
                 }
             }
             Err(e) => {
-                println!("     Failed {}: evaluation error: {:?}", description, e);
+                println!("     Failed {description}: evaluation error: {e:?}");
                 return false;
             }
         }
@@ -395,12 +374,12 @@ fn test_unary_operations() -> bool {
     match evaluate_expression(&neg_expr) {
         Ok(value) => {
             if value.as_integer() != Some(-5) {
-                println!("     Failed negation: expected -5, got {:?}", value);
+                println!("     Failed negation: expected -5, got {value:?}");
                 return false;
             }
         }
         Err(e) => {
-            println!("     Failed negation: evaluation error: {:?}", e);
+            println!("     Failed negation: evaluation error: {e:?}");
             return false;
         }
     }
@@ -420,12 +399,12 @@ fn test_unary_operations() -> bool {
     match evaluate_expression(&not_expr) {
         Ok(value) => {
             if value.as_boolean() != Some(false) {
-                println!("     Failed logical NOT: expected false, got {:?}", value);
+                println!("     Failed logical NOT: expected false, got {value:?}");
                 return false;
             }
         }
         Err(e) => {
-            println!("     Failed logical NOT: evaluation error: {:?}", e);
+            println!("     Failed logical NOT: evaluation error: {e:?}");
             return false;
         }
     }
@@ -461,15 +440,12 @@ fn test_if_expressions() -> bool {
         match evaluate_expression(&expr) {
             Ok(value) => {
                 if value.as_integer() != Some(expected) {
-                    println!(
-                        "     Failed {}: expected {}, got {:?}",
-                        description, expected, value
-                    );
+                    println!("     Failed {description}: expected {expected}, got {value:?}",);
                     return false;
                 }
             }
             Err(e) => {
-                println!("     Failed {}: evaluation error: {:?}", description, e);
+                println!("     Failed {description}: evaluation error: {e:?}");
                 return false;
             }
         }
@@ -497,12 +473,12 @@ fn test_let_expressions() -> bool {
     match evaluate_expression(&expr) {
         Ok(value) => {
             if value.as_integer() != Some(42) {
-                println!("     Failed let expression: expected 42, got {:?}", value);
+                println!("     Failed let expression: expected 42, got {value:?}");
                 return false;
             }
         }
         Err(e) => {
-            println!("     Failed let expression: evaluation error: {:?}", e);
+            println!("     Failed let expression: evaluation error: {e:?}");
             return false;
         }
     }
@@ -549,18 +525,12 @@ fn test_function_application() -> bool {
     match evaluate_expression(&application) {
         Ok(value) => {
             if value.as_integer() != Some(6) {
-                println!(
-                    "     Failed function application: expected 6, got {:?}",
-                    value
-                );
+                println!("     Failed function application: expected 6, got {value:?}",);
                 return false;
             }
         }
         Err(e) => {
-            println!(
-                "     Failed function application: evaluation error: {:?}",
-                e
-            );
+            println!("     Failed function application: evaluation error: {e:?}",);
             return false;
         }
     }
@@ -588,17 +558,13 @@ fn test_string_concatenation() -> bool {
         Ok(value) => {
             if value.as_string() != Some("Hello, World!") {
                 println!(
-                    "     Failed string concatenation: expected 'Hello, World!', got {:?}",
-                    value
+                    "     Failed string concatenation: expected 'Hello, World!', got {value:?}",
                 );
                 return false;
             }
         }
         Err(e) => {
-            println!(
-                "     Failed string concatenation: evaluation error: {:?}",
-                e
-            );
+            println!("     Failed string concatenation: evaluation error: {e:?}",);
             return false;
         }
     }
@@ -667,20 +633,19 @@ fn test_program_evaluation() -> bool {
                         // Programs should return unit
                         if !value.is_unit() {
                             println!(
-                                "     Failed program evaluation for '{}': expected unit, got {:?}",
-                                source, value
+                                "     Failed program evaluation for '{source}': expected unit, got {value:?}",
                             );
                             return false;
                         }
                     }
                     Err(e) => {
-                        println!("     Failed program evaluation for '{}': {:?}", source, e);
+                        println!("     Failed program evaluation for '{source}': {e:?}");
                         return false;
                     }
                 }
             }
             Err(e) => {
-                println!("     Failed to parse program '{}': {:?}", source, e);
+                println!("     Failed to parse program '{source}': {e:?}");
                 return false;
             }
         }
@@ -743,15 +708,12 @@ fn test_complex_expressions() -> bool {
         Ok(value) => {
             // 5 > 3 is true, so should evaluate to 10 + 2 = 12
             if value.as_integer() != Some(12) {
-                println!(
-                    "     Failed complex expression: expected 12, got {:?}",
-                    value
-                );
+                println!("     Failed complex expression: expected 12, got {value:?}",);
                 return false;
             }
         }
         Err(e) => {
-            println!("     Failed complex expression: evaluation error: {:?}", e);
+            println!("     Failed complex expression: evaluation error: {e:?}");
             return false;
         }
     }

@@ -163,7 +163,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("   Base cache size: 1000");
     println!("   Override cache size: 2000");
     println!("   Merged cache size: {}", merged_config.cache.max_size);
-    println!("   Merged log level: {:?}", merged_config.debug.log_level);
+    println!("   Merged log level: {merged_config.debug.log_level:?}");
     println!();
 
     // Example 8: Show cacheable expressions configuration

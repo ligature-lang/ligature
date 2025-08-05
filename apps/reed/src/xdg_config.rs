@@ -320,7 +320,7 @@ mod tests {
         let loaded = loaded_config.unwrap();
         assert_eq!(loaded.logging.level, "info");
         assert_eq!(loaded.defaults.output_format, "text");
-        assert_eq!(loaded.cache.enabled, true);
+        assert!(loaded.cache.enabled);
 
         // Verify CLI-specific directories
         let compiled_cache_dir = xdg_config.compiled_cache_dir().unwrap();
@@ -353,10 +353,10 @@ mod tests {
         assert_eq!(output_format, "text");
 
         let verbose = xdg_config.verbose_enabled().await.unwrap();
-        assert_eq!(verbose, false);
+        assert!(!verbose);
 
         let cache_enabled = xdg_config.cache_enabled().await.unwrap();
-        assert_eq!(cache_enabled, true);
+        assert!(cache_enabled);
 
         let cache_ttl = xdg_config.cache_ttl().await.unwrap();
         assert_eq!(cache_ttl, 24 * 60 * 60); // 24 hours

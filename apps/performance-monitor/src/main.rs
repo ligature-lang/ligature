@@ -3,7 +3,7 @@
 //! This tool provides comprehensive performance monitoring, regression testing,
 //! and adaptive optimization management.
 
-use clap::{App, Arg, SubCommand};
+use clap::{Arg, ArgAction, Command};
 use ligature_eval::evaluate_program;
 use ligature_eval::{
     AdaptiveOptimizer, AdaptiveOptimizerConfig, PerformanceConfig, PerformanceMonitor,
@@ -18,91 +18,85 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let matches = App::new("ligature-performance-monitor")
+    let matches = Command::new("ligature-performance-monitor")
         .version("1.0")
         .about("Performance monitoring and optimization tool for Ligature")
         .subcommand(
-            SubCommand::with_name("monitor")
+            Command::new("monitor")
                 .about("Monitor performance in real-time")
                 .arg(
-                    Arg::with_name("config")
+                    Arg::new("config")
                         .short('c')
                         .long("config")
                         .value_name("FILE")
-                        .help("Configuration file path")
-                        .takes_value(true),
+                        .help("Configuration file path"),
                 )
                 .arg(
-                    Arg::with_name("duration")
+                    Arg::new("duration")
                         .short('d')
                         .long("duration")
                         .value_name("SECONDS")
                         .help("Monitoring duration in seconds")
-                        .takes_value(true)
                         .default_value("60"),
                 ),
         )
         .subcommand(
-            SubCommand::with_name("regression-test")
+            Command::new("regression-test")
                 .about("Run performance regression tests")
                 .arg(
-                    Arg::with_name("baseline")
+                    Arg::new("baseline")
                         .short('b')
                         .long("baseline")
                         .value_name("FILE")
-                        .help("Baseline performance file")
-                        .takes_value(true),
+                        .help("Baseline performance file"),
                 )
                 .arg(
-                    Arg::with_name("output")
+                    Arg::new("output")
                         .short('o')
                         .long("output")
                         .value_name("FILE")
-                        .help("Output report file")
-                        .takes_value(true),
+                        .help("Output report file"),
                 ),
         )
         .subcommand(
-            SubCommand::with_name("optimize")
+            Command::new("optimize")
                 .about("Run adaptive optimization")
                 .arg(
-                    Arg::with_name("iterations")
+                    Arg::new("iterations")
                         .short('i')
                         .long("iterations")
                         .value_name("COUNT")
                         .help("Number of optimization iterations")
-                        .takes_value(true)
                         .default_value("10"),
                 )
                 .arg(
-                    Arg::with_name("report")
+                    Arg::new("report")
                         .short('r')
                         .long("report")
-                        .help("Generate optimization report"),
+                        .help("Generate optimization report")
+                        .action(ArgAction::SetTrue),
                 ),
         )
         .subcommand(
-            SubCommand::with_name("benchmark")
+            Command::new("benchmark")
                 .about("Run performance benchmarks")
                 .arg(
-                    Arg::with_name("expression")
+                    Arg::new("expression")
                         .short('e')
                         .long("expression")
                         .value_name("EXPR")
-                        .help("Expression to benchmark")
-                        .takes_value(true),
+                        .help("Expression to benchmark"),
                 )
                 .arg(
-                    Arg::with_name("iterations")
+                    Arg::new("iterations")
                         .short('i')
                         .long("iterations")
                         .value_name("COUNT")
                         .help("Number of iterations")
-                        .takes_value(true)
                         .default_value("1000"),
                 )
                 .arg(
-                    Arg::with_name("output")
+                    Arg::new("output")
                         .short('o')
                         .long("output")
                         .value_name("FILE")
@@ -110,32 +104,29 @@ async fn main() -> Result<()> {
                 ),
         )
         .subcommand(
-            SubCommand::with_name("report")
-                .about("Generate performance report")
+            Command::new("report")
+                .about("Generate performance reports")
                 .arg(
-                    Arg::with_name("input")
+                    Arg::new("input")
                         .short('i')
                         .long("input")
                         .value_name("FILE")
-                        .help("Input metrics file")
-                        .takes_value(true),
+                        .help("Input metrics file"),
                 )
                 .arg(
-                    Arg::with_name("output")
+                    Arg::new("output")
                         .short('o')
                         .long("output")
                         .value_name("FILE")
-                        .help("Output report file")
-                        .takes_value(true),
+                        .help("Output report file"),
                 )
                 .arg(
-                    Arg::with_name("format")
+                    Arg::new("format")
                         .short('f')
                         .long("format")
                         .value_name("FORMAT")
-                        .help("Output format (json, csv, human)")
-                        .takes_value(true)
-                        .default_value("human"),
+                        .help("Output format (json, csv, text)")
+                        .default_value("json"),
                 ),
         )
         .get_matches();
@@ -168,13 +159,13 @@ async fn main() -> Result<()> {
 async fn run_monitoring(args: &clap::ArgMatches) -> Result<()> {
     println!("Starting performance monitoring...");
 
-    let config = if let Some(config_path) = args.value_of("config") {
+    let config = if let Some(config_path) = args.get_one::<String>("config") {
         load_config(config_path)?
     } else {
         PerformanceConfig::default()
     };
 
-    let duration_seconds: u64 = args.value_of("duration").unwrap().parse()?;
+    let duration_seconds: u64 = args.get_one::<String>("duration").unwrap().parse()?;
     let duration = Duration::from_secs(duration_seconds);
 
     let monitor = PerformanceMonitor::with_config(config);
@@ -245,7 +236,7 @@ async fn run_regression_tests(args: &clap::ArgMatches) -> Result<()> {
     report.print_summary();
 
     // Save results if output file specified
-    if let Some(output_path) = args.value_of("output") {
+    if let Some(output_path) = args.get_one::<String>("output") {
         let output_path = PathBuf::from(output_path);
         save_regression_report(&report, &output_path)?;
         println!("Regression report saved to: {output_path:?}");
@@ -258,8 +249,8 @@ async fn run_regression_tests(args: &clap::ArgMatches) -> Result<()> {
 async fn run_optimization(args: &clap::ArgMatches) -> Result<()> {
     println!("Running adaptive optimization...");
 
-    let iterations: usize = args.value_of("iterations").unwrap().parse()?;
-    let generate_report = args.is_present("report");
+    let iterations: usize = args.get_one::<String>("iterations").unwrap().parse()?;
+    let generate_report = args.contains_id("report");
 
     let config = AdaptiveOptimizerConfig::default();
     let monitor = std::sync::Arc::new(PerformanceMonitor::new());
@@ -319,8 +310,11 @@ async fn run_optimization(args: &clap::ArgMatches) -> Result<()> {
 
 /// Run performance benchmarks
 async fn run_benchmark(args: &clap::ArgMatches) -> Result<()> {
-    let expression = args.value_of("expression").unwrap_or("42");
-    let iterations: usize = args.value_of("iterations").unwrap().parse()?;
+    let default_expr = "42".to_string();
+    let expression = args
+        .get_one::<String>("expression")
+        .unwrap_or(&default_expr);
+    let iterations: usize = args.get_one::<String>("iterations").unwrap().parse()?;
 
     println!("Running benchmark for expression: {expression}");
     println!("Iterations: {iterations}");
@@ -403,7 +397,7 @@ async fn run_benchmark(args: &clap::ArgMatches) -> Result<()> {
     report.print_summary();
 
     // Save results if output file specified
-    if let Some(output_path) = args.value_of("output") {
+    if let Some(output_path) = args.get_one::<String>("output") {
         let output_path = PathBuf::from(output_path);
         save_benchmark_results(&report, &output_path)?;
         println!("Benchmark results saved to: {output_path:?}");
@@ -414,14 +408,14 @@ async fn run_benchmark(args: &clap::ArgMatches) -> Result<()> {
 
 /// Generate performance report
 async fn generate_report(args: &clap::ArgMatches) -> Result<()> {
-    let format = args.value_of("format").unwrap();
+    let format = args.get_one::<String>("format").unwrap();
 
-    if let Some(input_path) = args.value_of("input") {
+    if let Some(input_path) = args.get_one::<String>("input") {
         // Load metrics from file and generate report
         let monitor = load_metrics_from_file(input_path)?;
         let report = monitor.generate_report();
 
-        if let Some(output_path) = args.value_of("output") {
+        if let Some(output_path) = args.get_one::<String>("output") {
             save_report(&report, output_path, format)?;
             println!("Report saved to: {output_path}");
         } else {
@@ -432,7 +426,7 @@ async fn generate_report(args: &clap::ArgMatches) -> Result<()> {
         let monitor = PerformanceMonitor::new();
         let report = monitor.generate_report();
 
-        if let Some(output_path) = args.value_of("output") {
+        if let Some(output_path) = args.get_one::<String>("output") {
             save_report(&report, output_path, format)?;
             println!("Report saved to: {output_path}");
         } else {
@@ -470,9 +464,9 @@ fn save_report(report: &PerformanceReport, path: &str, format: &str) -> Result<(
     let content = match format {
         "json" => serde_json::to_string_pretty(report)?,
         "csv" => convert_to_csv(report)?,
-        "human" => {
+        "text" => {
             report.print_summary();
-            String::new() // Human format is printed to stdout
+            String::new() // Text format is printed to stdout
         }
         _ => return Err("Unsupported format".into()),
     };
