@@ -1,0 +1,114 @@
+-- cacophony.lig
+-- module Cacophony
+
+-- Project metadata
+let project = {
+  name = "infrastructure-as-code",
+  version = "1.0.0",
+  description = "Infrastructure management with Terraform and Cacophony",
+  authors = ["team@example.com"],
+  repository = "https://github.com/example/infrastructure",
+  license = "Apache-2.0"
+};
+
+-- Environment definitions
+let environments = {
+  dev = {
+    name = "development",
+    description = "Development environment",
+    variables = {
+      AWS_REGION = "us-west-2",
+      ENVIRONMENT = "dev",
+      INSTANCE_TYPE = "t3.micro",
+      VPC_CIDR = "10.0.0.0/16"
+    },
+    plugins = ["terraform"]
+  },
+  
+  staging = {
+    name = "staging",
+    description = "Staging environment",
+    variables = {
+      AWS_REGION = "us-west-2",
+      ENVIRONMENT = "staging",
+      INSTANCE_TYPE = "t3.small",
+      VPC_CIDR = "10.1.0.0/16"
+    },
+    plugins = ["terraform"]
+  },
+  
+  prod = {
+    name = "production",
+    description = "Production environment",
+    variables = {
+      AWS_REGION = "us-west-2",
+      ENVIRONMENT = "prod",
+      INSTANCE_TYPE = "t3.medium",
+      VPC_CIDR = "10.2.0.0/16"
+    },
+    plugins = ["terraform"]
+  }
+};
+
+-- Collection definitions
+let collections = {
+  networking = {
+    name = "networking",
+    description = "VPC and networking infrastructure",
+    dependencies = [],
+    operations = ["plan", "apply", "destroy"],
+    environments = ["dev", "staging", "prod"]
+  },
+  
+  compute = {
+    name = "compute",
+    description = "EC2 instances and compute resources",
+    dependencies = ["networking"],
+    operations = ["plan", "apply", "destroy"],
+    environments = ["dev", "staging", "prod"]
+  },
+  
+  database = {
+    name = "database",
+    description = "RDS databases and storage",
+    dependencies = ["networking"],
+    operations = ["plan", "apply", "destroy"],
+    environments = ["dev", "staging", "prod"]
+  }
+};
+
+-- Custom operations
+let operations = {
+  plan = {
+    name = "terraform-plan",
+    description = "Generate Terraform execution plan",
+    parameters = {
+      timeout = 600,
+      retries = 3
+    }
+  },
+  
+  apply = {
+    name = "terraform-apply",
+    description = "Apply Terraform configuration",
+    parameters = {
+      timeout = 1800,
+      retries = 3
+    }
+  },
+  
+  destroy = {
+    name = "terraform-destroy",
+    description = "Destroy Terraform-managed infrastructure",
+    parameters = {
+      timeout = 1800,
+      retries = 3
+    }
+  }
+};
+
+-- Configuration object
+let config = { project = project, environments = environments, collections = collections, operations = operations };
+
+-- Export the configuration
+export config; 

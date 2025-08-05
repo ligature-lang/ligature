@@ -1,0 +1,7 @@
+let user = {
+    name = "Alice",
+    age = 30,
+    email = "alice@example.com"
+};
+let user_name = user.name;
+let user_age = user.age + 1;

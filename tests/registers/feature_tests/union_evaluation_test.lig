@@ -1,0 +1,29 @@
+// Test union construction and pattern matching
+type Option = Some Integer | None;
+
+// Test union construction without payload
+let none_value = None;
+
+// Test union construction with payload
+let some_value = Some(42);
+
+// Test pattern matching on unions
+let get_value = \opt -> match opt {
+    Some(n) => n,
+    None => 0
+};
+
+// Test the function with different union values
+let result1 = get_value(some_value);
+let result2 = get_value(none_value);
+
+// Test nested pattern matching
+let process_option = \opt -> match opt {
+    Some(0) => "zero",
+    Some(n) => "positive",
+    None => "none"
+};
+
+let result3 = process_option(Some(0));
+let result4 = process_option(Some(5));
+let result5 = process_option(None); 

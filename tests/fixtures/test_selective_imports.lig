@@ -1,0 +1,23 @@
+// Test file for selective imports
+
+// Module declaration
+module TestModule;
+
+// Basic import
+import "std.core";
+
+// Import with alias
+import "std.collections" as collections;
+
+// Selective import with "from" syntax
+import { List, Map } from stdlib.collections;
+
+// Selective import with quoted path
+import "std.string" { concat, split };
+
+// Selective import with aliases
+import { List as MyList, Map as MyMap } from stdlib.collections;
+
+// Some declarations
+let x = 42;
+let y = "hello"; 

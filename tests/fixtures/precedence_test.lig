@@ -1,0 +1,32 @@
+// Operator Precedence Test Cases
+// This file tests various operator precedence scenarios
+
+// Test 1: Basic arithmetic precedence
+let arithmetic_test = 2 + 3 * 4;  // Should be 2 + (3 * 4) = 14, not (2 + 3) * 4 = 20
+
+// Test 2: Mixed arithmetic and comparison
+let comparison_test = 5 + 3 > 7;  // Should be (5 + 3) > 7 = true
+
+// Test 3: Logical operator precedence
+let logical_test = true && false || true;  // Should be (true && false) || true = true
+
+// Test 4: Unary operator precedence
+let unary_test = -5 + 3;  // Should be (-5) + 3 = -2
+
+// Test 5: Function application precedence
+let function_test = f x + y;  // Should be (f x) + y, not f (x + y)
+
+// Test 6: Field access precedence
+let field_test = record.field + 5;  // Should be (record.field) + 5
+
+// Test 7: Complex nested precedence
+let complex_test = a + b * c > d && e || f;  // Should be ((a + (b * c)) > d) && e) || f
+
+// Test 8: Parenthesized expressions
+let parenthesized_test = (2 + 3) * 4;  // Should be 20
+
+// Test 9: Multiple unary operators
+let multiple_unary = --5;  // Should be -(-5) = 5
+
+// Test 10: Comparison chain
+let comparison_chain = 1 < 2 < 3;  // Should be (1 < 2) < 3 = true < 3 (type error expected) 

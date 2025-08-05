@@ -1,0 +1,16 @@
+[package]
+name = "ligature-ast"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "Abstract Syntax Tree definitions for the Ligature language"
+license.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+serde = { workspace = true, features = ["derive"] }
+thiserror = { workspace = true }
+miette = { workspace = true, features = ["fancy"] }
+indexmap = { workspace = true } 

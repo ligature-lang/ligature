@@ -1,0 +1,27 @@
+-- frontend.lig
+-- module frontend
+
+let config = {
+  name = "frontend",
+  type = "service",
+  
+  deploy = {
+    replicas = 2,
+    resources = {
+      cpu = "500m",
+      memory = "512Mi"
+    },
+    
+    ports = [{
+      container = 80,
+      service = 8080,
+      protocol = "http"
+    }]
+  },
+  
+  environment = {
+    "NODE_ENV" = "production"
+  }
+};
+
+export config;

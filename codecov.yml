@@ -1,0 +1,75 @@
+# Codecov configuration for Ligature
+# This file configures how Codecov processes and displays coverage data
+
+coverage:
+  # Overall project coverage threshold
+  threshold: 80%
+  
+  # Coverage thresholds for specific crates
+  target: 80%
+  
+  # Precision for coverage reporting
+  precision: 2
+  
+  # Round coverage numbers
+  round: down
+
+# Coverage status checks
+status:
+  project:
+    # Overall project coverage
+    target: 80%
+    threshold: 5%
+  patch:
+    # Coverage for new/changed code
+    target: 80%
+    threshold: 5%
+  changes:
+    # Coverage for changed files
+    target: 80%
+    threshold: 5%
+
+# Coverage flags for different test types
+flags:
+  unit:
+    # Unit test coverage
+    paths:
+      - "crates/*/src/"
+  integration:
+    # Integration test coverage
+    paths:
+      - "tests/"
+  property:
+    # Property test coverage
+    paths:
+      - "tests/property/"
+  differential:
+    # Differential test coverage
+    paths:
+      - "tests/differential/"
+
+# Ignore certain files/directories
+ignore:
+  # Generated files
+  - "target/"
+  - "**/*.rs.bk"
+  - "**/generated/"
+  
+  # Test files
+  - "**/*_test.rs"
+  - "**/test_*.rs"
+  - "tests/"
+  
+  # Documentation
+  - "docs/"
+  - "**/*.md"
+  
+  # Configuration files
+  - "**/*.toml"
+  - "**/*.yml"
+  - "**/*.yaml"
+  - "**/*.json"
+  
+  # Build artifacts
+  - "**/build/"
+  - "**/dist/" 

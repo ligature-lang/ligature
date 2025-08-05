@@ -1,0 +1,234 @@
+-- Dependent Type Computation Tests
+-- Phase 3: Type-Level Computation with Dependent Types (Pi/Sigma applications)
+
+-- Test 1: Pi Type Application
+-- Apply a dependent function type to a type argument
+type ApplyPi 'F 'A = 
+  match 'F {
+    Pi { parameter, parameter_type, return_type } =>
+      -- Substitute 'A for parameter in return_type
+      -- This is the core of dependent type computation
+      substitute 'parameter 'A 'return_type
+  };
+
+-- Test Pi type application with simple examples
+type SimplePi = Pi { 
+  parameter = "T", 
+  parameter_type = Type, 
+  return_type = List "T" 
+};
+
+type AppliedPi = ApplyPi SimplePi Int;  -- Should be List Int
+
+let testAppliedPi: AppliedPi = [1, 2, 3];
+
+-- Test 2: Sigma Type Projection
+-- Project from a dependent pair type
+type Proj1 'S = 
+  match 'S {
+    Sigma { parameter, parameter_type, return_type } =>
+      'parameter_type
+  };
+
+type Proj2 'S = 
+  match 'S {
+    Sigma { parameter, parameter_type, return_type } =>
+      'return_type
+  };
+
+-- Test Sigma type projection
+type SimpleSigma = Sigma { 
+  parameter = "T", 
+  parameter_type = Type, 
+  return_type = List "T" 
+};
+
+type FirstProjection = Proj1 SimpleSigma;  -- Should be Type
+type SecondProjection = Proj2 SimpleSigma; -- Should be List "T"
+
+-- Test 3: Dependent Type Construction
+-- Construct Pi and Sigma types programmatically
+type MakePi 'Param 'ParamType 'ReturnType = 
+  Pi { 
+    parameter = 'Param, 
+    parameter_type = 'ParamType, 
+    return_type = 'ReturnType 
+  };
+
+type MakeSigma 'Param 'ParamType 'ReturnType = 
+  Sigma { 
+    parameter = 'Param, 
+    parameter_type = 'ParamType, 
+    return_type = 'ReturnType 
+  };
+
+-- Test dependent type construction
+type ListConstructor = MakePi "T" Type (List "T");
+type ListPair = MakeSigma "T" Type (List "T");
+
+-- Test 4: Dependent Type Composition
+-- Compose dependent function types
+type ComposePi 'F 'G = 
+  match ('F, 'G) {
+    (Pi { parameter = p1, parameter_type = pt1, return_type = rt1 },
+     Pi { parameter = p2, parameter_type = pt2, return_type = rt2 }) =>
+      -- Compose the dependent functions
+      Pi { 
+        parameter = p1, 
+        parameter_type = pt1, 
+        return_type = ApplyPi 'F (ApplyPi 'G "T")
+      }
+  };
+
+-- Test dependent type composition
+type ComposedPi = ComposePi ListConstructor ListConstructor;
+
+-- Test 5: Dependent Type Pattern Matching
+-- Pattern match on dependent types
+type MatchPi 'F 'Cases = 
+  match 'F {
+    Pi { parameter, parameter_type, return_type } =>
+      -- Apply pattern matching based on the structure
+      match 'Cases {
+        "identity" => 'F,
+        "list" => List 'parameter_type,
+        "option" => Option 'parameter_type,
+        _ => 'F
+      }
+  };
+
+-- Test dependent type pattern matching
+type MatchedPi = MatchPi ListConstructor "list";
+
+-- Test 6: Dependent Type with Type Classes
+-- Use dependent types with type class constraints
+type ConstrainedPi 'Class 'Param 'ParamType 'ReturnType = 
+  Pi { 
+    parameter = 'Param, 
+    parameter_type = Constrained { constraint = 'Class, type = 'ParamType }, 
+    return_type = 'ReturnType 
+  };
+
+-- Test constrained dependent types
+type ShowableList = ConstrainedPi "Show" "T" Type (List "T");
+
+-- Test 7: Dependent Type with Subtyping
+-- Use dependent types with subtyping relationships
+type SubtypePi 'Super 'Sub 'ReturnType = 
+  Pi { 
+    parameter = "T", 
+    parameter_type = 'Super, 
+    return_type = 'ReturnType 
+  };
+
+-- Test subtyping with dependent types
+type NumberList = SubtypePi Number Int (List "T");
+
+-- Test 8: Dependent Type with Recursion
+-- Use dependent types with recursive definitions
+type RecursivePi 'Base 'Step = 
+  Pi { 
+    parameter = "N", 
+    parameter_type = Nat, 
+    return_type = match "N" {
+      Zero => 'Base,
+      Succ "N'" => 'Step (RecursivePi 'Base 'Step "N'")
+    }
+  };
+
+-- Test recursive dependent types
+type ListN = RecursivePi Unit (\'T -> { head: Int, tail: 'T });
+
+-- Test 9: Dependent Type with Higher-Order Functions
+-- Use dependent types with higher-order type functions
+type HigherOrderPi 'F 'G = 
+  Pi { 
+    parameter = "T", 
+    parameter_type = Type, 
+    return_type = 'F ('G "T")
+  };
+
+-- Test higher-order dependent types
+type HigherOrderList = HigherOrderPi List Option;
+
+-- Test 10: Dependent Type with Type-Level Computation
+-- Combine dependent types with type-level computation
+type ComputedPi 'F 'Compute = 
+  Pi { 
+    parameter = "T", 
+    parameter_type = Type, 
+    return_type = 'Compute ('F "T")
+  };
+
+-- Test computed dependent types
+type ComputedList = ComputedPi List (\'T -> List 'T);
+
+-- Test 11: Dependent Type with Type-Level Equality
+-- Use dependent types with type-level equality
+type EqualPi 'A 'B 'ReturnType = 
+  Pi { 
+    parameter = "proof", 
+    parameter_type = Equal 'A 'B, 
+    return_type = 'ReturnType 
+  };
+
+-- Test equality with dependent types
+type EqualList = EqualPi (List Int) (List Int) Unit;
+
+-- Test 12: Dependent Type with Type-Level Arithmetic
+-- Use dependent types with type-level arithmetic
+type ArithmeticPi 'N 'M = 
+  Pi { 
+    parameter = "T", 
+    parameter_type = Type, 
+    return_type = List "T"  -- Simplified for now
+  };
+
+-- Test arithmetic with dependent types
+type ArithmeticList = ArithmeticPi Zero (Succ Zero);
+
+-- Test 13: Dependent Type with Type-Level Lists
+-- Use dependent types with type-level lists
+type ListPi 'L = 
+  Pi { 
+    parameter = "T", 
+    parameter_type = Type, 
+    return_type = TypeList 'L "T"
+  };
+
+-- Test type-level lists with dependent types
+type TypeListPi = ListPi (Cons Type (Cons Type Nil));
+
+-- Test 14: Dependent Type with Type-Level Records
+-- Use dependent types with type-level records
+type RecordPi 'R = 
+  Pi { 
+    parameter = "T", 
+    parameter_type = Type, 
+    return_type = TypeRecord 'R "T"
+  };
+
+-- Test type-level records with dependent types
+type TypeRecordPi = RecordPi { name: String, age: Int };
+
+-- Test 15: Dependent Type with Type-Level Unions
+-- Use dependent types with type-level unions
+type UnionPi 'U = 
+  Pi { 
+    parameter = "T", 
+    parameter_type = Type, 
+    return_type = TypeUnion 'U "T"
+  };
+
+-- Test type-level unions with dependent types
+type TypeUnionPi = UnionPi (Ok(String) | Err(String));
+
+-- Export the dependent type computation functions
+export ApplyPi, Proj1, Proj2;
+export MakePi, MakeSigma;
+export ComposePi, MatchPi;
+export ConstrainedPi, SubtypePi, RecursivePi;
+export HigherOrderPi, ComputedPi;
+export EqualPi, ArithmeticPi;
+export ListPi, RecordPi, UnionPi;
+export SimplePi, SimpleSigma, ListConstructor, ListPair; 

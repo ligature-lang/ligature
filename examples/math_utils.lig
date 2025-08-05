@@ -1,0 +1,25 @@
+// Math utilities module
+
+// Export basic arithmetic functions
+export let add = \x y -> x + y
+export let subtract = \x y -> x - y
+export let multiply = \x y -> x * y
+export let divide = \x y -> x / y
+
+// Export some mathematical constants
+export let pi = 3.14159
+export let e = 2.71828
+
+// Export a more complex function
+export let factorial = \n ->
+    if n <= 1 then 1
+    else n * factorial (n - 1)
+
+// Export a type alias
+export type Point = { x: Float, y: Float }
+
+// Export a function that works with the Point type
+export let distance = \p1 p2 ->
+    let dx = p1.x - p2.x
+    let dy = p1.y - p2.y
+    sqrt (dx * dx + dy * dy) 

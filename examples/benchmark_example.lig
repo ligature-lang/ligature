@@ -1,0 +1,136 @@
+# Benchmark Examples for Ligature
+# This file contains various expressions that can be used for benchmarking
+
+# Simple literals
+let simple_integer = 42
+let simple_float = 3.14159
+let simple_string = "hello world"
+let simple_boolean = true
+
+# Arithmetic expressions
+let simple_arithmetic = 1 + 2
+let complex_arithmetic = 1 + 2 * 3 - 4 / 2
+let parenthesized_arithmetic = (1 + 2) * (3 - 4)
+let floating_point_arithmetic = 3.14 * 2.0 + 1.5
+
+# Comparison expressions
+let simple_comparison = 10 > 5
+let compound_comparison = 10 >= 5 && 20 <= 30
+let equality_comparison = 42 == 42 && 3.14 != 2.71
+
+# Logical expressions
+let simple_logical = true && false
+let complex_logical = true && true || false && !false
+let short_circuit_logical = false && (1 / 0 == 0)
+
+# Let expressions
+let simple_let = let x = 42 in x
+let nested_let = let x = 1 in let y = 2 in x + y
+let let_with_complex_expression = let x = 1 + 2 * 3 in let y = x * 2 in y + 1
+
+# Conditional expressions
+let simple_if = if true then 1 else 2
+let nested_if = if 10 > 5 then if 3 < 2 then 1 else 2 else 3
+let if_with_complex_condition = if (1 + 2) * 3 > 10 then 42 else 0
+
+# Records
+let simple_record = { x: 1, y: 2 }
+let record_access = let r = { x: 1, y: 2 } in r.x + r.y
+let nested_record = let r = { x: { a: 1, b: 2 }, y: 3 } in r.x.a + r.y
+
+# Lists
+let simple_list = [1, 2, 3]
+let list_access = let l = [1, 2, 3, 4, 5] in l[0] + l[1]
+let nested_list = let l = [[1, 2], [3, 4], [5, 6]] in l[0][0] + l[1][1]
+
+# Complex expressions
+let complex_expression = let x = { a: 1, b: [2, 3] } in x.a + x.b[0]
+let very_complex_expression = let config = { threshold: 100, enabled: true } in if config.enabled && 150 > config.threshold then 42 else 0
+let mathematical_expression = let x = 10 in let y = 20 in (x + y) * (x - y) / 2
+
+# Configuration examples
+let server_config = {
+    port: 8080,
+    host: "localhost",
+    debug: true,
+    timeout: 30,
+    max_connections: 1000
+}
+
+let environment_config = let env = "production" in if env == "production" then {
+    debug: false,
+    port: 443,
+    ssl: true,
+    timeout: 60
+} else {
+    debug: true,
+    port: 3000,
+    ssl: false,
+    timeout: 30
+}
+
+let nested_config = let base = { timeout: 30, retries: 3 } in let extended = {
+    base,
+    cache_size: 1024,
+    compression: true
+} in extended.timeout * extended.retries
+
+# Performance test expressions
+let performance_test_1 = let x = 1 in let y = 2 in let z = 3 in x + y + z
+let performance_test_2 = let values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] in values[0] + values[1] + values[2]
+let performance_test_3 = let config = { a: 1, b: 2, c: 3, d: 4, e: 5 } in config.a + config.b + config.c
+
+# Error cases (for testing error handling performance)
+let error_case_1 = 1 / 0  # Division by zero
+let error_case_2 = let l = [1, 2, 3] in l[10]  # Index out of bounds
+let error_case_3 = let r = { x: 1 } in r.y  # Missing field
+let error_case_4 = 1 + "hello"  # Type mismatch
+let error_case_5 = undefined_variable  # Undefined variable
+
+# Large expressions for stress testing
+let large_arithmetic = 1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10 + 11 + 12 + 13 + 14 + 15 + 16 + 17 + 18 + 19 + 20
+let large_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+let large_record = {
+    a: 1, b: 2, c: 3, d: 4, e: 5, f: 6, g: 7, h: 8, i: 9, j: 10,
+    k: 11, l: 12, m: 13, n: 14, o: 15, p: 16, q: 17, r: 18, s: 19, t: 20
+}
+
+# Real-world configuration examples
+let database_config = {
+    host: "localhost",
+    port: 5432,
+    database: "myapp",
+    username: "user",
+    password: "secret",
+    pool_size: 10,
+    timeout: 30,
+    ssl: true,
+    ssl_mode: "require"
+}
+
+let api_config = let environment = "production" in if environment == "production" then {
+    base_url: "https://api.example.com",
+    timeout: 30,
+    retries: 3,
+    rate_limit: 1000,
+    auth: {
+        type: "bearer",
+        token: "secret_token"
+    },
+    logging: {
+        level: "info",
+        format: "json"
+    }
+} else {
+    base_url: "http://localhost:3000",
+    timeout: 10,
+    retries: 1,
+    rate_limit: 100,
+    auth: {
+        type: "none"
+    },
+    logging: {
+        level: "debug",
+        format: "text"
+    }
+} 

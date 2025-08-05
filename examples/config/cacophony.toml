@@ -1,0 +1,153 @@
+# Cacophony Configuration File
+# This file configures the Cacophony application for managing Ligature projects
+# Place this file in your XDG config directory or specify with --config
+
+[project]
+name = "my-ligature-project"
+version = "1.0.0"
+description = "A sample Ligature project for demonstration"
+authors = ["Alice Developer", "Bob Maintainer"]
+repository = "https://github.com/example/my-ligature-project"
+license = "Apache-2.0"
+
+# Environment configurations
+[environments.development]
+name = "development"
+description = "Development environment with debug features"
+variables = { DATABASE_URL = "sqlite:///dev.db", LOG_LEVEL = "debug", DEBUG = "true" }
+plugins = ["debug-plugin", "hot-reload"]
+overrides = { cache_enabled = false, timeout = 10 }
+
+[environments.staging]
+name = "staging"
+description = "Staging environment for testing"
+variables = { DATABASE_URL = "postgresql://staging:5432/app", LOG_LEVEL = "info", DEBUG = "false" }
+plugins = ["monitoring", "logging"]
+overrides = { cache_enabled = true, timeout = 30 }
+
+[environments.production]
+name = "production"
+description = "Production environment"
+variables = { DATABASE_URL = "postgresql://prod:5432/app", LOG_LEVEL = "warn", DEBUG = "false" }
+plugins = ["monitoring", "logging", "security"]
+overrides = { cache_enabled = true, timeout = 60, strict_validation = true }
+
+# Collection configurations
+[collections.core]
+name = "core"
+description = "Core Ligature functionality"
+dependencies = []
+operations = ["parse", "evaluate", "validate"]
+environments = ["development", "staging", "production"]
+config = { max_ast_size = 1000000, enable_optimizations = true }
+
+[collections.testing]
+name = "testing"
+description = "Testing utilities and frameworks"
+dependencies = ["core"]
+operations = ["run-tests", "generate-tests", "coverage"]
+environments = ["development", "staging"]
+config = { test_timeout = 30, parallel_tests = true }
+
+[collections.deployment]
+name = "deployment"
+description = "Deployment and CI/CD operations"
+dependencies = ["core", "testing"]
+operations = ["build", "deploy", "rollback", "health-check"]
+environments = ["staging", "production"]
+config = { build_timeout = 300, deployment_strategy = "blue-green" }
+
+# Plugin configurations
+[[plugins]]
+name = "debug-plugin"
+version = "1.0.0"
+enabled = true
+config = { log_level = "debug", show_ast = true, show_timing = true }
+
+[[plugins]]
+name = "monitoring"
+version = "2.1.0"
+enabled = true
+config = { metrics_endpoint = "http://localhost:9090", alert_threshold = 0.95 }
+
+[[plugins]]
+name = "logging"
+version = "1.5.0"
+enabled = true
+config = { log_format = "json", log_level = "info", retention_days = 30 }
+
+[[plugins]]
+name = "security"
+version = "1.2.0"
+enabled = true
+config = { scan_dependencies = true, vulnerability_check = true, secret_scanning = true }
+
+[[plugins]]
+name = "hot-reload"
+version = "0.9.0"
+enabled = false
+config = { watch_paths = ["src/", "config/"], debounce_ms = 500 }
+
+# Operation configurations
+[operations.parse]
+name = "parse"
+description = "Parse Ligature source code into AST"
+script = "scripts/parse.lig"
+parameters = { input_file = "string", output_format = "json", validate = "boolean" }
+timeout = 30
+retries = 3
+
+[operations.evaluate]
+name = "evaluate"
+description = "Evaluate Ligature expressions"
+script = "scripts/evaluate.lig"
+parameters = { expression = "string", context = "object", strict = "boolean" }
+timeout = 60
+retries = 2
+
+[operations.validate]
+name = "validate"
+description = "Validate Ligature code and configurations"
+script = "scripts/validate.lig"
+parameters = { config_file = "string", schema = "string", strict = "boolean" }
+timeout = 45
+retries = 1
+
+[operations.run-tests]
+name = "run-tests"
+description = "Run test suites"
+script = "scripts/run-tests.lig"
+parameters = { test_pattern = "string", parallel = "boolean", coverage = "boolean" }
+timeout = 120
+retries = 1
+
+[operations.build]
+name = "build"
+description = "Build project artifacts"
+script = "scripts/build.lig"
+parameters = { target = "string", optimize = "boolean", clean = "boolean" }
+timeout = 300
+retries = 2
+
+[operations.deploy]
+name = "deploy"
+description = "Deploy to target environment"
+script = "scripts/deploy.lig"
+parameters = { environment = "string", version = "string", rollback_on_failure = "boolean" }
+timeout = 600
+retries = 1
+
+# Global settings
+[settings]
+# Default environment to use
+default_environment = "development"
+# Whether to enable auto-save
+auto_save = true
+# Auto-save interval in seconds
+auto_save_interval = 30
+# Whether to show notifications
+show_notifications = true
+# Whether to enable telemetry
+telemetry_enabled = false
+# Maximum number of recent projects to remember
+max_recent_projects = 10 

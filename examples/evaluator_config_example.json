@@ -1,0 +1,46 @@
+{
+  "cache": {
+    "enabled": true,
+    "max_size": 1500,
+    "max_memory_bytes": 1572864,
+    "warming": {
+      "enabled": false,
+      "max_expressions": 100,
+      "warm_on_module_load": false
+    },
+    "cacheable_expressions": {
+      "literals": true,
+      "variables": true,
+      "binary_ops": true,
+      "unary_ops": true,
+      "field_access": true,
+      "applications": false,
+      "let_expressions": false,
+      "records": false,
+      "unions": false,
+      "matches": false,
+      "if_expressions": false
+    }
+  },
+  "performance": {
+    "tail_call_optimization": true,
+    "stack_based_evaluation": true,
+    "value_optimization": true,
+    "max_stack_depth": 10000,
+    "env_pool_size": 150,
+    "value_pool_size": 1500
+  },
+  "memory": {
+    "monitoring": true,
+    "eviction_threshold_percent": 80.0,
+    "max_evaluation_memory_bytes": 268435456,
+    "gc_frequency": 1000
+  },
+  "debug": {
+    "logging": true,
+    "profiling": false,
+    "cache_statistics": true,
+    "memory_tracking": true,
+    "log_level": "debug"
+  }
+} 

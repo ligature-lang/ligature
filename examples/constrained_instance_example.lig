@@ -1,0 +1,43 @@
+// Example demonstrating constrained instance declarations
+
+// Define a type class for equality
+typeclass Eq 'a where
+    eq: 'a -> 'a -> Bool;
+
+// Define a type class for ordering
+typeclass Ord 'a where
+    superclass Eq 'a;
+    lt: 'a -> 'a -> Bool;
+
+// Define a type class for numeric operations
+typeclass Num 'a where
+    add: 'a -> 'a -> 'a;
+    sub: 'a -> 'a -> 'a;
+    mul: 'a -> 'a -> 'a;
+
+// Define a type class for showable values
+typeclass Show 'a where
+    show: 'a -> String;
+
+// Regular instance declaration (no constraints)
+instance Eq (Int) where
+    eq = \x y -> x == y;
+
+// Constrained instance declaration
+// This instance requires that 'a implements Show and Num
+instance Show (Num 'a => 'a) where
+    show = \x -> "Number: " ++ toString(x);
+
+// Another constrained instance example
+instance Ord (Eq 'a => 'a) where
+    lt = \x y -> not(eq(x, y)) && x < y;
+
+// Test the constrained instances
+let test_constrained = 
+    let x = 42;
+    let y = 10;
+    in {
+        eq_result = eq(x, y),
+        show_result = show(x),
+        lt_result = lt(x, y)
+    }; 

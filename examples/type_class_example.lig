@@ -1,0 +1,204 @@
+// Type Class System Example for Ligature
+// This file demonstrates the implementation of type classes and instances
+
+// Basic type classes
+typeclass Eq a where
+    eq : a -> a -> Bool;
+
+typeclass Ord a where
+    superclass Eq a;
+    compare : a -> a -> Ordering;
+    lt : a -> a -> Bool;
+    lte : a -> a -> Bool;
+    gt : a -> a -> Bool;
+    gte : a -> a -> Bool;
+
+typeclass Show a where
+    show : a -> String;
+
+typeclass Num a where
+    add : a -> a -> a;
+    sub : a -> a -> a;
+    mul : a -> a -> a;
+    neg : a -> a;
+    zero : a;
+
+// Built-in instances for primitive types
+instance Eq Int where
+    eq = \x y -> x == y;
+
+instance Ord Int where
+    compare = \x y -> if x < y then LT else if x > y then GT else EQ;
+    lt = \x y -> x < y;
+    lte = \x y -> x <= y;
+    gt = \x y -> x > y;
+    gte = \x y -> x >= y;
+
+instance Show Int where
+    show = \x -> toString x;
+
+instance Num Int where
+    add = \x y -> x + y;
+    sub = \x y -> x - y;
+    mul = \x y -> x * y;
+    neg = \x -> -x;
+    zero = 0;
+
+// String instances
+instance Eq String where
+    eq = \x y -> x == y;
+
+instance Ord String where
+    compare = \x y -> if x < y then LT else if x > y then GT else EQ;
+    lt = \x y -> x < y;
+    lte = \x y -> x <= y;
+    gt = \x y -> x > y;
+    gte = \x y -> x >= y;
+
+instance Show String where
+    show = \x -> x;
+
+// Boolean instances
+instance Eq Bool where
+    eq = \x y -> x == y;
+
+instance Ord Bool where
+    compare = \x y -> if x < y then LT else if x > y then GT else EQ;
+    lt = \x y -> x < y;
+    lte = \x y -> x <= y;
+    gt = \x y -> x > y;
+    gte = \x y -> x >= y;
+
+instance Show Bool where
+    show = \x -> if x then "true" else "false";
+
+// Custom data types
+type Person = { name : String, age : Int };
+
+type Maybe a = Just a | Nothing;
+
+type List a = Cons a (List a) | Nil;
+
+// Instance for Person
+instance Eq Person where
+    eq = \p1 p2 -> eq p1.name p2.name && eq p1.age p2.age;
+
+instance Ord Person where
+    compare = \p1 p2 -> 
+        case compare p1.name p2.name of
+            EQ -> compare p1.age p2.age;
+            other -> other;
+    lt = \p1 p2 -> compare p1 p2 == LT;
+    lte = \p1 p2 -> compare p1 p2 == LT || compare p1 p2 == EQ;
+    gt = \p1 p2 -> compare p1 p2 == GT;
+    gte = \p1 p2 -> compare p1 p2 == GT || compare p1 p2 == EQ;
+
+instance Show Person where
+    show = \p -> "Person(" ++ show p.name ++ ", " ++ show p.age ++ ")";
+
+// Parametric instances for Maybe
+instance Eq a => Eq (Maybe a) where
+    eq = \x y -> case (x, y) of
+        (Just a, Just b) -> eq a b;
+        (Nothing, Nothing) -> true;
+        _ -> false;
+
+instance Ord a => Ord (Maybe a) where
+    compare = \x y -> case (x, y) of
+        (Just a, Just b) -> compare a b;
+        (Nothing, Nothing) -> EQ;
+        (Nothing, Just _) -> LT;
+        (Just _, Nothing) -> GT;
+    lt = \x y -> compare x y == LT;
+    lte = \x y -> compare x y == LT || compare x y == EQ;
+    gt = \x y -> compare x y == GT;
+    gte = \x y -> compare x y == GT || compare x y == EQ;
+
+instance Show a => Show (Maybe a) where
+    show = \x -> case x of
+        Just a -> "Just(" ++ show a ++ ")";
+        Nothing -> "Nothing";
+
+// Parametric instances for List
+instance Eq a => Eq (List a) where
+    eq = \xs ys -> case (xs, ys) of
+        (Nil, Nil) -> true;
+        (Cons x xs', Cons y ys') -> eq x y && eq xs' ys';
+        _ -> false;
+
+instance Ord a => Ord (List a) where
+    compare = \xs ys -> case (xs, ys) of
+        (Nil, Nil) -> EQ;
+        (Nil, Cons _ _) -> LT;
+        (Cons _ _, Nil) -> GT;
+        (Cons x xs', Cons y ys') -> 
+            case compare x y of
+                EQ -> compare xs' ys';
+                other -> other;
+    lt = \x y -> compare x y == LT;
+    lte = \x y -> compare x y == LT || compare x y == EQ;
+    gt = \x y -> compare x y == GT;
+    gte = \x y -> compare x y == GT || compare x y == EQ;
+
+instance Show a => Show (List a) where
+    show = \xs -> case xs of
+        Nil -> "[]";
+        Cons x xs' -> "[" ++ show x ++ showList xs';
+    where
+        showList = \xs -> case xs of
+            Nil -> "]";
+            Cons x xs' -> ", " ++ show x ++ showList xs';
+
+// Generic functions using type classes
+let max : Ord a => a -> a -> a = \x y -> if gt x y then x else y;
+
+let min : Ord a => a -> a -> a = \x y -> if lt x y then x else y;
+
+let abs : Num a => Ord a => a -> a = \x -> if gte x zero then x else neg x;
+
+let sort : Ord a => List a -> List a = \xs -> 
+    case xs of
+        Nil -> Nil;
+        Cons x xs' -> insert x (sort xs');
+    where
+        insert = \x xs -> case xs of
+            Nil -> Cons x Nil;
+            Cons y ys -> if lte x y then Cons x (Cons y ys) else Cons y (insert x ys);
+
+let map : (a -> b) -> List a -> List b = \f xs ->
+    case xs of
+        Nil -> Nil;
+        Cons x xs' -> Cons (f x) (map f xs');
+
+let filter : (a -> Bool) -> List a -> List a = \p xs ->
+    case xs of
+        Nil -> Nil;
+        Cons x xs' -> if p x then Cons x (filter p xs') else filter p xs';
+
+// Test data and functions
+let people = Cons 
+    { name = "Alice", age = 30 } 
+    (Cons 
+        { name = "Bob", age = 25 } 
+        (Cons 
+            { name = "Charlie", age = 35 } 
+            Nil));
+
+let numbers = Cons 3 (Cons 1 (Cons 4 (Cons 1 (Cons 5 Nil))));
+
+let maybeNumbers = Cons (Just 5) (Cons Nothing (Cons (Just 3) Nil));
+
+// Test functions
+let testMax = max 5 3;
+let testMin = min 5 3;
+let testAbs = abs (-7);
+
+let sortedPeople = sort people;
+let sortedNumbers = sort numbers;
+
+let doubledNumbers = map (\x -> x * 2) numbers;
+let evenNumbers = filter (\x -> x % 2 == 0) numbers;
+
+let testMaybe = case maybeNumbers of
+    Cons (Just x) _ -> show x;
+    _ -> "No number found"; 

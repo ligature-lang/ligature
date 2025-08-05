@@ -1,0 +1,15 @@
+let add = \x y -> x + y;
+
+// Curried application (primary)
+let result1 = add(2)(3);
+
+// Tuple-style application (sugar)
+let result2 = add(2, 3);
+
+// Single argument lambda
+let double = \n -> n * 2;
+let result3 = double(5);
+
+// Nested applications
+let add5 = add(5);
+let result4 = add5(10);

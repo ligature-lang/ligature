@@ -1,0 +1,7 @@
+[register]
+name = "test"
+version = "0.1.0"
+description = "Test register for module loading"
+
+[exports]
+test_module = "test_module.lig" 

@@ -1,0 +1,10 @@
+let person = { 
+    name = "Alice", 
+    age = 30,
+    address = { 
+        street = "123 Main St", 
+        city = "Anytown" 
+    }
+};
+let street = person.address.street;
+let age = person.age; 

@@ -1,0 +1,9 @@
+type Option = Some Integer | None;
+
+let get_value = \opt -> match opt {
+    Some(n) => n,
+    None => 0
+};
+
+let result1 = get_value(Some(42));
+let result2 = get_value(None);

@@ -1,0 +1,517 @@
+{
+  "name": "vscode-ligature",
+  "displayName": "Ligature Language Support",
+  "description": "Complete language support for Ligature programming language with enhanced features",
+  "version": "0.1.0",
+  "publisher": "ligature-lang",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters",
+    "Formatters",
+    "Snippets"
+  ],
+  "keywords": [
+    "ligature",
+    "configuration",
+    "language",
+    "lsp",
+    "syntax",
+    "intellisense"
+  ],
+  "icon": "images/icon.png",
+  "galleryBanner": {
+    "color": "#2d3748",
+    "theme": "dark"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ligature-lang/ligature.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ligature-lang/ligature/issues"
+  },
+  "homepage": "https://github.com/ligature-lang/ligature",
+  "main": "./out/extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "languages": [
+      {
+        "id": "ligature",
+        "aliases": [
+          "Ligature",
+          "ligature"
+        ],
+        "extensions": [
+          ".lig"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "ligature",
+        "scopeName": "source.ligature",
+        "path": "./.lang/syntaxes/ligature.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "ligature",
+        "path": "./snippets/ligature.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "ligature.restartLanguageServer",
+        "title": "Ligature: Restart Language Server",
+        "category": "Ligature"
+      },
+      {
+        "command": "ligature.showDiagnostics",
+        "title": "Ligature: Show Diagnostics",
+        "category": "Ligature"
+      },
+      {
+        "command": "ligature.formatDocument",
+        "title": "Ligature: Format Document",
+        "category": "Ligature"
+      },
+      {
+        "command": "ligature.showHover",
+        "title": "Ligature: Show Hover Information",
+        "category": "Ligature"
+      },
+      {
+        "command": "ligature.goToDefinition",
+        "title": "Ligature: Go to Definition",
+        "category": "Ligature"
+      },
+      {
+        "command": "ligature.findReferences",
+        "title": "Ligature: Find All References",
+        "category": "Ligature"
+      },
+      {
+        "command": "ligature.renameSymbol",
+        "title": "Ligature: Rename Symbol",
+        "category": "Ligature"
+      },
+      {
+        "command": "ligature.organizeImports",
+        "title": "Ligature: Organize Imports",
+        "category": "Ligature"
+      },
+      {
+        "command": "ligature.showSymbols",
+        "title": "Ligature: Show Document Symbols",
+        "category": "Ligature"
+      },
+      {
+        "command": "ligature.showWorkspaceSymbols",
+        "title": "Ligature: Show Workspace Symbols",
+        "category": "Ligature"
+      },
+      {
+        "command": "ligature.refactorExtractFunction",
+        "title": "Ligature: Extract Function",
+        "category": "Ligature"
+      },
+      {
+        "command": "ligature.refactorInlineVariable",
+        "title": "Ligature: Inline Variable",
+        "category": "Ligature"
+      },
+      {
+        "command": "ligature.refactorExtractConstant",
+        "title": "Ligature: Extract Constant",
+        "category": "Ligature"
+      },
+      {
+        "command": "ligature.generateTests",
+        "title": "Ligature: Generate Tests",
+        "category": "Ligature"
+      },
+      {
+        "command": "ligature.generateDocumentation",
+        "title": "Ligature: Generate Documentation",
+        "category": "Ligature"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "ligature.restartLanguageServer",
+          "when": "resourceLangId == ligature"
+        },
+        {
+          "command": "ligature.showDiagnostics",
+          "when": "resourceLangId == ligature"
+        },
+        {
+          "command": "ligature.formatDocument",
+          "when": "resourceLangId == ligature"
+        },
+        {
+          "command": "ligature.organizeImports",
+          "when": "resourceLangId == ligature"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "ligature.showHover",
+          "when": "resourceLangId == ligature",
+          "group": "navigation"
+        },
+        {
+          "command": "ligature.goToDefinition",
+          "when": "resourceLangId == ligature",
+          "group": "navigation"
+        },
+        {
+          "command": "ligature.findReferences",
+          "when": "resourceLangId == ligature",
+          "group": "navigation"
+        },
+        {
+          "command": "ligature.renameSymbol",
+          "when": "resourceLangId == ligature",
+          "group": "1_modification"
+        },
+        {
+          "command": "ligature.formatDocument",
+          "when": "resourceLangId == ligature",
+          "group": "1_modification"
+        },
+        {
+          "command": "ligature.refactorExtractFunction",
+          "when": "resourceLangId == ligature",
+          "group": "1_modification"
+        },
+        {
+          "command": "ligature.refactorInlineVariable",
+          "when": "resourceLangId == ligature",
+          "group": "1_modification"
+        },
+        {
+          "command": "ligature.refactorExtractConstant",
+          "when": "resourceLangId == ligature",
+          "group": "1_modification"
+        },
+        {
+          "command": "ligature.generateTests",
+          "when": "resourceLangId == ligature",
+          "group": "1_modification"
+        },
+        {
+          "command": "ligature.generateDocumentation",
+          "when": "resourceLangId == ligature",
+          "group": "1_modification"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "ligature.goToDefinition",
+        "key": "ctrl+click",
+        "when": "resourceLangId == ligature"
+      },
+      {
+        "command": "ligature.findReferences",
+        "key": "shift+f12",
+        "when": "resourceLangId == ligature"
+      },
+      {
+        "command": "ligature.renameSymbol",
+        "key": "f2",
+        "when": "resourceLangId == ligature"
+      },
+      {
+        "command": "ligature.formatDocument",
+        "key": "shift+alt+f",
+        "when": "resourceLangId == ligature"
+      },
+      {
+        "command": "ligature.refactorExtractFunction",
+        "key": "ctrl+shift+r e",
+        "when": "resourceLangId == ligature"
+      },
+      {
+        "command": "ligature.refactorInlineVariable",
+        "key": "ctrl+shift+r i",
+        "when": "resourceLangId == ligature"
+      },
+      {
+        "command": "ligature.refactorExtractConstant",
+        "key": "ctrl+shift+r c",
+        "when": "resourceLangId == ligature"
+      },
+      {
+        "command": "ligature.generateTests",
+        "key": "ctrl+shift+t",
+        "when": "resourceLangId == ligature"
+      },
+      {
+        "command": "ligature.generateDocumentation",
+        "key": "ctrl+shift+d",
+        "when": "resourceLangId == ligature"
+      }
+    ],
+    "configuration": {
+      "title": "Ligature",
+      "properties": {
+        "ligature.languageServer.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable the Ligature language server"
+        },
+        "ligature.languageServer.path": {
+          "type": "string",
+          "default": "ligature-lsp",
+          "description": "Path to the Ligature language server executable"
+        },
+        "ligature.languageServer.args": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": ["--enhanced"],
+          "description": "Arguments to pass to the language server"
+        },
+        "ligature.languageServer.trace": {
+          "type": "string",
+          "enum": ["off", "messages", "verbose"],
+          "default": "off",
+          "description": "Trace level for the language server"
+        },
+        "ligature.diagnostics.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable diagnostic reporting"
+        },
+        "ligature.diagnostics.enhanced": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable enhanced diagnostics with detailed explanations"
+        },
+        "ligature.completion.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable code completion"
+        },
+        "ligature.completion.enhanced": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable enhanced completion with context awareness"
+        },
+        "ligature.completion.enableSnippets": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable snippet completions"
+        },
+        "ligature.completion.enableAutoImport": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable auto-import suggestions"
+        },
+        "ligature.completion.enableFuzzyMatching": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable fuzzy matching for completions"
+        },
+        "ligature.completion.enableContextAware": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable context-aware completions"
+        },
+        "ligature.formatting.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable document formatting"
+        },
+        "ligature.formatting.indentSize": {
+          "type": "number",
+          "default": 2,
+          "description": "Number of spaces for indentation"
+        },
+        "ligature.formatting.maxLineLength": {
+          "type": "number",
+          "default": 80,
+          "description": "Maximum line length before wrapping"
+        },
+        "ligature.formatting.enableOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Format document on save"
+        },
+        "ligature.formatting.enableOnPaste": {
+          "type": "boolean",
+          "default": true,
+          "description": "Format pasted content"
+        },
+        "ligature.hover.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable hover information"
+        },
+        "ligature.hover.enableTypeInfo": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show type information in hover"
+        },
+        "ligature.hover.enableDocumentation": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show documentation in hover"
+        },
+        "ligature.symbols.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable symbol navigation"
+        },
+        "ligature.references.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable reference finding"
+        },
+        "ligature.rename.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable symbol renaming"
+        },
+        "ligature.codeActions.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable code actions and quick fixes"
+        },
+        "ligature.codeActions.enableQuickFixes": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable quick fixes for errors"
+        },
+        "ligature.codeActions.enableRefactoring": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable refactoring actions"
+        },
+        "ligature.codeActions.enableCodeGeneration": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable code generation actions"
+        },
+        "ligature.inlayHints.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable inlay hints for types and parameters"
+        },
+        "ligature.inlayHints.enableTypeHints": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show type hints inline"
+        },
+        "ligature.inlayHints.enableParameterHints": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show parameter names inline"
+        },
+        "ligature.workspace.enableWorkspaceSymbols": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable workspace-wide symbol search"
+        },
+        "ligature.workspace.maxFiles": {
+          "type": "number",
+          "default": 1000,
+          "description": "Maximum number of files to index in workspace"
+        },
+        "ligature.workspace.includePatterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": ["**/*.lig"],
+          "description": "File patterns to include in workspace indexing"
+        },
+        "ligature.workspace.excludePatterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": ["**/target/**", "**/node_modules/**"],
+          "description": "File patterns to exclude from workspace indexing"
+        },
+        "ligature.semanticHighlighting.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable semantic highlighting"
+        },
+        "ligature.semanticHighlighting.enableTypeHighlighting": {
+          "type": "boolean",
+          "default": true,
+          "description": "Highlight types with semantic colors"
+        },
+        "ligature.semanticHighlighting.enableFunctionHighlighting": {
+          "type": "boolean",
+          "default": true,
+          "description": "Highlight functions with semantic colors"
+        },
+        "ligature.performance.enableIncrementalParsing": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable incremental parsing for better performance"
+        },
+        "ligature.performance.enableCaching": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable caching for better performance"
+        },
+        "ligature.performance.maxCacheSize": {
+          "type": "number",
+          "default": 100,
+          "description": "Maximum number of items to cache"
+        }
+      }
+    },
+    "problemMatchers": [
+      {
+        "name": "ligature",
+        "owner": "ligature",
+        "fileLocation": "relative",
+        "pattern": [
+          {
+            "regexp": "^(.*):(\\d+):(\\d+):\\s+(error|warning|info):\\s+(.*)$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "severity": 4,
+            "message": 5
+          }
+        ]
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.74.0",
+    "@types/node": "16.x",
+    "@typescript-eslint/eslint-plugin": "^5.42.0",
+    "@typescript-eslint/parser": "^5.42.0",
+    "eslint": "^8.26.0",
+    "typescript": "^4.8.4"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^8.0.2",
+    "vscode-languageserver": "^8.0.2",
+    "vscode-languageserver-textdocument": "^1.0.8"
+  }
+} 

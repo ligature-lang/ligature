@@ -1,0 +1,168 @@
+{
+  "comments": {
+    "lineComment": "//",
+    "blockComment": ["/*", "*/"]
+  },
+  "brackets": [
+    ["{", "}"],
+    ["[", "]"],
+    ["(", ")"]
+  ],
+  "autoClosingPairs": [
+    { "open": "{", "close": "}" },
+    { "open": "[", "close": "]" },
+    { "open": "(", "close": ")" },
+    { "open": "\"", "close": "\"", "notIn": ["string"] },
+    { "open": "'", "close": "'", "notIn": ["string"] },
+    { "open": "`", "close": "`", "notIn": ["string"] }
+  ],
+  "surroundingPairs": [
+    ["{", "}"],
+    ["[", "]"],
+    ["(", ")"],
+    ["\"", "\""],
+    ["'", "'"],
+    ["`", "`"]
+  ],
+  "folding": {
+    "markers": {
+      "start": "^\\s*//\\s*#?region\\b",
+      "end": "^\\s*//\\s*#?endregion\\b"
+    }
+  },
+  "wordPattern": "(-?\\d*\\.\\d\\w*)|([^\\`\\~\\!\\@\\#\\%\\^\\&\\*\\(\\)\\-\\=\\+\\[\\{\\]\\}\\\\\\|\\;\\:\\'\\\"\\,\\.\\<\\>\\/\\?\\s]+)",
+  "indentationRules": {
+    "increaseIndentPattern": "^(.*\\{[^}\"']*|.*\\([^)\"']*|.*\\[[^\\]\"']*|.*\\b(if|else|match|case|fun|let|in|where|module|type|data|class|instance)\\b.*)$",
+    "decreaseIndentPattern": "^(.*\\}|.*\\)|.*\\]|.*\\b(in|else|end)\\b.*)$"
+  },
+  "onEnterRules": [
+    {
+      "beforeText": "^\\s*//\\s*$",
+      "action": {
+        "indent": "none",
+        "appendText": "// "
+      }
+    },
+    {
+      "beforeText": "^\\s*fun\\s+\\w+\\s*\\([^)]*\\)\\s*->\\s*$",
+      "action": {
+        "indent": "indent",
+        "appendText": ""
+      }
+    },
+    {
+      "beforeText": "^\\s*let\\s+\\w+\\s*=\\s*$",
+      "action": {
+        "indent": "indent",
+        "appendText": ""
+      }
+    },
+    {
+      "beforeText": "^\\s*in\\s*$",
+      "action": {
+        "indent": "outdent",
+        "appendText": ""
+      }
+    },
+    {
+      "beforeText": "^\\s*match\\s+.*\\s+with\\s*$",
+      "action": {
+        "indent": "indent",
+        "appendText": ""
+      }
+    },
+    {
+      "beforeText": "^\\s*\\|\\s*.*\\s*->\\s*$",
+      "action": {
+        "indent": "indent",
+        "appendText": ""
+      }
+    },
+    {
+      "beforeText": "^\\s*if\\s+.*\\s+then\\s*$",
+      "action": {
+        "indent": "indent",
+        "appendText": ""
+      }
+    },
+    {
+      "beforeText": "^\\s*else\\s*$",
+      "action": {
+        "indent": "outdent",
+        "appendText": ""
+      }
+    },
+    {
+      "beforeText": "^\\s*type\\s+\\w+\\s*=\\s*$",
+      "action": {
+        "indent": "indent",
+        "appendText": ""
+      }
+    },
+    {
+      "beforeText": "^\\s*\\|\\s*\\w+\\s*of\\s*$",
+      "action": {
+        "indent": "indent",
+        "appendText": ""
+      }
+    },
+    {
+      "beforeText": "^\\s*module\\s+\\w+\\s*=\\s*\\{\\s*$",
+      "action": {
+        "indent": "indent",
+        "appendText": ""
+      }
+    },
+    {
+      "beforeText": "^\\s*\\}\\s*$",
+      "action": {
+        "indent": "outdent",
+        "appendText": ""
+      }
+    }
+  ],
+  "autoClosingOvertype": "always",
+  "formatOnSave": true,
+  "formatOnPaste": true,
+  "formatOnType": true,
+  "tabCompletion": "on",
+  "wordBasedSuggestions": true,
+  "suggestOnTriggerCharacters": true,
+  "acceptSuggestionOnCommitCharacter": true,
+  "acceptSuggestionOnEnter": "on",
+  "snippetSuggestions": "top",
+  "parameterHints": {
+    "enabled": true,
+    "cycle": true
+  },
+  "hover": {
+    "enabled": true,
+    "delay": 300
+  },
+  "signatureHelp": {
+    "enabled": true,
+    "triggerCharacters": ["(", ","]
+  },
+  "codeActionsOnSave": {
+    "source.organizeImports": true,
+    "source.fixAll": true
+  },
+  "editor": {
+    "quickSuggestions": {
+      "other": true,
+      "comments": false,
+      "strings": false
+    },
+    "quickSuggestionsDelay": 10,
+    "parameterHints": {
+      "enabled": true,
+      "cycle": true
+    },
+    "suggestOnTriggerCharacters": true,
+    "acceptSuggestionOnCommitCharacter": true,
+    "acceptSuggestionOnEnter": "on",
+    "tabCompletion": "on",
+    "wordBasedSuggestions": true,
+    "snippetSuggestions": "top"
+  }
+} 

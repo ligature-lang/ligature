@@ -1,0 +1,12 @@
+[package]
+name = "ligature-performance-validation"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ligature-eval = { path = "../../crates/ligature-eval" }
+ligature-ast = { path = "../../crates/ligature-ast" }
+
+[[bin]]
+name = "performance_validation"
+path = "performance_validation.rs" 

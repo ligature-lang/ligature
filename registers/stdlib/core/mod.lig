@@ -1,0 +1,72 @@
+-- Core module for Ligature Standard Library
+module Core;
+
+-- Core type definitions
+type Bool = True | False;
+
+type Unit = Unit;
+
+type Option 'T = Some('T) | None;
+
+type Result 'T 'E = Ok('T) | Err('E);
+
+-- Core functions for Bool
+let not = \b ->
+  match b {
+    True => False,
+    False => True
+  };
+
+let and = \a b ->
+  if a then
+    if b then True else False
+  else
+    False;
+
+let or = \a b ->
+  if a then True else
+    if b then True else False;
+
+-- Core functions for Option
+let isSome = \opt ->
+  match opt {
+    Some(_) => True,
+    None => False
+  };
+
+let isNone = \opt ->
+  match opt {
+    Some(_) => False,
+    None => True
+  };
+
+let map = \f opt ->
+  match opt {
+    Some(x) => Some(f(x)),
+    None => None
+  };
+
+-- Core functions for Result
+let isOk = \result ->
+  match result {
+    Ok(_) => True,
+    Err(_) => False
+  };
+
+let isErr = \result ->
+  match result {
+    Ok(_) => False,
+    Err(_) => True
+  };
+
+let mapResult = \f result ->
+  match result {
+    Ok(x) => Ok(f(x)),
+    Err(e) => Err(e)
+  };
+
+-- Export commonly used items
+export Bool, Unit, Option, Result;
+export not, and, or;
+export isSome, isNone, map;
+export isOk, isErr, mapResult; 

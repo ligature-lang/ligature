@@ -1,0 +1,20 @@
+[register]
+name = "stdlib"
+version = "1.0.0"
+description = "Ligature Standard Library"
+authors = ["Ligature Team <team@ligature.dev>"]
+license = "Apache-2.0"
+repository = "https://github.com/ligature-lang/ligature"
+
+[dependencies]
+# No dependencies for stdlib
+
+[exports]
+# Modules that can be imported by other registers
+core = "core/mod.lig"
+collections = "collections/mod.lig"
+validation = "validation/mod.lig"
+type-level = "type-level/mod.lig"
+
+[metadata]
+tags = ["standard-library", "core"] 

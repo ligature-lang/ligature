@@ -1,0 +1,64 @@
+[package]
+name = "krox"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "Client SDKs for invoking Ligature programs as side effects"
+license.workspace = true
+repository.workspace = true
+keywords = ["ligature", "sdk", "client", "side-effects", "configuration"]
+categories = ["development-tools", "configuration"]
+
+[dependencies]
+# Core Ligature dependencies
+ligature-ast.workspace = true
+ligature-eval.workspace = true
+ligature-parser.workspace = true
+
+# Serialization
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+serde_yaml.workspace = true
+
+# Error handling
+thiserror.workspace = true
+anyhow.workspace = true
+
+# Async runtime
+tokio = { version = "1.0", features = ["full", "process"] }
+async-trait = "0.1"
+
+# HTTP client for remote execution
+reqwest = { version = "0.11", features = ["json"], optional = true }
+
+# File system operations
+walkdir = "2.4"
+
+# Process execution
+which = "6.0"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Utilities
+once_cell.workspace = true
+indexmap.workspace = true
+tempfile = "3.8"
+
+# CLI dependencies
+clap = { version = "4.4", features = ["derive"], optional = true }
+
+[dev-dependencies]
+tokio-test = "0.4"
+tempfile = "3.8"
+
+[features]
+default = ["native", "http", "cli"]
+native = []  # Native execution via ligature-cli
+http = ["reqwest"]  # HTTP-based execution
+cli = ["clap"]  # Command-line interface
+python = []  # Python bindings
+node = []  # Node.js bindings
+java = []  # Java bindings
+go = []  # Go bindings 

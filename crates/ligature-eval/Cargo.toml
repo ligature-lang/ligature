@@ -1,0 +1,31 @@
+[package]
+name = "ligature-eval"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "Evaluation engine for the Ligature language"
+license.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+ligature-ast = { path = "../ligature-ast" }
+ligature-types = { path = "../ligature-types" }
+ligature-parser = { path = "../ligature-parser" }
+ligature-xdg = { path = "../ligature-xdg" }
+thiserror = { workspace = true }
+miette = { workspace = true, features = ["fancy"] }
+serde_json = { workspace = true }
+indexmap = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+toml = "0.8"
+serde_yaml = "0.9"
+tokio = { workspace = true, features = ["fs"] }
+rand = "0.8"
+
+# Memory profiling dependencies
+sysinfo = { workspace = true }
+
+[dev-dependencies]
+criterion = { workspace = true } 

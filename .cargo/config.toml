@@ -1,0 +1,34 @@
+[build]
+# Enable incremental compilation for faster builds
+incremental = true
+
+[profile.dev]
+# Optimize for coverage collection
+opt-level = 0
+debug = true
+
+[profile.test]
+# Optimize for coverage collection during tests
+opt-level = 0
+debug = true
+
+[profile.bench]
+# Optimize for benchmarks
+opt-level = 3
+debug = false
+
+# Coverage toolchain configuration
+[toolchain]
+channel = "stable"
+components = ["rustfmt", "clippy", "llvm-tools-preview"]
+
+# Coverage settings for cargo-llvm-cov
+[env]
+CARGO_INCREMENTAL = "0"
+RUSTFLAGS = "-Cinstrument-coverage"
+LLVM_PROFILE_FILE = "target/coverage/cargo-test-%p-%m.profraw"
+
+# Test configuration
+[test]
+# Run tests with coverage instrumentation
+args = ["--all-features", "--workspace"] 

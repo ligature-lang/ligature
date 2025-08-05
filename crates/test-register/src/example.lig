@@ -1,0 +1,12 @@
+module Example
+
+-- Define your types and functions here
+type ExampleType = {
+    name: String,
+    value: Int
+}
+
+let exampleFunction: String -> Int = fun name -> 
+    length(name)
+
+export { ExampleType, exampleFunction }

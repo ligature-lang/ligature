@@ -1,0 +1,196 @@
+-- Type-Level Computation Tests
+-- This file tests the implementation of type-level computation in Ligature
+
+-- Test 1: Basic Type-Level Identity Function
+-- The identity function at the type level: id : Type -> Type
+type Id 'T = 'T;
+
+-- Test that identity works on basic types
+let testIdInt: Id Int = 42;
+let testIdString: Id String = "hello";
+let testIdBool: Id Bool = True;
+
+-- Test 2: Type-Level Function Composition
+-- compose : (B -> C) -> (A -> B) -> (A -> C)
+type Compose 'F 'G 'A = 'F ('G 'A);
+
+-- Example: compose (List) (Option) Int = List (Option Int)
+type ListOption 'T = Compose List Option 'T;
+
+-- Test composition with concrete types
+let testCompose: ListOption Int = [Some(1), None, Some(3)];
+
+-- Test 3: Type-Level Pattern Matching
+-- Project a field from a record type
+type Project 'Field 'Record = 
+  match 'Record {
+    Record { fields } => 
+      -- Find the field with name 'Field and return its type
+      -- This is a simplified version - in practice this would need
+      -- more sophisticated type-level pattern matching
+      'Record
+  };
+
+-- Test 4: Type-Level Union Injection
+-- Inject a type into a union
+type Inject 'Variant 'Value 'Union = 
+  match 'Union {
+    Union { variants } =>
+      -- Add 'Variant('Value) to the union
+      -- This is conceptual - actual implementation would be more complex
+      'Union
+  };
+
+-- Test 5: Type-Level Computation with Dependent Types
+-- Pi type application: apply a dependent function type
+type ApplyPi 'F 'A = 
+  match 'F {
+    Pi { parameter, parameter_type, return_type } =>
+      -- Substitute 'A for parameter in return_type
+      -- This is the core of dependent type computation
+      'return_type
+  };
+
+-- Test 6: Sigma type projection
+-- Project from a dependent pair type
+type Proj1 'S = 
+  match 'S {
+    Sigma { parameter, parameter_type, return_type } =>
+      'parameter_type
+  };
+
+type Proj2 'S = 
+  match 'S {
+    Sigma { parameter, parameter_type, return_type } =>
+      'return_type
+  };
+
+-- Test 7: Type-Level Arithmetic
+-- Simple type-level arithmetic using type constructors
+type Succ 'N = 'N + 1;  -- Conceptual - would need type-level numbers
+type Pred 'N = 'N - 1;  -- Conceptual - would need type-level numbers
+
+-- Test 8: Type-Level Lists
+-- Type-level list operations
+type Cons 'H 'T = 'H :: 'T;  -- Conceptual - would need type-level lists
+type Head 'L = 
+  match 'L {
+    Cons { head, tail } => 'head
+  };
+type Tail 'L = 
+  match 'L {
+    Cons { head, tail } => 'tail
+  };
+
+-- Test 9: Type-Level Records
+-- Type-level record operations
+type GetField 'Name 'Record = 
+  match 'Record {
+    Record { fields } =>
+      -- Find field with name 'Name and return its type
+      'Record
+  };
+
+type SetField 'Name 'Value 'Record = 
+  match 'Record {
+    Record { fields } =>
+      -- Set field 'Name to type 'Value
+      'Record
+  };
+
+-- Test 10: Advanced Type-Level Functions
+-- Type-level map: apply a type function to every element of a type-level list
+type Map 'F 'L = 
+  match 'L {
+    Nil => Nil,
+    Cons { head, tail } => Cons ('F 'head) (Map 'F 'tail)
+  };
+
+-- Type-level fold: reduce a type-level list with a type function
+type Fold 'F 'Z 'L = 
+  match 'L {
+    Nil => 'Z,
+    Cons { head, tail } => 'F 'head (Fold 'F 'Z 'tail)
+  };
+
+-- Test 11: Type-Level Conditionals
+-- Type-level if-then-else using type-level booleans
+type If 'Cond 'Then 'Else = 
+  match 'Cond {
+    True => 'Then,
+    False => 'Else
+  };
+
+-- Test 12: Type-Level Equality
+-- Check if two types are equal
+type Equal 'A 'B = 
+  match ('A, 'B) {
+    ('A, 'A) => True,  -- Same type variable
+    (Int, Int) => True,
+    (String, String) => True,
+    (Bool, Bool) => True,
+    (Unit, Unit) => True,
+    _ => False
+  };
+
+-- Test 13: Type-Level Subtyping
+-- Check if one type is a subtype of another
+type Subtype 'A 'B = 
+  match ('A, 'B) {
+    ('A, 'A) => True,  -- Reflexivity
+    ('A, 'B) => 
+      -- Check if 'A <: 'B based on subtyping rules
+      -- This would need integration with the actual subtyping system
+      False
+  };
+
+-- Test 14: Type-Level Type Classes
+-- Check if a type implements a type class
+type Implements 'T 'Class = 
+  match 'Class {
+    "Show" => 
+      match 'T {
+        Int => True,
+        String => True,
+        Bool => True,
+        _ => False
+      },
+    "Eq" => 
+      match 'T {
+        Int => True,
+        String => True,
+        Bool => True,
+        Unit => True,
+        _ => False
+      },
+    _ => False
+  };
+
+-- Test 15: Type-Level Validation
+-- Validate that a type meets certain constraints
+type Validate 'T = 
+  match 'T {
+    Int => True,  -- Int is always valid
+    String => True,  -- String is always valid
+    Bool => True,  -- Bool is always valid
+    Unit => True,  -- Unit is always valid
+    List 'E => Validate 'E,  -- Recursively validate list elements
+    Record { fields } => 
+      -- Validate all field types
+      True,  -- Simplified for now
+    Union { variants } => 
+      -- Validate all variant types
+      True,  -- Simplified for now
+    _ => False
+  };
+
+-- Export all type-level functions for testing
+export Id, Compose, ListOption;
+export Project, Inject;
+export ApplyPi, Proj1, Proj2;
+export Succ, Pred;
+export Cons, Head, Tail;
+export GetField, SetField;
+export Map, Fold;
+export If, Equal, Subtype;
+export Implements, Validate; 

@@ -1,0 +1,36 @@
+[package]
+name = "keywork"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "Package management CLI for Ligature registers"
+license.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[[bin]]
+name = "keywork"
+path = "src/main.rs"
+
+[dependencies]
+ligature-ast = { path = "../../crates/ligature-ast" }
+ligature-parser = { path = "../../crates/ligature-parser" }
+ligature-types = { path = "../../crates/ligature-types" }
+ligature-eval = { path = "../../crates/ligature-eval" }
+ligature-xdg = { path = "../../crates/ligature-xdg" }
+clap = { workspace = true, features = ["derive"] }
+thiserror = { workspace = true }
+miette = { workspace = true, features = ["fancy"] }
+serde = { workspace = true, features = ["derive"] }
+serde_yaml = { workspace = true }
+toml = "0.8"
+reqwest = { version = "0.11", features = ["json"] }
+tokio = { workspace = true, features = ["full"] }
+walkdir = "2.4"
+dirs = "5.0"
+sha2 = "0.10"
+flate2 = "1.0"
+tar = "0.4"
+tempfile = "3.8"
+serde_json = { workspace = true } 

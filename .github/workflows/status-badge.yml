@@ -1,0 +1,28 @@
+name: Status Badge
+
+on:
+  workflow_run:
+    workflows: ["CI", "Test Scripts"]
+    types:
+      - completed
+
+jobs:
+  status-badge:
+    name: Generate Status Badge
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion != 'skipped'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Generate status badge
+        uses: schneegans/dynamic-badges-action@v1.6.0
+        with:
+          auth: ${{ secrets.GIST_SECRET }}
+          gistID: your-gist-id-here
+          filename: ligature-status.json
+          label: Ligature CI
+          message: ${{ github.event.workflow_run.conclusion }}
+          namedLogo: github
+          color: ${{ github.event.workflow_run.conclusion == 'success' && 'green' || 'red' }}
+          style: flat 

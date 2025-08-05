@@ -1,0 +1,32 @@
+-- Development environment configuration
+-- module Environment
+
+let environment = {
+  name = "development",
+  description = "Development environment for Terraform infrastructure",
+  variables = {
+    AWS_REGION = "us-west-2",
+    ENVIRONMENT = "dev",
+    INSTANCE_TYPE = "t3.micro",
+    VPC_CIDR = "10.0.0.0/16",
+    TF_VAR_environment = "dev",
+    TF_VAR_instance_count = "1"
+  },
+  plugins = ["terraform"],
+  plugin_config = {
+    terraform = {
+      workspace = "dev",
+      backend = "local",
+      dry_run = false,
+      timeout = 600,
+      retries = 3,
+      variables = {
+        "environment" = "dev",
+        "instance_count" = "1",
+        "instance_type" = "t3.micro"
+      }
+    }
+  }
+};
+
+export environment; 

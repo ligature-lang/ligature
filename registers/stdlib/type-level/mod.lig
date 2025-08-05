@@ -1,0 +1,599 @@
+-- Type-Level Standard Library Module
+-- Provides common type-level functions and utilities
+
+module TypeLevel;
+
+-- Import core types and functions
+import Core;
+
+-- =============================================================================
+-- Basic Type-Level Functions
+-- =============================================================================
+
+-- Identity function at the type level
+-- Id : Type -> Type
+type Id 'T = 'T;
+
+-- Function composition at the type level
+-- Compose : (B -> C) -> (A -> B) -> (A -> C)
+type Compose 'F 'G 'A = 'F ('G 'A);
+
+-- Constant function at the type level
+-- Const : A -> B -> A
+type Const 'A 'B = 'A;
+
+-- Flip function at the type level
+-- Flip : (A -> B -> C) -> (B -> A -> C)
+type Flip 'F 'B 'A = 'F 'A 'B;
+
+-- Function application at the type level
+-- Apply : (A -> B) -> A -> B
+type Apply 'F 'A = 'F 'A;
+
+-- =============================================================================
+-- Type-Level Pattern Matching
+-- =============================================================================
+
+-- Record field projection
+-- ProjectField : String -> Record -> Type
+type ProjectField 'FieldName 'RecordType = 
+  match 'RecordType {
+    Record { fields } => 
+      -- Find the field with name 'FieldName and return its type
+      -- This is a simplified version - actual implementation would need
+      -- more sophisticated type-level pattern matching
+      'RecordType
+  };
+
+-- Add a field to a record type
+-- AddField : String -> Type -> Record -> Record
+type AddField 'FieldName 'FieldType 'RecordType = 
+  match 'RecordType {
+    Record { fields } => 
+      -- Add the new field to the record type
+      Record { 
+        fields = fields ++ [{ name = 'FieldName, type = 'FieldType }]
+      }
+  };
+
+-- Remove a field from a record type
+-- RemoveField : String -> Record -> Record
+type RemoveField 'FieldName 'RecordType = 
+  match 'RecordType {
+    Record { fields } => 
+      -- Remove the field with name 'FieldName
+      Record { 
+        fields = filter (\field -> field.name != 'FieldName) fields
+      }
+  };
+
+-- Update a field type in a record type
+-- UpdateField : String -> Type -> Record -> Record
+type UpdateField 'FieldName 'NewType 'RecordType = 
+  match 'RecordType {
+    Record { fields } => 
+      -- Update the field with name 'FieldName to have type 'NewType
+      Record { 
+        fields = map (\field -> 
+          if field.name == 'FieldName then 
+            { name = field.name, type = 'NewType }
+          else 
+            field
+        ) fields
+      }
+  };
+
+-- Inject a variant into a union type
+-- InjectVariant : String -> Type -> Union -> Union
+type InjectVariant 'VariantName 'VariantType 'UnionType = 
+  match 'UnionType {
+    Union { variants } => 
+      -- Add the new variant to the union type
+      Union { 
+        variants = variants ++ [{ name = 'VariantName, type = 'VariantType }]
+      }
+  };
+
+-- Project a variant type from a union type
+-- ProjectVariant : String -> Union -> Type
+type ProjectVariant 'VariantName 'UnionType = 
+  match 'UnionType {
+    Union { variants } => 
+      -- Find the variant with name 'VariantName and return its type
+      match variants {
+        -- This is conceptual - would need type-level list pattern matching
+        _ => 'UnionType  -- Placeholder
+      }
+  };
+
+-- Remove a variant from a union type
+-- RemoveVariant : String -> Union -> Union
+type RemoveVariant 'VariantName 'UnionType = 
+  match 'UnionType {
+    Union { variants } => 
+      -- Remove the variant with name 'VariantName
+      Union { 
+        variants = filter (\variant -> variant.name != 'VariantName) variants
+      }
+  };
+
+-- =============================================================================
+-- Dependent Type Operations
+-- =============================================================================
+
+-- Apply a dependent function type to a type argument
+-- ApplyPi : Pi -> Type -> Type
+type ApplyPi 'F 'A = 
+  match 'F {
+    Pi { parameter, parameter_type, return_type } =>
+      -- Substitute 'A for parameter in return_type
+      -- This is the core of dependent type computation
+      substitute 'parameter 'A 'return_type
+  };
+
+-- Project first component from a Sigma type
+-- Proj1 : Sigma -> Type
+type Proj1 'S = 
+  match 'S {
+    Sigma { parameter, parameter_type, return_type } =>
+      'parameter_type
+  };
+
+-- Project second component from a Sigma type
+-- Proj2 : Sigma -> Type
+type Proj2 'S = 
+  match 'S {
+    Sigma { parameter, parameter_type, return_type } =>
+      'return_type
+  };
+
+-- Construct a Pi type
+-- MakePi : String -> Type -> Type -> Pi
+type MakePi 'Param 'ParamType 'ReturnType = 
+  Pi { 
+    parameter = 'Param, 
+    parameter_type = 'ParamType, 
+    return_type = 'ReturnType 
+  };
+
+-- Construct a Sigma type
+-- MakeSigma : String -> Type -> Type -> Sigma
+type MakeSigma 'Param 'ParamType 'ReturnType = 
+  Sigma { 
+    parameter = 'Param, 
+    parameter_type = 'ParamType, 
+    return_type = 'ReturnType 
+  };
+
+-- Compose dependent function types
+-- ComposePi : Pi -> Pi -> Pi
+type ComposePi 'F 'G = 
+  match ('F, 'G) {
+    (Pi { parameter = p1, parameter_type = pt1, return_type = rt1 },
+     Pi { parameter = p2, parameter_type = pt2, return_type = rt2 }) =>
+      -- Compose the dependent functions
+      Pi { 
+        parameter = p1, 
+        parameter_type = pt1, 
+        return_type = ApplyPi 'F (ApplyPi 'G "T")
+      }
+  };
+
+-- =============================================================================
+-- Type-Level Utilities
+-- =============================================================================
+
+-- Type-level conditional logic
+-- If : Bool -> Type -> Type -> Type
+type If 'Cond 'Then 'Else = 
+  match 'Cond {
+    True => 'Then,
+    False => 'Else
+  };
+
+-- Type-level equality checking
+-- Equal : Type -> Type -> Bool
+type Equal 'A 'B = 
+  match ('A, 'B) {
+    ('A, 'A) => True,  -- Same type variable
+    (Int, Int) => True,
+    (String, String) => True,
+    (Bool, Bool) => True,
+    (Unit, Unit) => True,
+    (Float, Float) => True,
+    
+    -- List equality
+    (List 'A, List 'B) => Equal 'A 'B,
+    
+    -- Record equality (structural)
+    (Record { fields = fa }, Record { fields = fb }) =>
+      -- Check if records have the same fields with equal types
+      length fa == length fb && 
+      all (\field -> 
+        hasField field.name fb && 
+        Equal (getField field.name fa) (getField field.name fb)
+      ) fa,
+    
+    -- Union equality (structural)
+    (Union { variants = va }, Union { variants = vb }) =>
+      -- Check if unions have the same variants with equal types
+      length va == length vb &&
+      all (\variant -> 
+        hasVariant variant.name vb && 
+        Equal (getVariant variant.name va) (getVariant variant.name vb)
+      ) va,
+    
+    -- Function equality
+    (Function { parameter = pa, return_type = ra }, 
+     Function { parameter = pb, return_type = rb }) =>
+      Equal pa pb && Equal ra rb,
+    
+    -- Option equality
+    (Option 'A, Option 'B) => Equal 'A 'B,
+    
+    -- Result equality
+    (Result 'A 'E, Result 'B 'F) => Equal 'A 'B && Equal 'E 'F,
+    
+    -- Default case: not equal
+    _ => False
+  };
+
+-- Type-level subtyping check
+-- Subtype : Type -> Type -> Bool
+type Subtype 'A 'B = 
+  match ('A, 'B) {
+    ('A, 'A) => True,  -- Reflexivity: A <: A
+    ('A, 'B) => 
+      -- Check if 'A <: 'B based on subtyping rules
+      -- This integrates with the actual subtyping system
+      match ('A, 'B) {
+        -- Record width subtyping: {a: T, b: U} <: {a: T}
+        (Record { fields = fa }, Record { fields = fb }) =>
+          -- Check if all fields in fb are present in fa with compatible types
+          all (\field -> hasField field.name fa && subtype (getField field.name fa) field.type) fb,
+        
+        -- Union depth subtyping: A <: A | B
+        ('A, Union { variants = vb }) =>
+          -- Check if 'A is compatible with any variant in vb
+          any (\variant -> subtype 'A variant.type) vb,
+        
+        -- List subtyping: List A <: List B if A <: B
+        (List 'A, List 'B) => subtype 'A 'B,
+        
+        -- Function subtyping: A -> B <: C -> D if C <: A and B <: D (contravariant)
+        (Function { parameter = pa, return_type = ra }, 
+         Function { parameter = pb, return_type = rb }) =>
+          subtype pb pa && subtype ra rb,
+        
+        -- Option subtyping: Option A <: Option B if A <: B
+        (Option 'A, Option 'B) => subtype 'A 'B,
+        
+        -- Result subtyping: Result A E <: Result B F if A <: B and E <: F
+        (Result 'A 'E, Result 'B 'F) => subtype 'A 'B && subtype 'E 'F,
+        
+        -- Default case: no subtyping relationship
+        _ => False
+      }
+  };
+
+-- Type-level validation
+-- Validate : Type -> Bool
+type Validate 'T = 
+  match 'T {
+    Int => True,  -- Int is always valid
+    String => True,  -- String is always valid
+    Bool => True,  -- Bool is always valid
+    Unit => True,  -- Unit is always valid
+    Float => True,  -- Float is always valid
+    
+    -- List validation: validate element type
+    List 'E => Validate 'E,
+    
+    -- Record validation: validate all field types
+    Record { fields } => 
+      all (\field -> Validate field.type) fields,
+    
+    -- Union validation: validate all variant types
+    Union { variants } => 
+      all (\variant -> Validate variant.type) variants,
+    
+    -- Function validation: validate parameter and return types
+    Function { parameter, return_type } => 
+      Validate parameter && Validate return_type,
+    
+    -- Option validation: validate element type
+    Option 'E => Validate 'E,
+    
+    -- Result validation: validate success and error types
+    Result 'S 'E => Validate 'S && Validate 'E,
+    
+    -- Type variable validation: always valid
+    Variable _ => True,
+    
+    -- Default case: not valid
+    _ => False
+  };
+
+-- =============================================================================
+-- Type-Level Composition Utilities
+-- =============================================================================
+
+-- Triple composition
+-- TripleCompose : (C -> D) -> (B -> C) -> (A -> B) -> (A -> D)
+type TripleCompose 'F 'G 'H 'A = Compose 'F (Compose 'G 'H) 'A;
+
+-- Quadruple composition
+-- QuadCompose : (D -> E) -> (C -> D) -> (B -> C) -> (A -> B) -> (A -> E)
+type QuadCompose 'F 'G 'H 'I 'A = Compose 'F (TripleCompose 'G 'H 'I) 'A;
+
+-- =============================================================================
+-- Type-Level List Operations
+-- =============================================================================
+
+-- Type-level list constructor
+-- Cons : Type -> TypeList -> TypeList
+type Cons 'H 'T = 'H :: 'T;  -- Conceptual - would need type-level lists
+
+-- Type-level list head
+-- Head : TypeList -> Type
+type Head 'L = 
+  match 'L {
+    Cons { head, tail } => 'head
+  };
+
+-- Type-level list tail
+-- Tail : TypeList -> TypeList
+type Tail 'L = 
+  match 'L {
+    Cons { head, tail } => 'tail
+  };
+
+-- Type-level list map
+-- Map : (Type -> Type) -> TypeList -> TypeList
+type Map 'F 'L = 
+  match 'L {
+    Nil => Nil,
+    Cons { head, tail } => Cons ('F 'head) (Map 'F 'tail)
+  };
+
+-- Type-level list fold
+-- Fold : (Type -> Type -> Type) -> Type -> TypeList -> Type
+type Fold 'F 'Z 'L = 
+  match 'L {
+    Nil => 'Z,
+    Cons { head, tail } => 'F 'head (Fold 'F 'Z 'tail)
+  };
+
+-- =============================================================================
+-- Type-Level Arithmetic (Conceptual)
+-- =============================================================================
+
+-- Type-level successor
+-- Succ : Nat -> Nat
+type Succ 'N = 'N + 1;  -- Conceptual - would need type-level numbers
+
+-- Type-level predecessor
+-- Pred : Nat -> Nat
+type Pred 'N = 'N - 1;  -- Conceptual - would need type-level numbers
+
+-- Type-level addition
+-- Add : Nat -> Nat -> Nat
+type Add 'N 'M = 'N + 'M;  -- Conceptual - would need type-level numbers
+
+-- Type-level multiplication
+-- Mul : Nat -> Nat -> Nat
+type Mul 'N 'M = 'N * 'M;  -- Conceptual - would need type-level numbers
+
+-- =============================================================================
+-- Type-Level Type Class Operations
+-- =============================================================================
+
+-- Check if a type implements a type class
+-- Implements : Type -> String -> Bool
+type Implements 'T 'Class = 
+  match 'Class {
+    "Show" => 
+      match 'T {
+        Int => True,
+        String => True,
+        Bool => True,
+        _ => False
+      },
+    "Eq" => 
+      match 'T {
+        Int => True,
+        String => True,
+        Bool => True,
+        Unit => True,
+        _ => False
+      },
+    _ => False
+  };
+
+-- =============================================================================
+-- Export All Type-Level Functions
+-- =============================================================================
+
+-- Basic functions
+export Id, Compose, Const, Flip, Apply;
+
+-- Pattern matching
+export ProjectField, AddField, RemoveField, UpdateField;
+export InjectVariant, ProjectVariant, RemoveVariant;
+
+-- Dependent types
+export ApplyPi, Proj1, Proj2;
+export MakePi, MakeSigma, ComposePi;
+
+-- Utilities
+export If, Equal, Subtype, Validate;
+
+-- Composition utilities
+export TripleCompose, QuadCompose;
+
+-- List operations
+export Cons, Head, Tail, Map, Fold;
+
+-- Arithmetic (conceptual)
+export Succ, Pred, Add, Mul;
+
+-- Type class operations
+export Implements;
+
+-- =============================================================================
+-- Advanced Subtyping Functions
+-- =============================================================================
+
+-- Type-level function to check constrained subtyping
+-- ConstrainedSubtype : Type -> Type -> List String -> Bool
+type ConstrainedSubtype 'A 'B 'Constraints = 
+  -- Check if 'A <: 'B under the given constraints
+  match 'Constraints {
+    [] => Subtype 'A 'B,  -- No constraints, use regular subtyping
+    [head | tail] => 
+      match head {
+        "Show" => Implements 'A "Show" && Implements 'B "Show" && Subtype 'A 'B,
+        "Eq" => Implements 'A "Eq" && Implements 'B "Eq" && Subtype 'A 'B,
+        "Ord" => Implements 'A "Ord" && Implements 'B "Ord" && Subtype 'A 'B,
+        _ => Subtype 'A 'B
+      }
+  };
+
+-- Type-level function to check variance
+-- Variance : Type -> String -> Bool
+type Variance 'T 'Variance = 
+  match ('T, 'Variance) {
+    -- Covariant types
+    (List _, "covariant") => True,
+    (Option _, "covariant") => True,
+    (Union _, "covariant") => True,
+    
+    -- Contravariant types
+    (Function _, "contravariant") => True,
+    
+    -- Invariant types
+    (Record _, "invariant") => True,
+    (Result _, "invariant") => True,
+    
+    -- Default case
+    _ => False
+  };
+
+-- Type-level function to check bounded subtyping
+-- BoundedSubtype : Type -> Type -> Type -> Type -> Bool
+type BoundedSubtype 'A 'Lower 'Upper 'B = 
+  -- Check if 'A <: 'B under the bounds Lower <: A <: Upper
+  Subtype 'Lower 'A && Subtype 'A 'Upper && Subtype 'A 'B;
+
+-- Type-level function to check recursive subtyping
+-- RecursiveSubtype : Type -> Type -> Nat -> Bool
+type RecursiveSubtype 'A 'B 'Depth = 
+  match 'Depth {
+    Zero => Equal 'A 'B,  -- At depth 0, only check equality
+    Succ 'D => 
+      match ('A, 'B) {
+        (List 'A', List 'B') => RecursiveSubtype 'A' 'B' 'D,
+        (Option 'A', Option 'B') => RecursiveSubtype 'A' 'B' 'D,
+        (Result 'A' 'E, Result 'B' 'F) => RecursiveSubtype 'A' 'B' 'D && RecursiveSubtype 'E 'F 'D,
+        _ => Subtype 'A 'B
+      }
+  };
+
+-- Type-level function to check subtyping with type families
+-- TypeFamilySubtype : Type -> Type -> Type -> Bool
+type TypeFamilySubtype 'Family 'A 'B = 
+  match 'Family {
+    "List" => Subtype (List 'A) (List 'B),
+    "Option" => Subtype (Option 'A) (Option 'B),
+    "Result" => Subtype (Result 'A String) (Result 'B String),
+    "Function" => Subtype (String -> 'A) (String -> 'B),
+    _ => False
+  };
+
+-- Type-level function to check higher-order subtyping
+-- HigherOrderSubtype : (Type -> Type) -> (Type -> Type) -> Bool
+type HigherOrderSubtype 'F 'G = 
+  -- Check if 'F <: 'G as higher-order types
+  -- This is a simplified version - in practice this would be more complex
+  match ('F, 'G) {
+    -- Both are list constructors
+    (List, List) => True,
+    -- Both are option constructors
+    (Option, Option) => True,
+    -- Both are result constructors
+    (Result, Result) => True,
+    -- Default case
+    _ => False
+  };
+
+-- Type-level function to check existential subtyping
+-- ExistentialSubtype : Type -> Type -> Bool
+type ExistentialSubtype 'A 'B = 
+  match ('A, 'B) {
+    -- Existential types with the same structure
+    (Exists "T" 'A', Exists "T" 'B') => Subtype 'A' 'B',
+    -- Existential type subtyping with different parameters
+    (Exists "T" 'A', Exists "U" 'B') => 
+      -- Rename and check subtyping
+      Subtype (substitute "T" "U" 'A') 'B',
+    -- Default case
+    _ => False
+  };
+
+-- Type-level function to check universal subtyping
+-- UniversalSubtype : Type -> Type -> Bool
+type UniversalSubtype 'A 'B = 
+  match ('A, 'B) {
+    -- Universal types with the same structure
+    (ForAll "T" 'A', ForAll "T" 'B') => Subtype 'A' 'B',
+    -- Universal type subtyping with different parameters
+    (ForAll "T" 'A', ForAll "U" 'B') => 
+      -- Rename and check subtyping
+      Subtype (substitute "T" "U" 'A') 'B',
+    -- Default case
+    _ => False
+  };
+
+-- Type-level function to check dependent type subtyping
+-- DependentSubtype : Type -> Type -> Bool
+type DependentSubtype 'A 'B = 
+  match ('A, 'B) {
+    -- Pi type subtyping
+    (Pi { parameter = pa, parameter_type = pat, return_type = rat }, 
+     Pi { parameter = pb, parameter_type = pbt, return_type = rbt }) =>
+      -- Contravariant in parameter, covariant in return
+      Subtype pbt pat && Subtype rat rbt,
+    
+    -- Sigma type subtyping
+    (Sigma { parameter = pa, parameter_type = pat, return_type = rat }, 
+     Sigma { parameter = pb, parameter_type = pbt, return_type = rbt }) =>
+      -- Covariant in both components
+      Subtype pat pbt && Subtype rat rbt,
+    
+    -- Default case
+    _ => False
+  };
+
+-- Type-level function to check subtyping with type-level functions
+-- TypeFunctionSubtype : (Type -> Type) -> (Type -> Type) -> Bool
+type TypeFunctionSubtype 'F 'G = 
+  -- Check if 'F <: 'G as type-level functions
+  -- This is a simplified version - in practice this would be more complex
+  match ('F, 'G) {
+    -- Both are identity functions
+    (Id, Id) => True,
+    -- Both are list constructors
+    (List, List) => True,
+    -- Both are option constructors
+    (Option, Option) => True,
+    -- Composition of compatible functions
+    (Compose 'F1 'G1, Compose 'F2 'G2) => 
+      TypeFunctionSubtype 'F1 'F2 && TypeFunctionSubtype 'G1 'G2,
+    -- Default case
+    _ => False
+  };
+
+-- Export advanced subtyping functions
+export ConstrainedSubtype, Variance, BoundedSubtype, RecursiveSubtype;
+export TypeFamilySubtype, HigherOrderSubtype, ExistentialSubtype, UniversalSubtype;
+export DependentSubtype, TypeFunctionSubtype; 

@@ -1,0 +1,511 @@
+-- Advanced Subtyping Example
+-- Demonstrates practical use cases for advanced subtyping in Ligature
+
+-- Import the type-level standard library
+import TypeLevel;
+
+-- =============================================================================
+-- Example 1: Type-Safe API Versioning with Subtyping
+-- =============================================================================
+
+-- Define API versions with subtyping relationships
+type ApiV1 = {
+  users: List { id: Int, name: String },
+  posts: List { id: Int, title: String, content: String }
+};
+
+type ApiV2 = {
+  users: List { id: Int, name: String, email: String },
+  posts: List { id: Int, title: String, content: String, author: String },
+  comments: List { id: Int, postId: Int, content: String }
+};
+
+-- Type-level function to check API compatibility
+type ApiCompatible 'Old 'New = Subtype 'New 'Old;
+
+-- Test API compatibility
+let apiV1ToV2Compatible: Bool = ApiCompatible ApiV1 ApiV2;  -- Should be False (V2 has more fields)
+let apiV2ToV1Compatible: Bool = ApiCompatible ApiV2 ApiV1;  -- Should be True (V2 can be used where V1 is expected)
+
+-- Type-level function to create backward-compatible API
+type BackwardCompatibleApi 'New 'Old = 
+  If (ApiCompatible 'New 'Old) 'New 'Old;
+
+-- Test backward compatibility
+type SafeApiV2 = BackwardCompatibleApi ApiV2 ApiV1;
+
+-- =============================================================================
+-- Example 2: Type-Safe Database Schema Evolution
+-- =============================================================================
+
+-- Define database schema versions
+type UserSchemaV1 = {
+  id: Int,
+  name: String,
+  age: Int
+};
+
+type UserSchemaV2 = {
+  id: Int,
+  name: String,
+  age: Int,
+  email: String,
+  createdAt: String
+};
+
+-- Type-level function to check schema migration safety
+type SafeMigration 'Old 'New = 
+  -- Migration is safe if new schema is a subtype of old schema
+  -- (i.e., new schema has all required fields of old schema)
+  Subtype 'New 'Old;
+
+-- Test schema migration safety
+let safeUserMigration: Bool = SafeMigration UserSchemaV1 UserSchemaV2;  -- Should be True
+let unsafeUserMigration: Bool = SafeMigration UserSchemaV2 UserSchemaV1;  -- Should be False
+
+-- Type-level function to create migration plan
+type MigrationPlan 'Old 'New = 
+  If (SafeMigration 'Old 'New) 
+     { action = "add_fields", fields = getMissingFields 'Old 'New }
+     { action = "breaking_change", incompatible_fields = getIncompatibleFields 'Old 'New };
+
+-- =============================================================================
+-- Example 3: Type-Safe Configuration Validation
+-- =============================================================================
+
+-- Define configuration schemas with subtyping
+type BasicConfig = {
+  port: Int,
+  host: String
+};
+
+type FullConfig = {
+  port: Int,
+  host: String,
+  database: { url: String, pool_size: Int },
+  logging: { level: String, file: String }
+};
+
+-- Type-level function to validate configuration
+type ValidateConfig 'Required 'Provided = 
+  -- Check if provided config satisfies required config
+  Subtype 'Provided 'Required;
+
+-- Test configuration validation
+let validBasicConfig: Bool = ValidateConfig BasicConfig FullConfig;  -- Should be True
+let invalidFullConfig: Bool = ValidateConfig FullConfig BasicConfig;  -- Should be False
+
+-- Type-level function to create configuration merger
+type MergeConfig 'A 'B = 
+  If (ValidateConfig 'A 'B) 'B 'A;
+
+-- =============================================================================
+-- Example 4: Type-Safe Error Handling with Subtyping
+-- =============================================================================
+
+-- Define error hierarchies with subtyping
+type ValidationError = {
+  field: String,
+  message: String
+};
+
+type DatabaseError = {
+  field: String,
+  message: String,
+  code: String,
+  query: String
+};
+
+type NetworkError = {
+  field: String,
+  message: String,
+  status: Int,
+  url: String
+};
+
+-- Type-level function to check error compatibility
+type ErrorCompatible 'Expected 'Actual = Subtype 'Actual 'Expected;
+
+-- Test error compatibility
+let validationToDatabaseCompatible: Bool = ErrorCompatible ValidationError DatabaseError;  -- Should be True
+let databaseToValidationCompatible: Bool = ErrorCompatible DatabaseError ValidationError;  -- Should be False
+
+-- Type-level function to create error handler
+type ErrorHandler 'Expected = 
+  If (ErrorCompatible 'Expected ValidationError) 
+     { handle = "validation_handler" }
+     (If (ErrorCompatible 'Expected DatabaseError)
+          { handle = "database_handler" }
+          { handle = "generic_handler" });
+
+-- =============================================================================
+-- Example 5: Type-Safe State Management with Subtyping
+-- =============================================================================
+
+-- Define state types with subtyping relationships
+type UserState = {
+  user: { id: Int, name: String },
+  isLoggedIn: Bool
+};
+
+type AdminState = {
+  user: { id: Int, name: String, role: String },
+  isLoggedIn: Bool,
+  permissions: List String
+};
+
+-- Type-level function to check state transitions
+type ValidStateTransition 'From 'To = 
+  -- Transition is valid if 'To is a subtype of 'From (can access all fields)
+  Subtype 'To 'From;
+
+-- Test state transitions
+let userToAdminTransition: Bool = ValidStateTransition UserState AdminState;  -- Should be False
+let adminToUserTransition: Bool = ValidStateTransition AdminState UserState;  -- Should be True
+
+-- Type-level function to create state reducer
+type StateReducer 'State 'Action = 
+  If (ValidStateTransition 'State 'State)
+     { type = "valid_transition" }
+     { type = "invalid_transition", error = "state_incompatible" };
+
+-- =============================================================================
+-- Example 6: Type-Safe Serialization with Subtyping
+-- =============================================================================
+
+-- Define serialization formats with subtyping
+type JsonFormat = {
+  type: "json",
+  encoding: "utf8"
+};
+
+type BinaryFormat = {
+  type: "binary",
+  encoding: "utf8",
+  compression: String
+};
+
+-- Type-level function to check format compatibility
+type FormatCompatible 'Required 'Provided = Subtype 'Provided 'Required;
+
+-- Test format compatibility
+let jsonToBinaryCompatible: Bool = FormatCompatible JsonFormat BinaryFormat;  -- Should be True
+let binaryToJsonCompatible: Bool = FormatCompatible BinaryFormat JsonFormat;  -- Should be False
+
+-- Type-level function to create serializer
+type Serializer 'Format 'Data = 
+  If (FormatCompatible JsonFormat 'Format)
+     { serialize = "json_serializer", deserialize = "json_deserializer" }
+     (If (FormatCompatible BinaryFormat 'Format)
+          { serialize = "binary_serializer", deserialize = "binary_deserializer" }
+          { serialize = "generic_serializer", deserialize = "generic_deserializer" });
+
+-- =============================================================================
+-- Example 7: Type-Safe Plugin System with Subtyping
+-- =============================================================================
+
+-- Define plugin interfaces with subtyping
+type BasicPlugin = {
+  name: String,
+  version: String,
+  init: Unit -> Unit
+};
+
+type AdvancedPlugin = {
+  name: String,
+  version: String,
+  init: Unit -> Unit,
+  config: { enabled: Bool, settings: { debug: Bool } },
+  dependencies: List String
+};
+
+-- Type-level function to check plugin compatibility
+type PluginCompatible 'Interface 'Plugin = Subtype 'Plugin 'Interface;
+
+-- Test plugin compatibility
+let basicPluginCompatible: Bool = PluginCompatible BasicPlugin AdvancedPlugin;  -- Should be True
+let advancedPluginCompatible: Bool = PluginCompatible AdvancedPlugin BasicPlugin;  -- Should be False
+
+-- Type-level function to create plugin loader
+type PluginLoader 'Interface = 
+  If (PluginCompatible 'Interface BasicPlugin)
+     { loader = "basic_loader", validator = "basic_validator" }
+     { loader = "advanced_loader", validator = "advanced_validator" };
+
+-- =============================================================================
+-- Example 8: Type-Safe Event System with Subtyping
+-- =============================================================================
+
+-- Define event types with subtyping
+type BaseEvent = {
+  id: String,
+  timestamp: String,
+  type: String
+};
+
+type UserEvent = {
+  id: String,
+  timestamp: String,
+  type: String,
+  userId: Int,
+  action: String
+};
+
+type SystemEvent = {
+  id: String,
+  timestamp: String,
+  type: String,
+  severity: String,
+  component: String
+};
+
+-- Type-level function to check event compatibility
+type EventCompatible 'Expected 'Actual = Subtype 'Actual 'Expected;
+
+-- Test event compatibility
+let userEventCompatible: Bool = EventCompatible BaseEvent UserEvent;  -- Should be True
+let systemEventCompatible: Bool = EventCompatible BaseEvent SystemEvent;  -- Should be True
+
+-- Type-level function to create event handler
+type EventHandler 'Event = 
+  If (EventCompatible BaseEvent 'Event)
+     { handler = "base_handler" }
+     (If (EventCompatible UserEvent 'Event)
+          { handler = "user_handler" }
+          { handler = "system_handler" });
+
+-- =============================================================================
+-- Example 9: Type-Safe Caching with Subtyping
+-- =============================================================================
+
+-- Define cache types with subtyping
+type SimpleCache = {
+  get: String -> Option String,
+  set: String -> String -> Unit
+};
+
+type AdvancedCache = {
+  get: String -> Option String,
+  set: String -> String -> Unit,
+  delete: String -> Unit,
+  clear: Unit -> Unit,
+  stats: { hits: Int, misses: Int }
+};
+
+-- Type-level function to check cache compatibility
+type CacheCompatible 'Required 'Provided = Subtype 'Provided 'Required;
+
+-- Test cache compatibility
+let simpleToAdvancedCompatible: Bool = CacheCompatible SimpleCache AdvancedCache;  -- Should be True
+let advancedToSimpleCompatible: Bool = CacheCompatible AdvancedCache SimpleCache;  -- Should be False
+
+-- Type-level function to create cache adapter
+type CacheAdapter 'Cache = 
+  If (CacheCompatible SimpleCache 'Cache)
+     { adapter = "simple_adapter" }
+     { adapter = "advanced_adapter" };
+
+-- =============================================================================
+-- Example 10: Type-Safe Validation with Subtyping
+-- =============================================================================
+
+-- Define validation rules with subtyping
+type BasicValidation = {
+  required: Bool,
+  minLength: Option Int
+};
+
+type AdvancedValidation = {
+  required: Bool,
+  minLength: Option Int,
+  maxLength: Option Int,
+  pattern: Option String,
+  custom: Option (String -> Bool)
+};
+
+-- Type-level function to check validation compatibility
+type ValidationCompatible 'Required 'Provided = Subtype 'Provided 'Required;
+
+-- Test validation compatibility
+let basicToAdvancedCompatible: Bool = ValidationCompatible BasicValidation AdvancedValidation;  -- Should be True
+let advancedToBasicCompatible: Bool = ValidationCompatible AdvancedValidation BasicValidation;  -- Should be False
+
+-- Type-level function to create validator
+type Validator 'Validation = 
+  If (ValidationCompatible BasicValidation 'Validation)
+     { validator = "basic_validator" }
+     { validator = "advanced_validator" };
+
+-- =============================================================================
+-- Example 11: Type-Safe Middleware with Subtyping
+-- =============================================================================
+
+-- Define middleware types with subtyping
+type BasicMiddleware = {
+  name: String,
+  handler: String -> String
+};
+
+type AdvancedMiddleware = {
+  name: String,
+  handler: String -> String,
+  priority: Int,
+  enabled: Bool,
+  config: { timeout: Int, retries: Int }
+};
+
+-- Type-level function to check middleware compatibility
+type MiddlewareCompatible 'Required 'Provided = Subtype 'Provided 'Required;
+
+-- Test middleware compatibility
+let basicToAdvancedCompatible: Bool = MiddlewareCompatible BasicMiddleware AdvancedMiddleware;  -- Should be True
+let advancedToBasicCompatible: Bool = MiddlewareCompatible AdvancedMiddleware BasicMiddleware;  -- Should be False
+
+-- Type-level function to create middleware chain
+type MiddlewareChain 'Middleware = 
+  If (MiddlewareCompatible BasicMiddleware 'Middleware)
+     { chain = "basic_chain" }
+     { chain = "advanced_chain" };
+
+-- =============================================================================
+-- Example 12: Type-Safe Database Queries with Subtyping
+-- =============================================================================
+
+-- Define query types with subtyping
+type BasicQuery = {
+  table: String,
+  select: List String
+};
+
+type AdvancedQuery = {
+  table: String,
+  select: List String,
+  where: Option String,
+  orderBy: Option String,
+  limit: Option Int,
+  offset: Option Int
+};
+
+-- Type-level function to check query compatibility
+type QueryCompatible 'Required 'Provided = Subtype 'Provided 'Required;
+
+-- Test query compatibility
+let basicToAdvancedCompatible: Bool = QueryCompatible BasicQuery AdvancedQuery;  -- Should be True
+let advancedToBasicCompatible: Bool = QueryCompatible AdvancedQuery BasicQuery;  -- Should be False
+
+-- Type-level function to create query builder
+type QueryBuilder 'Query = 
+  If (QueryCompatible BasicQuery 'Query)
+     { builder = "basic_builder" }
+     { builder = "advanced_builder" };
+
+-- =============================================================================
+-- Example 13: Type-Safe Authentication with Subtyping
+-- =============================================================================
+
+-- Define authentication types with subtyping
+type BasicAuth = {
+  username: String,
+  password: String
+};
+
+type OAuthAuth = {
+  username: String,
+  password: String,
+  provider: String,
+  token: String,
+  expiresAt: String
+};
+
+-- Type-level function to check auth compatibility
+type AuthCompatible 'Required 'Provided = Subtype 'Provided 'Required;
+
+-- Test auth compatibility
+let basicToOAuthCompatible: Bool = AuthCompatible BasicAuth OAuthAuth;  -- Should be True
+let oAuthToBasicCompatible: Bool = AuthCompatible OAuthAuth BasicAuth;  -- Should be False
+
+-- Type-level function to create auth handler
+type AuthHandler 'Auth = 
+  If (AuthCompatible BasicAuth 'Auth)
+     { handler = "basic_auth" }
+     { handler = "oauth_auth" };
+
+-- =============================================================================
+-- Example 14: Type-Safe Logging with Subtyping
+-- =============================================================================
+
+-- Define logging types with subtyping
+type BasicLog = {
+  level: String,
+  message: String
+};
+
+type AdvancedLog = {
+  level: String,
+  message: String,
+  timestamp: String,
+  context: { userId: Option Int, requestId: String },
+  metadata: { source: String, version: String }
+};
+
+-- Type-level function to check log compatibility
+type LogCompatible 'Required 'Provided = Subtype 'Provided 'Required;
+
+-- Test log compatibility
+let basicToAdvancedCompatible: Bool = LogCompatible BasicLog AdvancedLog;  -- Should be True
+let advancedToBasicCompatible: Bool = LogCompatible AdvancedLog BasicLog;  -- Should be False
+
+-- Type-level function to create logger
+type Logger 'Log = 
+  If (LogCompatible BasicLog 'Log)
+     { logger = "basic_logger" }
+     { logger = "advanced_logger" };
+
+-- =============================================================================
+-- Example 15: Type-Safe Testing with Subtyping
+-- =============================================================================
+
+-- Define test types with subtyping
+type BasicTest = {
+  name: String,
+  run: Unit -> Bool
+};
+
+type AdvancedTest = {
+  name: String,
+  run: Unit -> Bool,
+  setup: Unit -> Unit,
+  teardown: Unit -> Unit,
+  timeout: Int,
+  tags: List String
+};
+
+-- Type-level function to check test compatibility
+type TestCompatible 'Required 'Provided = Subtype 'Provided 'Required;
+
+-- Test test compatibility
+let basicToAdvancedCompatible: Bool = TestCompatible BasicTest AdvancedTest;  -- Should be True
+let advancedToBasicCompatible: Bool = TestCompatible AdvancedTest BasicTest;  -- Should be False
+
+-- Type-level function to create test runner
+type TestRunner 'Test = 
+  If (TestCompatible BasicTest 'Test)
+     { runner = "basic_runner" }
+     { runner = "advanced_runner" };
+
+-- Export all examples for testing
+export ApiV1, ApiV2, ApiCompatible, BackwardCompatibleApi, SafeApiV2;
+export UserSchemaV1, UserSchemaV2, SafeMigration, MigrationPlan;
+export BasicConfig, FullConfig, ValidateConfig, MergeConfig;
+export ValidationError, DatabaseError, NetworkError, ErrorCompatible, ErrorHandler;
+export UserState, AdminState, ValidStateTransition, StateReducer;
+export JsonFormat, BinaryFormat, FormatCompatible, Serializer;
+export BasicPlugin, AdvancedPlugin, PluginCompatible, PluginLoader;
+export BaseEvent, UserEvent, SystemEvent, EventCompatible, EventHandler;
+export SimpleCache, AdvancedCache, CacheCompatible, CacheAdapter;
+export BasicValidation, AdvancedValidation, ValidationCompatible, Validator;
+export BasicMiddleware, AdvancedMiddleware, MiddlewareCompatible, MiddlewareChain;
+export BasicQuery, AdvancedQuery, QueryCompatible, QueryBuilder;
+export BasicAuth, OAuthAuth, AuthCompatible, AuthHandler;
+export BasicLog, AdvancedLog, LogCompatible, Logger;
+export BasicTest, AdvancedTest, TestCompatible, TestRunner; 

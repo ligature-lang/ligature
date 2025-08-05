@@ -1,0 +1,29 @@
+[package]
+name = "reed"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "Command-line interface for the Ligature language"
+license.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[[bin]]
+name = "reed"
+path = "src/main.rs"
+
+[dependencies]
+ligature-ast = { path = "../../crates/ligature-ast" }
+ligature-parser = { path = "../../crates/ligature-parser" }
+ligature-types = { path = "../../crates/ligature-types" }
+ligature-eval = { path = "../../crates/ligature-eval" }
+ligature-xdg = { path = "../../crates/ligature-xdg" }
+clap = { workspace = true, features = ["derive"] }
+thiserror = { workspace = true }
+miette = { workspace = true, features = ["fancy"] }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+serde_yaml = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
+num_cpus = "1.16" 

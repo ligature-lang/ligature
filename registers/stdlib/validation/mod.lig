@@ -1,0 +1,75 @@
+-- Validation module for Ligature Standard Library
+module Validation
+
+-- Import core types
+import { Bool, Result } from core
+
+-- Validation error type
+type ValidationError = 
+  | InvalidEmail(String)
+  | InvalidUrl(String)
+  | InvalidLength(String, Int, Int)
+  | InvalidFormat(String, String)
+
+-- Email validation
+let validateEmail : String -> Result<String, ValidationError> = fun email ->
+  -- Simple email validation (basic pattern)
+  let hasAtSymbol : Bool = contains(email, "@")
+  let hasDomain : Bool = contains(email, ".")
+  in
+  if hasAtSymbol && hasDomain then
+    Ok(email)
+  else
+    Err(InvalidEmail(email))
+
+-- URL validation
+let validateUrl : String -> Result<String, ValidationError> = fun url ->
+  -- Simple URL validation
+  let hasProtocol : Bool = startsWith(url, "http://") || startsWith(url, "https://")
+  let hasDomain : Bool = contains(url, ".")
+  in
+  if hasProtocol && hasDomain then
+    Ok(url)
+  else
+    Err(InvalidUrl(url))
+
+-- String length validation
+let validateLength : String -> Int -> Int -> Result<String, ValidationError> = fun str min max ->
+  let len : Int = length(str)
+  in
+  if len >= min && len <= max then
+    Ok(str)
+  else
+    Err(InvalidLength(str, min, max))
+
+-- Pattern validation
+let validatePattern : String -> String -> Result<String, ValidationError> = fun str pattern ->
+  -- Simple pattern matching (basic implementation)
+  let matches : Bool = contains(str, pattern)
+  in
+  if matches then
+    Ok(str)
+  else
+    Err(InvalidFormat(str, pattern))
+
+-- Combined validation
+let validateEmailWithLength : String -> Int -> Int -> Result<String, ValidationError> = fun email min max ->
+  match validateEmail(email) with
+  | Ok(validEmail) -> validateLength(validEmail, min, max)
+  | Err(e) -> Err(e)
+
+-- Validation helpers
+let isValidEmail : String -> Bool = fun email ->
+  match validateEmail(email) with
+  | Ok(_) -> True
+  | Err(_) -> False
+
+let isValidUrl : String -> Bool = fun url ->
+  match validateUrl(url) with
+  | Ok(_) -> True
+  | Err(_) -> False
+
+-- Export all validation functions
+export { ValidationError }
+export { validateEmail, validateUrl, validateLength, validatePattern }
+export { validateEmailWithLength, isValidEmail, isValidUrl } 

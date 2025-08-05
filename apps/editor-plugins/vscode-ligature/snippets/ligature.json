@@ -1,0 +1,400 @@
+{
+  "Function Definition": {
+    "prefix": "fun",
+    "body": [
+      "fun ${1:functionName}(${2:parameters}) -> ${3:returnType} =",
+      "  ${4:body}"
+    ],
+    "description": "Define a function"
+  },
+  "Function with Type Annotation": {
+    "prefix": "funtype",
+    "body": [
+      "fun ${1:functionName} : ${2:parameterType} -> ${3:returnType} =",
+      "  ${4:body}"
+    ],
+    "description": "Define a function with explicit type annotation"
+  },
+  "Let Binding": {
+    "prefix": "let",
+    "body": [
+      "let ${1:variableName} = ${2:expression}",
+      "in ${3:body}"
+    ],
+    "description": "Create a let binding"
+  },
+  "Let with Type": {
+    "prefix": "lettype",
+    "body": [
+      "let ${1:variableName} : ${2:type} = ${3:expression}",
+      "in ${4:body}"
+    ],
+    "description": "Create a let binding with type annotation"
+  },
+  "If Expression": {
+    "prefix": "if",
+    "body": [
+      "if ${1:condition} then",
+      "  ${2:thenExpression}",
+      "else",
+      "  ${3:elseExpression}"
+    ],
+    "description": "Create an if-then-else expression"
+  },
+  "Match Expression": {
+    "prefix": "match",
+    "body": [
+      "match ${1:expression} with",
+      "  | ${2:pattern1} -> ${3:result1}",
+      "  | ${4:pattern2} -> ${5:result2}",
+      "  | _ -> ${6:defaultResult}"
+    ],
+    "description": "Create a pattern matching expression"
+  },
+  "Match with Guards": {
+    "prefix": "matchguard",
+    "body": [
+      "match ${1:expression} with",
+      "  | ${2:pattern1} when ${3:guard1} -> ${4:result1}",
+      "  | ${5:pattern2} when ${6:guard2} -> ${7:result2}",
+      "  | _ -> ${8:defaultResult}"
+    ],
+    "description": "Create a pattern matching expression with guards"
+  },
+  "Type Definition": {
+    "prefix": "type",
+    "body": [
+      "type ${1:TypeName} =",
+      "  | ${2:Constructor1} of ${3:type1}",
+      "  | ${4:Constructor2} of ${5:type2}"
+    ],
+    "description": "Define a custom type"
+  },
+  "Record Type": {
+    "prefix": "record",
+    "body": [
+      "type ${1:RecordName} = {",
+      "  ${2:field1}: ${3:type1},",
+      "  ${4:field2}: ${5:type2}",
+      "}"
+    ],
+    "description": "Define a record type"
+  },
+  "Type Alias": {
+    "prefix": "typealias",
+    "body": [
+      "type ${1:AliasName} = ${2:ExistingType}"
+    ],
+    "description": "Define a type alias"
+  },
+  "Import Statement": {
+    "prefix": "import",
+    "body": [
+      "import ${1:module} as ${2:alias}"
+    ],
+    "description": "Import a module"
+  },
+  "Import Qualified": {
+    "prefix": "importq",
+    "body": [
+      "import ${1:module} qualified as ${2:alias}"
+    ],
+    "description": "Import a module with qualified access"
+  },
+  "List Comprehension": {
+    "prefix": "listcomp",
+    "body": [
+      "[${1:expression} | ${2:pattern} <- ${3:list}]"
+    ],
+    "description": "Create a list comprehension"
+  },
+  "List Comprehension with Guard": {
+    "prefix": "listcompguard",
+    "body": [
+      "[${1:expression} | ${2:pattern} <- ${3:list}, ${4:guard}]"
+    ],
+    "description": "Create a list comprehension with guard"
+  },
+  "Lambda Function": {
+    "prefix": "lambda",
+    "body": [
+      "fun ${1:parameter} -> ${2:expression}"
+    ],
+    "description": "Create a lambda function"
+  },
+  "Lambda with Multiple Parameters": {
+    "prefix": "lambdamulti",
+    "body": [
+      "fun ${1:param1} ${2:param2} -> ${3:expression}"
+    ],
+    "description": "Create a lambda function with multiple parameters"
+  },
+  "Tuple": {
+    "prefix": "tuple",
+    "body": [
+      "(${1:value1}, ${2:value2})"
+    ],
+    "description": "Create a tuple"
+  },
+  "List": {
+    "prefix": "list",
+    "body": [
+      "[${1:item1}, ${2:item2}]"
+    ],
+    "description": "Create a list"
+  },
+  "Empty List": {
+    "prefix": "emptylist",
+    "body": [
+      "[]"
+    ],
+    "description": "Create an empty list"
+  },
+  "Map": {
+    "prefix": "map",
+    "body": [
+      "{${1:key1}: ${2:value1}, ${3:key2}: ${4:value2}}"
+    ],
+    "description": "Create a map"
+  },
+  "Empty Map": {
+    "prefix": "emptymap",
+    "body": [
+      "{}"
+    ],
+    "description": "Create an empty map"
+  },
+  "Option": {
+    "prefix": "option",
+    "body": [
+      "Some(${1:value})"
+    ],
+    "description": "Create an Option value"
+  },
+  "None": {
+    "prefix": "none",
+    "body": [
+      "None"
+    ],
+    "description": "Create a None value"
+  },
+  "Result": {
+    "prefix": "result",
+    "body": [
+      "Ok(${1:value})"
+    ],
+    "description": "Create a Result value"
+  },
+  "Error": {
+    "prefix": "error",
+    "body": [
+      "Error(${1:message})"
+    ],
+    "description": "Create an Error value"
+  },
+  "Pipe Operator": {
+    "prefix": "pipe",
+    "body": [
+      "${1:value} |> ${2:function}"
+    ],
+    "description": "Use the pipe operator"
+  },
+  "Where Clause": {
+    "prefix": "where",
+    "body": [
+      "where",
+      "  ${1:helperFunction} = ${2:definition}"
+    ],
+    "description": "Add a where clause"
+  },
+  "Module": {
+    "prefix": "module",
+    "body": [
+      "module ${1:ModuleName} = {",
+      "  ${2:exports}",
+      "}"
+    ],
+    "description": "Define a module"
+  },
+  "Register": {
+    "prefix": "register",
+    "body": [
+      "register ${1:RegisterName} = {",
+      "  ${2:entries}",
+      "}"
+    ],
+    "description": "Define a register"
+  },
+  "Test": {
+    "prefix": "test",
+    "body": [
+      "test \"${1:testName}\" =",
+      "  ${2:testExpression}",
+      "  where",
+      "    expected = ${3:expectedValue}",
+      "    actual = ${4:actualValue}"
+    ],
+    "description": "Create a test"
+  },
+  "Test Suite": {
+    "prefix": "testsuite",
+    "body": [
+      "testSuite \"${1:suiteName}\" = {",
+      "  test \"${2:test1}\" = ${3:expression1},",
+      "  test \"${4:test2}\" = ${5:expression2}",
+      "}"
+    ],
+    "description": "Create a test suite"
+  },
+  "Documentation Comment": {
+    "prefix": "doc",
+    "body": [
+      "/**",
+      " * ${1:description}",
+      " *",
+      " * @param ${2:paramName} ${3:paramDescription}",
+      " * @returns ${4:returnDescription}",
+      " */"
+    ],
+    "description": "Add documentation comment"
+  },
+  "Line Comment": {
+    "prefix": "//",
+    "body": [
+      "// ${1:comment}"
+    ],
+    "description": "Add a line comment"
+  },
+  "Block Comment": {
+    "prefix": "/*",
+    "body": [
+      "/*",
+      " * ${1:comment}",
+      " */"
+    ],
+    "description": "Add a block comment"
+  },
+  "Class Definition": {
+    "prefix": "class",
+    "body": [
+      "class ${1:ClassName} where",
+      "  ${2:method1}: ${3:signature1}",
+      "  ${4:method2}: ${5:signature2}"
+    ],
+    "description": "Define a type class"
+  },
+  "Instance Declaration": {
+    "prefix": "instance",
+    "body": [
+      "instance ${1:ClassName} for ${2:TypeName} where",
+      "  ${3:method1} = ${4:implementation1}",
+      "  ${5:method2} = ${6:implementation2}"
+    ],
+    "description": "Define a type class instance"
+  },
+  "Pattern Matching Function": {
+    "prefix": "funmatch",
+    "body": [
+      "fun ${1:functionName} ${2:pattern1} = ${3:result1}",
+      "fun ${1:functionName} ${4:pattern2} = ${5:result2}"
+    ],
+    "description": "Define a function with pattern matching"
+  },
+  "Fold Operation": {
+    "prefix": "fold",
+    "body": [
+      "fold ${1:function} ${2:initial} ${3:list}"
+    ],
+    "description": "Create a fold operation"
+  },
+  "Map Operation": {
+    "prefix": "map",
+    "body": [
+      "map ${1:function} ${2:list}"
+    ],
+    "description": "Create a map operation"
+  },
+  "Filter Operation": {
+    "prefix": "filter",
+    "body": [
+      "filter ${1:predicate} ${2:list}"
+    ],
+    "description": "Create a filter operation"
+  },
+  "Case Expression": {
+    "prefix": "case",
+    "body": [
+      "case ${1:expression} of",
+      "  ${2:pattern1} -> ${3:result1}",
+      "  ${4:pattern2} -> ${5:result2}"
+    ],
+    "description": "Create a case expression"
+  },
+  "Guard Expression": {
+    "prefix": "guard",
+    "body": [
+      "| ${1:condition1} = ${2:result1}",
+      "| ${3:condition2} = ${4:result2}",
+      "| otherwise = ${5:defaultResult}"
+    ],
+    "description": "Create guard expressions"
+  },
+  "Type Signature": {
+    "prefix": "sig",
+    "body": [
+      "${1:functionName} :: ${2:typeSignature}"
+    ],
+    "description": "Add a type signature"
+  },
+  "Export Declaration": {
+    "prefix": "export",
+    "body": [
+      "export { ${1:item1}, ${2:item2} }"
+    ],
+    "description": "Export items from module"
+  },
+  "Import All": {
+    "prefix": "importall",
+    "body": [
+      "import ${1:module}.*"
+    ],
+    "description": "Import all items from a module"
+  },
+  "Debug Print": {
+    "prefix": "debug",
+    "body": [
+      "debug \"${1:message}\" ${2:value}"
+    ],
+    "description": "Add debug output"
+  },
+  "Assert": {
+    "prefix": "assert",
+    "body": [
+      "assert ${1:condition} \"${2:message}\""
+    ],
+    "description": "Add an assertion"
+  },
+  "Error Handling": {
+    "prefix": "try",
+    "body": [
+      "try ${1:expression} with",
+      "  | ${2:ErrorType1} -> ${3:handler1}",
+      "  | ${4:ErrorType2} -> ${5:handler2}"
+    ],
+    "description": "Add error handling"
+  },
+  "Lazy Evaluation": {
+    "prefix": "lazy",
+    "body": [
+      "lazy ${1:expression}"
+    ],
+    "description": "Create a lazy expression"
+  },
+  "Strict Evaluation": {
+    "prefix": "strict",
+    "body": [
+      "strict ${1:expression}"
+    ],
+    "description": "Force strict evaluation"
+  }
+} 

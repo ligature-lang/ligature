@@ -1,0 +1,11 @@
+# Clippy configuration for the Ligature project
+
+# Set MSRV
+msrv = "1.70.0"
+
+# Configure specific thresholds
+too-many-arguments-threshold = 10
+type-complexity-threshold = 100  # Increased further for complex AST types
+too-many-lines-threshold = 500
+cognitive-complexity-threshold = 30
+large-error-threshold = 300  # Increased for AST error types 

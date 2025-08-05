@@ -1,0 +1,141 @@
+// Test complex pattern guard expressions
+// This file tests various complex guard expressions to ensure they work correctly
+
+// Test 1: Multiple arithmetic operations in guard
+let test_multiple_arithmetic = match 15 {
+    x when x % 3 == 0 && x % 5 == 0 => "divisible by both 3 and 5",
+    x when x % 3 == 0 => "divisible by 3",
+    x when x % 5 == 0 => "divisible by 5",
+    _ => "not divisible by 3 or 5"
+};
+
+// Test 2: Nested function calls in guard
+let is_even = \x -> x % 2 == 0;
+let is_positive = \x -> x > 0;
+let test_nested_functions = match 8 {
+    x when is_even(x) && is_positive(x) => "positive even",
+    x when is_even(x) && !is_positive(x) => "negative even",
+    x when !is_even(x) && is_positive(x) => "positive odd",
+    _ => "negative odd"
+};
+
+// Test 3: Complex boolean logic in guard
+let test_complex_boolean = match 7 {
+    x when x > 10 && x < 20 => "between 10 and 20",
+    x when x > 0 && x <= 10 => "between 1 and 10",
+    x when x == 0 => "zero",
+    x when x < 0 => "negative",
+    _ => "other"
+};
+
+// Test 4: String operations in guard
+let test_string_operations = match "hello world" {
+    s when s == "hello" => "greeting",
+    s when s == "goodbye" => "farewell",
+    s when s == "" => "empty",
+    s when s == "hello world" => "full greeting",
+    _ => "other string"
+};
+
+// Test 5: Record pattern matching with complex guards
+let test_record_complex = match { name = "Alice", age = 25, city = "New York" } {
+    { name = n, age = a, city = c } when a >= 18 && c == "New York" => "adult in NYC",
+    { name = n, age = a, city = c } when a >= 18 && c != "New York" => "adult elsewhere",
+    { name = n, age = a, city = c } when a < 18 => "minor",
+    _ => "unknown"
+};
+
+// Test 6: List pattern matching with arithmetic
+let test_list_arithmetic = match [1, 2, 3, 4] {
+    [x, y, z, w] when x + y + z + w > 10 => "sum greater than 10",
+    [x, y, z, w] when x + y + z + w == 10 => "sum equals 10",
+    [x, y, z, w] when x + y + z + w < 10 => "sum less than 10",
+    _ => "other list"
+};
+
+// Test 7: Union pattern with nested conditions
+type Option = Some(Integer) | None;
+
+let test_union_nested = match Some(15) {
+    Some(x) when x > 10 && x < 20 => "between 10 and 20",
+    Some(x) when x > 0 && x <= 10 => "between 1 and 10",
+    Some(x) when x <= 0 => "non-positive",
+    None => "no value",
+    _ => "other"
+};
+
+// Test 8: Multiple guards with different patterns
+let test_multiple_guards = match 42 {
+    x when x > 100 => "very large",
+    x when x > 50 => "large",
+    x when x > 25 => "medium",
+    x when x > 10 => "small",
+    x when x > 0 => "tiny",
+    x when x == 0 => "zero",
+    _ => "negative"
+};
+
+// Test 9: Complex nested expressions
+let test_complex_nested = match 12 {
+    x when (x % 2 == 0) && (x % 3 == 0) && (x > 10) => "even, divisible by 3, and > 10",
+    x when (x % 2 == 0) && (x % 3 == 0) => "even and divisible by 3",
+    x when x % 2 == 0 => "even",
+    x when x % 3 == 0 => "divisible by 3",
+    _ => "other"
+};
+
+// Test 10: Guard with field access
+let test_field_access = match { value = 15, flag = true } {
+    { value = v, flag = f } when v > 10 && f => "high value with flag",
+    { value = v, flag = f } when v > 10 && !f => "high value without flag",
+    { value = v, flag = f } when v <= 10 && f => "low value with flag",
+    _ => "low value without flag"
+};
+
+// Test 11: Complex nested union patterns
+type Result = Ok(Integer) | Error(String);
+
+let test_nested_union = match Ok(42) {
+    Ok(x) when x > 50 => "large success",
+    Ok(x) when x > 0 && x <= 50 => "small success",
+    Ok(x) when x <= 0 => "zero or negative success",
+    Error(s) when s == "timeout" => "timeout error",
+    Error(s) when s == "network" => "network error",
+    Error(s) when s == "" => "empty error",
+    _ => "other error"
+};
+
+// Test 12: Mixed type operations in guards
+let test_mixed_types = match { number = 15, text = "hello" } {
+    { number = n, text = t } when n > 10 && t == "hello" => "high number with hello",
+    { number = n, text = t } when n > 10 && t != "hello" => "high number with other text",
+    { number = n, text = t } when n <= 10 && t == "hello" => "low number with hello",
+    _ => "low number with other text"
+};
+
+// Test 13: Complex arithmetic expressions
+let test_complex_arithmetic = match 20 {
+    x when x * 2 + 5 > 50 => "complex arithmetic high",
+    x when x * 2 + 5 > 30 => "complex arithmetic medium",
+    x when x * 2 + 5 > 10 => "complex arithmetic low",
+    _ => "complex arithmetic very low"
+};
+
+// Test 14: Nested pattern matching with guards
+let test_nested_patterns = match Some(Some(25)) {
+    Some(Some(x)) when x > 20 && x < 30 => "nested high",
+    Some(Some(x)) when x > 10 && x <= 20 => "nested medium",
+    Some(Some(x)) when x <= 10 => "nested low",
+    Some(None) => "inner none",
+    None => "outer none",
+    _ => "other nested"
+};
+
+// Test 15: Multiple conditions with different operators
+let test_multiple_conditions = match 17 {
+    x when x > 20 || x < 5 => "outside range",
+    x when x >= 10 && x <= 15 => "in middle range",
+    x when x > 15 && x <= 20 => "in upper range",
+    x when x >= 5 && x < 10 => "in lower range",
+    _ => "exact match"
+}; 

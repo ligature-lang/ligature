@@ -1,0 +1,20 @@
+[package]
+name = "ligature-performance-monitor"
+version = "0.1.0"
+edition = "2021"
+authors = ["Ligature Team"]
+description = "Performance monitoring and optimization tool for the Ligature language"
+
+[dependencies]
+ligature-eval = { path = "../../crates/ligature-eval" }
+ligature-parser = { path = "../../crates/ligature-parser" }
+ligature-ast = { path = "../../crates/ligature-ast" }
+clap = "3.2"
+tokio = { version = "1.0", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+rand = "0.8"
+sysinfo = "0.29"
+
+[dev-dependencies]
+tempfile = "3.0" 

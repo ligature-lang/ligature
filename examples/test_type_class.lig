@@ -1,0 +1,1 @@
+typeclass Eq 'a where eq : 'a -> 'a -> Bool;

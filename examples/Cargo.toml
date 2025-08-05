@@ -1,0 +1,166 @@
+[package]
+name = "ligature-examples"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "Examples for the Ligature language ecosystem"
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+krox = { path = "../krox/krox-rs" }
+ligature-ast = { path = "../crates/ligature-ast" }
+ligature-parser = { path = "../crates/ligature-parser" }
+ligature-types = { path = "../crates/ligature-types" }
+ligature-eval = { path = "../crates/ligature-eval" }
+tokio = { version = "1.0", features = ["full"] }
+pest = "2.7"
+
+[[example]]
+name = "krox_example"
+path = "krox_example.rs"
+
+[[example]]
+name = "test_core"
+path = "test_core.rs"
+
+[[example]]
+name = "test_parser"
+path = "../tests/integration/test_parser.rs"
+
+[[example]]
+name = "test_type_inference"
+path = "../tests/integration/test_type_inference.rs"
+
+[[example]]
+name = "test_evaluation"
+path = "../tests/integration/test_evaluation.rs"
+
+[[example]]
+name = "test_pattern_guards"
+path = "test_pattern_guards.rs"
+
+[[example]]
+name = "test_module_system"
+path = "test_module_system.rs"
+
+[[example]]
+name = "test_modulo_issue"
+path = "test_modulo_issue.rs"
+
+[[example]]
+name = "debug_parser"
+path = "debug_parser.rs"
+
+[[example]]
+name = "test_complex_guards"
+path = "test_complex_guards.rs"
+
+[[example]]
+name = "test_operator_parsing"
+path = "test_operator_parsing.rs"
+
+[[example]]
+name = "debug_operator_parsing"
+path = "debug_operator_parsing.rs"
+
+[[example]]
+name = "precedence_fixes_test"
+path = "../tests/integration/precedence_fixes_test.rs"
+
+# Removed missing debug files
+# [[example]]
+# name = "debug_precedence_structure"
+# path = "../tests/integration/debug_precedence_structure.rs"
+
+# [[example]]
+# name = "debug_grammar_structure"
+# path = "../tests/integration/debug_grammar_structure.rs"
+
+# [[example]]
+# name = "debug_multiplicative_structure"
+# path = "../tests/integration/debug_multiplicative_structure.rs"
+
+# [[example]]
+# name = "debug_multiplicative_detailed"
+# path = "../tests/integration/debug_multiplicative_detailed.rs"
+
+[[example]]
+name = "debug_pest"
+path = "debug_pest.rs"
+
+[[example]]
+name = "memory_tracking_demo"
+path = "memory_tracking_demo.rs"
+
+[[bin]]
+name = "test_union_evaluation"
+path = "test_union_evaluation.rs"
+
+[[bin]]
+name = "test_union_pattern_matching"
+path = "test_union_pattern_matching.rs"
+
+[[bin]]
+name = "test_advanced_union_patterns"
+path = "test_advanced_union_patterns.rs"
+
+[[bin]]
+name = "test_match_expression_parsing"
+path = "test_match_expression_parsing.rs"
+
+[[bin]]
+name = "test_simple_union_pattern"
+path = "test_simple_union_pattern.rs"
+
+[[bin]]
+name = "debug_union_pattern"
+path = "debug_union_pattern.rs"
+
+[[bin]]
+name = "test_if_parsing"
+path = "test_if_parsing.rs"
+
+[[bin]]
+name = "debug_grammar"
+path = "debug_grammar.rs"
+
+[[bin]]
+name = "debug_if_parsing"
+path = "debug_if_parsing.rs"
+
+[[bin]]
+name = "test_caching"
+path = "test_caching.rs"
+
+[[bin]]
+name = "test_comprehensive_performance"
+path = "test_comprehensive_performance.rs"
+
+[[bin]]
+name = "function_call_benchmark"
+path = "function_call_benchmark.rs"
+
+[[bin]]
+name = "test_expression_caching"
+path = "test_expression_caching.rs"
+
+[[bin]]
+name = "performance_benchmark"
+path = "performance_benchmark.rs"
+
+[[bin]]
+name = "performance_optimization_benchmark"
+path = "performance_optimization_benchmark.rs"
+
+[[bin]]
+name = "simple_performance_test"
+path = "simple_performance_test.rs"
+
+[[bin]]
+name = "test_value_optimization"
+path = "test_value_optimization.rs"
+
+[[bin]]
+name = "function_call_performance_test"
+path = "function_call_performance_test.rs" 

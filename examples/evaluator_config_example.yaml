@@ -1,0 +1,47 @@
+# Ligature Evaluator Configuration Example (YAML format)
+# This file can be placed in ~/.config/ligature/eval.yaml for global settings
+# or in your project directory for project-specific settings
+
+cache:
+  enabled: true
+  max_size: 3000
+  max_memory_bytes: 3145728  # 3MB
+  
+  warming:
+    enabled: true
+    max_expressions: 300
+    warm_on_module_load: true
+  
+  cacheable_expressions:
+    literals: true
+    variables: true
+    binary_ops: true
+    unary_ops: true
+    field_access: true
+    applications: false  # Be careful with function applications
+    let_expressions: false
+    records: false
+    unions: false
+    matches: false
+    if_expressions: false
+
+performance:
+  tail_call_optimization: true
+  stack_based_evaluation: true
+  value_optimization: true
+  max_stack_depth: 20000
+  env_pool_size: 300
+  value_pool_size: 3000
+
+memory:
+  monitoring: true
+  eviction_threshold_percent: 90.0
+  max_evaluation_memory_bytes: 1073741824  # 1GB
+  gc_frequency: 250
+
+debug:
+  logging: false
+  profiling: true
+  cache_statistics: true
+  memory_tracking: true
+  log_level: warn 

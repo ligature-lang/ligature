@@ -1,0 +1,533 @@
+-- Advanced Subtyping Tests
+-- Phase 4: Advanced Subtyping (type-level subtyping checks, equality, conditionals, validation)
+
+-- Import the type-level standard library
+import TypeLevel;
+
+-- =============================================================================
+-- Test 1: Type-Level Subtyping Checks
+-- =============================================================================
+
+-- Type-level subtyping check
+-- Subtype : Type -> Type -> Bool
+type Subtype 'A 'B = 
+  match ('A, 'B) {
+    ('A, 'A) => True,  -- Reflexivity: A <: A
+    ('A, 'B) => 
+      -- Check if 'A <: 'B based on subtyping rules
+      -- This integrates with the actual subtyping system
+      match ('A, 'B) {
+        -- Record width subtyping: {a: T, b: U} <: {a: T}
+        (Record { fields = fa }, Record { fields = fb }) =>
+          -- Check if all fields in fb are present in fa with compatible types
+          all (\field -> hasField field.name fa && subtype (getField field.name fa) field.type) fb,
+        
+        -- Union depth subtyping: A <: A | B
+        ('A, Union { variants = vb }) =>
+          -- Check if 'A is compatible with any variant in vb
+          any (\variant -> subtype 'A variant.type) vb,
+        
+        -- List subtyping: List A <: List B if A <: B
+        (List 'A, List 'B) => subtype 'A 'B,
+        
+        -- Function subtyping: A -> B <: C -> D if C <: A and B <: D (contravariant)
+        (Function { parameter = pa, return_type = ra }, 
+         Function { parameter = pb, return_type = rb }) =>
+          subtype pb pa && subtype ra rb,
+        
+        -- Option subtyping: Option A <: Option B if A <: B
+        (Option 'A, Option 'B) => subtype 'A 'B,
+        
+        -- Result subtyping: Result A E <: Result B F if A <: B and E <: F
+        (Result 'A 'E, Result 'B 'F) => subtype 'A 'B && subtype 'E 'F,
+        
+        -- Default case: no subtyping relationship
+        _ => False
+      }
+  };
+
+-- Test basic subtyping relationships
+let testReflexivity: Bool = Subtype Int Int;  -- Should be True
+let testBasicSubtyping: Bool = Subtype Int Number;  -- Should be True (if Number is supertype of Int)
+
+-- Test record width subtyping
+type BasicUser = { name: String, age: Int };
+type ExtendedUser = { name: String, age: Int, email: String };
+
+let testRecordWidthSubtyping: Bool = Subtype ExtendedUser BasicUser;  -- Should be True
+let testRecordWidthSubtypingReverse: Bool = Subtype BasicUser ExtendedUser;  -- Should be False
+
+-- Test union depth subtyping
+type BasicResult = Ok(String) | Err(String);
+type ExtendedResult = Ok(String) | Err(String) | Pending;
+
+let testUnionDepthSubtyping: Bool = Subtype BasicResult ExtendedResult;  -- Should be True
+let testUnionDepthSubtypingReverse: Bool = Subtype ExtendedResult BasicResult;  -- Should be False
+
+-- Test list subtyping
+let testListSubtyping: Bool = Subtype (List Int) (List Number);  -- Should be True
+let testListSubtypingReverse: Bool = Subtype (List Number) (List Int);  -- Should be False
+
+-- Test function subtyping (contravariant in parameter, covariant in return)
+type IntFunction = Int -> String;
+type NumberFunction = Number -> String;
+
+let testFunctionSubtyping: Bool = Subtype NumberFunction IntFunction;  -- Should be True (contravariant)
+let testFunctionSubtypingReverse: Bool = Subtype IntFunction NumberFunction;  -- Should be False
+
+-- =============================================================================
+-- Test 2: Type-Level Equality
+-- =============================================================================
+
+-- Type-level equality checking
+-- Equal : Type -> Type -> Bool
+type Equal 'A 'B = 
+  match ('A, 'B) {
+    ('A, 'A) => True,  -- Same type variable
+    (Int, Int) => True,
+    (String, String) => True,
+    (Bool, Bool) => True,
+    (Unit, Unit) => True,
+    (Float, Float) => True,
+    
+    -- List equality
+    (List 'A, List 'B) => Equal 'A 'B,
+    
+    -- Record equality (structural)
+    (Record { fields = fa }, Record { fields = fb }) =>
+      -- Check if records have the same fields with equal types
+      length fa == length fb && 
+      all (\field -> 
+        hasField field.name fb && 
+        Equal (getField field.name fa) (getField field.name fb)
+      ) fa,
+    
+    -- Union equality (structural)
+    (Union { variants = va }, Union { variants = vb }) =>
+      -- Check if unions have the same variants with equal types
+      length va == length vb &&
+      all (\variant -> 
+        hasVariant variant.name vb && 
+        Equal (getVariant variant.name va) (getVariant variant.name vb)
+      ) va,
+    
+    -- Function equality
+    (Function { parameter = pa, return_type = ra }, 
+     Function { parameter = pb, return_type = rb }) =>
+      Equal pa pb && Equal ra rb,
+    
+    -- Option equality
+    (Option 'A, Option 'B) => Equal 'A 'B,
+    
+    -- Result equality
+    (Result 'A 'E, Result 'B 'F) => Equal 'A 'B && Equal 'E 'F,
+    
+    -- Default case: not equal
+    _ => False
+  };
+
+-- Test basic equality
+let testBasicEquality: Bool = Equal Int Int;  -- Should be True
+let testBasicInequality: Bool = Equal Int String;  -- Should be False
+
+-- Test list equality
+let testListEquality: Bool = Equal (List Int) (List Int);  -- Should be True
+let testListInequality: Bool = Equal (List Int) (List String);  -- Should be False
+
+-- Test record equality
+type Record1 = { name: String, age: Int };
+type Record2 = { name: String, age: Int };
+type Record3 = { name: String, age: Int, email: String };
+
+let testRecordEquality: Bool = Equal Record1 Record2;  -- Should be True
+let testRecordInequality: Bool = Equal Record1 Record3;  -- Should be False
+
+-- Test union equality
+type Union1 = Ok(String) | Err(String);
+type Union2 = Ok(String) | Err(String);
+type Union3 = Ok(String) | Err(String) | Pending;
+
+let testUnionEquality: Bool = Equal Union1 Union2;  -- Should be True
+let testUnionInequality: Bool = Equal Union1 Union3;  -- Should be False
+
+-- =============================================================================
+-- Test 3: Type-Level Conditional Logic
+-- =============================================================================
+
+-- Type-level conditional logic
+-- If : Bool -> Type -> Type -> Type
+type If 'Cond 'Then 'Else = 
+  match 'Cond {
+    True => 'Then,
+    False => 'Else
+  };
+
+-- Test basic conditionals
+type ConditionalType1 = If True Int String;  -- Should be Int
+type ConditionalType2 = If False Int String;  -- Should be String
+
+let testConditional1: ConditionalType1 = 42;
+let testConditional2: ConditionalType2 = "hello";
+
+-- Test conditional with subtyping
+type ConditionalSubtype = If (Subtype Int Number) Int Number;  -- Should be Int
+let testConditionalSubtype: ConditionalSubtype = 42;
+
+-- Test conditional with equality
+type ConditionalEquality = If (Equal Int Int) String Bool;  -- Should be String
+let testConditionalEquality: ConditionalEquality = "equal";
+
+-- Test nested conditionals
+type NestedConditional = If (Subtype Int Number) 
+                          (If (Equal Int Int) Int String) 
+                          Bool;  -- Should be Int
+let testNestedConditional: NestedConditional = 42;
+
+-- =============================================================================
+-- Test 4: Type-Level Validation
+-- =============================================================================
+
+-- Type-level validation
+-- Validate : Type -> Bool
+type Validate 'T = 
+  match 'T {
+    Int => True,  -- Int is always valid
+    String => True,  -- String is always valid
+    Bool => True,  -- Bool is always valid
+    Unit => True,  -- Unit is always valid
+    Float => True,  -- Float is always valid
+    
+    -- List validation: validate element type
+    List 'E => Validate 'E,
+    
+    -- Record validation: validate all field types
+    Record { fields } => 
+      all (\field -> Validate field.type) fields,
+    
+    -- Union validation: validate all variant types
+    Union { variants } => 
+      all (\variant -> Validate variant.type) variants,
+    
+    -- Function validation: validate parameter and return types
+    Function { parameter, return_type } => 
+      Validate parameter && Validate return_type,
+    
+    -- Option validation: validate element type
+    Option 'E => Validate 'E,
+    
+    -- Result validation: validate success and error types
+    Result 'S 'E => Validate 'S && Validate 'E,
+    
+    -- Type variable validation: always valid
+    Variable _ => True,
+    
+    -- Default case: not valid
+    _ => False
+  };
+
+-- Test basic validation
+let testBasicValidation: Bool = Validate Int;  -- Should be True
+let testBasicValidation2: Bool = Validate String;  -- Should be True
+
+-- Test list validation
+let testListValidation: Bool = Validate (List Int);  -- Should be True
+let testListValidation2: Bool = Validate (List (List String));  -- Should be True
+
+-- Test record validation
+let testRecordValidation: Bool = Validate { name: String, age: Int };  -- Should be True
+let testRecordValidation2: Bool = Validate { user: { name: String, age: Int }, active: Bool };  -- Should be True
+
+-- Test union validation
+let testUnionValidation: Bool = Validate (Ok(String) | Err(String));  -- Should be True
+let testUnionValidation2: Bool = Validate (Some(Int) | None);  -- Should be True
+
+-- =============================================================================
+-- Test 5: Advanced Subtyping with Type Classes
+-- =============================================================================
+
+-- Type-level function to check if a type implements a type class
+-- Implements : Type -> String -> Bool
+type Implements 'T 'Class = 
+  match 'Class {
+    "Show" => 
+      match 'T {
+        Int => True,
+        String => True,
+        Bool => True,
+        Float => True,
+        Unit => True,
+        List 'E => Implements 'E "Show",
+        Record { fields } => all (\field -> Implements field.type "Show") fields,
+        Union { variants } => all (\variant -> Implements variant.type "Show") variants,
+        _ => False
+      },
+    "Eq" => 
+      match 'T {
+        Int => True,
+        String => True,
+        Bool => True,
+        Unit => True,
+        Float => True,
+        List 'E => Implements 'E "Eq",
+        Record { fields } => all (\field -> Implements field.type "Eq") fields,
+        Union { variants } => all (\variant -> Implements variant.type "Eq") variants,
+        _ => False
+      },
+    "Ord" => 
+      match 'T {
+        Int => True,
+        String => True,
+        Bool => True,
+        Float => True,
+        List 'E => Implements 'E "Ord",
+        _ => False
+      },
+    _ => False
+  };
+
+-- Test type class implementation checking
+let testShowImplementation: Bool = Implements Int "Show";  -- Should be True
+let testEqImplementation: Bool = Implements String "Eq";  -- Should be True
+let testOrdImplementation: Bool = Implements Bool "Ord";  -- Should be True
+
+-- Test type class implementation with complex types
+let testListShowImplementation: Bool = Implements (List Int) "Show";  -- Should be True
+let testRecordEqImplementation: Bool = Implements { name: String, age: Int } "Eq";  -- Should be True
+
+-- =============================================================================
+-- Test 6: Type-Level Subtyping with Constraints
+-- =============================================================================
+
+-- Type-level function to check constrained subtyping
+-- ConstrainedSubtype : Type -> Type -> List String -> Bool
+type ConstrainedSubtype 'A 'B 'Constraints = 
+  -- Check if 'A <: 'B under the given constraints
+  match 'Constraints {
+    [] => Subtype 'A 'B,  -- No constraints, use regular subtyping
+    [head | tail] => 
+      match head {
+        "Show" => Implements 'A "Show" && Implements 'B "Show" && Subtype 'A 'B,
+        "Eq" => Implements 'A "Eq" && Implements 'B "Eq" && Subtype 'A 'B,
+        "Ord" => Implements 'A "Ord" && Implements 'B "Ord" && Subtype 'A 'B,
+        _ => Subtype 'A 'B
+      }
+  };
+
+-- Test constrained subtyping
+let testConstrainedSubtyping: Bool = ConstrainedSubtype Int Number ["Show"];  -- Should be True
+let testConstrainedSubtyping2: Bool = ConstrainedSubtype (List Int) (List Number) ["Eq"];  -- Should be True
+
+-- =============================================================================
+-- Test 7: Type-Level Subtyping with Variance
+-- =============================================================================
+
+-- Type-level function to check variance
+-- Variance : Type -> String -> Bool
+type Variance 'T 'Variance = 
+  match ('T, 'Variance) {
+    -- Covariant types
+    (List _, "covariant") => True,
+    (Option _, "covariant") => True,
+    (Union _, "covariant") => True,
+    
+    -- Contravariant types
+    (Function _, "contravariant") => True,
+    
+    -- Invariant types
+    (Record _, "invariant") => True,
+    (Result _, "invariant") => True,
+    
+    -- Default case
+    _ => False
+  };
+
+-- Test variance checking
+let testCovariantList: Bool = Variance (List Int) "covariant";  -- Should be True
+let testContravariantFunction: Bool = Variance (Int -> String) "contravariant";  -- Should be True
+let testInvariantRecord: Bool = Variance { name: String } "invariant";  -- Should be True
+
+-- =============================================================================
+-- Test 8: Type-Level Subtyping with Bounds
+-- =============================================================================
+
+-- Type-level function to check bounded subtyping
+-- BoundedSubtype : Type -> Type -> Type -> Type -> Bool
+type BoundedSubtype 'A 'Lower 'Upper 'B = 
+  -- Check if 'A <: 'B under the bounds Lower <: A <: Upper
+  Subtype 'Lower 'A && Subtype 'A 'Upper && Subtype 'A 'B;
+
+-- Test bounded subtyping
+let testBoundedSubtyping: Bool = BoundedSubtype Int Number Float String;  -- Should be False (Int not <: String)
+let testBoundedSubtyping2: Bool = BoundedSubtype Int Number Float Number;  -- Should be True
+
+-- =============================================================================
+-- Test 9: Type-Level Subtyping with Recursion
+-- =============================================================================
+
+-- Type-level function to check recursive subtyping
+-- RecursiveSubtype : Type -> Type -> Nat -> Bool
+type RecursiveSubtype 'A 'B 'Depth = 
+  match 'Depth {
+    Zero => Equal 'A 'B,  -- At depth 0, only check equality
+    Succ 'D => 
+      match ('A, 'B) {
+        (List 'A', List 'B') => RecursiveSubtype 'A' 'B' 'D,
+        (Option 'A', Option 'B') => RecursiveSubtype 'A' 'B' 'D,
+        (Result 'A' 'E, Result 'B' 'F) => RecursiveSubtype 'A' 'B' 'D && RecursiveSubtype 'E 'F 'D,
+        _ => Subtype 'A 'B
+      }
+  };
+
+-- Test recursive subtyping
+let testRecursiveSubtyping: Bool = RecursiveSubtype (List (List Int)) (List (List Number)) (Succ (Succ Zero));  -- Should be True
+
+-- =============================================================================
+-- Test 10: Type-Level Subtyping with Type Families
+-- =============================================================================
+
+-- Type-level function to check subtyping with type families
+-- TypeFamilySubtype : Type -> Type -> Type -> Bool
+type TypeFamilySubtype 'Family 'A 'B = 
+  match 'Family {
+    "List" => Subtype (List 'A) (List 'B),
+    "Option" => Subtype (Option 'A) (Option 'B),
+    "Result" => Subtype (Result 'A String) (Result 'B String),
+    "Function" => Subtype (String -> 'A) (String -> 'B),
+    _ => False
+  };
+
+-- Test type family subtyping
+let testTypeFamilyList: Bool = TypeFamilySubtype "List" Int Number;  -- Should be True
+let testTypeFamilyOption: Bool = TypeFamilySubtype "Option" Int Number;  -- Should be True
+let testTypeFamilyResult: Bool = TypeFamilySubtype "Result" Int Number;  -- Should be True
+let testTypeFamilyFunction: Bool = TypeFamilySubtype "Function" Number Int;  -- Should be True (contravariant)
+
+-- =============================================================================
+-- Test 11: Type-Level Subtyping with Higher-Order Types
+-- =============================================================================
+
+-- Type-level function to check higher-order subtyping
+-- HigherOrderSubtype : (Type -> Type) -> (Type -> Type) -> Bool
+type HigherOrderSubtype 'F 'G = 
+  -- Check if 'F <: 'G as higher-order types
+  -- This is a simplified version - in practice this would be more complex
+  match ('F, 'G) {
+    -- Both are list constructors
+    (List, List) => True,
+    -- Both are option constructors
+    (Option, Option) => True,
+    -- Both are result constructors
+    (Result, Result) => True,
+    -- Default case
+    _ => False
+  };
+
+-- Test higher-order subtyping
+let testHigherOrderList: Bool = HigherOrderSubtype List List;  -- Should be True
+let testHigherOrderOption: Bool = HigherOrderSubtype Option Option;  -- Should be True
+
+-- =============================================================================
+-- Test 12: Type-Level Subtyping with Existential Types
+-- =============================================================================
+
+-- Type-level function to check existential subtyping
+-- ExistentialSubtype : Type -> Type -> Bool
+type ExistentialSubtype 'A 'B = 
+  match ('A, 'B) {
+    -- Existential types with the same structure
+    (Exists "T" 'A', Exists "T" 'B') => Subtype 'A' 'B',
+    -- Existential type subtyping with different parameters
+    (Exists "T" 'A', Exists "U" 'B') => 
+      -- Rename and check subtyping
+      Subtype (substitute "T" "U" 'A') 'B',
+    -- Default case
+    _ => False
+  };
+
+-- Test existential subtyping (conceptual - would need existential types)
+let testExistentialSubtype: Bool = True;  -- Placeholder
+
+-- =============================================================================
+-- Test 13: Type-Level Subtyping with Universal Types
+-- =============================================================================
+
+-- Type-level function to check universal subtyping
+-- UniversalSubtype : Type -> Type -> Bool
+type UniversalSubtype 'A 'B = 
+  match ('A, 'B) {
+    -- Universal types with the same structure
+    (ForAll "T" 'A', ForAll "T" 'B') => Subtype 'A' 'B',
+    -- Universal type subtyping with different parameters
+    (ForAll "T" 'A', ForAll "U" 'B') => 
+      -- Rename and check subtyping
+      Subtype (substitute "T" "U" 'A') 'B',
+    -- Default case
+    _ => False
+  };
+
+-- Test universal subtyping (conceptual - would need universal types)
+let testUniversalSubtype: Bool = True;  -- Placeholder
+
+-- =============================================================================
+-- Test 14: Type-Level Subtyping with Dependent Types
+-- =============================================================================
+
+-- Type-level function to check dependent type subtyping
+-- DependentSubtype : Type -> Type -> Bool
+type DependentSubtype 'A 'B = 
+  match ('A, 'B) {
+    -- Pi type subtyping
+    (Pi { parameter = pa, parameter_type = pat, return_type = rat }, 
+     Pi { parameter = pb, parameter_type = pbt, return_type = rbt }) =>
+      -- Contravariant in parameter, covariant in return
+      Subtype pbt pat && Subtype rat rbt,
+    
+    -- Sigma type subtyping
+    (Sigma { parameter = pa, parameter_type = pat, return_type = rat }, 
+     Sigma { parameter = pb, parameter_type = pbt, return_type = rbt }) =>
+      -- Covariant in both components
+      Subtype pat pbt && Subtype rat rbt,
+    
+    -- Default case
+    _ => False
+  };
+
+-- Test dependent type subtyping
+type Pi1 = Pi { parameter = "T", parameter_type = Type, return_type = List "T" };
+type Pi2 = Pi { parameter = "T", parameter_type = Type, return_type = List "T" };
+
+let testDependentSubtype: Bool = DependentSubtype Pi1 Pi2;  -- Should be True
+
+-- =============================================================================
+-- Test 15: Type-Level Subtyping with Type-Level Functions
+-- =============================================================================
+
+-- Type-level function to check subtyping with type-level functions
+-- TypeFunctionSubtype : (Type -> Type) -> (Type -> Type) -> Bool
+type TypeFunctionSubtype 'F 'G = 
+  -- Check if 'F <: 'G as type-level functions
+  -- This is a simplified version - in practice this would be more complex
+  match ('F, 'G) {
+    -- Both are identity functions
+    (Id, Id) => True,
+    -- Both are list constructors
+    (List, List) => True,
+    -- Both are option constructors
+    (Option, Option) => True,
+    -- Composition of compatible functions
+    (Compose 'F1 'G1, Compose 'F2 'G2) => 
+      TypeFunctionSubtype 'F1 'F2 && TypeFunctionSubtype 'G1 'G2,
+    -- Default case
+    _ => False
+  };
+
+-- Test type function subtyping
+let testTypeFunctionId: Bool = TypeFunctionSubtype Id Id;  -- Should be True
+let testTypeFunctionList: Bool = TypeFunctionSubtype List List;  -- Should be True
+let testTypeFunctionCompose: Bool = TypeFunctionSubtype (Compose List Option) (Compose List Option);  -- Should be True
+
+-- Export all advanced subtyping functions for testing
+export Subtype, Equal, If, Validate, Implements;
+export ConstrainedSubtype, Variance, BoundedSubtype, RecursiveSubtype;
+export TypeFamilySubtype, HigherOrderSubtype, ExistentialSubtype, UniversalSubtype;
+export DependentSubtype, TypeFunctionSubtype; 

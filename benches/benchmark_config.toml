@@ -1,0 +1,182 @@
+# Benchmark Configuration for Ligature
+# This file contains default settings for the benchmark system
+
+[general]
+# Default crates to benchmark
+crates = ["ligature-parser", "ligature-eval"]
+
+# Default output format
+output_format = "human"  # human, json, csv, all
+
+# Enable memory profiling by default
+memory_profiling = true
+
+# Generate reports by default
+generate_reports = true
+
+[performance]
+# Number of warmup iterations
+warmup_iterations = 1000
+
+# Number of measurement iterations
+measurement_iterations = 10000
+
+# Timeout in seconds
+timeout_seconds = 30
+
+# Minimum number of samples for statistical significance
+min_samples = 10
+
+# Maximum number of samples
+max_samples = 100
+
+[memory]
+# Enable detailed memory tracking
+track_memory = true
+
+# Memory sampling interval (milliseconds)
+sampling_interval = 100
+
+# Track memory leaks
+detect_leaks = true
+
+[output]
+# Output directory for reports
+reports_dir = "reports"
+
+# Save detailed logs
+save_logs = true
+
+# Include system information in reports
+include_system_info = true
+
+# Generate HTML reports
+generate_html = false
+
+[ci]
+# Settings for continuous integration
+# Reduced iterations for faster CI runs
+ci_warmup_iterations = 100
+ci_measurement_iterations = 1000
+ci_timeout_seconds = 60
+
+# Fail on performance regression
+fail_on_regression = true
+
+# Regression threshold (percentage)
+regression_threshold = 10.0
+
+[benchmarks]
+# Parser benchmark configurations
+[benchmarks.parser]
+enabled = true
+categories = ["literals", "arithmetic", "comparison", "logical", "let", "function", "record", "list", "complex", "errors", "large", "memory"]
+
+# Evaluator benchmark configurations
+[benchmarks.evaluator]
+enabled = true
+categories = ["literals", "arithmetic", "comparison", "logical", "let", "conditional", "record", "list", "complex", "errors", "end_to_end"]
+
+# Custom benchmark configurations
+[benchmarks.custom]
+enabled = true
+include_parser_benchmarks = true
+include_evaluator_benchmarks = true
+include_end_to_end_benchmarks = true
+
+[targets]
+# Performance targets for different components
+[targets.parser]
+simple_throughput = 10000  # ops/sec
+complex_throughput = 3000   # ops/sec
+simple_latency = 100        # microseconds
+complex_latency = 300       # microseconds
+peak_memory = 2048          # KB
+memory_increase = 1024      # KB
+
+[targets.evaluator]
+simple_throughput = 8000    # ops/sec
+complex_throughput = 2500   # ops/sec
+simple_latency = 125        # microseconds
+complex_latency = 400       # microseconds
+peak_memory = 4096          # KB
+memory_increase = 2048      # KB
+
+[targets.end_to_end]
+throughput = 2000           # ops/sec
+latency = 500               # microseconds
+peak_memory = 6144          # KB
+memory_increase = 3072      # KB
+
+[profiling]
+# Profiling settings
+[profiling.cpu]
+enabled = true
+sample_rate = 1000          # Hz
+
+[profiling.memory]
+enabled = true
+track_allocations = true
+track_deallocations = true
+track_peak_usage = true
+
+[profiling.io]
+enabled = false
+track_file_operations = false
+track_network_operations = false
+
+[reports]
+# Report generation settings
+[reports.formats]
+human = true
+json = true
+csv = true
+html = false
+markdown = true
+
+[reports.content]
+include_summary = true
+include_details = true
+include_charts = true
+include_comparisons = true
+include_recommendations = true
+
+[reports.storage]
+save_to_disk = true
+compress_results = false
+retention_days = 30
+
+[comparison]
+# Benchmark comparison settings
+[comparison.baseline]
+enabled = true
+baseline_file = "baseline.json"
+auto_update = false
+
+[comparison.regression]
+detection_enabled = true
+threshold_percentage = 5.0
+fail_on_regression = true
+alert_on_regression = true
+
+[comparison.trends]
+track_trends = true
+trend_window = 10           # number of runs
+trend_analysis = true
+
+[environment]
+# Environment-specific settings
+[environment.development]
+verbose = true
+fast_mode = true
+save_intermediate = true
+
+[environment.ci]
+verbose = false
+fast_mode = false
+save_intermediate = false
+
+[environment.production]
+verbose = false
+fast_mode = false
+save_intermediate = false 

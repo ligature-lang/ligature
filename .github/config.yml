@@ -1,0 +1,59 @@
+# Ligature CI Configuration
+# This file documents the CI workflow configuration and can be used for customization
+
+# Supported Rust versions for testing
+rust_versions:
+  - stable
+  - 1.70
+
+# Crates in the workspace that need to be built and tested
+workspace_crates:
+  - ligature-ast
+  - ligature-parser
+  - ligature-types
+  - ligature-eval
+  - ligature-cli
+  - ligature-lsp
+  - krox
+  - keywork
+
+# Test categories
+test_categories:
+  - unit
+  - integration
+  - property
+  - differential
+
+# Examples that should be built and run
+examples:
+  - test_core
+  - test_parser
+  - test_type_inference
+  - test_evaluation
+
+# CI environment variables
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+# Cache configuration
+cache:
+  paths:
+    - ~/.cargo/registry
+    - ~/.cargo/git
+    - target
+
+# GitHub Actions versions
+actions:
+  checkout: v4
+  cache: v3
+  rust-toolchain: stable
+
+# Clippy configuration
+clippy:
+  flags: "--all-targets --all-features"
+  deny: "-D warnings"
+
+# Security audit configuration
+security:
+  audit_flags: "--deny warnings" 

@@ -1,0 +1,96 @@
+# Ligature CLI Configuration File
+# This file configures the behavior of the Ligature CLI tool
+# Place this file in your XDG config directory or specify with --config
+
+[logging]
+# Log level: trace, debug, info, warn, error
+level = "info"
+# Whether to log to file
+log_to_file = true
+# Whether to log to console
+log_to_console = false
+# Maximum log file size in bytes (10MB)
+max_file_size = 10485760
+# Number of log files to keep
+max_files = 5
+# Whether to include timestamps in logs
+include_timestamps = true
+
+[performance]
+# Whether to enable parallel processing
+enable_parallel = true
+# Number of worker threads for parallel operations
+# Set to 0 to use all available CPU cores
+worker_threads = 0
+# Whether to enable caching
+enable_caching = true
+# Cache TTL in seconds (1 hour)
+cache_ttl_seconds = 3600
+
+[defaults]
+# Default output format: json, yaml, text
+output_format = "text"
+# Whether to show verbose output by default
+verbose = false
+# Whether to show progress bars by default
+show_progress = true
+# Default timeout for operations in seconds
+timeout_seconds = 30
+
+[cache]
+# Whether caching is enabled
+enabled = true
+# Maximum cache size in bytes (100MB)
+max_size = 104857600
+# Maximum age for cache entries in seconds (24 hours)
+max_age = 86400
+# Whether to clean old cache entries automatically
+auto_clean = true
+
+# Development-specific settings
+[development]
+# Whether to enable debug mode
+debug = false
+# Whether to show internal timing information
+show_timing = false
+# Whether to validate configurations strictly
+strict_validation = false
+# Whether to enable experimental features
+experimental_features = false
+
+# Editor integration settings
+[editor]
+# Default editor to use for opening files
+default_editor = "code"
+# Whether to enable LSP integration
+lsp_enabled = true
+# LSP server port (0 for auto-assign)
+lsp_port = 0
+# Whether to enable auto-completion
+auto_completion = true
+# Whether to enable syntax highlighting
+syntax_highlighting = true
+
+# Network settings
+[network]
+# Default timeout for network requests in seconds
+timeout = 30
+# Whether to use HTTPS by default
+use_https = true
+# Proxy configuration (optional)
+# proxy_url = "http://proxy.example.com:8080"
+# Whether to verify SSL certificates
+verify_ssl = true
+# User agent string
+user_agent = "Ligature CLI/1.0.0"
+
+# Security settings
+[security]
+# Whether to allow insecure connections
+allow_insecure = false
+# Whether to store sensitive data in plain text
+store_plaintext_secrets = false
+# Maximum key size for encryption (bits)
+max_key_size = 4096
+# Whether to enable audit logging
+audit_logging = false 

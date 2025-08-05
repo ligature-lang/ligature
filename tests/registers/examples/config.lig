@@ -1,0 +1,91 @@
+// Configuration example
+// This demonstrates how Ligature can be used for configuration management
+
+// Server configuration
+let server_config = {
+    host = "localhost",
+    port = 8080,
+    timeout = 30,
+    ssl = true
+}
+
+// Database configuration
+let db_config = {
+    host = "db.example.com",
+    port = 5432,
+    database = "myapp",
+    username = "app_user",
+    password = "secret_password",
+    pool_size = 10,
+    ssl_mode = "require"
+}
+
+// Application configuration
+let app_config = {
+    name = "My Application",
+    version = "1.0.0",
+    environment = "production",
+    debug = false,
+    log_level = "info",
+    features = {
+        cache = true,
+        metrics = true,
+        api_docs = false
+    }
+}
+
+// User roles and permissions
+let roles = {
+    admin = {
+        name = "Administrator",
+        permissions = ["read", "write", "delete", "admin"],
+        level = 100
+    },
+    user = {
+        name = "Regular User",
+        permissions = ["read", "write"],
+        level = 10
+    },
+    guest = {
+        name = "Guest User",
+        permissions = ["read"],
+        level = 1
+    }
+}
+
+// API endpoints configuration
+let api_endpoints = [
+    {
+        path = "/api/v1/users",
+        method = "GET",
+        auth_required = true,
+        rate_limit = 100
+    },
+    {
+        path = "/api/v1/users",
+        method = "POST",
+        auth_required = true,
+        rate_limit = 10
+    },
+    {
+        path = "/api/v1/health",
+        method = "GET",
+        auth_required = false,
+        rate_limit = 1000
+    }
+]
+
+// Validation functions
+let validate_port = \port -> if port > 0 && port < 65536 then true else false
+
+let validate_config = \config -> {
+    server_valid = validate_port config.server.port,
+    db_valid = validate_port config.db.port,
+    all_valid = server_valid && db_valid
+}
+
+// Configuration validation
+let validation_result = validate_config {
+    server = server_config,
+    db = db_config
+} 

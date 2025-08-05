@@ -1,0 +1,17 @@
+[register]
+name = "test-register"
+version = "0.1.0"
+description = "A Ligature register"
+authors = ["Your Name <your.email@example.com>"]
+license = "Apache-2.0"
+
+[dependencies]
+# Add your dependencies here
+# stdlib = "1.0.0"
+
+[exports]
+# Add your exported modules here
+# example = "src/example.lig"
+
+[metadata]
+tags = []

@@ -1,0 +1,53 @@
+# Ligature Evaluator Configuration Example
+# This file can be placed in ~/.config/ligature/eval.toml for global settings
+# or in your project directory for project-specific settings
+
+# Cache configuration
+[cache]
+enabled = true
+max_size = 2000
+max_memory_bytes = 2097152  # 2MB
+
+# Cache warming settings
+[cache.warming]
+enabled = true
+max_expressions = 200
+warm_on_module_load = true
+
+# Which expression types to cache
+[cache.cacheable_expressions]
+literals = true
+variables = true
+binary_ops = true
+unary_ops = true
+field_access = true
+applications = false  # Be careful with function applications
+let_expressions = false
+records = false
+unions = false
+matches = false
+if_expressions = false
+
+# Performance optimization settings
+[performance]
+tail_call_optimization = true
+stack_based_evaluation = true
+value_optimization = true
+max_stack_depth = 15000
+env_pool_size = 200
+value_pool_size = 2000
+
+# Memory management settings
+[memory]
+monitoring = false
+eviction_threshold_percent = 85.0
+max_evaluation_memory_bytes = 524288000  # 500MB
+gc_frequency = 500
+
+# Debug and monitoring settings
+[debug]
+logging = false
+profiling = false
+cache_statistics = true
+memory_tracking = false
+log_level = "info" 

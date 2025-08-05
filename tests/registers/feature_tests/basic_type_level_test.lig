@@ -1,0 +1,117 @@
+-- Basic Type-Level Computation Tests
+-- Phase 1: Basic Type-Level Functions (identity, compose)
+
+-- Test 1: Type-Level Identity Function
+-- The most basic type-level function: id : Type -> Type
+type Id 'T = 'T;
+
+-- Test identity with basic types
+let testIdInt: Id Int = 42;
+let testIdString: Id String = "hello";
+let testIdBool: Id Bool = True;
+let testIdUnit: Id Unit = Unit;
+
+-- Test identity with complex types
+let testIdList: Id (List Int) = [1, 2, 3];
+let testIdRecord: Id { name: String, age: Int } = { name = "Alice", age = 30 };
+let testIdUnion: Id (Option Int) = Some(42);
+
+-- Test 2: Type-Level Function Composition
+-- compose : (B -> C) -> (A -> B) -> (A -> C)
+type Compose 'F 'G 'A = 'F ('G 'A);
+
+-- Test composition with concrete type constructors
+type ListOption 'T = Compose List Option 'T;
+type OptionList 'T = Compose Option List 'T;
+
+-- Test the composed types
+let testListOption: ListOption Int = [Some(1), None, Some(3)];
+let testOptionList: OptionList Int = Some([1, 2, 3]);
+
+-- Test composition with identity (should be identity)
+type IdCompose 'T = Compose Id Id 'T;
+let testIdCompose: IdCompose Int = 42;
+
+-- Test composition with multiple applications
+type TripleCompose 'F 'G 'H 'A = Compose 'F (Compose 'G 'H) 'A;
+type ListOptionMaybe 'T = TripleCompose List Option Maybe 'T;
+
+-- Test 3: Type-Level Constant Function
+-- const : A -> B -> A (at type level)
+type Const 'A 'B = 'A;
+
+-- Test constant function
+let testConstInt: Const Int String = 42;
+let testConstString: Const String Int = "hello";
+
+-- Test 4: Type-Level Flip Function
+-- flip : (A -> B -> C) -> (B -> A -> C) (at type level)
+type Flip 'F 'B 'A = 'F 'A 'B;
+
+-- Test flip with a type constructor that takes two arguments
+-- This is conceptual - would need a type constructor that takes two type arguments
+type Pair 'A 'B = { first: 'A, second: 'B };
+type FlippedPair 'B 'A = Flip Pair 'B 'A;
+
+let testFlippedPair: FlippedPair String Int = { first = 42, second = "hello" };
+
+-- Test 5: Type-Level Application
+-- Apply a type function to a type argument
+type Apply 'F 'A = 'F 'A;
+
+-- Test application
+let testApplyId: Apply Id Int = 42;
+let testApplyList: Apply List Int = [1, 2, 3];
+
+-- Test 6: Type-Level Partial Application
+-- Partially apply a type function
+type PartialApply 'F 'A = \'B -> 'F 'A 'B;
+
+-- This is more advanced - would need higher-order type functions
+-- For now, we'll test the concept with concrete examples
+type PartialPair 'A = \'B -> Pair 'A 'B;
+
+let testPartialPair: PartialPair Int String = { first = 42, second = "hello" };
+
+-- Test 7: Type-Level Function Testing
+-- Test that our type-level functions work correctly
+let testIdentityLaws: Bool = 
+  -- Id should be the identity for composition
+  let id1: Id Int = 42;
+  let id2: Compose Id Id Int = 42;
+  id1 == id2;
+
+let testCompositionLaws: Bool = 
+  -- Composition should be associative
+  let comp1: Compose (Compose List Option) Maybe Int = [Some(Just(1)), None];
+  let comp2: Compose List (Compose Option Maybe) Int = [Some(Just(1)), None];
+  True; -- Would need type-level equality to test this properly
+
+-- Test 8: Type-Level Function Composition with Built-in Types
+-- Test composition with the built-in type constructors
+type MaybeList 'T = Compose Maybe List 'T;
+type ListMaybe 'T = Compose List Maybe 'T;
+
+let testMaybeList: MaybeList Int = Just([1, 2, 3]);
+let testListMaybe: ListMaybe Int = [Just(1), None, Just(3)];
+
+-- Test 9: Type-Level Function with Records
+-- Test type-level functions that work with record types
+type AddField 'Name 'Type 'Record = 
+  -- Conceptually add a field to a record type
+  -- This would need more sophisticated type-level pattern matching
+  'Record;
+
+-- Test 10: Type-Level Function with Unions
+-- Test type-level functions that work with union types
+type AddVariant 'Name 'Type 'Union = 
+  -- Conceptually add a variant to a union type
+  -- This would need more sophisticated type-level pattern matching
+  'Union;
+
+-- Export the basic type-level functions
+export Id, Compose, Const, Flip, Apply;
+export ListOption, OptionList, IdCompose;
+export TripleCompose, ListOptionMaybe;
+export Pair, FlippedPair, PartialPair;
+export MaybeList, ListMaybe; 

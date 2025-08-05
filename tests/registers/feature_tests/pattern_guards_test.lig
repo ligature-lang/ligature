@@ -1,0 +1,80 @@
+// Test pattern guards functionality
+// Pattern guards allow conditional matching using the "when" keyword
+
+// Test 1: Simple pattern guard with integer comparison
+let test_simple_guard = match 5 {
+    x when x > 3 => "greater than 3",
+    x when x < 3 => "less than 3",
+    _ => "exactly 3"
+};
+
+// Test 2: Pattern guard with variable binding and arithmetic
+let test_arithmetic_guard = match 10 {
+    x when x % 2 == 0 => "even",
+    x when x % 2 == 1 => "odd",
+    _ => "unknown"
+};
+
+// Test 3: Pattern guard with union types
+type Option = Some(Integer) | None;
+
+let test_union_guard = match Some(15) {
+    Some(x) when x > 10 => "large number",
+    Some(x) when x <= 10 => "small number",
+    None => "no value"
+};
+
+// Test 4: Pattern guard with record patterns
+let test_record_guard = match { name = "Alice", age = 25 } {
+    { name = n, age = a } when a >= 18 => "adult",
+    { name = n, age = a } when a < 18 => "minor",
+    _ => "unknown"
+};
+
+// Test 5: Pattern guard with list patterns
+let test_list_guard = match [1, 2, 3] {
+    [x, y, z] when x + y + z > 5 => "sum greater than 5",
+    [x, y, z] when x + y + z <= 5 => "sum less than or equal to 5",
+    _ => "other"
+};
+
+// Test 6: Multiple guards with complex conditions
+let test_complex_guard = match 7 {
+    x when x > 10 && x < 20 => "between 10 and 20",
+    x when x > 0 && x <= 10 => "between 1 and 10",
+    x when x == 0 => "zero",
+    x when x < 0 => "negative",
+    _ => "other"
+};
+
+// Test 7: Guard with function calls
+let is_even = \x -> x % 2 == 0;
+let test_function_guard = match 8 {
+    x when is_even(x) => "even number",
+    x when !is_even(x) => "odd number",
+    _ => "unknown"
+};
+
+// Test 8: Guard with string operations
+let test_string_guard = match "hello" {
+    s when s == "hello" => "greeting",
+    s when s == "goodbye" => "farewell",
+    s when s == "" => "empty",
+    _ => "other string"
+};
+
+// Test 9: Nested pattern guards
+let test_nested_guard = match Some(Some(5)) {
+    Some(Some(x)) when x > 0 => "positive nested",
+    Some(Some(x)) when x <= 0 => "non-positive nested",
+    Some(None) => "inner none",
+    None => "outer none"
+};
+
+// Test 10: Guard with boolean logic
+let test_boolean_guard = match true {
+    b when b && true => "true and true",
+    b when b && false => "true and false",
+    b when !b => "false",
+    _ => "other boolean"
+}; 

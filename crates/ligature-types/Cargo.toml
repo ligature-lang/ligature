@@ -1,0 +1,22 @@
+[package]
+name = "ligature-types"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "Type system implementation for the Ligature language"
+license.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+ligature-ast = { path = "../ligature-ast" }
+ligature-parser = { path = "../ligature-parser" }
+thiserror = { workspace = true }
+miette = { workspace = true, features = ["fancy"] }
+indexmap = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+toml = { workspace = true }
+
+[dev-dependencies]
+tempfile = "3.8" 

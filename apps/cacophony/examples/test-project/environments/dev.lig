@@ -1,0 +1,20 @@
+-- dev.lig
+-- module dev
+
+let overrides = {
+  variables = {
+    "ENV" = "dev"
+  },
+  
+  collections = {
+    app = {
+      replicas = 1,
+      resources = {
+        cpu = "100m",
+        memory = "128Mi"
+      }
+    }
+  }
+};
+
+export overrides;

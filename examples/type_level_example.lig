@@ -1,0 +1,316 @@
+-- Type-Level Computation Example
+-- Demonstrates practical use cases for type-level computation in Ligature
+
+-- Import the type-level standard library
+import TypeLevel;
+
+-- =============================================================================
+-- Example 1: Type-Level Configuration Management
+-- =============================================================================
+
+-- Define a configuration schema with type-level validation
+type ConfigSchema = {
+  database: { host: String, port: Int },
+  api: { endpoint: String, timeout: Int },
+  logging: { level: String, file: String }
+};
+
+-- Type-level function to validate configuration fields
+type ValidateConfig 'Config = 
+  match 'Config {
+    ConfigSchema => True,  -- Valid configuration
+    _ => False
+  };
+
+-- Type-level function to extract database configuration
+type DatabaseConfig 'Config = ProjectField "database" 'Config;
+
+-- Type-level function to extract API configuration
+type ApiConfig 'Config = ProjectField "api" 'Config;
+
+-- Test the configuration management
+let config: ConfigSchema = {
+  database = { host = "localhost", port = 5432 },
+  api = { endpoint = "/api/v1", timeout = 30 },
+  logging = { level = "info", file = "app.log" }
+};
+
+-- =============================================================================
+-- Example 2: Type-Level Data Transformation
+-- =============================================================================
+
+-- Define a data transformation pipeline using type-level functions
+type TransformPipeline 'Input 'Transform 'Output = 
+  Compose 'Transform 'Input 'Output;
+
+-- Type-level function to make a type optional
+type MakeOptional 'T = Option 'T;
+
+-- Type-level function to make a type a list
+type MakeList 'T = List 'T;
+
+-- Type-level function to wrap in a result
+type MakeResult 'T = Result 'T String;
+
+-- Test the transformation pipeline
+type OptionalUser = TransformPipeline { name: String, age: Int } MakeOptional Unit;
+type UserList = TransformPipeline { name: String, age: Int } MakeList Unit;
+type UserResult = TransformPipeline { name: String, age: Int } MakeResult Unit;
+
+let optionalUser: OptionalUser = Some({ name = "Alice", age = 30 });
+let userList: UserList = [{ name = "Alice", age = 30 }, { name = "Bob", age = 25 }];
+let userResult: UserResult = Ok({ name = "Alice", age = 30 });
+
+-- =============================================================================
+-- Example 3: Type-Level API Design
+-- =============================================================================
+
+-- Define API endpoint types with type-level validation
+type ApiEndpoint 'Method 'Path 'Request 'Response = {
+  method: 'Method,
+  path: 'Path,
+  request: 'Request,
+  response: 'Response
+};
+
+-- Type-level function to validate HTTP methods
+type ValidateMethod 'Method = 
+  match 'Method {
+    "GET" => True,
+    "POST" => True,
+    "PUT" => True,
+    "DELETE" => True,
+    _ => False
+  };
+
+-- Type-level function to create a GET endpoint
+type GetEndpoint 'Path 'Response = 
+  ApiEndpoint "GET" 'Path Unit 'Response;
+
+-- Type-level function to create a POST endpoint
+type PostEndpoint 'Path 'Request 'Response = 
+  ApiEndpoint "POST" 'Path 'Request 'Response;
+
+-- Test API endpoint creation
+type UserListEndpoint = GetEndpoint "/users" (List { id: Int, name: String });
+type CreateUserEndpoint = PostEndpoint "/users" { name: String, email: String } { id: Int, name: String };
+
+-- =============================================================================
+-- Example 4: Type-Level Database Schema
+-- =============================================================================
+
+-- Define database table schema with type-level operations
+type TableSchema 'Name 'Fields = {
+  name: 'Name,
+  fields: 'Fields
+};
+
+-- Type-level function to add a field to a table
+type AddTableField 'FieldName 'FieldType 'Table = 
+  match 'Table {
+    TableSchema { name, fields } => 
+      TableSchema { 
+        name = name, 
+        fields = AddField 'FieldName 'FieldType fields 
+      }
+  };
+
+-- Type-level function to remove a field from a table
+type RemoveTableField 'FieldName 'Table = 
+  match 'Table {
+    TableSchema { name, fields } => 
+      TableSchema { 
+        name = name, 
+        fields = RemoveField 'FieldName fields 
+      }
+  };
+
+-- Test database schema operations
+type UserTable = TableSchema "users" { id: Int, name: String, email: String };
+type UserTableWithAge = AddTableField "age" Int UserTable;
+type UserTableWithoutEmail = RemoveTableField "email" UserTable;
+
+-- =============================================================================
+-- Example 5: Type-Level Error Handling
+-- =============================================================================
+
+-- Define error types with type-level operations
+type ErrorType 'Code 'Message = {
+  code: 'Code,
+  message: 'Message
+};
+
+-- Type-level function to create a validation error
+type ValidationError 'Field = ErrorType "VALIDATION_ERROR" ('Field ++ " is invalid");
+
+-- Type-level function to create a not found error
+type NotFoundError 'Resource = ErrorType "NOT_FOUND" ('Resource ++ " not found");
+
+-- Type-level function to create a server error
+type ServerError 'Operation = ErrorType "SERVER_ERROR" ('Operation ++ " failed");
+
+-- Test error type creation
+type UserValidationError = ValidationError "email";
+type UserNotFoundError = NotFoundError "user";
+type DatabaseServerError = ServerError "database connection";
+
+-- =============================================================================
+-- Example 6: Type-Level State Management
+-- =============================================================================
+
+-- Define state types with type-level operations
+type State 'Data 'Actions = {
+  data: 'Data,
+  actions: 'Actions
+};
+
+-- Type-level function to add an action to state
+type AddAction 'ActionName 'ActionType 'State = 
+  match 'State {
+    State { data, actions } => 
+      State { 
+        data = data, 
+        actions = AddField 'ActionName 'ActionType actions 
+      }
+  };
+
+-- Type-level function to update state data
+type UpdateStateData 'NewData 'State = 
+  match 'State {
+    State { data, actions } => 
+      State { 
+        data = 'NewData, 
+        actions = actions 
+      }
+  };
+
+-- Test state management
+type UserState = State { name: String, age: Int } { updateName: String -> Unit };
+type UserStateWithAgeAction = AddAction "updateAge" (Int -> Unit) UserState;
+type UserStateWithNewData = UpdateStateData { name: String, age: Int, email: String } UserState;
+
+-- =============================================================================
+-- Example 7: Type-Level Testing
+-- =============================================================================
+
+-- Define test types with type-level validation
+type TestCase 'Name 'Input 'Expected 'Actual = {
+  name: 'Name,
+  input: 'Input,
+  expected: 'Expected,
+  actual: 'Actual
+};
+
+-- Type-level function to validate test case types
+type ValidateTestCase 'TestCase = 
+  match 'TestCase {
+    TestCase { name, input, expected, actual } => 
+      Equal (typeof 'expected) (typeof 'actual)
+  };
+
+-- Type-level function to create a simple test case
+type SimpleTest 'Name 'Input 'Expected = 
+  TestCase 'Name 'Input 'Expected 'Input;
+
+-- Test test case creation
+type StringLengthTest = SimpleTest "string length" String Int;
+type AdditionTest = SimpleTest "addition" (Int, Int) Int;
+
+-- =============================================================================
+-- Example 8: Type-Level Serialization
+-- =============================================================================
+
+-- Define serialization types with type-level operations
+type Serializer 'Input 'Output = {
+  serialize: 'Input -> 'Output,
+  deserialize: 'Output -> 'Input
+};
+
+-- Type-level function to create a JSON serializer
+type JsonSerializer 'T = Serializer 'T String;
+
+-- Type-level function to create a binary serializer
+type BinarySerializer 'T = Serializer 'T (List Int);
+
+-- Type-level function to compose serializers
+type ComposeSerializer 'S1 'S2 = 
+  match ('S1, 'S2) {
+    (Serializer { serialize = s1, deserialize = d1 },
+     Serializer { serialize = s2, deserialize = d2 }) =>
+      Serializer { 
+        serialize = Compose s1 s2, 
+        deserialize = Compose d2 d1 
+      }
+  };
+
+-- Test serializer creation
+type UserJsonSerializer = JsonSerializer { name: String, age: Int };
+type UserBinarySerializer = BinarySerializer { name: String, age: Int };
+
+-- =============================================================================
+-- Example 9: Type-Level Caching
+-- =============================================================================
+
+-- Define cache types with type-level operations
+type Cache 'Key 'Value = {
+  get: 'Key -> Option 'Value,
+  set: 'Key -> 'Value -> Unit,
+  clear: Unit -> Unit
+};
+
+-- Type-level function to create a simple cache
+type SimpleCache 'Key 'Value = Cache 'Key 'Value;
+
+-- Type-level function to create a cache with TTL
+type TtlCache 'Key 'Value = Cache 'Key ('Value, Int);
+
+-- Type-level function to create a cache with statistics
+type StatsCache 'Key 'Value = Cache 'Key ('Value, { hits: Int, misses: Int });
+
+-- Test cache creation
+type UserCache = SimpleCache Int { name: String, age: Int };
+type UserTtlCache = TtlCache Int { name: String, age: Int };
+type UserStatsCache = StatsCache Int { name: String, age: Int };
+
+-- =============================================================================
+-- Example 10: Type-Level Validation Pipeline
+-- =============================================================================
+
+-- Define validation pipeline with type-level operations
+type ValidationPipeline 'Input 'Validators 'Output = {
+  input: 'Input,
+  validators: 'Validators,
+  output: 'Output
+};
+
+-- Type-level function to add a validator
+type AddValidator 'ValidatorName 'ValidatorType 'Pipeline = 
+  match 'Pipeline {
+    ValidationPipeline { input, validators, output } => 
+      ValidationPipeline { 
+        input = input, 
+        validators = AddField 'ValidatorName 'ValidatorType validators, 
+        output = output 
+      }
+  };
+
+-- Type-level function to create a validation pipeline
+type CreateValidationPipeline 'Input 'Output = 
+  ValidationPipeline 'Input {} 'Output;
+
+-- Test validation pipeline creation
+type UserValidationPipeline = CreateValidationPipeline { name: String, age: Int } { name: String, age: Int };
+type UserValidationWithNameCheck = AddValidator "validateName" (String -> Bool) UserValidationPipeline;
+type UserValidationWithAgeCheck = AddValidator "validateAge" (Int -> Bool) UserValidationWithNameCheck;
+
+-- Export all examples for testing
+export ConfigSchema, ValidateConfig, DatabaseConfig, ApiConfig;
+export TransformPipeline, MakeOptional, MakeList, MakeResult;
+export ApiEndpoint, ValidateMethod, GetEndpoint, PostEndpoint;
+export TableSchema, AddTableField, RemoveTableField;
+export ErrorType, ValidationError, NotFoundError, ServerError;
+export State, AddAction, UpdateStateData;
+export TestCase, ValidateTestCase, SimpleTest;
+export Serializer, JsonSerializer, BinarySerializer, ComposeSerializer;
+export Cache, SimpleCache, TtlCache, StatsCache;
+export ValidationPipeline, AddValidator, CreateValidationPipeline; 

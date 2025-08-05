@@ -1,0 +1,20 @@
+version: "0.2"
+ignorePaths: []
+dictionaryDefinitions: []
+dictionaries: []
+words:
+  - clippy
+  - Deque
+  - dtolnay
+  - flate2
+  - Interner
+  - keywork
+  - krox
+  - miette
+  - proptest
+  - serde
+  - subtyping
+  - thiserror
+  - walkdir
+ignoreWords: []
+import: []

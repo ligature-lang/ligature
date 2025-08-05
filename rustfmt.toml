@@ -1,0 +1,77 @@
+# Rust formatting configuration for the Ligature project
+
+# Use 4 spaces for indentation
+tab_spaces = 4
+
+# Maximum line length
+max_width = 100
+
+# Use Unix line endings
+newline_style = "Unix"
+
+# Format code in edition 2021
+edition = "2021"
+
+# Import grouping
+imports_granularity = "Module"
+group_imports = "StdExternalCrate"
+
+# Match arm formatting
+match_arm_leading_pipes = "Never"
+
+# Function call formatting
+fn_call_width = 60
+
+# Struct literal formatting
+struct_lit_width = 18
+
+# Array formatting
+array_width = 60
+
+# Chain formatting
+chain_width = 60
+
+# Closure formatting
+closure_width = 60
+
+# If let formatting
+if_let_else_width = 60
+
+# Match expression formatting
+match_expression_width = 60
+
+# Method chain formatting
+method_chain_width = 60
+
+# Tuple formatting
+tuple_width = 60
+
+# Use `?` operator instead of `try!` macro
+use_try_shorthand = true
+
+# Use `?` operator instead of `try!` macro
+use_field_init_shorthand = true
+
+# Remove trailing commas
+remove_nested_parens = true
+
+# Normalize comments
+normalize_comments = true
+
+# Normalize doc comments
+normalize_doc_attributes = true
+
+# Format string literals
+format_strings = true
+
+# Format macro calls
+format_macro_matchers = true
+
+# Format macro definitions
+format_macro_bodies = true
+
+# Format derive attributes
+format_derive = true
+
+# Format attributes
+format_code_in_doc_comments = true 

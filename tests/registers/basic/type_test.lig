@@ -1,0 +1,21 @@
+// Basic arithmetic
+let x = 5;
+let y = x + 3;
+
+// Function with type annotation
+let add: Integer -> Integer -> Integer = \x y -> x + y;
+let result = add(2)(3);
+
+// Record with field access
+let user = {
+    name = "Alice",
+    age = 30
+};
+let name = user.name;
+
+// Pattern matching
+type Option = Some Integer | None;
+let get_value = \opt -> match opt {
+    Some(n) => n,
+    None => 0
+}; 

@@ -1,0 +1,6 @@
+module ExampleTest
+
+import { exampleFunction } from Example
+
+let testResult = exampleFunction("test")
+-- Add your tests here

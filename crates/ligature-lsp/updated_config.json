@@ -1,0 +1,86 @@
+{
+  "general": {
+    "enable_telemetry": false,
+    "enable_experimental_features": false,
+    "max_concurrent_operations": 4,
+    "request_timeout_ms": 30000
+  },
+  "formatting": {
+    "indent_size": 2,
+    "use_tabs": false,
+    "max_line_length": 80,
+    "insert_final_newline": true,
+    "trim_trailing_whitespace": true,
+    "insert_spaces_around_operators": true,
+    "align_assignments": true,
+    "align_function_parameters": true
+  },
+  "diagnostics": {
+    "enable_realtime": true,
+    "enable_workspace_wide": true,
+    "max_diagnostics_per_file": 100,
+    "show_unused_variables": true,
+    "show_type_mismatches": true,
+    "show_import_warnings": true,
+    "show_style_warnings": true,
+    "show_performance_warnings": true,
+    "show_security_warnings": true
+  },
+  "completion": {
+    "enable_auto_completion": true,
+    "enable_snippets": true,
+    "show_documentation": true,
+    "show_type_information": true,
+    "max_completion_items": 100,
+    "enable_fuzzy_matching": true,
+    "enable_context_aware": true,
+    "enable_auto_import": true
+  },
+  "workspace": {
+    "enable_workspace_symbols": true,
+    "enable_cross_file_symbols": true,
+    "max_workspace_files": 1000,
+    "include_patterns": [
+      "**/*.lig"
+    ],
+    "exclude_patterns": [
+      "**/target/**",
+      "**/node_modules/**",
+      "**/.git/**",
+      "**/build/**",
+      "**/dist/**"
+    ],
+    "watch_files": true,
+    "watch_directories": true,
+    "enable_workspace_indexing": true,
+    "max_workspace_size_mb": 100
+  },
+  "performance": {
+    "max_cached_documents": 100,
+    "cache_ttl_seconds": 3600,
+    "enable_incremental_parsing": true,
+    "enable_background_indexing": true,
+    "max_memory_usage_mb": 512,
+    "enable_parallel_processing": true,
+    "worker_threads": 8
+  },
+  "logging": {
+    "level": "info",
+    "log_to_file": true,
+    "log_to_console": false,
+    "max_file_size": 10485760,
+    "max_files": 5,
+    "include_timestamps": true,
+    "include_thread_info": false
+  },
+  "language": {
+    "ligature": {
+      "enable_advanced_type_checking": true,
+      "enable_constraint_solving": true,
+      "enable_module_resolution": true,
+      "enable_register_support": true,
+      "enable_xdg_config": true,
+      "enable_hot_reloading": true
+    }
+  }
+}

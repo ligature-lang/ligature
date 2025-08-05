@@ -1,0 +1,19 @@
+// Type error: trying to add string and integer
+let x = "hello" + 5;
+
+// Type error: function type annotation doesn't match implementation
+let add: Integer -> Integer -> Integer = \x y -> x - y;
+
+// Type error: accessing non-existent field
+let user = {
+    name = "Alice",
+    age = 30
+};
+let email = user.email;
+
+// Type error: pattern match with wrong types
+type Option = Some Integer | None;
+let get_value = \opt -> match opt {
+    Some(n) => "string",  // Should return Integer
+    None => 0
+}; 

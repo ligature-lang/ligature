@@ -1,0 +1,67 @@
+-- Collections module for Ligature Standard Library
+module Collections
+
+-- Import core types
+import { Bool, Option } from core
+
+-- List type definition
+type List<T> = Nil | Cons(T, List<T>)
+
+-- Basic list operations
+let isEmpty : List<T> -> Bool = fun list ->
+  match list with
+  | Nil -> True
+  | Cons(_, _) -> False
+
+let length : List<T> -> Int = fun list ->
+  match list with
+  | Nil -> 0
+  | Cons(_, tail) -> 1 + length(tail)
+
+let head : List<T> -> Option<T> = fun list ->
+  match list with
+  | Nil -> None
+  | Cons(x, _) -> Some(x)
+
+let tail : List<T> -> Option<List<T>> = fun list ->
+  match list with
+  | Nil -> None
+  | Cons(_, xs) -> Some(xs)
+
+-- Higher-order functions
+let map : (T -> U) -> List<T> -> List<U> = fun f list ->
+  match list with
+  | Nil -> Nil
+  | Cons(x, xs) -> Cons(f(x), map(f, xs))
+
+let filter : (T -> Bool) -> List<T> -> List<T> = fun pred list ->
+  match list with
+  | Nil -> Nil
+  | Cons(x, xs) ->
+    if pred(x) then
+      Cons(x, filter(pred, xs))
+    else
+      filter(pred, xs)
+
+let fold : (U -> T -> U) -> U -> List<T> -> U = fun f acc list ->
+  match list with
+  | Nil -> acc
+  | Cons(x, xs) -> fold(f, f(acc, x), xs)
+
+-- List construction
+let append : List<T> -> List<T> -> List<T> = fun list1 list2 ->
+  match list1 with
+  | Nil -> list2
+  | Cons(x, xs) -> Cons(x, append(xs, list2))
+
+let reverse : List<T> -> List<T> = fun list ->
+  let reverseHelper : List<T> -> List<T> -> List<T> = fun acc list ->
+    match list with
+    | Nil -> acc
+    | Cons(x, xs) -> reverseHelper(Cons(x, acc), xs)
+  in
+  reverseHelper(Nil, list)
+
+-- Export all items
+export { List, isEmpty, length, head, tail }
+export { map, filter, fold, append, reverse } 

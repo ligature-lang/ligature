@@ -1,0 +1,20 @@
+-- prod.lig
+-- module prod
+
+let overrides = {
+  variables = {
+    "ENV" = "prod"
+  },
+  
+  collections = {
+    app = {
+      replicas = 1,
+      resources = {
+        cpu = "100m",
+        memory = "128Mi"
+      }
+    }
+  }
+};
+
+export overrides;

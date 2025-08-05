@@ -1,0 +1,218 @@
+-- Type-Level Pattern Matching Tests
+-- Phase 2: Type-Level Pattern Matching (record projection, union injection)
+
+-- Test 1: Record Type Projection
+-- Project a field type from a record type
+type ProjectField 'FieldName 'RecordType = 
+  match 'RecordType {
+    Record { fields } => 
+      -- Find the field with name 'FieldName and return its type
+      -- This requires type-level pattern matching on record types
+      match fields {
+        -- This is conceptual - would need type-level list pattern matching
+        -- For now, we'll use a simplified approach
+        _ => 'RecordType  -- Placeholder
+      }
+  };
+
+-- Test projection with concrete record types
+type UserRecord = { name: String, age: Int, email: String };
+type NameType = ProjectField "name" UserRecord;  -- Should be String
+type AgeType = ProjectField "age" UserRecord;    -- Should be Int
+type EmailType = ProjectField "email" UserRecord; -- Should be String
+
+-- Test the projected types
+let testNameType: NameType = "Alice";
+let testAgeType: AgeType = 30;
+let testEmailType: EmailType = "alice@example.com";
+
+-- Test 2: Record Type Field Addition
+-- Add a field to a record type
+type AddField 'FieldName 'FieldType 'RecordType = 
+  match 'RecordType {
+    Record { fields } => 
+      -- Add the new field to the record type
+      -- This requires type-level record construction
+      Record { 
+        fields = fields ++ [{ name = 'FieldName, type = 'FieldType }]
+      }
+  };
+
+-- Test adding fields
+type BasicUser = { name: String, age: Int };
+type ExtendedUser = AddField "email" String BasicUser;
+
+let testExtendedUser: ExtendedUser = { 
+  name = "Alice", 
+  age = 30, 
+  email = "alice@example.com" 
+};
+
+-- Test 3: Record Type Field Removal
+-- Remove a field from a record type
+type RemoveField 'FieldName 'RecordType = 
+  match 'RecordType {
+    Record { fields } => 
+      -- Remove the field with name 'FieldName
+      -- This requires type-level list filtering
+      Record { 
+        fields = filter (\field -> field.name != 'FieldName) fields
+      }
+  };
+
+-- Test removing fields
+type UserWithoutEmail = RemoveField "email" ExtendedUser;
+
+let testUserWithoutEmail: UserWithoutEmail = { 
+  name = "Alice", 
+  age = 30 
+};
+
+-- Test 4: Record Type Field Update
+-- Update a field type in a record type
+type UpdateField 'FieldName 'NewType 'RecordType = 
+  match 'RecordType {
+    Record { fields } => 
+      -- Update the field with name 'FieldName to have type 'NewType
+      Record { 
+        fields = map (\field -> 
+          if field.name == 'FieldName then 
+            { name = field.name, type = 'NewType }
+          else 
+            field
+        ) fields
+      }
+  };
+
+-- Test updating fields
+type UserWithOptionalAge = UpdateField "age" (Option Int) BasicUser;
+
+let testUserWithOptionalAge: UserWithOptionalAge = { 
+  name = "Alice", 
+  age = Some(30) 
+};
+
+-- Test 5: Union Type Injection
+-- Inject a variant into a union type
+type InjectVariant 'VariantName 'VariantType 'UnionType = 
+  match 'UnionType {
+    Union { variants } => 
+      -- Add the new variant to the union type
+      Union { 
+        variants = variants ++ [{ name = 'VariantName, type = 'VariantType }]
+      }
+  };
+
+-- Test injecting variants
+type BasicResult = Ok(String) | Err(String);
+type ExtendedResult = InjectVariant "Pending" Unit BasicResult;
+
+let testExtendedResult: ExtendedResult = Ok("success");
+
+-- Test 6: Union Type Projection
+-- Project a variant type from a union type
+type ProjectVariant 'VariantName 'UnionType = 
+  match 'UnionType {
+    Union { variants } => 
+      -- Find the variant with name 'VariantName and return its type
+      match variants {
+        -- This is conceptual - would need type-level list pattern matching
+        _ => 'UnionType  -- Placeholder
+      }
+  };
+
+-- Test projecting variants
+type OkType = ProjectVariant "Ok" BasicResult;  -- Should be String
+type ErrType = ProjectVariant "Err" BasicResult; -- Should be String
+
+let testOkType: OkType = "success";
+let testErrType: ErrType = "error";
+
+-- Test 7: Union Type Variant Removal
+-- Remove a variant from a union type
+type RemoveVariant 'VariantName 'UnionType = 
+  match 'UnionType {
+    Union { variants } => 
+      -- Remove the variant with name 'VariantName
+      Union { 
+        variants = filter (\variant -> variant.name != 'VariantName) variants
+      }
+  };
+
+-- Test removing variants
+type ResultWithoutErr = RemoveVariant "Err" BasicResult;
+
+let testResultWithoutErr: ResultWithoutErr = Ok("success");
+
+-- Test 8: Type-Level Pattern Matching with Nested Types
+-- Test pattern matching on nested record and union types
+type NestedRecord = { 
+  user: { name: String, age: Int }, 
+  metadata: { created: String, updated: String } 
+};
+
+type UserFromNested = ProjectField "user" NestedRecord;
+type NameFromNested = ProjectField "name" UserFromNested;
+
+let testNameFromNested: NameFromNested = "Alice";
+
+-- Test 9: Type-Level Pattern Matching with Type Variables
+-- Test pattern matching that preserves type variables
+type GenericRecord 'T = { value: 'T, count: Int };
+type ValueType 'T = ProjectField "value" (GenericRecord 'T);  -- Should be 'T
+type CountType 'T = ProjectField "count" (GenericRecord 'T);  -- Should be Int
+
+let testValueType: ValueType String = "hello";
+let testCountType: CountType String = 42;
+
+-- Test 10: Type-Level Pattern Matching with Conditional Logic
+-- Test pattern matching that includes conditional logic
+type ConditionalProject 'Condition 'FieldName 'RecordType = 
+  match 'Condition {
+    True => ProjectField 'FieldName 'RecordType,
+    False => Unit  -- Return unit type if condition is false
+  };
+
+-- Test conditional projection
+let testConditionalProject: ConditionalProject True "name" BasicUser = "Alice";
+
+-- Test 11: Type-Level Pattern Matching with Error Handling
+-- Test pattern matching that handles missing fields gracefully
+type SafeProject 'FieldName 'RecordType 'DefaultType = 
+  match 'RecordType {
+    Record { fields } => 
+      -- Try to find the field, return default if not found
+      -- This is conceptual - would need more sophisticated pattern matching
+      match (hasField 'FieldName fields) {
+        True => ProjectField 'FieldName 'RecordType,
+        False => 'DefaultType
+      }
+  };
+
+-- Test safe projection
+let testSafeProject: SafeProject "nonexistent" BasicUser String = "default";
+
+-- Test 12: Type-Level Pattern Matching with Transformation
+-- Test pattern matching that transforms types
+type TransformField 'FieldName 'Transform 'RecordType = 
+  match 'RecordType {
+    Record { fields } => 
+      -- Apply transformation to the specified field
+      UpdateField 'FieldName ('Transform (ProjectField 'FieldName 'RecordType)) 'RecordType
+  };
+
+-- Test field transformation
+type UserWithListName = TransformField "name" List BasicUser;
+
+let testUserWithListName: UserWithListName = { 
+  name = ["Alice", "Bob"], 
+  age = 30 
+};
+
+-- Export the type-level pattern matching functions
+export ProjectField, AddField, RemoveField, UpdateField;
+export InjectVariant, ProjectVariant, RemoveVariant;
+export ConditionalProject, SafeProject, TransformField;
+export UserRecord, BasicUser, ExtendedUser, UserWithoutEmail;
+export UserWithOptionalAge, BasicResult, ExtendedResult;
+export NestedRecord, GenericRecord; 

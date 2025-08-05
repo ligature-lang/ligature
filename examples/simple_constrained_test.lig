@@ -1,0 +1,15 @@
+// Simple test for constrained instance parsing
+
+typeclass Eq 'a where
+    eq: 'a -> 'a -> Bool;
+
+typeclass Show 'a where
+    show: 'a -> String;
+
+// Regular instance
+instance Eq (Int) where
+    eq = \x y -> x == y;
+
+// Constrained instance
+instance Show (Eq 'a => 'a) where
+    show = \x -> "value"; 

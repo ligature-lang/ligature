@@ -1,0 +1,25 @@
+// Example demonstrating import resolution in Ligature
+
+// Import from a relative path
+import "./math_utils"
+
+// Import from a register
+import "std.collections.list"
+
+// Import specific items from a module
+import "std.string" { concat, split }
+
+// Use imported functions
+let result = math_utils.add 5 3
+let doubled = math_utils.multiply result 2
+
+// Use imported types
+let numbers = [1, 2, 3, 4, 5]
+let reversed = list.reverse numbers
+
+// Use imported string functions
+let message = concat "Hello, " "World!"
+let words = split message " "
+
+// Export our own functions
+export let calculate = \x y -> math_utils.add (math_utils.multiply x 2) y 

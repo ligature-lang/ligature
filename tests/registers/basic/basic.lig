@@ -1,0 +1,57 @@
+// Basic Ligature example
+// This demonstrates the core language features
+
+// Basic literals
+let answer = 42;
+let pi = 3.14159;
+let greeting = "Hello, Ligature!";
+let is_valid = true;
+let nothing = ();
+
+// Type annotations
+let count: Integer = 10;
+let message: String = "Hello";
+
+// Record construction
+let user = {
+    name = "Alice",
+    age = 30,
+    email = "alice@example.com"
+};
+
+// Record field access
+let user_name = user.name;
+
+// Function definition
+let add = \x y -> x + y;
+
+// Function application
+let result = add 5 3;
+
+// Function with type annotation
+let multiply: Integer -> Integer -> Integer = \x y -> x * y;
+
+// Let expression
+let doubled = let x = 5 in x * 2;
+
+// If expression
+let max = \a b -> if a > b then a else b;
+
+// Binary operations
+let sum = 1 + 2 + 3;
+let product = 2 * 3 * 4;
+let comparison = 5 > 3;
+let logical = true && false;
+
+// Unary operations
+let negative = -5;
+let not_true = !true;
+
+// List construction
+let numbers = [1, 2, 3, 4, 5];
+
+// Pattern matching (simplified)
+let greet = \user -> match user {
+    { name = n } => "Hello, " ++ n,
+    _ => "Hello, stranger"
+}; 

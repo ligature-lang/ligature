@@ -1,0 +1,283 @@
+{
+  "name": "Ligature",
+  "scopeName": "source.ligature",
+  "fileTypes": ["lig"],
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#numbers"
+    },
+    {
+      "include": "#keywords"
+    },
+    {
+      "include": "#operators"
+    },
+    {
+      "include": "#types"
+    },
+    {
+      "include": "#functions"
+    },
+    {
+      "include": "#variables"
+    },
+    {
+      "include": "#imports"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.ligature",
+          "match": "//.*$"
+        },
+        {
+          "name": "comment.block.ligature",
+          "begin": "/\\*",
+          "end": "\\*/",
+          "captures": {
+            "0": { "name": "punctuation.definition.comment.ligature" }
+          }
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.ligature",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.ligature",
+              "match": "\\\\."
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.single.ligature",
+          "begin": "'",
+          "end": "'",
+          "patterns": [
+            {
+              "name": "constant.character.escape.ligature",
+              "match": "\\\\."
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.template.ligature",
+          "begin": "`",
+          "end": "`",
+          "patterns": [
+            {
+              "name": "constant.character.escape.ligature",
+              "match": "\\\\."
+            },
+            {
+              "name": "variable.interpolation.ligature",
+              "begin": "\\$\\{",
+              "end": "\\}",
+              "patterns": [
+                {
+                  "include": "#expressions"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.integer.ligature",
+          "match": "\\b\\d+\\b"
+        },
+        {
+          "name": "constant.numeric.float.ligature",
+          "match": "\\b\\d+\\.\\d+\\b"
+        },
+        {
+          "name": "constant.numeric.hex.ligature",
+          "match": "\\b0x[0-9a-fA-F]+\\b"
+        },
+        {
+          "name": "constant.numeric.binary.ligature",
+          "match": "\\b0b[01]+\\b"
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.ligature",
+          "match": "\\b(if|then|else|match|case|where|in|let|fun|type|import|export|as|module|register)\\b"
+        },
+        {
+          "name": "keyword.operator.ligature",
+          "match": "\\b(and|or|not|is|as)\\b"
+        },
+        {
+          "name": "constant.language.ligature",
+          "match": "\\b(true|false|null|undefined)\\b"
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.arithmetic.ligature",
+          "match": "\\+|-|\\*|/|%|\\*\\*"
+        },
+        {
+          "name": "keyword.operator.comparison.ligature",
+          "match": "==|!=|<=|>=|<|>|<=>"
+        },
+        {
+          "name": "keyword.operator.logical.ligature",
+          "match": "&&|\\|\\||!"
+        },
+        {
+          "name": "keyword.operator.assignment.ligature",
+          "match": "=|\\+=|-=|\\*=|/=|%="
+        },
+        {
+          "name": "keyword.operator.access.ligature",
+          "match": "\\."
+        },
+        {
+          "name": "keyword.operator.pipe.ligature",
+          "match": "\\|>|\\|\\||\\|"
+        },
+        {
+          "name": "keyword.operator.arrow.ligature",
+          "match": "->|=>|<-"
+        },
+        {
+          "name": "keyword.operator.range.ligature",
+          "match": "\\.\\."
+        },
+        {
+          "name": "keyword.operator.type.ligature",
+          "match": ":|::|\\?"
+        }
+      ]
+    },
+    "types": {
+      "patterns": [
+        {
+          "name": "storage.type.primitive.ligature",
+          "match": "\\b(Int|Float|String|Bool|Unit|List|Map|Set|Option|Result|Either|Tuple|Record|Union|Enum)\\b"
+        },
+        {
+          "name": "storage.type.user-defined.ligature",
+          "match": "\\b[A-Z][a-zA-Z0-9_]*\\b"
+        },
+        {
+          "name": "storage.type.generic.ligature",
+          "begin": "([A-Z][a-zA-Z0-9_]*)\\s*<",
+          "end": ">",
+          "beginCaptures": {
+            "1": { "name": "storage.type.user-defined.ligature" }
+          },
+          "patterns": [
+            {
+              "include": "#types"
+            }
+          ]
+        }
+      ]
+    },
+    "functions": {
+      "patterns": [
+        {
+          "name": "entity.name.function.ligature",
+          "match": "\\b[a-z][a-zA-Z0-9_]*\\s*\\("
+        },
+        {
+          "name": "keyword.function.ligature",
+          "match": "\\bfun\\b"
+        },
+        {
+          "name": "entity.name.function.definition.ligature",
+          "begin": "\\bfun\\s+([a-z][a-zA-Z0-9_]*)",
+          "end": "\\s*=",
+          "beginCaptures": {
+            "1": { "name": "entity.name.function.ligature" }
+          }
+        }
+      ]
+    },
+    "variables": {
+      "patterns": [
+        {
+          "name": "variable.other.ligature",
+          "match": "\\b[a-z][a-zA-Z0-9_]*\\b"
+        },
+        {
+          "name": "variable.parameter.ligature",
+          "match": "\\b_[a-zA-Z0-9_]*\\b"
+        }
+      ]
+    },
+    "imports": {
+      "patterns": [
+        {
+          "name": "keyword.control.import.ligature",
+          "begin": "\\bimport\\b",
+          "end": "(?=\\n|$)",
+          "patterns": [
+            {
+              "name": "string.quoted.ligature",
+              "match": "\"[^\"]*\""
+            },
+            {
+              "name": "keyword.control.as.ligature",
+              "match": "\\bas\\b"
+            },
+            {
+              "name": "variable.other.ligature",
+              "match": "\\b[a-z][a-zA-Z0-9_]*\\b"
+            }
+          ]
+        }
+      ]
+    },
+    "expressions": {
+      "patterns": [
+        {
+          "include": "#comments"
+        },
+        {
+          "include": "#strings"
+        },
+        {
+          "include": "#numbers"
+        },
+        {
+          "include": "#keywords"
+        },
+        {
+          "include": "#operators"
+        },
+        {
+          "include": "#types"
+        },
+        {
+          "include": "#functions"
+        },
+        {
+          "include": "#variables"
+        }
+      ]
+    }
+  }
+} 

@@ -1,0 +1,104 @@
+-- test-project.lig
+-- module Cacophony
+
+-- Project metadata
+let project = {
+  name = "test-project",
+  version = "1.0.0",
+  description = "Kubernetes deployment with cacophony",
+  authors = ["team@example.com"],
+  repository = "https://github.com/example/test-project",
+  license = "Apache-2.0"
+};
+
+-- Environment definitions
+let environments = {
+  dev = {
+    name = "development",
+    description = "Development environment",
+    variables = {
+      DATABASE_URL = "postgresql://localhost:5432/dev",
+      API_BASE_URL = "http://localhost:8080",
+      LOG_LEVEL = "debug"
+    },
+    plugins = ["docker", "kubernetes"]
+  },
+  
+  staging = {
+    name = "staging",
+    description = "Staging environment",
+    variables = {
+      DATABASE_URL = "postgresql://staging-db:5432/staging",
+      API_BASE_URL = "https://staging-api.example.com",
+      LOG_LEVEL = "info"
+    },
+    plugins = ["kubernetes", "terraform"]
+  },
+  
+  prod = {
+    name = "production",
+    description = "Production environment",
+    variables = {
+      DATABASE_URL = "postgresql://prod-db:5432/prod",
+      API_BASE_URL = "https://api.example.com",
+      LOG_LEVEL = "warn"
+    },
+    plugins = ["kubernetes", "terraform", "monitoring"]
+  }
+};
+
+-- Collection definitions
+let collections = {
+  frontend = {
+    name = "frontend",
+    description = "Frontend application",
+    dependencies = ["shared-types"],
+    operations = ["deploy", "validate", "test"],
+    environments = ["dev", "staging", "prod"]
+  },
+  
+  backend = {
+    name = "backend",
+    description = "Backend API service",
+    dependencies = ["shared-types", "database"],
+    operations = ["deploy", "validate", "test", "migrate"],
+    environments = ["dev", "staging", "prod"]
+  },
+  
+  database = {
+    name = "database",
+    description = "Database configuration and migrations",
+    dependencies = ["none"],
+    operations = ["deploy", "migrate", "backup"],
+    environments = ["dev", "staging", "prod"]
+  }
+};
+
+-- Custom operations
+let operations = {
+  migrate = {
+    name = "migrate",
+    description = "Run database migrations",
+    script = "scripts/migrate.sh",
+    parameters = {
+      timeout = 300,
+      retries = 3
+    }
+  },
+  
+  test = {
+    name = "test",
+    description = "Run integration tests",
+    script = "scripts/test.sh",
+    parameters = {
+      parallel = true,
+      coverage = true
+    }
+  }
+};
+
+-- Configuration object
+let config = { project = project, environments = environments, collections = collections, operations = operations }; 
+
+-- Export the configuration
+export config;

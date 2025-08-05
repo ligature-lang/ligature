@@ -1,0 +1,206 @@
+# Ligature LSP Server Configuration File
+# This file configures the Language Server Protocol server for Ligature
+# Place this file in your XDG config directory or specify with --config
+
+[server]
+# Server name and version
+name = "ligature-lsp"
+version = "1.0.0"
+# Whether to enable the server
+enabled = true
+# Server port (0 for auto-assign)
+port = 0
+# Maximum number of concurrent connections
+max_connections = 10
+# Connection timeout in seconds
+connection_timeout = 30
+# Whether to enable logging
+enable_logging = true
+
+[diagnostics]
+# Whether to enable diagnostics
+enabled = true
+# Diagnostic severity levels: error, warning, info, hint
+default_severity = "warning"
+# Whether to enable detailed explanations
+enable_detailed_explanations = true
+# Whether to enable fix suggestions
+enable_fix_suggestions = true
+# Whether to enable security warnings
+enable_security_warnings = true
+# Whether to enable style suggestions
+enable_style_suggestions = true
+# Maximum number of diagnostics per file
+max_diagnostics_per_file = 100
+# Whether to include AST validation errors
+include_ast_errors = true
+# Whether to include parser errors
+include_parser_errors = true
+# Whether to include type checking errors
+include_type_errors = true
+
+[completion]
+# Whether to enable auto-completion
+enabled = true
+# Whether to enable context-aware completion
+enable_context_aware = true
+# Whether to enable type-aware completion
+enable_type_aware = true
+# Whether to enable fuzzy matching
+enable_fuzzy_matching = true
+# Whether to enable auto-import suggestions
+enable_auto_import = true
+# Whether to enable snippets
+enable_snippets = true
+# Maximum number of completion items
+max_completion_items = 50
+# Whether to include documentation in completions
+include_documentation = true
+# Whether to include type information in completions
+include_type_info = true
+
+[formatting]
+# Whether to enable code formatting
+enabled = true
+# Default indentation style: spaces, tabs
+indent_style = "spaces"
+# Number of spaces per indentation level
+indent_size = 2
+# Maximum line length
+max_line_length = 80
+# Whether to insert final newline
+insert_final_newline = true
+# Whether to trim trailing whitespace
+trim_trailing_whitespace = true
+# Whether to ensure consistent line endings
+ensure_consistent_line_endings = true
+
+[hover]
+# Whether to enable hover information
+enabled = true
+# Whether to show type information on hover
+show_type_info = true
+# Whether to show documentation on hover
+show_documentation = true
+# Whether to show AST information on hover
+show_ast_info = false
+# Whether to show performance hints on hover
+show_performance_hints = true
+
+[signature_help]
+# Whether to enable signature help
+enabled = true
+# Whether to show parameter names
+show_parameter_names = true
+# Whether to show parameter types
+show_parameter_types = true
+# Whether to show documentation
+show_documentation = true
+
+[code_actions]
+# Whether to enable code actions
+enabled = true
+# Whether to enable quick fixes
+enable_quick_fixes = true
+# Whether to enable refactoring actions
+enable_refactoring = true
+# Whether to enable organize imports
+enable_organize_imports = true
+# Whether to enable add missing imports
+enable_add_missing_imports = true
+# Whether to enable fix all in file
+enable_fix_all_in_file = true
+# Whether to enable fix all in workspace
+enable_fix_all_in_workspace = false
+
+[references]
+# Whether to enable find references
+enabled = true
+# Whether to include declaration in references
+include_declaration = true
+# Whether to include implementation in references
+include_implementation = true
+# Maximum number of reference locations
+max_reference_locations = 100
+
+[definitions]
+# Whether to enable go to definition
+enabled = true
+# Whether to enable go to type definition
+enable_type_definition = true
+# Whether to enable go to implementation
+enable_implementation = true
+
+[symbols]
+# Whether to enable document symbols
+enabled = true
+# Whether to enable workspace symbols
+enable_workspace_symbols = true
+# Whether to include function symbols
+include_functions = true
+# Whether to include variable symbols
+include_variables = true
+# Whether to include type symbols
+include_types = true
+# Whether to include module symbols
+include_modules = true
+
+[performance]
+# Whether to enable performance optimizations
+enabled = true
+# Whether to enable caching
+enable_caching = true
+# Cache TTL in seconds
+cache_ttl_seconds = 3600
+# Whether to enable parallel processing
+enable_parallel = true
+# Number of worker threads
+worker_threads = 0
+# Whether to enable incremental parsing
+enable_incremental_parsing = true
+# Whether to enable AST caching
+enable_ast_caching = true
+
+[logging]
+# Log level: trace, debug, info, warn, error
+level = "info"
+# Whether to log to file
+log_to_file = true
+# Whether to log to console
+log_to_console = false
+# Log file path (relative to XDG data directory)
+log_file = "ligature-lsp.log"
+# Maximum log file size in bytes
+max_log_file_size = 10485760
+# Number of log files to keep
+max_log_files = 5
+# Whether to include timestamps
+include_timestamps = true
+# Whether to include client information
+include_client_info = true
+
+[security]
+# Whether to enable security features
+enabled = true
+# Whether to validate file paths
+validate_file_paths = true
+# Whether to restrict file access
+restrict_file_access = false
+# Allowed file extensions
+allowed_extensions = [".lig", ".ligature"]
+# Whether to enable sandboxing
+enable_sandboxing = false
+# Whether to log security events
+log_security_events = true
+
+[experimental]
+# Whether to enable experimental features
+enabled = false
+# Whether to enable semantic highlighting
+semantic_highlighting = false
+# Whether to enable inlay hints
+inlay_hints = false
+# Whether to enable call hierarchy
+call_hierarchy = false
+# Whether to enable type hierarchy
+type_hierarchy = false 

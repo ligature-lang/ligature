@@ -1,0 +1,335 @@
+// Ligature Language Grammar
+// This grammar defines the syntax for the Ligature configuration language
+
+// Top-level rules
+program = { SOI ~ WHITESPACE* ~ declaration* ~ WHITESPACE* ~ EOI }
+module = { SOI ~ module_declaration? ~ import* ~ declaration* ~ EOI }
+
+// Module declaration
+module_declaration = { "module" ~ identifier ~ ";" }
+
+// Import statements
+import = { 
+    "import" ~ import_path ~ ("as" ~ identifier)? ~ ";" |
+    "import" ~ "{" ~ import_item ~ ("," ~ import_item)* ~ "}" ~ "from" ~ import_path ~ ";" |
+    "import" ~ import_path ~ "{" ~ import_item ~ ("," ~ import_item)* ~ "}" ~ ";"
+}
+import_declaration = { import }
+import_path = { 
+    identifier ~ ("." ~ identifier)* |
+    string_literal
+}
+import_item = { identifier ~ ("as" ~ identifier)? }
+
+// Declarations
+declaration = {
+    import_declaration |
+    instance_declaration_with_args |
+    instance_declaration_no_args |
+    instance_declaration |
+    constrained_instance_declaration |
+    value_declaration |
+    type_alias_declaration |
+    type_constructor_declaration |
+    type_class_declaration |
+    export_declaration
+}
+
+value_declaration = { 
+    ("let" ~ "rec")? ~ "let" ~ identifier ~ (":" ~ type_expression)? ~ "=" ~ value_expression ~ ";"
+}
+
+// Value expressions (expressions that can appear in value declarations)
+value_expression = { 
+    let_expression | lambda_expression | match_expression | if_expression | logical_or | logical_and | equality | comparison | additive | multiplicative | unary | application | field_access | primary
+}
+
+type_alias_declaration = {
+    "type" ~ identifier ~ type_parameter* ~ "=" ~ type_expression ~ ";"
+}
+
+type_constructor_declaration = {
+    "type" ~ identifier ~ type_parameter* ~ "=" ~ type_constructor_body ~ ";"
+}
+
+type_constructor_body = {
+    union_type |
+    record_type
+}
+
+type_class_declaration = {
+    "typeclass" ~ identifier ~ type_parameter* ~ 
+    "where" ~ (superclass_declaration | method_implementation | method_signature)*
+}
+
+superclass_declaration = {
+    "superclass" ~ type_class_constraint ~ ("," ~ type_class_constraint)* ~ ";"
+}
+
+instance_declaration = {
+    "instance" ~ identifier ~ WHITESPACE* ~ "(" ~ instance_type_args ~ ")" ~ WHITESPACE* ~ "where" ~ WHITESPACE* ~ method_implementation*
+}
+
+constrained_instance_declaration = {
+    "instance" ~ identifier ~ WHITESPACE* ~ "(" ~ type_class_constraint ~ "=>" ~ instance_type_args ~ ")" ~ WHITESPACE* ~ "where" ~ WHITESPACE* ~ method_implementation*
+}
+
+instance_type_args = {
+    instance_type_argument ~ (WHITESPACE* ~ "," ~ WHITESPACE* ~ instance_type_argument)*
+}
+
+instance_type_argument = {
+    basic_type |
+    type_variable |
+    parenthesized_type |
+    union_type |
+    record_type |
+    list_type |
+    constrained_type
+}
+
+// Alternative approach: Define specific patterns
+instance_declaration_with_args = {
+    "instance" ~ identifier ~ instance_type_argument+ ~ WHITESPACE* ~ "where" ~ (WHITESPACE* ~ method_implementation)* ~ WHITESPACE*
+}
+
+instance_declaration_no_args = {
+    "instance" ~ identifier ~ WHITESPACE* ~ "where" ~ (WHITESPACE* ~ method_implementation)* ~ WHITESPACE*
+}
+
+export_declaration = {
+    "export" ~ export_item ~ ("," ~ export_item)* ~ ";"
+}
+
+// Type expressions
+type_expression = { 
+    constrained_type |
+    function_type |
+    union_type |
+    record_type |
+    list_type |
+    basic_type |
+    type_variable |
+    parenthesized_type
+}
+
+constrained_type = {
+    type_class_constraint ~ "=>" ~ type_expression
+}
+
+function_type = { 
+    (union_type | record_type | list_type | basic_type | type_variable | parenthesized_type) ~ "->" ~ type_expression
+}
+
+union_type = {
+    type_variant ~ ("|" ~ type_variant)*
+}
+
+type_variant = {
+    identifier ~ (non_union_type_expression)?
+}
+
+non_union_type_expression = { 
+    constrained_type |
+    function_type |
+    record_type |
+    list_type |
+    basic_type |
+    type_variable |
+    parenthesized_type
+}
+
+record_type = {
+    "{" ~ record_field_type ~ ("," ~ record_field_type)* ~ "}"
+}
+
+record_field_type = {
+    identifier ~ ":" ~ type_expression
+}
+
+list_type = {
+    "[" ~ type_expression ~ "]"
+}
+
+basic_type = {
+    "Unit" | "Bool" | "String" | "Integer" | "Int" | "Float"
+}
+
+type_variable = { "'" ~ identifier }
+
+parenthesized_type = { "(" ~ type_expression ~ ")" }
+
+// Type parameters and arguments
+type_parameter = { "'" ~ identifier }
+type_argument = { type_expression }
+
+// Type class constraints
+type_class_constraint = {
+    identifier ~ type_argument*
+}
+
+// Method signatures and implementations
+method_signature = {
+    identifier ~ ":" ~ type_expression ~ ";"
+}
+
+method_implementation = {
+    identifier ~ "=" ~ value_expression ~ ";"
+}
+
+// Export items
+export_item = {
+    identifier ~ ("as" ~ identifier)?
+}
+
+// Expressions with precedence climbing
+expression = { let_expression | lambda_expression | match_expression | if_expression | logical_or | logical_and | equality | comparison | additive | multiplicative | unary | application | field_access | primary }
+
+let_expression = {
+    "let" ~ identifier ~ (":" ~ type_expression)? ~ "=" ~ logical_or ~ "in" ~ expression
+}
+
+logical_or = { logical_and ~ (logical_or_operator ~ logical_and)* }
+logical_and = { equality ~ (logical_and_operator ~ equality)* }
+equality = { comparison ~ (equality_operator ~ comparison)* }
+
+// Explicit operator rules for better parsing
+logical_or_operator = { "||" }
+logical_and_operator = { "&&" }
+equality_operator = { "==" | "!=" }
+comparison = { additive ~ (comparison_operator ~ additive)* }
+comparison_operator = { "<=" | ">=" | "<" | ">" }
+additive = { multiplicative ~ (additive_operator ~ multiplicative)* }
+additive_operator = { "+" | "-" }
+multiplicative = { unary ~ (multiplicative_operator ~ unary)* }
+multiplicative_operator = { "*" | "/" | "%" }
+unary = { (unary_operator ~ unary) | application }
+application = { field_access ~ (single_argument | tuple_argument)* }
+field_access = { primary ~ ("." ~ identifier)* }
+
+primary = {
+    if_expression |
+    match_expression |
+    record_expression |
+    list_expression |
+    literal_expression |
+    variable_expression |
+    union_expression |
+    parenthesized_expression
+}
+
+if_expression = {
+    "if" ~ expression ~ "then" ~ expression ~ "else" ~ expression
+}
+
+match_expression = {
+    "match" ~ expression ~ "{" ~ match_case ~ ("," ~ match_case)* ~ "}"
+}
+
+match_case = {
+    pattern ~ ("when" ~ expression)? ~ arrow ~ expression
+}
+
+lambda_expression = {
+    "\\" ~ identifier+ ~ (":" ~ type_expression)? ~ "->" ~ expression
+}
+
+application_expression = {
+    (literal_expression | non_keyword_variable_expression | parenthesized_expression) ~ (single_argument | tuple_argument)
+}
+
+single_argument = {
+    literal_expression | non_keyword_variable_expression | parenthesized_expression | lambda_expression | let_expression | if_expression | match_expression | record_expression | list_expression
+}
+
+tuple_argument = {
+    "(" ~ expression ~ ("," ~ expression)* ~ ")"
+}
+
+
+
+record_expression = {
+    "{" ~ record_field ~ ("," ~ record_field)* ~ "}"
+}
+
+record_field = {
+    identifier ~ "=" ~ expression
+}
+
+field_access_expression = { (non_keyword_variable_expression | parenthesized_expression) ~ ("." ~ identifier)+ }
+
+union_expression = {
+    identifier ~ (expression)?
+}
+
+list_expression = {
+    "[" ~ expression ~ ("," ~ expression)* ~ "]"
+}
+
+literal_expression = { literal }
+
+variable_expression = { identifier }
+non_keyword_variable_expression = { !("if" | "then" | "else" | "let" | "in" | "match" | "type" | "typeclass" | "instance" | "where" | "export" | "import" | "module" | "superclass" | "when" | "rec") ~ identifier }
+
+parenthesized_expression = { "(" ~ expression ~ ")" }
+
+// Patterns - reordered to avoid conflicts
+pattern = {
+    wildcard_pattern |
+    literal_pattern |
+    union_pattern |      // Move this above variable_pattern to fix precedence
+    variable_pattern |
+    record_pattern |
+    list_pattern |
+    parenthesized_pattern
+}
+
+wildcard_pattern = { "_" }
+variable_pattern = { identifier }
+literal_pattern = { literal }
+record_pattern = { "{" ~ record_pattern_field ~ ("," ~ record_pattern_field)* ~ "}" }
+record_pattern_field = { identifier ~ "=" ~ pattern }
+union_pattern = { identifier ~ ("(" ~ pattern ~ ")")? }
+list_pattern = { "[" ~ pattern ~ ("," ~ pattern)* ~ "]" }
+parenthesized_pattern = { "(" ~ pattern ~ ")" }
+
+// Literals
+literal = {
+    string_literal |
+    float_literal |
+    integer_literal |
+    boolean_literal |
+    unit_literal
+}
+
+string_literal = @{ "\"" ~ (!"\"" ~ ANY)* ~ "\"" }
+float_literal = @{ ("+" | "-")? ~ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+ }
+integer_literal = @{ ("+" | "-")? ~ ASCII_DIGIT+ }
+boolean_literal = { "true" | "false" }
+unit_literal = { "()" }
+
+// Operators
+binary_operator = {
+    "+" | "-" | "*" | "/" | "%" |
+    "==" | "!=" | "<" | "<=" | ">" | ">=" |
+    "&&" | "||" |
+    "++"
+}
+
+unary_operator = {
+    "!" | "-"
+}
+
+// Identifiers
+identifier = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
+
+// Tokens
+arrow = { "=>" }
+arrow_token = { arrow }
+
+// Whitespace and comments
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
+COMMENT = _{ line_comment | block_comment | dash_comment }
+line_comment = _{ "//" ~ (!"\n" ~ ANY)* ~ ("\n" | EOI) }
+dash_comment = _{ "--" ~ (!"\n" ~ ANY)* ~ ("\n" | EOI) }
+block_comment = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" } 

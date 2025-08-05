@@ -1,0 +1,87 @@
+[workspace]
+resolver = "2"
+
+
+members = [
+    "apps/keywork",
+    "apps/performance-monitor",
+    "apps/cacophony",
+    "crates/ligature-ast",
+    "crates/ligature-parser", 
+    "crates/ligature-types",
+    "crates/ligature-eval",
+    "apps/reed",
+    "crates/ligature-lsp",
+    "crates/ligature-xdg",
+    "examples",
+    "krox/krox-rs",
+    "tests/performance_validation",
+]
+
+exclude = [
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["Ligature Language Team"]
+description = "A Turing-incomplete configuration and data management language"
+license = "Apache-2.0"
+repository = "https://github.com/ligature-lang/ligature"
+keywords = ["configuration", "language", "compiler", "type-system"]
+categories = ["development-tools", "configuration"]
+
+[workspace.dependencies]
+# Core dependencies
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = "0.9"
+toml = "0.8"
+thiserror = "1.0"
+anyhow = "1.0"
+miette = { version = "5.0", features = ["fancy"] }
+
+# Parsing
+pest = "2.7"
+pest_derive = "2.7"
+
+# Property testing
+proptest = "1.3"
+
+# Testing frameworks
+criterion = "0.5"
+test-case = "3.3"
+rstest = "0.18"
+mockall = "0.12"
+fake = "2.9"
+
+# CLI
+clap = { version = "4.4", features = ["derive"] }
+
+# LSP
+tower-lsp = "0.19"
+lsp-types = "0.94"
+
+# Utilities
+once_cell = "1.19"
+indexmap = "2.0"
+xdg = "2.5"
+
+# Memory profiling
+sysinfo = "0.29"
+
+# Krox dependencies
+reqwest = { version = "0.11", features = ["json"] }
+walkdir = "2.4"
+which = "6.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tempfile = "3.8"
+tokio-test = "0.4"
+async-trait = "0.1"
+tokio = { version = "1.0", features = ["full"] }
+
+# Internal crates
+ligature-ast = { path = "crates/ligature-ast" }
+ligature-eval = { path = "crates/ligature-eval" }
+ligature-parser = { path = "crates/ligature-parser" } 
