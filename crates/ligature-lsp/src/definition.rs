@@ -4,11 +4,14 @@ use ligature_ast::{DeclarationKind, Program, Span};
 use lsp_types::{Location, Position, Range, Url};
 use std::collections::HashMap;
 
+/// Type alias for the definitions cache to reduce complexity
+type DefinitionsCache = HashMap<String, HashMap<String, Location>>;
+
 /// Provider for finding symbol definitions.
 #[derive(Clone)]
 pub struct DefinitionProvider {
     /// Cache of symbol definitions by document URI.
-    definitions_cache: HashMap<String, HashMap<String, Location>>,
+    definitions_cache: DefinitionsCache,
 }
 
 impl DefinitionProvider {
@@ -78,10 +81,7 @@ impl DefinitionProvider {
         if let Some(program) = ast {
             if let Some(location) = self.find_definition_in_program(program, &symbol_name, uri) {
                 // Cache the definition
-                let cache = self
-                    .definitions_cache
-                    .entry(uri.to_string())
-                    .or_insert_with(HashMap::new);
+                let cache = self.definitions_cache.entry(uri.to_string()).or_default();
                 cache.insert(symbol_name.clone(), location.clone());
                 return Some(location);
             }

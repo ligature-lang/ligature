@@ -1,0 +1,13 @@
+[register]
+name = "cycle_test"
+version = "1.0.0"
+description = "Test register for import cycle detection"
+authors = ["Test Author <test@example.com>"]
+license = "MIT"
+
+[exports]
+module_a = "module_a.lig"
+module_b = "module_b.lig"
+
+[metadata]
+tags = ["test", "cycle"] 

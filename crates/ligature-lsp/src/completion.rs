@@ -15,6 +15,7 @@ pub struct CompletionProvider {
     /// Built-in functions and their signatures.
     builtins: HashMap<&'static str, BuiltinFunction>,
     /// Type checker for type-aware completions.
+    #[allow(dead_code)]
     type_checker: TypeChecker,
 }
 
@@ -263,7 +264,7 @@ impl CompletionProvider {
             let (name, kind, detail) = match &declaration.kind {
                 ligature_ast::DeclarationKind::Value(value_decl) => {
                     let detail = if let Some(ref type_ann) = value_decl.type_annotation {
-                        format!(": {:?}", type_ann)
+                        format!(": {type_ann:?}")
                     } else {
                         ": <inferred>".to_string()
                     };
@@ -300,11 +301,11 @@ impl CompletionProvider {
                 detail: Some(detail),
                 documentation: Some(lsp_types::Documentation::MarkupContent(MarkupContent {
                     kind: MarkupKind::Markdown,
-                    value: format!("Imported from module: {}", module_uri),
+                    value: format!("Imported from module: {module_uri}"),
                 })),
                 deprecated: None,
                 preselect: None,
-                sort_text: Some(format!("1{}", name)), // Prioritize imported symbols
+                sort_text: Some(format!("1{name}")), // Prioritize imported symbols
                 filter_text: Some(name.clone()),
                 insert_text: Some(name),
                 insert_text_format: Some(InsertTextFormat::PLAIN_TEXT),
@@ -350,7 +351,7 @@ impl CompletionProvider {
                         )),
                         insert_text: Some(name.to_string()),
                         insert_text_format: Some(InsertTextFormat::PLAIN_TEXT),
-                        sort_text: Some(format!("1{}", name)),
+                        sort_text: Some(format!("1{name}")),
                         ..Default::default()
                     });
                 }
@@ -571,13 +572,13 @@ impl CompletionProvider {
                 items.push(CompletionItem {
                     label: keyword.to_string(),
                     kind: Some(CompletionItemKind::KEYWORD),
-                    detail: Some(format!("keyword: {}", keyword)),
+                    detail: Some(format!("keyword: {keyword}")),
                     documentation: Some(lsp_types::Documentation::MarkupContent(MarkupContent {
                         kind: MarkupKind::Markdown,
                         value: documentation.to_string(),
                     })),
                     deprecated: None,
-                    sort_text: Some(format!("0_{}", keyword)),
+                    sort_text: Some(format!("0_{keyword}")),
                     filter_text: Some(keyword.to_string()),
                     insert_text: Some(keyword.to_string()),
                     insert_text_format: Some(InsertTextFormat::PLAIN_TEXT),
@@ -611,7 +612,7 @@ impl CompletionProvider {
                         value: format!("**{}**\n\n{}", builtin.signature, builtin.documentation),
                     })),
                     deprecated: None,
-                    sort_text: Some(format!("1_{}", name)),
+                    sort_text: Some(format!("1_{name}")),
                     filter_text: Some(name.to_string()),
                     insert_text: Some(format!("{}({})", name, builtin.parameters.join(", "))),
                     insert_text_format: Some(InsertTextFormat::SNIPPET),
@@ -912,7 +913,7 @@ impl CompletionProvider {
             && line
                 .chars()
                 .nth(start - 1)
-                .map_or(false, |c| c.is_alphanumeric() || c == '_')
+                .is_some_and(|c| c.is_alphanumeric() || c == '_')
         {
             start -= 1;
         }
@@ -923,7 +924,7 @@ impl CompletionProvider {
             && line
                 .chars()
                 .nth(end)
-                .map_or(false, |c| c.is_alphanumeric() || c == '_')
+                .is_some_and(|c| c.is_alphanumeric() || c == '_')
         {
             end += 1;
         }

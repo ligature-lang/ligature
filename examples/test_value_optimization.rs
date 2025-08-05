@@ -1,9 +1,11 @@
 //! Simple test to verify value optimization features work correctly.
 
-use ligature_eval::{Evaluator, ValueOptimizationStats};
+use ligature_eval::Evaluator;
 use ligature_parser::parse_program;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+
+fn main() -> Result<()> {
     println!("🧪 Testing Value Optimization Features");
     println!("=====================================\n");
 
@@ -24,7 +26,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         match parse_program(source) {
             Ok(program) => match evaluator.evaluate_program(&program) {
                 Ok(value) => {
-                    println!("   ✓ {}: Success", description);
+                    println!("   ✓ {description}: Success");
                     if value.is_list() {
                         if let Some(elements) = value.as_list() {
                             println!("      - List has {} elements", elements.len());
@@ -32,11 +34,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
                 Err(e) => {
-                    println!("   ✗ {}: Evaluation failed - {}", description, e);
+                    println!("   ✗ {description}: Evaluation failed - {e}");
                 }
             },
             Err(e) => {
-                println!("   ✗ {}: Parsing failed - {}", description, e);
+                println!("   ✗ {description}: Parsing failed - {e}");
             }
         }
     }
@@ -102,15 +104,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let _result2 = non_optimized_evaluator.evaluate_program(&parsed)?;
     let non_optimized_duration = start.elapsed();
 
-    println!("   ✓ Optimized duration: {:?}", optimized_duration);
-    println!("   ✓ Non-optimized duration: {:?}", non_optimized_duration);
+    println!("   ✓ Optimized duration: {optimized_duration:?}");
+    println!("   ✓ Non-optimized duration: {non_optimized_duration:?}");
 
     if optimized_duration < non_optimized_duration {
         let improvement = ((non_optimized_duration.as_nanos() as f64
             - optimized_duration.as_nanos() as f64)
             / non_optimized_duration.as_nanos() as f64)
             * 100.0;
-        println!("   🚀 Performance improvement: {:.1}%", improvement);
+        println!("   🚀 Performance improvement: {improvement:.1}%");
     } else {
         println!("   📊 Performance difference: Minimal (expected for small programs)");
     }

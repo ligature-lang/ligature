@@ -30,10 +30,11 @@
 //! // Server handles LSP communication automatically
 //! ```
 
+#[allow(deprecated)]
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use thiserror::Error;
 use tokio::sync::RwLock;
 use tower_lsp::jsonrpc::Result;
@@ -62,12 +63,7 @@ use ligature_ast::{AstError, Span};
 // Constants
 const DEFAULT_SERVER_VERSION: &str = "0.1.0";
 const DEFAULT_SERVER_NAME: &str = "ligature-lsp";
-const DEFAULT_INDENT_SIZE: usize = 2;
-const DEFAULT_MAX_LINE_LENGTH: usize = 80;
 const SCRATCH_DIRECTORY: &str = "registers/_scratch";
-const DEFAULT_MAX_WORKSPACE_FILES: usize = 1000;
-const DEFAULT_MAX_CACHED_DOCUMENTS: usize = 100;
-const DEFAULT_CACHE_TTL_SECONDS: u64 = 3600;
 
 // Error types
 #[derive(Debug, Error)]
@@ -144,12 +140,14 @@ pub struct LigatureLspServer {
     /// Import resolution service.
     import_resolution: Arc<ImportResolutionService>,
     /// Document cache with improved state management.
+    #[allow(clippy::type_complexity)]
     documents: Arc<RwLock<HashMap<String, DocumentState>>>,
     /// Configuration manager.
     config_manager: Arc<RwLock<ConfigurationManager>>,
     /// Workspace manager.
     workspace_manager: Arc<WorkspaceManager>,
     /// XDG configuration manager.
+    #[allow(dead_code)]
     xdg_config: Option<LspXdgConfig>,
     /// Shutdown flag for graceful shutdown
     shutdown_requested: Arc<AtomicBool>,
@@ -236,6 +234,7 @@ impl LigatureLspServer {
     ///
     /// The function logs warnings and continues with default settings if
     /// configuration loading fails, ensuring the server remains functional.
+    #[allow(dead_code)]
     async fn initialize_xdg_config(&mut self) {
         let xdg_config = match LspXdgConfig::new().await {
             Ok(config) => config,
@@ -255,6 +254,7 @@ impl LigatureLspServer {
     }
 
     /// Load and apply XDG configuration settings.
+    #[allow(dead_code)]
     async fn load_xdg_configuration(&mut self, xdg_config: &LspXdgConfig) {
         match xdg_config.load_config().await {
             Ok(Some(config)) => {
@@ -271,6 +271,7 @@ impl LigatureLspServer {
     }
 
     /// Apply XDG configuration to the server settings.
+    #[allow(dead_code)]
     async fn apply_xdg_configuration(&mut self, config: LspConfig) {
         let mut config_manager = self.config_manager.write().await;
         let mut lsp_config = config_manager.get_config().clone();
@@ -286,6 +287,7 @@ impl LigatureLspServer {
     }
 
     /// Create and save default XDG configuration.
+    #[allow(dead_code)]
     async fn create_default_xdg_configuration(&self, xdg_config: &LspXdgConfig) {
         let default_config = LspConfig::default();
         if let Err(e) = xdg_config.save_config(&default_config).await {
@@ -323,6 +325,7 @@ impl LigatureLspServer {
     /// # Returns
     ///
     /// The document state if found, `None` otherwise
+    #[allow(dead_code)]
     async fn get_document_state(&self, uri: &str) -> Option<DocumentState> {
         let documents = self.documents.read().await;
         documents.get(uri).cloned()
@@ -553,7 +556,7 @@ impl LigatureLspServer {
 
     /// Save the current configuration to disk.
     async fn save_configuration(&self) -> std::result::Result<(), ServerError> {
-        let config_manager = self.config_manager.read().await;
+        let _config_manager = self.config_manager.read().await;
         // Note: ConfigurationManager doesn't have get_config_path method yet
         // This is a placeholder for future implementation
         info!("Saving configuration (placeholder)");
@@ -568,12 +571,14 @@ impl LigatureLspServer {
     }
 
     /// Increment the pending requests counter.
+    #[allow(dead_code)]
     async fn increment_pending_requests(&self) {
         let mut pending = self.pending_requests.write().await;
         *pending += 1;
     }
 
     /// Decrement the pending requests counter.
+    #[allow(dead_code)]
     async fn decrement_pending_requests(&self) {
         let mut pending = self.pending_requests.write().await;
         if *pending > 0 {
@@ -647,6 +652,7 @@ impl LigatureLspServer {
     }
 
     /// Get all workspace symbols matching a query.
+    #[allow(dead_code)]
     async fn get_workspace_symbols(&self, query: &str) -> Vec<WorkspaceSymbol> {
         let symbols = self.symbols.read().await;
         symbols.get_workspace_symbols(query)
@@ -684,6 +690,7 @@ impl LigatureLspServer {
     }
 
     /// Find symbol references across all loaded modules.
+    #[allow(dead_code)]
     async fn find_symbol_references(&self, symbol_name: &str, source_uri: &str) -> Vec<Location> {
         let mut references = Vec::new();
 
@@ -878,6 +885,7 @@ impl LigatureLspServer {
     }
 
     /// Get completion items from a module.
+    #[allow(dead_code)]
     fn get_module_completions(
         &self,
         module: &ligature_ast::Module,
@@ -892,7 +900,7 @@ impl LigatureLspServer {
                     let detail = value_decl
                         .type_annotation
                         .as_ref()
-                        .map(|t| format!("Type: {:?}", t));
+                        .map(|t| format!("Type: {t:?}"));
 
                     completions.push(CompletionItem {
                         label: value_decl.name.clone(),
@@ -1026,6 +1034,7 @@ impl LigatureLspServer {
     }
 
     /// Extract symbols from a module that match a query.
+    #[allow(dead_code)]
     fn extract_symbols_from_module(
         &self,
         module: &ligature_ast::Module,
@@ -1058,6 +1067,7 @@ impl LigatureLspServer {
                         name: symbol_name.clone(),
                         kind,
                         tags: None,
+                        #[allow(deprecated)]
                         deprecated: None,
                         location: Location::new(
                             url,
@@ -1096,7 +1106,7 @@ impl LanguageServer for LigatureLspServer {
                 self.client
                     .log_message(
                         MessageType::WARNING,
-                        format!("Configuration error: {}", error),
+                        format!("Configuration error: {error}"),
                     )
                     .await;
             }
@@ -1177,7 +1187,7 @@ impl LanguageServer for LigatureLspServer {
         // We'll spawn a task to initialize XDG config
         let server_arc = Arc::new(self);
         tokio::spawn({
-            let server = server_arc.clone();
+            let _server = server_arc.clone();
             async move {
                 // This is a workaround - in a real implementation, we'd need to restructure
                 // to allow mutable access to the server during initialization
@@ -1612,6 +1622,7 @@ impl LigatureLspServer {
     }
 
     /// Load all modules from a directory recursively.
+    #[allow(dead_code)]
     async fn load_modules_from_directory(&self, dir: &Path) {
         let mut stack = vec![dir.to_path_buf()];
 
@@ -1658,7 +1669,7 @@ impl LigatureLspServer {
         }
 
         // Create temporary file
-        let temp_file = scratch_dir.join(format!("{}.lig", name));
+        let temp_file = scratch_dir.join(format!("{name}.lig"));
         std::fs::write(&temp_file, content).map_err(|e| AstError::ParseError {
             message: format!("Failed to write temporary file: {e}"),
             span: Span::default(),
@@ -1671,7 +1682,7 @@ impl LigatureLspServer {
     /// Convert a file path to a URI.
     fn path_to_uri(&self, path: &Path) -> std::result::Result<String, AstError> {
         let url = Url::from_file_path(path).map_err(|_| AstError::ParseError {
-            message: format!("Cannot convert path to URI: {:?}", path),
+            message: format!("Cannot convert path to URI: {path:?}"),
             span: Span::default(),
         })?;
 
@@ -1684,64 +1695,13 @@ pub async fn run_server() {
     let stdin = tokio::io::stdin();
     let stdout = tokio::io::stdout();
 
-    let (service, socket) = LspService::new(|client| LigatureLspServer::new(client));
+    let (service, socket) = LspService::new(LigatureLspServer::new);
     Server::new(stdin, stdout, socket).serve(service).await;
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::Arc;
-    use tower_lsp::lsp_types::*;
-
-    #[tokio::test]
-    async fn test_server_creation() {
-        // Test server creation without requiring a mock client
-        // This test verifies that the server can be created successfully
-        assert!(true); // Placeholder test
-    }
-
-    #[tokio::test]
-    async fn test_document_management() {
-        // Test document management functionality
-        // This test verifies that document operations work correctly
-        assert!(true); // Placeholder test
-    }
-
-    #[tokio::test]
-    async fn test_configuration_validation() {
-        // Test configuration validation functionality
-        // This test verifies that configuration validation works correctly
-        assert!(true); // Placeholder test
-    }
-
-    #[tokio::test]
-    async fn test_graceful_shutdown() {
-        // Test graceful shutdown functionality
-        // This test verifies that graceful shutdown works correctly
-        assert!(true); // Placeholder test
-    }
-
-    #[tokio::test]
-    async fn test_large_file_performance() {
-        // Test large file performance
-        // This test verifies that large files are handled efficiently
-        assert!(true); // Placeholder test
-    }
-
-    #[tokio::test]
-    async fn test_cache_cleanup() {
-        // Test cache cleanup functionality
-        // This test verifies that document cache cleanup works correctly
-        assert!(true); // Placeholder test
-    }
-
-    #[tokio::test]
-    async fn test_error_handling() {
-        // Test error handling functionality
-        // This test verifies that error handling works correctly
-        assert!(true); // Placeholder test
-    }
 
     #[tokio::test]
     async fn test_xdg_configuration_handling() {

@@ -2,7 +2,7 @@ use ligature_ast::AstResult;
 use ligature_parser::Parser;
 
 fn test_expression(source: &str) {
-    println!("\n=== Testing: '{}' ===", source);
+    println!("\n=== Testing: '{source}' ===");
 
     // Test with the full parser
     let mut parser = Parser::new();
@@ -11,7 +11,7 @@ fn test_expression(source: &str) {
             println!("✓ Full parser: {:?}", expr.kind);
         }
         Err(e) => {
-            println!("✗ Full parser failed: {:?}", e);
+            println!("✗ Full parser failed: {e:?}");
         }
     }
 }
@@ -49,4 +49,4 @@ fn main() -> AstResult<()> {
     test_expression("5 == 5 == true");
 
     Ok(())
-} 
+}

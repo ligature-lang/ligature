@@ -113,7 +113,7 @@ my-project/
 
 The main configuration file defines your project structure:
 
-```ligature
+```ocaml
 -- cacophony.lig
 module Cacophony
 
@@ -183,7 +183,7 @@ let collections = {
 
 Each environment has its own configuration file:
 
-```ligature
+```ocaml
 -- environments/dev.lig
 module Dev
 
@@ -203,7 +203,7 @@ let config = {
 
 Collections define the components of your system:
 
-```ligature
+```ocaml
 -- collections/frontend.lig
 module Frontend
 
@@ -286,7 +286,7 @@ cacophony config get [OPTIONS] <KEY>
 
 Cacophony supports plugins for custom operations:
 
-```ligature
+```ocaml
 -- plugins/custom/plugin.lig
 module CustomPlugin
 
@@ -307,7 +307,7 @@ let operations = {
 
 Collections can declare dependencies:
 
-```ligature
+```ocaml
 let collections = {
   frontend = {
     dependencies = ["backend", "database"],
@@ -328,7 +328,7 @@ let collections = {
 
 Environment-specific variables are automatically injected:
 
-```ligature
+```ocaml
 -- Access environment variables in your Ligature code
 let api_config = {
   url = env.api_url,
@@ -341,7 +341,7 @@ let api_config = {
 
 Cacophony leverages Ligature's type system for configuration validation:
 
-```ligature
+```ocaml
 type Environment = {
   name: String,
   variables: Record String String,
@@ -366,7 +366,7 @@ let validate_config = \env collection -> {
 
 Keep environment-specific configurations separate:
 
-```ligature
+```ocaml
 -- Use environment variables for configuration
 let config = {
   api_url = env.api_url,
@@ -379,7 +379,7 @@ let config = {
 
 Organize collections by responsibility:
 
-```ligature
+```ocaml
 let collections = {
   -- Infrastructure
   database = { /* database config */ },
@@ -398,7 +398,7 @@ let collections = {
 
 Declare explicit dependencies:
 
-```ligature
+```ocaml
 let collections = {
   frontend = {
     dependencies = ["backend"],
@@ -428,7 +428,7 @@ echo "Frontend deployed successfully"
 
 Validate configurations before deployment:
 
-```ligature
+```ocaml
 let validate_environment = \env -> {
   required_vars = ["api_url", "database_url"],
   missing = filter (\var -> !has_key env.variables var) required_vars,
@@ -492,7 +492,7 @@ cacophony --verbose deploy --environment dev
 
 ### Kubernetes Integration
 
-```ligature
+```ocaml
 -- collections/kubernetes.lig
 module Kubernetes
 
@@ -508,7 +508,7 @@ let k8s_config = {
 
 ### Docker Integration
 
-```ligature
+```ocaml
 -- collections/docker.lig
 module Docker
 
@@ -521,7 +521,7 @@ let docker_config = {
 
 ### AWS Integration
 
-```ligature
+```ocaml
 -- collections/aws.lig
 module AWS
 

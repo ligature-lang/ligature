@@ -103,11 +103,13 @@ pub enum Constraint {
     Custom(String),
 }
 
+/// Type alias for custom validator functions
+type CustomValidator = Box<dyn Fn(&serde_json::Value) -> ValidationResult<()> + Send + Sync>;
+
 /// Configuration validator
 pub struct ConfigValidator {
     schemas: HashMap<String, ConfigSchema>,
-    custom_validators:
-        HashMap<String, Box<dyn Fn(&serde_json::Value) -> ValidationResult<()> + Send + Sync>>,
+    custom_validators: HashMap<String, CustomValidator>,
 }
 
 impl ConfigValidator {
@@ -140,12 +142,12 @@ impl ConfigValidator {
         schema_name: &str,
     ) -> ValidationResult<()> {
         let schema = self.schemas.get(schema_name).ok_or_else(|| {
-            ValidationError::SchemaError(format!("Schema '{}' not found", schema_name))
+            ValidationError::SchemaError(format!("Schema '{schema_name}' not found"))
         })?;
 
         // Validate required fields
         for field_name in &schema.required_fields {
-            if !config.get(field_name).is_some() {
+            if config.get(field_name).is_none() {
                 return Err(ValidationError::MissingRequiredField {
                     field: field_name.clone(),
                 });
@@ -200,7 +202,7 @@ impl ConfigValidator {
         if let Some(ref pattern) = schema.pattern {
             if let Some(s) = value.as_str() {
                 let regex = regex::Regex::new(pattern).map_err(|e| {
-                    ValidationError::SchemaError(format!("Invalid regex pattern: {}", e))
+                    ValidationError::SchemaError(format!("Invalid regex pattern: {e}"))
                 })?;
                 if !regex.is_match(s) {
                     return Err(ValidationError::InvalidValue {
@@ -216,8 +218,7 @@ impl ConfigValidator {
             if let Some(num) = value.as_f64() {
                 if num < min_val {
                     return Err(ValidationError::ConstraintViolation(format!(
-                        "Value {} is less than minimum {}",
-                        num, min_val
+                        "Value {num} is less than minimum {min_val}",
                     )));
                 }
             }
@@ -227,8 +228,7 @@ impl ConfigValidator {
             if let Some(num) = value.as_f64() {
                 if num > max_val {
                     return Err(ValidationError::ConstraintViolation(format!(
-                        "Value {} is greater than maximum {}",
-                        num, max_val
+                        "Value {num} is greater than maximum {max_val}",
                     )));
                 }
             }
@@ -348,7 +348,7 @@ impl ConfigValidator {
             }
             FieldType::Url => {
                 if let Some(url) = value.as_str() {
-                    if !url::Url::parse(url).is_ok() {
+                    if url::Url::parse(url).is_err() {
                         return Err(ValidationError::InvalidValue {
                             field: "url".to_string(),
                             value: url.to_string(),
@@ -461,8 +461,7 @@ impl ConfigValidator {
                 if let Some(num) = value.as_f64() {
                     if num < *min {
                         return Err(ValidationError::ConstraintViolation(format!(
-                            "Value {} is less than minimum {}",
-                            num, min
+                            "Value {num} is less than minimum {min}",
                         )));
                     }
                 }
@@ -471,8 +470,7 @@ impl ConfigValidator {
                 if let Some(num) = value.as_f64() {
                     if num > *max {
                         return Err(ValidationError::ConstraintViolation(format!(
-                            "Value {} is greater than maximum {}",
-                            num, max
+                            "Value {num} is greater than maximum {max}",
                         )));
                     }
                 }
@@ -481,9 +479,8 @@ impl ConfigValidator {
                 if let Some(s) = value.as_str() {
                     if s.len() < *min {
                         return Err(ValidationError::ConstraintViolation(format!(
-                            "String length {} is less than minimum {}",
+                            "String length {} is less than minimum {min}",
                             s.len(),
-                            min
                         )));
                     }
                 }
@@ -492,9 +489,8 @@ impl ConfigValidator {
                 if let Some(s) = value.as_str() {
                     if s.len() > *max {
                         return Err(ValidationError::ConstraintViolation(format!(
-                            "String length {} is greater than maximum {}",
+                            "String length {} is greater than maximum {max}",
                             s.len(),
-                            max
                         )));
                     }
                 }
@@ -502,7 +498,7 @@ impl ConfigValidator {
             FieldConstraint::Pattern(pattern) => {
                 if let Some(s) = value.as_str() {
                     let regex = regex::Regex::new(pattern).map_err(|e| {
-                        ValidationError::SchemaError(format!("Invalid regex pattern: {}", e))
+                        ValidationError::SchemaError(format!("Invalid regex pattern: {e}"))
                     })?;
                     if !regex.is_match(s) {
                         return Err(ValidationError::InvalidValue {
@@ -619,8 +615,7 @@ impl ConfigValidator {
                 for dep in dependencies {
                     if config.get(dep).is_none() {
                         return Err(ValidationError::ConstraintViolation(format!(
-                            "Field '{}' depends on '{}' which is missing",
-                            field, dep
+                            "Field '{field}' depends on '{dep}' which is missing",
                         )));
                     }
                 }

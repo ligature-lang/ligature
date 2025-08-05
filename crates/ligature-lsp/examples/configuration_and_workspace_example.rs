@@ -4,8 +4,10 @@ use ligature_lsp::{config::ConfigurationManager, workspace::WorkspaceManager};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
+type MainResult = Result<(), Box<dyn std::error::Error>>;
+
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> MainResult {
     // Initialize logging
     tracing_subscriber::fmt::init();
 
@@ -33,7 +35,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     } else {
         println!("   ⚠ Configuration has errors:");
         for error in &validation_errors {
-            println!("     - {}", error);
+            println!("     - {error}");
         }
     }
 

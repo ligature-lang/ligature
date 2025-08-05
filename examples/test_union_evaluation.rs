@@ -4,7 +4,7 @@ use ligature_eval::{Evaluator, Value};
 fn main() -> AstResult<()> {
     println!("Testing improved union evaluation...");
 
-    let mut evaluator = Evaluator::new();
+    let evaluator = Evaluator::new();
 
     // Test union value creation
     let some_value = Value::union(
@@ -12,18 +12,18 @@ fn main() -> AstResult<()> {
         Some(Value::integer(42, Span::default())),
         Span::default(),
     );
-    println!("✓ Created Some(42): {:?}", some_value);
+    println!("✓ Created Some(42): {some_value:?}");
 
     let none_value = Value::union("None".to_string(), None, Span::default());
-    println!("✓ Created None: {:?}", none_value);
+    println!("✓ Created None: {none_value:?}");
 
     // Test union value access
     if let Some((variant, value)) = some_value.as_union() {
-        println!("✓ Some value variant: {}, payload: {:?}", variant, value);
+        println!("✓ Some value variant: {variant}, payload: {value:?}");
     }
 
     if let Some((variant, value)) = none_value.as_union() {
-        println!("✓ None value variant: {}, payload: {:?}", variant, value);
+        println!("✓ None value variant: {variant}, payload: {value:?}");
     }
 
     // Test union value type checking
@@ -40,10 +40,10 @@ fn main() -> AstResult<()> {
     };
 
     let matches_some = evaluator.pattern_matches(&some_pattern, &some_value)?;
-    println!("✓ Some pattern matches Some(42): {}", matches_some);
+    println!("✓ Some pattern matches Some(42): {matches_some}");
 
     let matches_none = evaluator.pattern_matches(&some_pattern, &none_value)?;
-    println!("✓ Some pattern matches None: {}", matches_none);
+    println!("✓ Some pattern matches None: {matches_none}");
 
     // Test None pattern matching
     let none_pattern = Pattern::Union {
@@ -52,10 +52,10 @@ fn main() -> AstResult<()> {
     };
 
     let matches_some_none = evaluator.pattern_matches(&none_pattern, &some_value)?;
-    println!("✓ None pattern matches Some(42): {}", matches_some_none);
+    println!("✓ None pattern matches Some(42): {matches_some_none}");
 
     let matches_none_none = evaluator.pattern_matches(&none_pattern, &none_value)?;
-    println!("✓ None pattern matches None: {}", matches_none_none);
+    println!("✓ None pattern matches None: {matches_none_none}");
 
     println!("✓ All union evaluation tests passed!");
     Ok(())

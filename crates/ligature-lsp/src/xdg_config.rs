@@ -103,10 +103,10 @@ impl LspXdgConfig {
     /// Create a new XDG configuration manager for LSP
     pub async fn new() -> Result<Self> {
         let xdg_config = XdgConfig::new("ligature-lsp", "config.toml")
-            .map_err(|e| LspXdgError::Internal(format!("Failed to create XDG config: {}", e)))?;
+            .map_err(|e| LspXdgError::Internal(format!("Failed to create XDG config: {e}")))?;
 
         let xdg_paths = XdgPaths::new("ligature-lsp")
-            .map_err(|e| LspXdgError::Internal(format!("Failed to create XDG paths: {}", e)))?;
+            .map_err(|e| LspXdgError::Internal(format!("Failed to create XDG paths: {e}")))?;
 
         Ok(Self {
             xdg_config,
@@ -119,7 +119,7 @@ impl LspXdgConfig {
         self.xdg_config
             .load()
             .await
-            .map_err(|e| LspXdgError::Internal(format!("Failed to load XDG config: {}", e)))
+            .map_err(|e| LspXdgError::Internal(format!("Failed to load XDG config: {e}")))
     }
 
     /// Save the LSP configuration to XDG config directory
@@ -127,35 +127,35 @@ impl LspXdgConfig {
         self.xdg_config
             .save(config)
             .await
-            .map_err(|e| LspXdgError::Internal(format!("Failed to save XDG config: {}", e)))
+            .map_err(|e| LspXdgError::Internal(format!("Failed to save XDG config: {e}")))
     }
 
     /// Get the XDG config directory path
     pub fn config_dir(&self) -> Result<PathBuf> {
         self.xdg_paths
             .config_dir()
-            .map_err(|e| LspXdgError::Internal(format!("Failed to get config directory: {}", e)))
+            .map_err(|e| LspXdgError::Internal(format!("Failed to get config directory: {e}")))
     }
 
     /// Get the XDG data directory path
     pub fn data_dir(&self) -> Result<PathBuf> {
         self.xdg_paths
             .data_dir()
-            .map_err(|e| LspXdgError::Internal(format!("Failed to get data directory: {}", e)))
+            .map_err(|e| LspXdgError::Internal(format!("Failed to get data directory: {e}")))
     }
 
     /// Get the XDG cache directory path
     pub fn cache_dir(&self) -> Result<PathBuf> {
         self.xdg_paths
             .cache_dir()
-            .map_err(|e| LspXdgError::Internal(format!("Failed to get cache directory: {}", e)))
+            .map_err(|e| LspXdgError::Internal(format!("Failed to get cache directory: {e}")))
     }
 
     /// Get the XDG state directory path
     pub fn state_dir(&self) -> Result<PathBuf> {
         self.xdg_paths
             .state_dir()
-            .map_err(|e| LspXdgError::Internal(format!("Failed to get state directory: {}", e)))
+            .map_err(|e| LspXdgError::Internal(format!("Failed to get state directory: {e}")))
     }
 
     /// Ensure all XDG directories exist
@@ -163,7 +163,7 @@ impl LspXdgConfig {
         self.xdg_paths
             .ensure_directories()
             .await
-            .map_err(|e| LspXdgError::Internal(format!("Failed to ensure directories: {}", e)))
+            .map_err(|e| LspXdgError::Internal(format!("Failed to ensure directories: {e}")))
     }
 
     /// Get the workspace cache directory path
@@ -205,14 +205,14 @@ impl LspXdgConfig {
     pub fn find_config_file(&self, filename: &str) -> Result<Option<PathBuf>> {
         self.xdg_paths
             .find_config_file(filename)
-            .map_err(|e| LspXdgError::Internal(format!("Failed to find config file: {}", e)))
+            .map_err(|e| LspXdgError::Internal(format!("Failed to find config file: {e}")))
     }
 
     /// Find a data file in the XDG data directory
     pub fn find_data_file(&self, filename: &str) -> Result<Option<PathBuf>> {
         self.xdg_paths
             .find_data_file(filename)
-            .map_err(|e| LspXdgError::Internal(format!("Failed to find data file: {}", e)))
+            .map_err(|e| LspXdgError::Internal(format!("Failed to find data file: {e}")))
     }
 }
 
@@ -251,7 +251,7 @@ mod tests {
         assert!(loaded_config.is_some());
 
         let loaded = loaded_config.unwrap();
-        assert_eq!(loaded.enable_workspace_diagnostics, true);
+        assert!(loaded.enable_workspace_diagnostics);
         assert_eq!(loaded.max_workspace_files, 1000);
         assert!(loaded.include_patterns.contains(&"**/*.lig".to_string()));
 

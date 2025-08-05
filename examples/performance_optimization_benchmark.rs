@@ -5,8 +5,8 @@
 //! 3. Value Representation Optimization: Reduce cloning overhead with Arc<Value> and value interning
 
 use ligature_ast::{AstResult, BinaryOperator, Expr, ExprKind, Literal, Span};
-use ligature_eval::{CacheStats, Evaluator};
-use std::time::{Duration, Instant};
+use ligature_eval::Evaluator;
+use std::time::Instant;
 
 fn main() -> AstResult<()> {
     println!("Ligature Performance Optimization Benchmark");
@@ -73,8 +73,8 @@ fn benchmark_function_call_performance() -> AstResult<()> {
 
     let stats = evaluator.cache_stats();
 
-    println!("Function calls per second: {:.0}", ops_per_sec);
-    println!("Total time: {:?}", duration);
+    println!("Function calls per second: {ops_per_sec:.0}");
+    println!("Total time: {duration:?}");
     println!("Stack evaluations: {}", stats.stack_evals);
     println!("Tail calls: {}", stats.tail_calls);
     println!("Cache hit rate: {:.2}%", stats.hit_rate());
@@ -107,8 +107,8 @@ fn benchmark_arithmetic_performance() -> AstResult<()> {
 
     let stats = evaluator.cache_stats();
 
-    println!("Arithmetic operations per second: {:.0}", ops_per_sec);
-    println!("Total time: {:?}", duration);
+    println!("Arithmetic operations per second: {ops_per_sec:.0}");
+    println!("Total time: {duration:?}");
     println!("Cache hit rate: {:.2}%", stats.hit_rate());
     println!(
         "Value pool utilization: {:.2}%",
@@ -151,8 +151,8 @@ fn benchmark_expression_caching() -> AstResult<()> {
 
     let stats = evaluator.cache_stats();
 
-    println!("Warmup time: {:?}", warmup_duration);
-    println!("Cached evaluation time: {:?}", cache_duration);
+    println!("Warmup time: {warmup_duration:?}");
+    println!("Cached evaluation time: {cache_duration:?}");
     println!("Cache hits: {}", stats.hits);
     println!("Cache misses: {}", stats.misses);
     println!("Cache hit rate: {:.2}%", stats.hit_rate());
@@ -185,7 +185,7 @@ fn benchmark_value_representation() -> AstResult<()> {
     // Test string values
     let start = Instant::now();
     for i in 0..iterations {
-        let value = ligature_eval::Value::string(format!("string_{}", i), Span::default());
+        let value = ligature_eval::Value::string(format!("string_{i}"), Span::default());
         let _cloned = value.clone();
     }
     let string_duration = start.elapsed();
@@ -200,7 +200,7 @@ fn benchmark_value_representation() -> AstResult<()> {
         );
         fields.insert(
             "y".to_string(),
-            ligature_eval::Value::string(format!("value_{}", i), Span::default()),
+            ligature_eval::Value::string(format!("value_{i}"), Span::default()),
         );
         let value = ligature_eval::Value::record(fields, Span::default());
         let _cloned = value.clone();
@@ -272,7 +272,7 @@ fn benchmark_memory_optimization() -> AstResult<()> {
     let (env_available, env_total) = evaluator.env_pool_stats();
     let (value_available, value_total) = evaluator.value_pool_stats();
 
-    println!("Created {} expressions in {:?}", iterations, duration);
+    println!("Created {iterations} expressions in {duration:?}");
     println!("Cache size: {}", evaluator.cache_size());
     println!(
         "Cache memory usage: {} bytes",

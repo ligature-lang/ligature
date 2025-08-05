@@ -227,7 +227,7 @@ impl EvaluationEnvironment {
             if let Some((_, module_env)) = module_value.as_module() {
                 let bindings = module_env.current_bindings();
                 for (name, value) in bindings {
-                    let prefixed_name = format!("{}{}", prefix, name);
+                    let prefixed_name = format!("{prefix}{name}");
                     self.bindings.insert(prefixed_name, value.clone());
                 }
                 self.invalidate_cache();

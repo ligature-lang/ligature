@@ -1,6 +1,6 @@
 //! Benchmarking utilities for the Ligature evaluation engine.
 
-use crate::{Evaluator, MemoryStats, MemoryTracker, CacheStats};
+use crate::{CacheStats, Evaluator, MemoryStats, MemoryTracker};
 use ligature_ast::{AstError, Span};
 use ligature_parser::parse_program;
 use std::time::{Duration, Instant};
@@ -207,7 +207,7 @@ impl BenchmarkSuite {
             println!("  Total benchmarks: {total_benchmarks}");
             println!("  Total time: {total_time:?}");
             println!("  Average benchmark time: {avg_time:?}");
-            println!("  Average throughput: {:.2} ops/sec", avg_throughput);
+            println!("  Average throughput: {avg_throughput:.2} ops/sec");
         }
     }
 
@@ -223,11 +223,20 @@ impl BenchmarkSuite {
         let has_cache_data = self.results.iter().any(|r| r.cache_stats.is_some());
 
         if has_memory_data && has_cache_data {
-            writeln!(file, "name,iterations,total_time_ns,avg_time_ns,min_time_ns,max_time_ns,throughput_ops_per_sec,memory_rss_bytes,memory_vms_bytes,memory_delta_bytes,cache_hits,cache_misses,cache_hit_rate,cache_evictions")?;
+            writeln!(
+                file,
+                "name,iterations,total_time_ns,avg_time_ns,min_time_ns,max_time_ns,throughput_ops_per_sec,memory_rss_bytes,memory_vms_bytes,memory_delta_bytes,cache_hits,cache_misses,cache_hit_rate,cache_evictions"
+            )?;
         } else if has_memory_data {
-            writeln!(file, "name,iterations,total_time_ns,avg_time_ns,min_time_ns,max_time_ns,throughput_ops_per_sec,memory_rss_bytes,memory_vms_bytes,memory_delta_bytes")?;
+            writeln!(
+                file,
+                "name,iterations,total_time_ns,avg_time_ns,min_time_ns,max_time_ns,throughput_ops_per_sec,memory_rss_bytes,memory_vms_bytes,memory_delta_bytes"
+            )?;
         } else if has_cache_data {
-            writeln!(file, "name,iterations,total_time_ns,avg_time_ns,min_time_ns,max_time_ns,throughput_ops_per_sec,cache_hits,cache_misses,cache_hit_rate,cache_evictions")?;
+            writeln!(
+                file,
+                "name,iterations,total_time_ns,avg_time_ns,min_time_ns,max_time_ns,throughput_ops_per_sec,cache_hits,cache_misses,cache_hit_rate,cache_evictions"
+            )?;
         } else {
             writeln!(
                 file,
@@ -246,8 +255,16 @@ impl BenchmarkSuite {
                     .unwrap_or(0);
                 let cache_hits = result.cache_stats.as_ref().map(|c| c.hits).unwrap_or(0);
                 let cache_misses = result.cache_stats.as_ref().map(|c| c.misses).unwrap_or(0);
-                let cache_hit_rate = result.cache_stats.as_ref().map(|c| c.hit_rate()).unwrap_or(0.0);
-                let cache_evictions = result.cache_stats.as_ref().map(|c| c.evictions).unwrap_or(0);
+                let cache_hit_rate = result
+                    .cache_stats
+                    .as_ref()
+                    .map(|c| c.hit_rate())
+                    .unwrap_or(0.0);
+                let cache_evictions = result
+                    .cache_stats
+                    .as_ref()
+                    .map(|c| c.evictions)
+                    .unwrap_or(0);
 
                 writeln!(
                     file,
@@ -293,8 +310,16 @@ impl BenchmarkSuite {
             } else if has_cache_data {
                 let cache_hits = result.cache_stats.as_ref().map(|c| c.hits).unwrap_or(0);
                 let cache_misses = result.cache_stats.as_ref().map(|c| c.misses).unwrap_or(0);
-                let cache_hit_rate = result.cache_stats.as_ref().map(|c| c.hit_rate()).unwrap_or(0.0);
-                let cache_evictions = result.cache_stats.as_ref().map(|c| c.evictions).unwrap_or(0);
+                let cache_hit_rate = result
+                    .cache_stats
+                    .as_ref()
+                    .map(|c| c.hit_rate())
+                    .unwrap_or(0.0);
+                let cache_evictions = result
+                    .cache_stats
+                    .as_ref()
+                    .map(|c| c.evictions)
+                    .unwrap_or(0);
 
                 writeln!(
                     file,

@@ -13,7 +13,7 @@ fn main() -> AstResult<()> {
     "#;
 
     println!("Testing basic module parsing...");
-    println!("Source: {}", source);
+    println!("Source: {source}");
 
     let module = parser.parse_module(source)?;
     println!("Module parsed successfully!");
@@ -23,7 +23,7 @@ fn main() -> AstResult<()> {
 
     // Debug: Print all declarations
     for (i, decl) in module.declarations.iter().enumerate() {
-        println!("  Declaration {}: {:?}", i, decl);
+        println!("  Declaration {i}: {decl:?}");
     }
 
     // Verify that declarations are parsed correctly
@@ -49,7 +49,7 @@ fn main() -> AstResult<()> {
     "#;
 
     println!("\nTesting module with explicit name...");
-    println!("Source: {}", source_with_name);
+    println!("Source: {source_with_name}");
 
     let module_with_name = parser.parse_module(source_with_name)?;
     println!("Module with name parsed successfully!");
@@ -300,7 +300,7 @@ fn main() -> AstResult<()> {
     let module_value = evaluator.evaluate_module(&module)?;
 
     if let Some((name, env)) = module_value.as_module() {
-        println!("Module name: {}", name);
+        println!("Module name: {name}");
         println!(
             "Module environment has {} bindings",
             env.current_bindings().len()
@@ -345,7 +345,7 @@ fn main() -> AstResult<()> {
             println!("  - Module value created: {}", module_value.is_module());
         }
         Err(e) => {
-            println!("⚠ External module resolution partially working: {}", e);
+            println!("⚠ External module resolution partially working: {e}");
             println!("  - Register manifest parsing: ✅ Working");
             println!("  - Module file discovery: ✅ Working");
             println!("  - Module file parsing: ⚠️ Needs comment handling");

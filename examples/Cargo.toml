@@ -8,7 +8,7 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-krox = { path = "../krox/krox-rs" }
+krox = { path = "../krox" }
 ligature-ast = { path = "../crates/ligature-ast" }
 ligature-parser = { path = "../crates/ligature-parser" }
 ligature-types = { path = "../crates/ligature-types" }

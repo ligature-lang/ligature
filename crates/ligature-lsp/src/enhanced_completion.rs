@@ -3,8 +3,8 @@
 use ligature_ast::{Program, Type};
 use ligature_types::checker::TypeChecker;
 use lsp_types::{
-    CompletionContext, CompletionItem, CompletionItemKind, CompletionResponse,
-    InsertTextFormat, MarkupContent, MarkupKind, Position,
+    CompletionContext, CompletionItem, CompletionItemKind, CompletionResponse, InsertTextFormat,
+    MarkupContent, MarkupKind, Position,
 };
 use std::collections::HashMap;
 
@@ -15,10 +15,12 @@ pub struct EnhancedCompletionProvider {
     /// Built-in functions and their signatures.
     builtins: HashMap<&'static str, EnhancedBuiltinFunction>,
     /// Type checker for type-aware completions.
+    #[allow(dead_code)]
     type_checker: TypeChecker,
     /// Configuration for enhanced completions.
     config: EnhancedCompletionConfig,
     /// Context-aware snippets.
+    #[allow(dead_code)]
     context_snippets: HashMap<String, Vec<CompletionItem>>,
 }
 
@@ -27,9 +29,12 @@ pub struct EnhancedCompletionProvider {
 struct EnhancedBuiltinFunction {
     signature: String,
     documentation: String,
+    #[allow(dead_code)]
     parameters: Vec<String>,
+    #[allow(dead_code)]
     return_type: String,
     examples: Vec<String>,
+    #[allow(dead_code)]
     category: String,
 }
 
@@ -239,13 +244,15 @@ impl EnhancedCompletionProvider {
     }
 
     /// Get enhanced symbol completions.
-    fn get_enhanced_symbol_completions(&self, content: &str, prefix: &str) -> Vec<CompletionItem> {
-        let mut completions = Vec::new();
-
+    fn get_enhanced_symbol_completions(
+        &self,
+        _content: &str,
+        _prefix: &str,
+    ) -> Vec<CompletionItem> {
         // This is a simplified implementation
         // In a full implementation, you would analyze the AST to find all symbols
 
-        completions
+        Vec::new()
     }
 
     /// Get enhanced keyword completions.
@@ -254,10 +261,10 @@ impl EnhancedCompletionProvider {
 
         for (keyword, documentation) in &self.keywords {
             if keyword.starts_with(prefix) || self.fuzzy_match(keyword, prefix) {
-                let mut item = CompletionItem {
+                let item = CompletionItem {
                     label: keyword.to_string(),
                     kind: Some(CompletionItemKind::KEYWORD),
-                    detail: Some(format!("Keyword: {}", keyword)),
+                    detail: Some(format!("Keyword: {keyword}")),
                     documentation: if self.config.enable_documentation {
                         Some(lsp_types::Documentation::MarkupContent(MarkupContent {
                             kind: MarkupKind::Markdown,
@@ -266,7 +273,7 @@ impl EnhancedCompletionProvider {
                     } else {
                         None
                     },
-                    sort_text: Some(format!("1_{}", keyword)),
+                    sort_text: Some(format!("1_{keyword}")),
                     filter_text: Some(keyword.to_string()),
                     insert_text: Some(keyword.to_string()),
                     insert_text_format: Some(InsertTextFormat::PLAIN_TEXT),
@@ -295,7 +302,7 @@ impl EnhancedCompletionProvider {
 
         for (name, builtin) in &self.builtins {
             if name.starts_with(prefix) || self.fuzzy_match(name, prefix) {
-                let mut item = CompletionItem {
+                let item = CompletionItem {
                     label: name.to_string(),
                     kind: Some(CompletionItemKind::FUNCTION),
                     detail: Some(builtin.signature.clone()),
@@ -304,7 +311,7 @@ impl EnhancedCompletionProvider {
                         if self.config.enable_examples && !builtin.examples.is_empty() {
                             doc.push_str("\n\n**Examples:**\n");
                             for example in &builtin.examples {
-                                doc.push_str(&format!("```\n{}\n```\n", example));
+                                doc.push_str(&format!("```\n{example}\n```\n"));
                             }
                         }
                         Some(lsp_types::Documentation::MarkupContent(MarkupContent {
@@ -314,7 +321,7 @@ impl EnhancedCompletionProvider {
                     } else {
                         None
                     },
-                    sort_text: Some(format!("2_{}", name)),
+                    sort_text: Some(format!("2_{name}")),
                     filter_text: Some(name.to_string()),
                     insert_text: Some(name.to_string()),
                     insert_text_format: Some(InsertTextFormat::PLAIN_TEXT),
@@ -341,8 +348,8 @@ impl EnhancedCompletionProvider {
     fn get_enhanced_snippet_completions(
         &self,
         prefix: &str,
-        content: &str,
-        position: Position,
+        _content: &str,
+        _position: Position,
     ) -> Vec<CompletionItem> {
         let mut completions = Vec::new();
 
@@ -371,21 +378,20 @@ impl EnhancedCompletionProvider {
         ];
 
         for builtin in &builtins {
-            if builtin.starts_with(prefix) && !content.contains(&format!("import {}", builtin)) {
+            if builtin.starts_with(prefix) && !content.contains(&format!("import {builtin}")) {
                 completions.push(CompletionItem {
-                    label: format!("import {}", builtin),
+                    label: format!("import {builtin}"),
                     kind: Some(CompletionItemKind::TEXT),
-                    detail: Some(format!("Import {} from stdlib", builtin)),
+                    detail: Some(format!("Import {builtin} from stdlib")),
                     documentation: Some(lsp_types::Documentation::MarkupContent(MarkupContent {
                         kind: MarkupKind::Markdown,
                         value: format!(
-                            "Add import statement for `{}` from the standard library",
-                            builtin
+                            "Add import statement for `{builtin}` from the standard library"
                         ),
                     })),
-                    sort_text: Some(format!("3_import_{}", builtin)),
+                    sort_text: Some(format!("3_import_{builtin}")),
                     filter_text: Some(builtin.to_string()),
-                    insert_text: Some(format!("import {} from \"stdlib/core\";", builtin)),
+                    insert_text: Some(format!("import {builtin} from \"stdlib/core\";")),
                     insert_text_format: Some(InsertTextFormat::PLAIN_TEXT),
                     text_edit: None,
                     additional_text_edits: None,
@@ -418,7 +424,7 @@ impl EnhancedCompletionProvider {
                     kind: Some(CompletionItemKind::KEYWORD),
                     detail: Some("Function syntax".to_string()),
                     documentation: None,
-                    sort_text: Some(format!("1_func_{}", keyword)),
+                    sort_text: Some(format!("1_func_{keyword}")),
                     filter_text: Some(keyword.to_string()),
                     insert_text: Some(keyword.to_string()),
                     insert_text_format: Some(InsertTextFormat::PLAIN_TEXT),
@@ -451,7 +457,7 @@ impl EnhancedCompletionProvider {
                     kind: Some(CompletionItemKind::KEYWORD),
                     detail: Some("Type syntax".to_string()),
                     documentation: None,
-                    sort_text: Some(format!("1_type_{}", keyword)),
+                    sort_text: Some(format!("1_type_{keyword}")),
                     filter_text: Some(keyword.to_string()),
                     insert_text: Some(keyword.to_string()),
                     insert_text_format: Some(InsertTextFormat::PLAIN_TEXT),
@@ -484,7 +490,7 @@ impl EnhancedCompletionProvider {
                     kind: Some(CompletionItemKind::KEYWORD),
                     detail: Some("Pattern matching syntax".to_string()),
                     documentation: None,
-                    sort_text: Some(format!("1_pattern_{}", keyword)),
+                    sort_text: Some(format!("1_pattern_{keyword}")),
                     filter_text: Some(keyword.to_string()),
                     insert_text: Some(keyword.to_string()),
                     insert_text_format: Some(InsertTextFormat::PLAIN_TEXT),
@@ -517,7 +523,7 @@ impl EnhancedCompletionProvider {
                     kind: Some(CompletionItemKind::KEYWORD),
                     detail: Some("Import syntax".to_string()),
                     documentation: None,
-                    sort_text: Some(format!("1_import_{}", keyword)),
+                    sort_text: Some(format!("1_import_{keyword}")),
                     filter_text: Some(keyword.to_string()),
                     insert_text: Some(keyword.to_string()),
                     insert_text_format: Some(InsertTextFormat::PLAIN_TEXT),

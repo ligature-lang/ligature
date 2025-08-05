@@ -43,12 +43,12 @@ fn main() {
     // Test type checking
     match type_check_program(&program) {
         Ok(()) => println!("✓ Type checking passed"),
-        Err(e) => println!("✗ Type checking failed: {}", e),
+        Err(e) => println!("✗ Type checking failed: {e}"),
     }
 
     // Test evaluation
     match evaluate_program(&program) {
-        Ok(result) => println!("✓ Evaluation succeeded: {:?}", result),
-        Err(e) => println!("✗ Evaluation failed: {}", e),
+        Ok(result) => println!("✓ Evaluation succeeded: {result:?}"),
+        Err(e) => println!("✗ Evaluation failed: {e}"),
     }
 }

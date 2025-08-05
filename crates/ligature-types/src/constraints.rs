@@ -80,7 +80,7 @@ impl ConstraintSolver {
         }
 
         if !self.constraints.is_empty() {
-                          return Err(format!(
+            return Err(format!(
                 "Failed to solve all constraints after {MAX_ITERATIONS} iterations"
             ));
         }
@@ -197,30 +197,30 @@ impl ConstraintSolver {
 
         match (&left.kind, &right.kind) {
             // Same types are subtypes of themselves
-            (TypeKind::Unit, TypeKind::Unit) |
-            (TypeKind::Bool, TypeKind::Bool) |
-            (TypeKind::String, TypeKind::String) |
-            (TypeKind::Integer, TypeKind::Integer) |
-            (TypeKind::Float, TypeKind::Float) => {
-                Ok(())
-            }
+            (TypeKind::Unit, TypeKind::Unit)
+            | (TypeKind::Bool, TypeKind::Bool)
+            | (TypeKind::String, TypeKind::String)
+            | (TypeKind::Integer, TypeKind::Integer)
+            | (TypeKind::Float, TypeKind::Float) => Ok(()),
 
             // Integer is a subtype of Float
-            (TypeKind::Integer, TypeKind::Float) => {
-                Ok(())
-            }
+            (TypeKind::Integer, TypeKind::Float) => Ok(()),
 
             // Type variables
-            (TypeKind::Variable(var), _) => {
-                self.unify_variable(var.clone(), right)
-            }
-            (_, TypeKind::Variable(var)) => {
-                self.unify_variable(var.clone(), left)
-            }
+            (TypeKind::Variable(var), _) => self.unify_variable(var.clone(), right),
+            (_, TypeKind::Variable(var)) => self.unify_variable(var.clone(), left),
 
             // Function types (contravariant in parameter, covariant in return)
-            (TypeKind::Function { parameter: p1, return_type: r1 }, 
-             TypeKind::Function { parameter: p2, return_type: r2 }) => {
+            (
+                TypeKind::Function {
+                    parameter: p1,
+                    return_type: r1,
+                },
+                TypeKind::Function {
+                    parameter: p2,
+                    return_type: r2,
+                },
+            ) => {
                 // Contravariant: parameter type of supertype must be subtype of parameter type of subtype
                 self.add_constraint(Constraint::Subtype(*p2.clone(), *p1.clone()));
                 // Covariant: return type of subtype must be subtype of return type of supertype
@@ -236,7 +236,10 @@ impl ConstraintSolver {
                     for field1 in f1 {
                         if field1.name == field2.name {
                             // Depth subtyping: field types must be in subtype relationship
-                            self.add_constraint(Constraint::Subtype(field1.type_.clone(), field2.type_.clone()));
+                            self.add_constraint(Constraint::Subtype(
+                                field1.type_.clone(),
+                                field2.type_.clone(),
+                            ));
                             found = true;
                             break;
                         }
@@ -245,7 +248,10 @@ impl ConstraintSolver {
                         return Err(format!(
                             "Record subtyping failed: supertype missing required field '{}'. Available fields: [{}]",
                             field2.name,
-                            f1.iter().map(|f| f.name.as_str()).collect::<Vec<_>>().join(", ")
+                            f1.iter()
+                                .map(|f| f.name.as_str())
+                                .collect::<Vec<_>>()
+                                .join(", ")
                         ));
                     }
                 }
@@ -262,7 +268,10 @@ impl ConstraintSolver {
                             // Depth subtyping: variant types must be in subtype relationship
                             match (&variant1.type_, &variant2.type_) {
                                 (Some(t1), Some(t2)) => {
-                                    self.add_constraint(Constraint::Subtype(t1.clone(), t2.clone()));
+                                    self.add_constraint(Constraint::Subtype(
+                                        t1.clone(),
+                                        t2.clone(),
+                                    ));
                                 }
                                 (None, None) => {}
                                 _ => {
@@ -280,7 +289,10 @@ impl ConstraintSolver {
                         return Err(format!(
                             "Union subtyping failed: supertype missing required variant '{}'. Available variants: [{}]",
                             variant1.name,
-                            v2.iter().map(|v| v.name.as_str()).collect::<Vec<_>>().join(", ")
+                            v2.iter()
+                                .map(|v| v.name.as_str())
+                                .collect::<Vec<_>>()
+                                .join(", ")
                         ));
                     }
                 }
@@ -294,13 +306,11 @@ impl ConstraintSolver {
             }
 
             // Incompatible types
-            _ => {
-                Err(format!(
-                    "Subtyping failed: cannot establish subtype relationship between {:?} and {:?}. \
+            _ => Err(format!(
+                "Subtyping failed: cannot establish subtype relationship between {:?} and {:?}. \
                      Consider if these types should be related or if there's a type error in your code.",
-                    left.kind, right.kind
-                ))
-            }
+                left.kind, right.kind
+            )),
         }
     }
 
@@ -334,12 +344,15 @@ impl ConstraintSolver {
         } else {
             Err(format!(
                 "Type {:?} does not implement class {}. Available instances: {}",
-                type_.kind, class, available_instances.join(", ")
+                type_.kind,
+                class,
+                available_instances.join(", ")
             ))
         }
     }
 
     /// Solve a class constraint with context.
+    #[allow(dead_code)]
     fn solve_class_constraint(
         &mut self,
         type_: Type,
@@ -371,15 +384,15 @@ impl ConstraintSolver {
     ) -> Result<(), String> {
         // Find all matching instances
         let mut matching_instances = Vec::new();
-        
+
         if self.check_builtin_instance(&type_, &class) {
             matching_instances.push("built-in".to_string());
         }
-        
+
         if self.check_user_instance(&type_, &class) {
             matching_instances.push("user-defined".to_string());
         }
-        
+
         if self.check_derived_instance(&type_, &class) {
             matching_instances.push("derived".to_string());
         }
@@ -606,7 +619,7 @@ impl ConstraintSolver {
     /// Get available instances for a type class.
     fn get_available_instances(&self, class: &str) -> Vec<String> {
         let mut instances = Vec::new();
-        
+
         // Add built-in instances
         match class {
             "Eq" => {
@@ -618,10 +631,7 @@ impl ConstraintSolver {
                 ]);
             }
             "Ord" => {
-                instances.extend(vec![
-                    "Integer".to_string(),
-                    "String".to_string(),
-                ]);
+                instances.extend(vec!["Integer".to_string(), "String".to_string()]);
             }
             "Show" => {
                 instances.extend(vec![
@@ -632,9 +642,7 @@ impl ConstraintSolver {
                 ]);
             }
             "Num" => {
-                instances.extend(vec![
-                    "Integer".to_string(),
-                ]);
+                instances.extend(vec!["Integer".to_string()]);
             }
             _ => {}
         }

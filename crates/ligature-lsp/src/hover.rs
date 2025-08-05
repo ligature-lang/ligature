@@ -255,7 +255,7 @@ impl HoverProvider {
         let contents = vec![
             MarkedString::LanguageString(lsp_types::LanguageString {
                 language: "ligature".to_string(),
-                value: format!("type {}", type_name),
+                value: format!("type {type_name}"),
             }),
             MarkedString::String(documentation.to_string()),
         ];
@@ -293,7 +293,7 @@ impl HoverProvider {
 
     /// Create hover information for a value declaration.
     fn create_value_hover(&self, value_decl: &ValueDeclaration) -> Hover {
-        let mut contents = vec![];
+        let mut contents = Vec::new();
 
         // Add signature
         let signature = if let Some(ref type_ann) = value_decl.type_annotation {
@@ -312,7 +312,7 @@ impl HoverProvider {
         if value_str.len() < 100 {
             contents.push(MarkedString::LanguageString(lsp_types::LanguageString {
                 language: "ligature".to_string(),
-                value: format!("= {}", value_str),
+                value: format!("= {value_str}"),
             }));
         } else {
             contents.push(MarkedString::String("= <complex expression>".to_string()));
@@ -339,7 +339,7 @@ impl HoverProvider {
 
     /// Create hover information for a type constructor.
     fn create_type_constructor_hover(&self, type_ctor: &TypeConstructor) -> Hover {
-        let mut contents = vec![];
+        let mut contents = Vec::new();
 
         // Add type signature
         let signature = format!("data {}", type_ctor.name);
@@ -390,7 +390,7 @@ impl HoverProvider {
                 body,
             } => {
                 let type_ann = if let Some(ty) = parameter_type {
-                    format!(" : {:?}", ty)
+                    format!(" : {ty:?}")
                 } else {
                     String::new()
                 };
@@ -490,7 +490,7 @@ impl HoverProvider {
     /// Convert a literal to a string representation.
     fn literal_to_string(&self, literal: &ligature_ast::Literal) -> String {
         match literal {
-            ligature_ast::Literal::String(s) => format!("\"{}\"", s),
+            ligature_ast::Literal::String(s) => format!("\"{s}\""),
             ligature_ast::Literal::Integer(i) => i.to_string(),
             ligature_ast::Literal::Float(f) => f.to_string(),
             ligature_ast::Literal::Boolean(b) => b.to_string(),
@@ -585,7 +585,7 @@ impl HoverProvider {
             && line
                 .chars()
                 .nth(start - 1)
-                .map_or(false, |c| c.is_alphanumeric() || c == '_')
+                .is_some_and(|c| c.is_alphanumeric() || c == '_')
         {
             start -= 1;
         }
@@ -596,7 +596,7 @@ impl HoverProvider {
             && line
                 .chars()
                 .nth(end)
-                .map_or(false, |c| c.is_alphanumeric() || c == '_')
+                .is_some_and(|c| c.is_alphanumeric() || c == '_')
         {
             end += 1;
         }

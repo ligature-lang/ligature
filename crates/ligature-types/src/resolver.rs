@@ -8,6 +8,9 @@ use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use toml;
 
+/// Type alias for import path result
+type ImportPathResult = AstResult<(String, Vec<String>)>;
+
 /// Register manifest structure for parsing register.toml files.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct RegisterManifest {
@@ -117,7 +120,7 @@ impl ModuleResolver {
 
     /// Parse an import path to extract register and module names.
     /// Now supports nested module paths like "std.collections.list"
-    fn parse_import_path(&self, path: &str) -> AstResult<(String, Vec<String>)> {
+    fn parse_import_path(&self, path: &str) -> ImportPathResult {
         let parts: Vec<&str> = path.split('.').collect();
         match parts.as_slice() {
             [register_name, module_name] => {
@@ -151,7 +154,11 @@ impl ModuleResolver {
 
     /// Find a nested module within a register.
     /// Recursively traverses the module path to find the target module.
-    fn find_nested_in_register(&self, register_path: &Path, module_path: &[String]) -> AstResult<PathBuf> {
+    fn find_nested_in_register(
+        &self,
+        register_path: &Path,
+        module_path: &[String],
+    ) -> AstResult<PathBuf> {
         if module_path.is_empty() {
             return Err(AstError::ParseError {
                 message: "Empty module path".to_string(),
@@ -166,10 +173,10 @@ impl ModuleResolver {
 
         // Recursive case: find the intermediate module and continue
         let intermediate_module = &module_path[0];
-        
+
         // Find the intermediate module (could be file or directory)
         let intermediate_path = self.find_in_register(register_path, intermediate_module, true)?;
-        
+
         // Check if the intermediate module is a directory (submodule)
         if intermediate_path.is_dir() {
             // Continue searching in the submodule directory
@@ -177,7 +184,9 @@ impl ModuleResolver {
         } else {
             // The intermediate module is a file, not a directory
             Err(AstError::ParseError {
-                message: format!("Module '{intermediate_module}' is not a directory, cannot contain submodules"),
+                message: format!(
+                    "Module '{intermediate_module}' is not a directory, cannot contain submodules"
+                ),
                 span: Span::default(),
             })
         }
@@ -242,7 +251,12 @@ impl ModuleResolver {
     }
 
     /// Find a module within a register.
-    fn find_in_register(&self, register_path: &Path, module_name: &str, for_nested: bool) -> AstResult<PathBuf> {
+    fn find_in_register(
+        &self,
+        register_path: &Path,
+        module_name: &str,
+        for_nested: bool,
+    ) -> AstResult<PathBuf> {
         // Look for register.toml to understand the register structure
         let register_manifest = register_path.join("register.toml");
         if register_manifest.exists() {
@@ -280,8 +294,7 @@ impl ModuleResolver {
 
             // If not found in exports, try common locations
             let common_paths = [
-                register_path
-                    .join(format!("{module_name}.lig")),
+                register_path.join(format!("{module_name}.lig")),
                 register_path.join(format!("{module_name}.lig")),
                 register_path
                     .join("modules")
@@ -299,7 +312,7 @@ impl ModuleResolver {
         if let Ok(entries) = std::fs::read_dir(register_path) {
             for entry in entries.flatten() {
                 let path = entry.path();
-                
+
                 // Check for .lig files
                 if path.is_file() && path.extension().is_some_and(|ext| ext == "lig") {
                     let stem = path.file_stem().unwrap().to_string_lossy();
@@ -307,7 +320,7 @@ impl ModuleResolver {
                         return Ok(path);
                     }
                 }
-                
+
                 // Check for directories (for nested modules)
                 if path.is_dir() {
                     let dir_name = path.file_name().unwrap().to_string_lossy();
@@ -323,7 +336,9 @@ impl ModuleResolver {
                         }
                         // If no mod.lig, this is not a valid module
                         return Err(AstError::ParseError {
-                            message: format!("Directory '{module_name}' does not contain a mod.lig file"),
+                            message: format!(
+                                "Directory '{module_name}' does not contain a mod.lig file"
+                            ),
                             span: Span::default(),
                         });
                     }

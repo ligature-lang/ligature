@@ -86,7 +86,7 @@ tags = ["standard-library", "core"]
 
 Each module within a register follows a standard structure:
 
-```ligature
+```ocaml
 -- core/mod.rs
 module Core
 
@@ -119,7 +119,7 @@ let isSome : Option<T> -> Bool = fun opt ->
 
 The library system extends Ligature's syntax with import statements:
 
-```ligature
+```ocaml
 -- Import entire module
 import stdlib.core
 
@@ -141,7 +141,7 @@ let isValid = validation.validateEmail("test@example.com")
 
 Modules can be declared explicitly:
 
-```ligature
+```ocaml
 module MyModule
 
 -- Module contents
@@ -222,7 +222,7 @@ export { MyType, myFunction }
 
 The type system will be extended to handle module types:
 
-```ligature
+```ocaml
 -- Module type definition
 type Module = {
   name: String,
@@ -493,7 +493,7 @@ The register system must accumulate errors to the maximum extent possible, provi
 
 #### Error Reporting Format
 
-```ligature
+```ocaml
 -- Example: Multiple errors accumulated and reported together
 Error: Multiple issues found in configuration
 
@@ -549,7 +549,7 @@ struct StackFrame {
 
 ##### AST-Stack Mapping
 
-```ligature
+```ocaml
 -- Example: Error with full context mapping
 let validateUserConfig : UserConfig -> Result<UserConfig, ValidationError> = fun config ->
   let emailResult = validateEmail(config.email)  -- Error occurs here
@@ -587,7 +587,7 @@ Error: Validation failed in validateUserConfig
 
 ##### Contextual Suggestions
 
-```ligature
+```ocaml
 -- Example: Smart suggestions based on context
 Error: Type mismatch in validation function
   ├─ Expected: String -> Bool
@@ -605,7 +605,7 @@ Error: Type mismatch in validation function
 
 ### Import Errors
 
-```ligature
+```ocaml
 -- Error: Module not found with context
 import nonexistent.module  -- Error: Module 'nonexistent.module' not found
   ├─ Available modules: ['stdlib.core', 'stdlib.collections', 'stdlib.validation']
@@ -633,7 +633,7 @@ import { PrivateFunction } from stdlib.core
 
 ### Dependency Errors
 
-```ligature
+```ocaml
 -- Error: Circular dependency with full analysis
 -- register.toml: Circular dependency detected: A -> B -> C -> A
   ├─ Dependency cycle:
@@ -766,7 +766,7 @@ Jsonnet, while powerful, has significant weaknesses in error handling that the L
 
 #### Ligature Error Handling
 
-```ligature
+```ocaml
 -- Ligature: Accumulates errors, rich context
 let config = import "config.lig"
 let user = config.users[0]  -- Error: users field not found

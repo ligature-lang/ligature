@@ -1,7 +1,7 @@
 //! Dependency resolution and management.
 
 use crate::registry::Registry;
-use miette::{miette, Result};
+use miette::{Result, miette};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
@@ -23,6 +23,7 @@ pub struct DependencyGraph {
 pub struct DependencyNode {
     pub dependency: Dependency,
     pub resolved: bool,
+    #[allow(dead_code)]
     pub conflicts: Vec<DependencyConflict>,
     pub resolved_version: Option<String>,
     pub registry: Option<Registry>,
@@ -33,14 +34,17 @@ pub struct DependencyConflict {
     pub package: String,
     pub requested_version: String,
     pub resolved_version: String,
+    #[allow(dead_code)]
     pub conflict_type: ConflictType,
 }
 
 #[derive(Debug, Clone)]
 pub enum ConflictType {
+    #[allow(dead_code)]
     VersionMismatch,
     CircularDependency,
     MissingDependency,
+    #[allow(dead_code)]
     IncompatibleVersion,
 }
 
@@ -48,6 +52,7 @@ pub enum ConflictType {
 pub struct ResolutionResult {
     pub resolved_dependencies: HashMap<String, String>,
     pub conflicts: Vec<DependencyConflict>,
+    #[allow(dead_code)]
     pub resolution_order: Vec<String>,
     pub success: bool,
 }
@@ -63,6 +68,7 @@ pub struct Semver {
 }
 
 impl Semver {
+    #[allow(dead_code)]
     pub fn parse(version: &str) -> Result<Self> {
         // Remove leading 'v' if present
         let version = version.trim_start_matches('v');
@@ -110,6 +116,7 @@ impl Semver {
         })
     }
 
+    #[allow(dead_code)]
     pub fn satisfies_constraint(&self, constraint: &str) -> bool {
         if constraint == "latest" {
             return true;
@@ -120,11 +127,9 @@ impl Semver {
         }
 
         // Handle exact version
-        if !constraint
-            .starts_with(|c: char| c == '>' || c == '<' || c == '=' || c == '~' || c == '^')
-        {
+        if !constraint.starts_with(['>', '<', '=', '~', '^']) {
             return self
-                == &Semver::parse(constraint).unwrap_or_else(|_| Semver {
+                == &Semver::parse(constraint).unwrap_or(Semver {
                     major: 0,
                     minor: 0,
                     patch: 0,
@@ -134,38 +139,28 @@ impl Semver {
         }
 
         // Handle version ranges
-        if constraint.starts_with('>') {
-            if constraint.starts_with(">=") {
-                let version = &constraint[2..];
+        if let Some(version) = constraint.strip_prefix('>') {
+            if let Some(version) = constraint.strip_prefix(">=") {
                 if let Ok(req_version) = Semver::parse(version) {
                     return self >= &req_version;
                 }
-            } else {
-                let version = &constraint[1..];
-                if let Ok(req_version) = Semver::parse(version) {
-                    return self > &req_version;
-                }
+            } else if let Ok(req_version) = Semver::parse(version) {
+                return self > &req_version;
             }
-        } else if constraint.starts_with('<') {
-            if constraint.starts_with("<=") {
-                let version = &constraint[2..];
+        } else if let Some(version) = constraint.strip_prefix('<') {
+            if let Some(version) = constraint.strip_prefix("<=") {
                 if let Ok(req_version) = Semver::parse(version) {
                     return self <= &req_version;
                 }
-            } else {
-                let version = &constraint[1..];
-                if let Ok(req_version) = Semver::parse(version) {
-                    return self < &req_version;
-                }
+            } else if let Ok(req_version) = Semver::parse(version) {
+                return self < &req_version;
             }
-        } else if constraint.starts_with('=') {
-            let version = &constraint[1..];
+        } else if let Some(version) = constraint.strip_prefix('=') {
             if let Ok(req_version) = Semver::parse(version) {
                 return self == &req_version;
             }
-        } else if constraint.starts_with('~') {
+        } else if let Some(version) = constraint.strip_prefix('~') {
             // Tilde range: ~1.2.3 means >=1.2.3 and <1.3.0
-            let version = &constraint[1..];
             if let Ok(req_version) = Semver::parse(version) {
                 let min_version = req_version.clone();
                 let max_version = Semver {
@@ -177,9 +172,8 @@ impl Semver {
                 };
                 return self >= &min_version && self < &max_version;
             }
-        } else if constraint.starts_with('^') {
+        } else if let Some(version) = constraint.strip_prefix('^') {
             // Caret range: ^1.2.3 means >=1.2.3 and <2.0.0
-            let version = &constraint[1..];
             if let Ok(req_version) = Semver::parse(version) {
                 let min_version = req_version.clone();
                 let max_version = Semver {
@@ -206,11 +200,13 @@ impl Dependency {
         }
     }
 
+    #[allow(dead_code)]
     pub fn with_registry(mut self, registry: String) -> Self {
         self.registry = Some(registry);
         self
     }
 
+    #[allow(dead_code)]
     pub fn parse(spec: &str) -> Result<Self> {
         // Parse dependency specification like "package@version" or "package"
         let parts: Vec<&str> = spec.split('@').collect();
@@ -222,14 +218,21 @@ impl Dependency {
         }
     }
 
-    pub fn to_string(&self) -> String {
+    // Remove the inherent to_string method as it shadows Display
+}
+
+impl std::fmt::Display for Dependency {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let Some(registry) = &self.registry {
-            format!("{}@{} from {}", self.name, self.version, registry)
+            write!(f, "{}@{} from {}", self.name, self.version, registry)
         } else {
-            format!("{}@{}", self.name, self.version)
+            write!(f, "{}@{}", self.name, self.version)
         }
     }
+}
 
+impl Dependency {
+    #[allow(dead_code)]
     pub fn satisfies_version(&self, version: &str) -> bool {
         // Use proper semver comparison
         if self.version == "latest" {
@@ -237,7 +240,7 @@ impl Dependency {
         }
 
         if let Ok(req_semver) = Semver::parse(&self.version) {
-            if let Ok(actual_semver) = Semver::parse(version) {
+            if let Ok(_actual_semver) = Semver::parse(version) {
                 return req_semver.satisfies_constraint(&self.version);
             }
         }
@@ -254,7 +257,15 @@ impl DependencyGraph {
             edges: HashMap::new(),
         }
     }
+}
 
+impl Default for DependencyGraph {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl DependencyGraph {
     pub fn add_dependency(&mut self, dependency: Dependency) {
         let node_name = dependency.name.clone();
         let node = DependencyNode {
@@ -269,6 +280,7 @@ impl DependencyGraph {
         self.edges.insert(node_name, Vec::new());
     }
 
+    #[allow(dead_code)]
     pub fn add_dependency_edge(&mut self, from: &str, to: &str) {
         if let Some(edges) = self.edges.get_mut(from) {
             if !edges.contains(&to.to_string()) {
@@ -302,9 +314,10 @@ impl DependencyGraph {
                 };
 
                 // Validate that the package exists
-                if let Err(_) = registry
+                if (registry
                     .validate_package(&node.dependency.name, &version_to_resolve)
-                    .await
+                    .await)
+                    .is_err()
                 {
                     success = false;
                     conflicts.push(DependencyConflict {
@@ -329,16 +342,18 @@ impl DependencyGraph {
 
         let node_names: Vec<String> = self.nodes.keys().cloned().collect();
         for node_name in node_names {
-            if !visited.contains(&node_name) {
-                if let Err(_) = self.visit_node(&node_name, &mut visited, &mut visiting) {
-                    success = false;
-                    conflicts.push(DependencyConflict {
-                        package: node_name.clone(),
-                        requested_version: "circular".to_string(),
-                        resolved_version: "circular".to_string(),
-                        conflict_type: ConflictType::CircularDependency,
-                    });
-                }
+            if !visited.contains(&node_name)
+                && self
+                    .visit_node(&node_name, &mut visited, &mut visiting)
+                    .is_err()
+            {
+                success = false;
+                conflicts.push(DependencyConflict {
+                    package: node_name.clone(),
+                    requested_version: "circular".to_string(),
+                    resolved_version: "circular".to_string(),
+                    conflict_type: ConflictType::CircularDependency,
+                });
             }
         }
 
@@ -350,6 +365,7 @@ impl DependencyGraph {
         })
     }
 
+    #[allow(dead_code)]
     async fn resolve_single_dependency_simple(
         &self,
         _node_name: &str,
@@ -361,6 +377,7 @@ impl DependencyGraph {
         Ok(())
     }
 
+    #[allow(dead_code)]
     async fn resolve_single_dependency(
         &self,
         _node_name: &str,
@@ -386,9 +403,10 @@ impl DependencyGraph {
         };
 
         // Validate that the package exists
-        if let Err(_) = registry
+        if (registry
             .validate_package(&node.dependency.name, &version_to_resolve)
-            .await
+            .await)
+            .is_err()
         {
             return Err(miette!(
                 "Package {}@{} not found in registry",
@@ -431,6 +449,7 @@ impl DependencyGraph {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub fn detect_conflicts(&self) -> Vec<DependencyConflict> {
         let mut conflicts = Vec::new();
 
@@ -468,6 +487,7 @@ impl DependencyGraph {
         conflicts
     }
 
+    #[allow(dead_code)]
     pub fn get_resolution_order(&self) -> Vec<String> {
         let mut order = Vec::new();
         let mut visited = HashSet::new();
@@ -482,6 +502,7 @@ impl DependencyGraph {
         order
     }
 
+    #[allow(dead_code)]
     fn topological_sort(
         &self,
         node_name: &str,
@@ -503,6 +524,7 @@ impl DependencyGraph {
         order.push(node_name.to_string());
     }
 
+    #[allow(dead_code)]
     pub fn validate(&self) -> Result<()> {
         // Check for circular dependencies
         let mut visited = HashSet::new();
@@ -510,9 +532,7 @@ impl DependencyGraph {
 
         for node_name in self.nodes.keys() {
             if !visited.contains(node_name) {
-                if let Err(e) = self.visit_node(node_name, &mut visited, &mut visiting) {
-                    return Err(e);
-                }
+                self.visit_node(node_name, &mut visited, &mut visiting)?;
             }
         }
 
@@ -526,6 +546,7 @@ impl DependencyGraph {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub fn add_transitive_dependencies(&mut self, _registry: &Registry) -> Result<()> {
         // This would add dependencies of dependencies
         // For now, just return Ok() as this is a placeholder
@@ -533,6 +554,7 @@ impl DependencyGraph {
     }
 }
 
+#[allow(dead_code)]
 pub fn parse_dependencies(dependencies: &HashMap<String, String>) -> Result<Vec<Dependency>> {
     let mut result = Vec::new();
 
@@ -575,16 +597,16 @@ pub async fn install_dependencies(graph: &DependencyGraph, install_path: &Path) 
 
     for (node_name, node) in &graph.nodes {
         if let Some(version) = &node.resolved_version {
-            println!("Installing {}@{}...", node_name, version);
+            println!("Installing {node_name}@{version}...");
 
             // Download the package
             let cached_file = registry.download_package_cached(node_name, version).await?;
 
             // Extract to install path
-            let package_install_path = install_path.join(format!("{}-{}", node_name, version));
+            let package_install_path = install_path.join(format!("{node_name}-{version}"));
             extract_package(&cached_file, &package_install_path).await?;
 
-            println!("✓ Installed {}@{}", node_name, version);
+            println!("✓ Installed {node_name}@{version}");
         }
     }
 

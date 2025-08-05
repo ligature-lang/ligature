@@ -5,7 +5,7 @@ use std::fs;
 use std::path::Path;
 use tracing::{error, info, warn};
 
-use crate::config::ConfigManager;
+use crate::config::{CacophonyXdgConfig, ConfigManager};
 use crate::error::Result;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -145,7 +145,9 @@ impl Commands {
         println!("DEBUG: CLI execute called");
         // Load configuration using XDG
         println!("DEBUG: Creating ConfigManager with XDG");
-        let config_manager = ConfigManager::with_xdg().await?;
+        let xdg_config = CacophonyXdgConfig::new("cacophony".to_string());
+        let config_path = xdg_config.config_dir()?.join("config.toml");
+        let config_manager = ConfigManager::new(config_path)?.with_xdg_config(xdg_config);
         println!("DEBUG: ConfigManager created successfully");
 
         match self {
@@ -193,13 +195,10 @@ impl Commands {
                 dry_run,
                 force,
             } => {
-                info!(
-                    "Deploying collection '{}' to environment '{}'",
-                    collection, environment
-                );
+                info!("Deploying collection '{collection}' to environment '{environment}'",);
 
                 // Validate the configuration first
-                let validation_result = config_manager.validate()?;
+                let validation_result = config_manager.validate();
                 if !validation_result.errors.is_empty() {
                     error!("Configuration validation failed:");
                     for err in &validation_result.errors {
@@ -211,49 +210,44 @@ impl Commands {
                 }
 
                 // Check if collection exists
-                let config = config_manager.get_config();
-                let collection_config = config.collections.get(&collection).ok_or_else(|| {
-                    crate::error::CacophonyError::Collection(format!(
-                        "Collection '{}' not found",
-                        collection
-                    ))
-                })?;
+                let collection_config = config_manager
+                    .get_collection_config(&collection)
+                    .ok_or_else(|| {
+                        crate::error::CacophonyError::Collection(format!(
+                            "Collection '{collection}' not found"
+                        ))
+                    })?;
 
                 // Check if environment exists
-                let env_config = config.environments.get(&environment).ok_or_else(|| {
-                    crate::error::CacophonyError::Environment(format!(
-                        "Environment '{}' not found",
-                        environment
-                    ))
-                })?;
+                let env_config = config_manager
+                    .get_environment_config(&environment)
+                    .ok_or_else(|| {
+                        crate::error::CacophonyError::Environment(format!(
+                            "Environment '{environment}' not found"
+                        ))
+                    })?;
 
                 // Check if collection supports this environment
                 if !collection_config.environments.contains(&environment) {
                     return Err(crate::error::CacophonyError::Config(format!(
-                        "Collection '{}' does not support environment '{}'",
-                        collection, environment
+                        "Collection '{collection}' does not support environment '{environment}'"
                     )));
                 }
 
                 // Check dependencies
                 for dep in &collection_config.dependencies {
-                    if dep != "none" && !config.collections.contains_key(dep) {
+                    if dep != "none" && config_manager.get_collection_config(dep).is_none() {
                         return Err(crate::error::CacophonyError::Config(format!(
-                            "Collection '{}' depends on '{}' which is not defined",
-                            collection, dep
+                            "Collection '{collection}' depends on '{dep}' which is not defined"
                         )));
                     }
                 }
 
-                info!(
-                    "✅ Collection '{}' validated for deployment to '{}'",
-                    collection, environment
-                );
+                info!("✅ Collection '{collection}' validated for deployment to '{environment}'",);
 
                 if dry_run {
                     info!(
-                        "🔍 DRY RUN: Would deploy collection '{}' to environment '{}'",
-                        collection, environment
+                        "🔍 DRY RUN: Would deploy collection '{collection}' to environment '{environment}'",
                     );
                     info!(
                         "   Collection: {}",
@@ -277,19 +271,20 @@ impl Commands {
 
                 // Execute deployment operations
                 info!(
-                    "🚀 Starting deployment of collection '{}' to environment '{}'",
-                    collection, environment
+                    "🚀 Starting deployment of collection '{collection}' to environment '{environment}'",
                 );
 
                 for operation_name in &collection_config.operations {
-                    if let Some(operation_config) = config.operations.get(operation_name) {
+                    if let Some(operation_config) =
+                        config_manager.get_operation_config(operation_name)
+                    {
                         info!("  📋 Executing operation: {}", operation_name);
 
                         // Check if operation script exists
                         if let Some(script) = &operation_config.script {
                             let script_path = Path::new(script);
                             if !script_path.exists() {
-                                warn!("  ⚠️  Operation script '{}' not found, skipping", script);
+                                warn!("  ⚠️  Operation script '{script}' not found, skipping");
                                 continue;
                             }
 
@@ -306,8 +301,7 @@ impl Commands {
                                 Ok(output) => {
                                     if output.status.success() {
                                         info!(
-                                            "  ✅ Operation '{}' completed successfully",
-                                            operation_name
+                                            "  ✅ Operation '{operation_name}' completed successfully",
                                         );
                                         if !output.stdout.is_empty() {
                                             info!(
@@ -316,7 +310,7 @@ impl Commands {
                                             );
                                         }
                                     } else {
-                                        error!("  ❌ Operation '{}' failed", operation_name);
+                                        error!("  ❌ Operation '{operation_name}' failed");
                                         if !output.stderr.is_empty() {
                                             error!(
                                                 "  📄 Error: {}",
@@ -325,21 +319,20 @@ impl Commands {
                                         }
                                         if !force {
                                             return Err(crate::error::CacophonyError::Operation(
-                                                format!("Operation '{}' failed", operation_name),
+                                                format!("Operation '{operation_name}' failed"),
                                             ));
                                         }
                                     }
                                 }
                                 Err(e) => {
                                     error!(
-                                        "  ❌ Failed to execute operation '{}': {}",
-                                        operation_name, e
+                                        "  ❌ Failed to execute operation '{operation_name}': {}",
+                                        e
                                     );
                                     if !force {
                                         return Err(crate::error::CacophonyError::Operation(
                                             format!(
-                                                "Failed to execute operation '{}': {}",
-                                                operation_name, e
+                                                "Failed to execute operation '{operation_name}': {e}"
                                             ),
                                         ));
                                     }
@@ -347,21 +340,16 @@ impl Commands {
                             }
                         } else {
                             warn!(
-                                "  ⚠️  Operation '{}' has no script defined, skipping",
-                                operation_name
+                                "  ⚠️  Operation '{operation_name}' has no script defined, skipping",
                             );
                         }
                     } else {
-                        warn!(
-                            "  ⚠️  Operation '{}' not defined in configuration",
-                            operation_name
-                        );
+                        warn!("  ⚠️  Operation '{operation_name}' not defined in configuration",);
                     }
                 }
 
                 info!(
-                    "✅ Deployment of collection '{}' to environment '{}' completed",
-                    collection, environment
+                    "✅ Deployment of collection '{collection}' to environment '{environment}' completed",
                 );
                 Ok(())
             }
@@ -374,7 +362,7 @@ impl Commands {
                 info!("Validating configuration");
 
                 // Use the existing validate method from ConfigManager
-                let validation_result = config_manager.validate()?;
+                let validation_result = config_manager.validate();
 
                 let mut errors = validation_result.errors;
                 let mut warnings = validation_result.warnings;
@@ -384,20 +372,20 @@ impl Commands {
 
                 // Filter by specific collection if provided
                 if let Some(coll_name) = collection {
-                    if !config.collections.contains_key(&coll_name) {
-                        errors.push(format!("Collection '{}' not found", coll_name));
+                    if config_manager.get_collection_config(&coll_name).is_none() {
+                        errors.push(format!("Collection '{coll_name}' not found"));
                     } else {
-                        info!("Validating collection: {}", coll_name);
+                        info!("Validating collection: {coll_name}");
                         // Collection-specific validation could be added here
                     }
                 }
 
                 // Filter by specific environment if provided
                 if let Some(env_name) = environment {
-                    if !config.environments.contains_key(&env_name) {
-                        errors.push(format!("Environment '{}' not found", env_name));
+                    if config_manager.get_environment_config(&env_name).is_none() {
+                        errors.push(format!("Environment '{env_name}' not found"));
                     } else {
-                        info!("Validating environment: {}", env_name);
+                        info!("Validating environment: {env_name}");
                         // Environment-specific validation could be added here
                     }
                 }
@@ -412,8 +400,7 @@ impl Commands {
                         for var in &required_vars {
                             if !env_config.variables.contains_key(*var) {
                                 warnings.push(format!(
-                                    "Environment '{}' missing recommended variable: {}",
-                                    env_name, var
+                                    "Environment '{env_name}' missing recommended variable: {var}"
                                 ));
                             }
                         }
@@ -424,8 +411,7 @@ impl Commands {
                         for op in &coll_config.operations {
                             if !config.operations.contains_key(op) {
                                 warnings.push(format!(
-                                    "Collection '{}' references undefined operation: {}",
-                                    coll_name, op
+                                    "Collection '{coll_name}' references undefined operation: {op}"
                                 ));
                             }
                         }
@@ -437,8 +423,7 @@ impl Commands {
                             let script_file = std::env::current_dir()?.join(script_path);
                             if !script_file.exists() {
                                 warnings.push(format!(
-                                    "Operation '{}' script not found: {}",
-                                    op_name, script_path
+                                    "Operation '{op_name}' script not found: {script_path}"
                                 ));
                             }
                         }
@@ -489,10 +474,7 @@ impl Commands {
                 to,
                 output,
             } => {
-                info!(
-                    "Showing differences for collection '{}' from '{}' to '{}'",
-                    collection, from, to
-                );
+                info!("Showing differences for collection '{collection}' from '{from}' to '{to}'",);
 
                 // Get the configuration
                 let config = config_manager.get_config();
@@ -500,38 +482,33 @@ impl Commands {
                 // Check if collection exists
                 let collection_config = config.collections.get(&collection).ok_or_else(|| {
                     crate::error::CacophonyError::Collection(format!(
-                        "Collection '{}' not found",
-                        collection
+                        "Collection '{collection}' not found"
                     ))
                 })?;
 
                 // Check if environments exist
                 let from_env = config.environments.get(&from).ok_or_else(|| {
                     crate::error::CacophonyError::Environment(format!(
-                        "Environment '{}' not found",
-                        from
+                        "Environment '{from}' not found"
                     ))
                 })?;
 
                 let to_env = config.environments.get(&to).ok_or_else(|| {
                     crate::error::CacophonyError::Environment(format!(
-                        "Environment '{}' not found",
-                        to
+                        "Environment '{to}' not found"
                     ))
                 })?;
 
                 // Check if collection supports both environments
                 if !collection_config.environments.contains(&from) {
                     return Err(crate::error::CacophonyError::Config(format!(
-                        "Collection '{}' does not support environment '{}'",
-                        collection, from
+                        "Collection '{collection}' does not support environment '{from}'"
                     )));
                 }
 
                 if !collection_config.environments.contains(&to) {
                     return Err(crate::error::CacophonyError::Config(format!(
-                        "Collection '{}' does not support environment '{}'",
-                        collection, to
+                        "Collection '{collection}' does not support environment '{to}'"
                     )));
                 }
 
@@ -551,16 +528,16 @@ impl Commands {
                 match output.as_str() {
                     "json" => {
                         let json = serde_json::to_string_pretty(&diff_info)
-                            .map_err(|e| crate::error::CacophonyError::Json(e))?;
-                        println!("{}", json);
+                            .map_err(crate::error::CacophonyError::Json)?;
+                        println!("{json}");
                     }
                     "yaml" => {
                         let yaml = serde_yaml::to_string(&diff_info)
                             .map_err(|e| crate::error::CacophonyError::Yaml(e.to_string()))?;
-                        println!("{}", yaml);
+                        println!("{yaml}");
                     }
-                    "text" | _ => {
-                        println!("📊 Environment Diff for Collection: {}", collection);
+                    "text" => {
+                        println!("📊 Environment Diff for Collection: {collection}");
                         println!(
                             "   From: {} ({})",
                             from,
@@ -585,16 +562,16 @@ impl Commands {
 
                             match (from_val, to_val) {
                                 (Some(f), Some(t)) if f == t => {
-                                    println!("   {}: {} (unchanged)", key, f);
+                                    println!("   {key}: {f} (unchanged)");
                                 }
                                 (Some(f), Some(t)) => {
-                                    println!("   {}: {} → {}", key, f, t);
+                                    println!("   {key}: {f} → {t}");
                                 }
                                 (Some(f), None) => {
-                                    println!("   {}: {} → <removed>", key, f);
+                                    println!("   {key}: {f} → <removed>");
                                 }
                                 (None, Some(t)) => {
-                                    println!("   {}: <added> → {}", key, t);
+                                    println!("   {key}: <added> → {t}");
                                 }
                                 (None, None) => unreachable!(),
                             }
@@ -613,13 +590,13 @@ impl Commands {
 
                             match (from_has, to_has) {
                                 (true, true) => {
-                                    println!("   {}: ✓ (unchanged)", plugin);
+                                    println!("   {plugin}: ✓ (unchanged)");
                                 }
                                 (true, false) => {
-                                    println!("   {}: ✓ → ✗ (removed)", plugin);
+                                    println!("   {plugin}: ✓ → ✗ (removed)");
                                 }
                                 (false, true) => {
-                                    println!("   {}: ✗ → ✓ (added)", plugin);
+                                    println!("   {plugin}: ✗ → ✓ (added)");
                                 }
                                 (false, false) => unreachable!(),
                             }
@@ -629,7 +606,81 @@ impl Commands {
                         // Operations
                         println!("⚙️  Operations:");
                         for operation in &collection_config.operations {
-                            println!("   {}", operation);
+                            println!("   {operation}");
+                        }
+                    }
+                    _ => {
+                        // Default to text format for unknown output formats
+                        println!("📊 Environment Diff for Collection: {collection}");
+                        println!(
+                            "   From: {} ({})",
+                            from,
+                            from_env.description.as_deref().unwrap_or("No description")
+                        );
+                        println!(
+                            "   To:   {} ({})",
+                            to,
+                            to_env.description.as_deref().unwrap_or("No description")
+                        );
+                        println!();
+
+                        // Variables diff
+                        println!("🔧 Environment Variables:");
+                        let mut all_keys: std::collections::HashSet<_> =
+                            from_env.variables.keys().collect();
+                        all_keys.extend(to_env.variables.keys());
+
+                        for key in all_keys.iter().sorted() {
+                            let from_val = from_env.variables.get(*key);
+                            let to_val = to_env.variables.get(*key);
+
+                            match (from_val, to_val) {
+                                (Some(f), Some(t)) if f == t => {
+                                    println!("   {key}: {f} (unchanged)");
+                                }
+                                (Some(f), Some(t)) => {
+                                    println!("   {key}: {f} → {t}");
+                                }
+                                (Some(f), None) => {
+                                    println!("   {key}: {f} → <removed>");
+                                }
+                                (None, Some(t)) => {
+                                    println!("   {key}: <added> → {t}");
+                                }
+                                (None, None) => unreachable!(),
+                            }
+                        }
+                        println!();
+
+                        // Plugins diff
+                        println!("🔌 Plugins:");
+                        let mut all_plugins: std::collections::HashSet<_> =
+                            from_env.plugins.iter().collect();
+                        all_plugins.extend(to_env.plugins.iter());
+
+                        for plugin in all_plugins.iter().sorted() {
+                            let from_has = from_env.plugins.contains(plugin);
+                            let to_has = to_env.plugins.contains(plugin);
+
+                            match (from_has, to_has) {
+                                (true, true) => {
+                                    println!("   {plugin}: ✓ (unchanged)");
+                                }
+                                (true, false) => {
+                                    println!("   {plugin}: ✓ → ✗ (removed)");
+                                }
+                                (false, true) => {
+                                    println!("   {plugin}: ✗ → ✓ (added)");
+                                }
+                                (false, false) => unreachable!(),
+                            }
+                        }
+                        println!();
+
+                        // Operations
+                        println!("⚙️  Operations:");
+                        for operation in &collection_config.operations {
+                            println!("   {operation}");
                         }
                     }
                 }
@@ -693,7 +744,7 @@ impl Commands {
                 environment,
                 param,
             } => {
-                info!("Running operation '{}'", operation);
+                info!("Running operation '{operation}'");
 
                 // Get the configuration
                 let config = config_manager.get_config();
@@ -701,8 +752,7 @@ impl Commands {
                 // Check if operation exists
                 let operation_config = config.operations.get(&operation).ok_or_else(|| {
                     crate::error::CacophonyError::Operation(format!(
-                        "Operation '{}' not found",
-                        operation
+                        "Operation '{operation}' not found"
                     ))
                 })?;
 
@@ -712,10 +762,7 @@ impl Commands {
                     if let Some((key, value)) = param_str.split_once('=') {
                         custom_params.insert(key.to_string(), value.to_string());
                     } else {
-                        warn!(
-                            "Invalid parameter format: '{}', expected key=value",
-                            param_str
-                        );
+                        warn!("Invalid parameter format: '{param_str}', expected key=value");
                     }
                 }
 
@@ -723,25 +770,22 @@ impl Commands {
                 if let Some(ref coll_name) = collection {
                     let collection_config = config.collections.get(coll_name).ok_or_else(|| {
                         crate::error::CacophonyError::Collection(format!(
-                            "Collection '{}' not found",
-                            coll_name
+                            "Collection '{coll_name}' not found"
                         ))
                     })?;
 
                     if !collection_config.operations.contains(&operation) {
                         return Err(crate::error::CacophonyError::Operation(format!(
-                            "Collection '{}' does not support operation '{}'",
-                            coll_name, operation
+                            "Collection '{coll_name}' does not support operation '{operation}'"
                         )));
                     }
                 }
 
                 // Validate environment if provided
                 if let Some(ref env_name) = environment {
-                    let env_config = config.environments.get(env_name).ok_or_else(|| {
+                    let _env_config = config.environments.get(env_name).ok_or_else(|| {
                         crate::error::CacophonyError::Environment(format!(
-                            "Environment '{}' not found",
-                            env_name
+                            "Environment '{env_name}' not found"
                         ))
                     })?;
 
@@ -750,14 +794,13 @@ impl Commands {
                         let collection_config = config.collections.get(coll_name).unwrap();
                         if !collection_config.environments.contains(env_name) {
                             return Err(crate::error::CacophonyError::Config(format!(
-                                "Collection '{}' does not support environment '{}'",
-                                coll_name, env_name
+                                "Collection '{coll_name}' does not support environment '{env_name}'"
                             )));
                         }
                     }
                 }
 
-                info!("✅ Operation '{}' validated", operation);
+                info!("✅ Operation '{operation}' validated");
                 info!(
                     "   Description: {}",
                     operation_config
@@ -767,15 +810,15 @@ impl Commands {
                 );
 
                 if let Some(ref coll_name) = collection {
-                    info!("   Collection: {}", coll_name);
+                    info!("   Collection: {coll_name}");
                 }
 
                 if let Some(ref env_name) = environment {
-                    info!("   Environment: {}", env_name);
+                    info!("   Environment: {env_name}");
                 }
 
                 if !custom_params.is_empty() {
-                    info!("   Custom parameters: {:?}", custom_params);
+                    info!("   Custom parameters: {custom_params:?}");
                 }
 
                 // Execute the operation
@@ -783,12 +826,11 @@ impl Commands {
                     let script_path = Path::new(script);
                     if !script_path.exists() {
                         return Err(crate::error::CacophonyError::Operation(format!(
-                            "Operation script '{}' not found",
-                            script
+                            "Operation script '{script}' not found"
                         )));
                     }
 
-                    info!("🚀 Executing operation script: {}", script);
+                    info!("🚀 Executing operation script: {script}");
 
                     // Build command with arguments
                     let mut command = std::process::Command::new("bash");
@@ -804,7 +846,7 @@ impl Commands {
 
                     // Add custom parameters
                     for (key, value) in &custom_params {
-                        command.arg("--param").arg(&format!("{}={}", key, value));
+                        command.arg("--param").arg(format!("{key}={value}"));
                     }
 
                     // Execute the command
@@ -813,34 +855,32 @@ impl Commands {
                     match output {
                         Ok(output) => {
                             if output.status.success() {
-                                info!("✅ Operation '{}' completed successfully", operation);
+                                info!("✅ Operation '{operation}' completed successfully");
                                 if !output.stdout.is_empty() {
                                     info!("📄 Output: {}", String::from_utf8_lossy(&output.stdout));
                                 }
                             } else {
-                                error!("❌ Operation '{}' failed", operation);
+                                error!("❌ Operation '{operation}' failed");
                                 if !output.stderr.is_empty() {
                                     error!("📄 Error: {}", String::from_utf8_lossy(&output.stderr));
                                 }
                                 return Err(crate::error::CacophonyError::Operation(format!(
-                                    "Operation '{}' failed",
-                                    operation
+                                    "Operation '{operation}' failed"
                                 )));
                             }
                         }
                         Err(e) => {
-                            error!("❌ Failed to execute operation '{}': {}", operation, e);
+                            error!("❌ Failed to execute operation '{operation}': {}", e);
                             return Err(crate::error::CacophonyError::Operation(format!(
-                                "Failed to execute operation '{}': {}",
-                                operation, e
+                                "Failed to execute operation '{operation}': {e}"
                             )));
                         }
                     }
                 } else {
-                    warn!("⚠️  Operation '{}' has no script defined", operation);
+                    warn!("⚠️  Operation '{operation}' has no script defined");
                 }
 
-                info!("✅ Operation '{}' completed", operation);
+                info!("✅ Operation '{operation}' completed");
                 Ok(())
             }
 
@@ -859,13 +899,13 @@ impl Commands {
                     config.project.name, config.project.version
                 );
                 if let Some(desc) = &config.project.description {
-                    println!("   Description: {}", desc);
+                    println!("   Description: {desc}");
                 }
                 if let Some(repo) = &config.project.repository {
-                    println!("   Repository: {}", repo);
+                    println!("   Repository: {repo}");
                 }
                 if let Some(license) = &config.project.license {
-                    println!("   License: {}", license);
+                    println!("   License: {license}");
                 }
                 println!();
 
@@ -936,13 +976,13 @@ impl Commands {
 
                     if detailed {
                         if let Some(script) = &op_config.script {
-                            println!("      Script: {}", script);
+                            println!("      Script: {script}");
                         }
                         if let Some(timeout) = op_config.timeout {
-                            println!("      Timeout: {}s", timeout);
+                            println!("      Timeout: {timeout}s");
                         }
                         if let Some(retries) = op_config.retries {
-                            println!("      Retries: {}", retries);
+                            println!("      Retries: {retries}");
                         }
                     }
                 }
@@ -969,12 +1009,11 @@ impl Commands {
                 if let Some(ref env_name) = environment {
                     let env_config = config.environments.get(env_name).ok_or_else(|| {
                         crate::error::CacophonyError::Environment(format!(
-                            "Environment '{}' not found",
-                            env_name
+                            "Environment '{env_name}' not found"
                         ))
                     })?;
 
-                    println!("🎯 Deployment Status for Environment: {}", env_name);
+                    println!("🎯 Deployment Status for Environment: {env_name}");
                     println!(
                         "   Environment: {} ({})",
                         env_name,
@@ -1055,9 +1094,7 @@ impl Commands {
         for env in &environments {
             let env_content = Self::generate_environment_template(env);
             fs::write(
-                project_dir
-                    .join("environments")
-                    .join(format!("{}.lig", env)),
+                project_dir.join("environments").join(format!("{env}.lig")),
                 env_content,
             )?;
         }
@@ -1067,9 +1104,7 @@ impl Commands {
         for coll in &collections {
             let coll_content = Self::generate_collection_template(coll);
             fs::write(
-                project_dir
-                    .join("collections")
-                    .join(format!("{}.lig", coll)),
+                project_dir.join("collections").join(format!("{coll}.lig")),
                 coll_content,
             )?;
         }
@@ -1103,16 +1138,16 @@ impl Commands {
     fn generate_config_template(project_name: &str, template_type: &str) -> String {
         match template_type {
             "terraform" => format!(
-                r#"-- {}.lig
+                r#"-- {project_name}.lig
 -- module Cacophony
 
 -- Project metadata
 let project = {{
-  name = "{}",
+  name = "{project_name}",
   version = "1.0.0",
   description = "Terraform infrastructure with cacophony",
   authors = ["team@example.com"],
-  repository = "https://github.com/example/{}",
+  repository = "https://github.com/example/{project_name}",
   license = "Apache-2.0"
 }};
 
@@ -1207,20 +1242,19 @@ let config = {{ project = project, environments = environments, collections = co
 
 -- Export the configuration
 export config;
-"#,
-                project_name, project_name, project_name
+"#
             ),
             _ => format!(
-                r#"-- {}.lig
+                r#"-- {project_name}.lig
 -- module Cacophony
 
 -- Project metadata
 let project = {{
-  name = "{}",
+  name = "{project_name}",
   version = "1.0.0",
   description = "Basic cacophony project",
   authors = ["team@example.com"],
-  repository = "https://github.com/example/{}",
+  repository = "https://github.com/example/{project_name}",
   license = "Apache-2.0"
 }};
 
@@ -1264,15 +1298,14 @@ let config = {{ project = project, environments = environments, collections = co
 
 -- Export the configuration
 export config;
-"#,
-                project_name, project_name, project_name
+"#
             ),
         }
     }
 
     fn generate_readme_template(project_name: &str) -> String {
         format!(
-            r#"# {}
+            r#"# {project_name}
 
 A Cacophony-managed project for orchestrating Ligature programs.
 
@@ -1312,8 +1345,7 @@ Edit `cacophony.lig` to configure your project's:
 ## Documentation
 
 For more information, see the [Cacophony documentation](https://github.com/fugue-ai/ligature).
-"#,
-            project_name
+"#
         )
     }
 
@@ -1346,12 +1378,12 @@ Thumbs.db
 
     fn generate_environment_template(env_name: &str) -> String {
         format!(
-            r#"-- {}.lig
--- module {}
+            r#"-- {env_name}.lig
+-- module {env_name}
 
 let overrides = {{
   variables = {{
-    "ENV" = "{}"
+    "ENV" = "{env_name}"
   }},
   
   collections = {{
@@ -1366,18 +1398,17 @@ let overrides = {{
 }};
 
 export overrides;
-"#,
-            env_name, env_name, env_name
+"#
         )
     }
 
     fn generate_collection_template(coll_name: &str) -> String {
         format!(
-            r#"-- {}.lig
--- module {}
+            r#"-- {coll_name}.lig
+-- module {coll_name}
 
 let config = {{
-  name = "{}",
+  name = "{coll_name}",
   type = "service",
   
   deploy = {{
@@ -1400,8 +1431,7 @@ let config = {{
 }};
 
 export config;
-"#,
-            coll_name, coll_name, coll_name
+"#
         )
     }
 

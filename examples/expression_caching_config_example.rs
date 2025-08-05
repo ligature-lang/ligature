@@ -234,7 +234,7 @@ fn example_performance_focused() {
     let stats = evaluator.cache_stats();
     
     println!("\nPerformance Test Results:");
-    println!("  Total Time: {:?}", duration);
+    println!("  Total Time: {duration:?}");
     println!("  Evaluations per second: {:.0}", 1000.0 / duration.as_secs_f64());
     println!("  Cache Hits: {}", stats.hits);
     println!("  Cache Misses: {}", stats.misses);
@@ -267,7 +267,7 @@ async fn example_configuration_persistence() {
     
     // Save configuration to file
     match evaluator.save_config(ConfigFormat::Toml).await {
-        Ok(path) => println!("Configuration saved to: {:?}", path),
+        Ok(path) => println!("Configuration saved to: {path:?}"),
         Err(e) => println!("Failed to save configuration: {}", e),
     }
     

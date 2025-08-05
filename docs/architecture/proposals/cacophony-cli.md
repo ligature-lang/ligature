@@ -84,7 +84,7 @@ enum Commands {
         #[arg(short, long)]
         template: Option<String>,
     },
-    
+
     /// Deploy a collection to an environment
     Deploy {
         #[arg(short, long)]
@@ -94,7 +94,7 @@ enum Commands {
         #[arg(short, long)]
         dry_run: bool,
     },
-    
+
     /// Validate configurations
     Validate {
         #[arg(short, long)]
@@ -102,7 +102,7 @@ enum Commands {
         #[arg(short, long)]
         environment: Option<String>,
     },
-    
+
     /// Show differences between environments
     Diff {
         #[arg(short, long)]
@@ -112,7 +112,7 @@ enum Commands {
         #[arg(short, long)]
         to: String,
     },
-    
+
     /// List available collections and environments
     List {
         #[arg(short, long)]
@@ -120,7 +120,7 @@ enum Commands {
         #[arg(short, long)]
         environments: bool,
     },
-    
+
     /// Run custom operations
     Run {
         #[arg(short, long)]
@@ -190,11 +190,11 @@ impl Environment {
         // Load environment-specific Ligature files
         // Resolve variables and plugins
     }
-    
+
     pub fn resolve_variables(&self, template: &str) -> Result<String> {
         // Resolve variables in templates
     }
-    
+
     pub fn get_plugin(&self, name: &str) -> Option<&Box<dyn Plugin>> {
         // Get plugin by name
     }
@@ -218,15 +218,15 @@ impl Collection {
         // Load collection Ligature files
         // Resolve dependencies
     }
-    
+
     pub fn validate(&self, environment: &Environment) -> Result<ValidationResult> {
         // Validate collection against environment
     }
-    
+
     pub fn deploy(&self, environment: &Environment) -> Result<DeployResult> {
         // Deploy collection to environment
     }
-    
+
     pub fn diff(&self, from_env: &Environment, to_env: &Environment) -> Result<DiffResult> {
         // Generate diff between environments
     }
@@ -278,7 +278,7 @@ pub struct DockerPlugin;
 
 Each cacophony project includes a main manifest file:
 
-```ligature
+```ocaml
 -- cacophony.lig
 module Cacophony
 
@@ -302,7 +302,7 @@ let environments = {
     },
     plugins = ["docker", "kubernetes"]
   },
-  
+
   staging = {
     name = "staging",
     description = "Staging environment",
@@ -313,7 +313,7 @@ let environments = {
     },
     plugins = ["kubernetes", "terraform"]
   },
-  
+
   prod = {
     name = "production",
     description = "Production environment",
@@ -335,7 +335,7 @@ let collections = {
     operations = ["deploy", "validate", "test"],
     environments = ["dev", "staging", "prod"]
   },
-  
+
   backend = {
     name = "backend",
     description = "Backend API service",
@@ -343,7 +343,7 @@ let collections = {
     operations = ["deploy", "validate", "test", "migrate"],
     environments = ["dev", "staging", "prod"]
   },
-  
+
   database = {
     name = "database",
     description = "Database configuration and migrations",
@@ -364,7 +364,7 @@ let operations = {
       "retries" = 3
     }
   },
-  
+
   test = {
     name = "test",
     description = "Run integration tests",
@@ -384,7 +384,7 @@ export { project, environments, collections, operations }
 
 Each environment can have its own configuration file:
 
-```ligature
+```ocaml
 -- environments/dev.lig
 module Dev
 
@@ -393,7 +393,7 @@ let overrides = {
     "DEBUG" = true,
     "CACHE_TTL" = 60
   },
-  
+
   collections = {
     frontend = {
       replicas = 1,
@@ -402,7 +402,7 @@ let overrides = {
         memory = "128Mi"
       }
     },
-    
+
     backend = {
       replicas = 1,
       resources = {
@@ -420,33 +420,33 @@ export { overrides }
 
 Each collection defines its specific configuration:
 
-```ligature
+```ocaml
 -- collections/frontend.lig
 module Frontend
 
 let config = {
   name = "frontend",
   type = "web",
-  
+
   build = {
     dockerfile = "Dockerfile",
     context = ".",
     target = "production"
   },
-  
+
   deploy = {
     replicas = 2,
     resources = {
       cpu = "500m",
       memory = "512Mi"
     },
-    
+
     ports = [{
       container = 80,
       service = 8080,
       protocol = "http"
     }],
-    
+
     health_check = {
       path = "/health",
       port = 80,
@@ -454,7 +454,7 @@ let config = {
       period = 10
     }
   },
-  
+
   environment = {
     "NODE_ENV" = "production",
     "API_URL" = "${API_BASE_URL}",
@@ -516,7 +516,7 @@ pub struct KubernetesPlugin {
 
 impl Plugin for KubernetesPlugin {
     fn name(&self) -> &str { "kubernetes" }
-    
+
     fn operations(&self) -> Vec<Box<dyn Operation>> {
         vec![
             Box::new(K8sDeployOperation),
@@ -536,7 +536,7 @@ pub struct TerraformPlugin {
 
 impl Plugin for TerraformPlugin {
     fn name(&self) -> &str { "terraform" }
-    
+
     fn operations(&self) -> Vec<Box<dyn Operation>> {
         vec![
             Box::new(TerraformPlanOperation),
@@ -558,7 +558,7 @@ pub struct CustomPlugin {
 
 impl Plugin for CustomPlugin {
     fn name(&self) -> &str { &self.name }
-    
+
     fn operations(&self) -> Vec<Box<dyn Operation>> {
         self.operations.clone()
     }
@@ -572,7 +572,7 @@ pub struct CustomOperation {
 
 impl Operation for CustomOperation {
     fn name(&self) -> &str { &self.name }
-    
+
     fn execute(&self, collection: &Collection, environment: &Environment) -> Result<OperationResult> {
         // Execute custom script with collection and environment context
         let script = environment.resolve_variables(&self.script)?;
@@ -586,11 +586,13 @@ impl Operation for CustomOperation {
 ### Phase 1: Core Infrastructure (Weeks 1-4)
 
 1. **CLI Framework Setup**
+
    - Set up Rust project with clap for CLI
    - Implement basic command structure
    - Add configuration loading and validation
 
 2. **Environment Management**
+
    - Implement environment loading from Ligature files
    - Add variable resolution system
    - Create environment validation
@@ -603,11 +605,13 @@ impl Operation for CustomOperation {
 ### Phase 2: Operation System (Weeks 5-8)
 
 1. **Operation Framework**
+
    - Implement operation trait and basic operations
    - Add operation discovery and execution
    - Create operation validation and error handling
 
 2. **Plugin System**
+
    - Implement plugin trait and loading mechanism
    - Add built-in plugins (Kubernetes, Terraform)
    - Create plugin configuration and management
@@ -620,11 +624,13 @@ impl Operation for CustomOperation {
 ### Phase 3: Advanced Features (Weeks 9-12)
 
 1. **Advanced Operations**
+
    - Implement diff generation between environments
    - Add dry-run capabilities
    - Create rollback and recovery operations
 
 2. **Custom Operations**
+
    - Implement script-based custom operations
    - Add parameter passing and validation
    - Create operation composition and chaining
@@ -637,11 +643,13 @@ impl Operation for CustomOperation {
 ### Phase 4: Ecosystem and Tooling (Weeks 13-16)
 
 1. **Templates and Examples**
+
    - Create project templates for common use cases
    - Add comprehensive examples and documentation
    - Implement template generation and customization
 
 2. **IDE Integration**
+
    - Add LSP support for cacophony manifests
    - Implement IntelliSense and autocompletion
    - Create debugging and troubleshooting tools
@@ -656,11 +664,13 @@ impl Operation for CustomOperation {
 ### Tanka
 
 **Similarities:**
+
 - Declarative configuration management
 - Environment-based deployment
 - Kubernetes integration
 
 **Differences:**
+
 - **Purpose**: Tanka is Kubernetes-specific, cacophony is purpose-agnostic
 - **Language**: Tanka uses Jsonnet, cacophony uses Ligature
 - **Type Safety**: Cacophony provides stronger type safety and error handling
@@ -669,11 +679,13 @@ impl Operation for CustomOperation {
 ### Helm
 
 **Similarities:**
+
 - Template-based configuration
 - Environment variable substitution
 - Release management
 
 **Differences:**
+
 - **Scope**: Helm is Kubernetes-only, cacophony supports multiple platforms
 - **Language**: Helm uses Go templates, cacophony uses Ligature
 - **Type Safety**: Cacophony provides compile-time type checking
@@ -682,11 +694,13 @@ impl Operation for CustomOperation {
 ### Terraform
 
 **Similarities:**
+
 - Declarative infrastructure management
 - State management
 - Environment separation
 
 **Differences:**
+
 - **Focus**: Terraform is infrastructure-focused, cacophony is application-focused
 - **Language**: Terraform uses HCL, cacophony uses Ligature
 - **Type System**: Cacophony provides stronger type safety and validation
@@ -695,31 +709,37 @@ impl Operation for CustomOperation {
 ## Benefits and Advantages
 
 ### 1. **Type Safety and Correctness**
+
 - Compile-time validation of configurations
 - Type-safe environment variable resolution
 - Error accumulation and comprehensive diagnostics
 
 ### 2. **Purpose-Agnostic Design**
+
 - Not tied to any specific domain or platform
 - Flexible plugin system for custom integrations
 - Reusable across different use cases
 
 ### 3. **Register-Based Architecture**
+
 - Leverages Ligature's register system for dependency management
 - Consistent with Ligature's design philosophy
 - Better code organization and reusability
 
 ### 4. **Environment Management**
+
 - Strong separation between environments
 - Environment-specific overrides and configurations
 - Safe promotion between environments
 
 ### 5. **Extensible Operation System**
+
 - Custom operations through scripts and plugins
 - Composable and chainable operations
 - Rich plugin ecosystem
 
 ### 6. **Developer Experience**
+
 - Rich error messages and diagnostics
 - IDE integration with LSP support
 - Comprehensive documentation and examples
@@ -732,4 +752,4 @@ The register-based architecture ensures consistency with Ligature's design philo
 
 The implementation plan is structured to deliver value incrementally, starting with core infrastructure and building up to a comprehensive orchestration platform. The focus on type safety, error handling, and developer experience will make cacophony a compelling alternative to existing tools while maintaining compatibility with existing workflows.
 
-By leveraging Ligature's strengths in type safety and error handling, cacophony addresses many of the pain points experienced with existing configuration management tools while providing the flexibility needed for modern application deployment scenarios. 
+By leveraging Ligature's strengths in type safety and error handling, cacophony addresses many of the pain points experienced with existing configuration management tools while providing the flexibility needed for modern application deployment scenarios.

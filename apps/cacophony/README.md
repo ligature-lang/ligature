@@ -83,7 +83,7 @@ my-project/
 
 The main configuration file defines your project structure:
 
-```ligature
+```ocaml
 -- cacophony.lig
 module Cacophony
 
@@ -121,7 +121,7 @@ export { project, environments, collections }
 
 Environment-specific configurations can override default values:
 
-```ligature
+```ocaml
 -- environments/dev.lig
 module Dev
 
@@ -149,7 +149,7 @@ export { overrides }
 
 Each collection defines its specific configuration:
 
-```ligature
+```ocaml
 -- collections/frontend.lig
 module Frontend
 
@@ -386,7 +386,7 @@ src/
 
 ## License
 
-This project is licensed under the Apache License, Version 2.0 - see the LICENSE file for details.
+This project is licensed under the Apache License, Version 2.0 - see the [LICENSE](../../LICENSE) file for details.
 
 ## Roadmap
 

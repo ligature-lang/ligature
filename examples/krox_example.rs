@@ -2,8 +2,10 @@
 
 use krox::{Client, ClientBuilder, ExecutionMode};
 
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<()> {
     println!("Krox Example - Ligature Program Execution");
     println!("==========================================");
 
@@ -17,18 +19,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let source = "let x = 42";
             match client.execute_source(source).await {
                 Ok(result) => {
-                    println!("   ✓ Executed program: {}", source);
+                    println!("   ✓ Executed program: {source}");
                     println!("   ✓ Result: {:?}", result.value);
                     println!("   ✓ Duration: {:?}", result.metadata.duration);
                     println!("   ✓ Cached: {}", result.metadata.cached);
                 }
                 Err(e) => {
-                    println!("   ✗ Failed to execute program: {}", e);
+                    println!("   ✗ Failed to execute program: {e}");
                 }
             }
         }
         Err(e) => {
-            println!("   ✗ Failed to create native client: {}", e);
+            println!("   ✗ Failed to create native client: {e}");
             println!("   Note: This is expected if ligature-cli is not installed");
         }
     }
@@ -55,7 +57,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
         Err(e) => {
-            println!("   ✗ Failed to create client with builder: {}", e);
+            println!("   ✗ Failed to create client with builder: {e}");
         }
     }
 
@@ -68,16 +70,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let source = "let y = 100";
             match client.execute_source(source).await {
                 Ok(result) => {
-                    println!("   ✓ Executed program: {}", source);
+                    println!("   ✓ Executed program: {source}");
                     println!("   ✓ Result: {:?}", result.value);
                 }
                 Err(e) => {
-                    println!("   ✗ Failed to execute program: {}", e);
+                    println!("   ✗ Failed to execute program: {e}");
                 }
             }
         }
         Err(e) => {
-            println!("   ✗ In-process execution not available: {}", e);
+            println!("   ✗ In-process execution not available: {e}");
             println!("   Note: This is expected as in-process execution is not yet implemented");
         }
     }

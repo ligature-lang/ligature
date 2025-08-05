@@ -11,7 +11,7 @@ fn main() {
     "#;
     
     let program = parse_program(source).unwrap();
-    println!("Parsed program: {:?}", program);
+    println!("Parsed program: {program:?}");
     
     let mut inference = TypeInference::new();
     
@@ -25,7 +25,7 @@ fn main() {
                 
                 // If this is a union type, bind each variant as a constructor
                 if let TypeKind::Union { variants } = &type_alias.type_.kind {
-                    println!("Found union type with variants: {:?}", variants);
+                    println!("Found union type with variants: {variants:?}");
                     for variant in variants {
                         println!("Binding variant: {}", variant.name);
                         // Create a type constructor for each variant
@@ -39,7 +39,7 @@ fn main() {
                         
                         // Also bind each variant as a value constructor
                         // This allows using variants like `None` or `Some(42)` in expressions
-                        println!("Binding {} as value with type: {:?}", variant.name, type_alias.type_);
+                        println!("Binding {} as value with type: {variant.name, type_alias.type_:?}");
                         inference.bind(variant.name.clone(), type_alias.type_.clone());
                     }
                 }
@@ -51,11 +51,11 @@ fn main() {
     // Now check if None is bound
     println!("Checking if None is bound...");
     match inference.environment.lookup("None") {
-        Some(ty) => println!("None is bound with type: {:?}", ty),
+        Some(ty) => println!("None is bound with type: {ty:?}"),
         None => println!("None is NOT bound!"),
     }
     
     // Try to type check the program
     let result = type_check_program(&program);
-    println!("Type check result: {:?}", result);
+    println!("Type check result: {result:?}");
 } 

@@ -26,7 +26,7 @@ fn main() {
             }
         }
         Err(e) => {
-            println!("Pest if_expression parsing failed: {:?}", e);
+            println!("Pest if_expression parsing failed: {e:?}");
         }
     }
 }

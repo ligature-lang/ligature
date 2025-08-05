@@ -202,17 +202,21 @@ impl TypeChecker {
             .type_annotation
             .as_ref()
             .unwrap_or(&inferred_type);
-        
+
         // Check for binding conflicts
-        match self.environment.bind_with_conflict_check(value_decl.name.clone(), final_type.clone()) {
-            Ok(()) => {},
+        match self
+            .environment
+            .bind_with_conflict_check(value_decl.name.clone(), final_type.clone())
+        {
+            Ok(()) => {}
             Err((name, existing_type, new_type)) => {
                 return Err(TypeError::binding_conflict(
                     name,
                     format!("{existing_type:?}"),
                     format!("{new_type:?}"),
                     value_decl.span,
-                ).into());
+                )
+                .into());
             }
         }
 
@@ -405,15 +409,19 @@ impl TypeChecker {
                             let import_name = item.alias.as_ref().unwrap_or(&item.name);
 
                             // Check for conflicts with existing bindings
-                            match self.environment.bind_with_conflict_check(import_name.clone(), binding_type.clone()) {
-                                Ok(()) => {},
+                            match self
+                                .environment
+                                .bind_with_conflict_check(import_name.clone(), binding_type.clone())
+                            {
+                                Ok(()) => {}
                                 Err((name, existing_type, new_type)) => {
-                                                                    return Err(TypeError::import_binding_conflict(
-                                    name,
-                                    format!("{existing_type:?}"),
-                                    format!("{new_type:?}"),
-                                    import.span,
-                                ).into());
+                                    return Err(TypeError::import_binding_conflict(
+                                        name,
+                                        format!("{existing_type:?}"),
+                                        format!("{new_type:?}"),
+                                        import.span,
+                                    )
+                                    .into());
                                 }
                             }
                         }
@@ -422,15 +430,19 @@ impl TypeChecker {
                     // Import all exported bindings directly
                     for (name, binding_type) in exported_bindings {
                         // Check for conflicts with existing bindings
-                        match self.environment.bind_with_conflict_check(name.clone(), binding_type.clone()) {
-                            Ok(()) => {},
+                        match self
+                            .environment
+                            .bind_with_conflict_check(name.clone(), binding_type.clone())
+                        {
+                            Ok(()) => {}
                             Err((conflict_name, existing_type, new_type)) => {
                                 return Err(TypeError::import_binding_conflict(
                                     conflict_name,
                                     format!("{existing_type:?}"),
                                     format!("{new_type:?}"),
                                     import.span,
-                                ).into());
+                                )
+                                .into());
                             }
                         }
                     }
@@ -464,32 +476,36 @@ impl TypeChecker {
         instance: &ligature_ast::InstanceDeclaration,
     ) -> AstResult<()> {
         // Check for instance conflicts
-        if let Err(conflicting_instances) = self.environment.check_instance_conflicts(
-            &instance.class_name,
-            &instance.type_arguments,
-        ) {
+        if let Err(conflicting_instances) = self
+            .environment
+            .check_instance_conflicts(&instance.class_name, &instance.type_arguments)
+        {
             let conflicting_names: Vec<String> = conflicting_instances
                 .iter()
                 .map(|inst| format!("{inst:?}"))
                 .collect();
-            
+
             return Err(TypeError::type_class_instance_conflict(
                 instance.class_name.clone(),
                 format!("{instance:?}"),
                 conflicting_names,
                 instance.span,
-            ).into());
+            )
+            .into());
         }
 
         // Check for instance overlaps
-        let overlaps = self.environment.check_instance_overlaps(&instance.class_name);
+        let overlaps = self
+            .environment
+            .check_instance_overlaps(&instance.class_name);
         if let Some((type1, type2)) = overlaps.into_iter().next() {
             return Err(TypeError::type_class_overlap(
                 instance.class_name.clone(),
                 type1,
                 type2,
                 instance.span,
-            ).into());
+            )
+            .into());
         }
 
         // Look up the type class to get method signatures
@@ -501,23 +517,26 @@ impl TypeChecker {
                     instance.class_name.clone(),
                     "No instances available".to_string(),
                     instance.span,
-                ).into());
+                )
+                .into());
             }
         };
 
         // Check that all method implementations have the correct types
         for method in &instance.methods {
             let inferred_type = self.infer_expression(&method.implementation)?;
-            
+
             // Find the expected type for this method
-            if let Some(expected_method) = type_class_methods.iter().find(|m| m.name == method.name) {
+            if let Some(expected_method) = type_class_methods.iter().find(|m| m.name == method.name)
+            {
                 if !self.types_equal(&inferred_type, &expected_method.type_)? {
                     return Err(TypeError::type_class_method_mismatch(
                         method.name.clone(),
                         format!("{expected_method:?}"),
                         format!("{inferred_type:?}"),
                         method.span,
-                    ).into());
+                    )
+                    .into());
                 }
             } else {
                 return Err(TypeError::type_class_method_mismatch(
@@ -525,12 +544,14 @@ impl TypeChecker {
                     "method not found in type class".to_string(),
                     format!("{inferred_type:?}"),
                     method.span,
-                ).into());
+                )
+                .into());
             }
         }
 
         // Add the instance to the environment
-        self.environment.bind_instance(instance.class_name.clone(), instance.clone());
+        self.environment
+            .bind_instance(instance.class_name.clone(), instance.clone());
 
         Ok(())
     }
@@ -635,8 +656,9 @@ impl TypeChecker {
                 for variant in variants {
                     if variant.name == name {
                         // Return a function type that takes the payload type and returns the union type
-                                                  let parameter_type = variant
-                              .type_.clone()
+                        let parameter_type = variant
+                            .type_
+                            .clone()
                             .unwrap_or_else(|| Type::unit(Span::default()));
 
                         return Ok(Type::function(
@@ -1184,7 +1206,7 @@ impl TypeChecker {
         depth: usize,
     ) -> AstResult<bool> {
         const MAX_DEPTH: usize = 50; // Prevent infinite recursion
-        
+
         if depth > MAX_DEPTH {
             return Ok(false); // Return false to prevent stack overflow
         }
@@ -1205,7 +1227,9 @@ impl TypeChecker {
                     let t1_opt = substitution.get(var1).cloned();
                     let t2_opt = substitution.get(var2).cloned();
                     match (t1_opt, t2_opt) {
-                        (Some(t1), Some(t2)) => self.types_equal_internal(&t1, &t2, substitution, depth + 1),
+                        (Some(t1), Some(t2)) => {
+                            self.types_equal_internal(&t1, &t2, substitution, depth + 1)
+                        }
                         (Some(t1), None) => {
                             substitution.insert(var2.clone(), t1);
                             Ok(true)
@@ -1268,7 +1292,12 @@ impl TypeChecker {
                     if field1.name != field2.name {
                         return Ok(false);
                     }
-                    if !self.types_equal_internal(&field1.type_, &field2.type_, substitution, depth + 1)? {
+                    if !self.types_equal_internal(
+                        &field1.type_,
+                        &field2.type_,
+                        substitution,
+                        depth + 1,
+                    )? {
                         return Ok(false);
                     }
                 }

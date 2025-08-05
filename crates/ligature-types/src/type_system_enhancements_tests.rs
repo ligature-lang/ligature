@@ -1,6 +1,8 @@
 //! Tests for type system enhancements in the Ligature language.
 
+#[allow(unused_imports)]
 use crate::inference::TypeInference;
+#[allow(unused_imports)]
 use ligature_ast::{Span, Type, TypeKind};
 
 #[test]
@@ -45,7 +47,7 @@ fn test_cycle_detection() {
 
 #[test]
 fn test_nested_module_paths() {
-    let mut inference = TypeInference::new();
+    let inference = TypeInference::new();
 
     // Test simple path
     let (register, module) = inference.parse_import_path("stdlib.core").unwrap();
@@ -69,7 +71,7 @@ fn test_nested_module_paths() {
 
 #[test]
 fn test_register_toml_parsing() {
-    let mut inference = TypeInference::new();
+    let inference = TypeInference::new();
 
     // Create a temporary register.toml file for testing
     let temp_dir = tempfile::tempdir().unwrap();

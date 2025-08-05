@@ -1,7 +1,7 @@
 //! Expression definitions for the Ligature language.
 
-use crate::span::{Span, Spanned};
 use crate::Type;
+use crate::span::{Span, Spanned};
 use serde::{Deserialize, Serialize};
 
 /// A Ligature expression.

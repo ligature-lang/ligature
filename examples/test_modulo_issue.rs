@@ -6,18 +6,18 @@ fn main() -> AstResult<()> {
 
     // Test simple modulo operation
     let source = "let x = 10 % 2;";
-    println!("Testing: {}", source);
+    println!("Testing: {source}");
     match parser.parse_program(source) {
-        Ok(program) => println!("Success: {:?}", program),
-        Err(e) => println!("Error: {:?}", e),
+        Ok(program) => println!("Success: {program:?}"),
+        Err(e) => println!("Error: {e:?}"),
     }
 
     // Test modulo in comparison
     let source2 = "let x = 10 % 2 == 0;";
-    println!("Testing: {}", source2);
+    println!("Testing: {source2}");
     match parser.parse_program(source2) {
-        Ok(program) => println!("Success: {:?}", program),
-        Err(e) => println!("Error: {:?}", e),
+        Ok(program) => println!("Success: {program:?}"),
+        Err(e) => println!("Error: {e:?}"),
     }
 
     // Test modulo in pattern guard
@@ -29,8 +29,8 @@ fn main() -> AstResult<()> {
     "#;
     println!("Testing pattern guard with modulo...");
     match parser.parse_program(source3) {
-        Ok(program) => println!("Success: {:?}", program),
-        Err(e) => println!("Error: {:?}", e),
+        Ok(program) => println!("Success: {program:?}"),
+        Err(e) => println!("Error: {e:?}"),
     }
 
     Ok(())

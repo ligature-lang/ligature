@@ -41,7 +41,7 @@ No, Ligature is specifically designed for configuration management and data vali
 
 Ligature uses Hindley-Milner type inference, which can automatically determine types for most expressions. You can also provide explicit type annotations when needed.
 
-```ligature
+```ocaml
 // Type inference
 let x = 42; // Inferred as Integer
 let add = \x y -> x + y; // Inferred as Integer -> Integer -> Integer
@@ -54,7 +54,7 @@ let multiply: Integer -> Integer -> Integer = \x y -> x * y;
 
 Union types allow you to represent data that can be one of several variants:
 
-```ligature
+```ocaml
 type Option = Some a | None;
 type Result = Success a | Error String;
 
@@ -67,7 +67,7 @@ let safe_divide = \x y -> match y of
 
 You can define custom types using type aliases and union types:
 
-```ligature
+```ocaml
 // Type alias
 type UserId = Integer;
 type Email = String;
@@ -87,7 +87,7 @@ type UserStatus = Active | Inactive | Suspended;
 
 Records have named fields, while tuples have positional fields:
 
-```ligature
+```ocaml
 // Record
 let user = {
     name = "Alice",
@@ -104,7 +104,7 @@ let point = (10, 20);
 
 Pattern matching allows you to destructure data and handle different cases:
 
-```ligature
+```ocaml
 let classify_number = \n -> match n of
     x when x < 0 => "negative",
     x when x == 0 => "zero",
@@ -116,7 +116,7 @@ let classify_number = \n -> match n of
 
 Pattern guards allow you to add conditions to pattern matches:
 
-```ligature
+```ocaml
 let validate_age = \age -> match age of
     a when a < 0 => Invalid "Age cannot be negative",
     a when a > 150 => Invalid "Age seems unrealistic",
@@ -127,7 +127,7 @@ let validate_age = \age -> match age of
 
 Always include cases for all possible variants or use a wildcard pattern:
 
-```ligature
+```ocaml
 type Option = Some a | None;
 
 let get_value = \option -> match option of
@@ -139,7 +139,7 @@ let get_value = \option -> match option of
 
 Yes, you can pattern match on record fields:
 
-```ligature
+```ocaml
 let greet_user = \user -> match user of
     { name = n, age = a } when a >= 18 => "Hello, " ++ n,
     { name = n } => "Hello, young " ++ n,
@@ -152,12 +152,12 @@ let greet_user = \user -> match user of
 
 Use the `module` keyword to define a module:
 
-```ligature
+```ocaml
 module Math {
     let add = \x y -> x + y;
     let subtract = \x y -> x - y;
     let multiply = \x y -> x * y;
-    
+
     type Point = {
         x: Integer,
         y: Integer
@@ -169,7 +169,7 @@ module Math {
 
 Use the `import` keyword to import modules:
 
-```ligature
+```ocaml
 // Import entire module
 import Math;
 
@@ -184,11 +184,11 @@ import Math as M;
 
 Use the `export` keyword to specify what gets exported:
 
-```ligature
+```ocaml
 module MyModule {
     let public_function = \x -> x + 1;
     let private_helper = \x -> x * 2; // Not exported
-    
+
     export { public_function };
 }
 ```
@@ -223,6 +223,7 @@ Memory usage depends on the size and complexity of your data structures. Ligatur
 ### What IDEs support Ligature?
 
 Ligature has a Language Server Protocol (LSP) implementation that provides:
+
 - Syntax highlighting
 - Code completion
 - Error reporting
@@ -291,7 +292,7 @@ cargo run --bin reed -- benchmark custom --file my_benchmark.lig
 
 Use union types for error handling:
 
-```ligature
+```ocaml
 type ValidationResult = Valid | Invalid String;
 
 let validate_user = \user -> match user of
@@ -383,4 +384,4 @@ let validate_user = \user -> match user of
 
 ### Is Ligature production-ready?
 
-Ligature is currently in development. While the core language features are implemented, it may not be suitable for all production use cases yet. Check the project status and roadmap for current capabilities. 
+Ligature is currently in development. While the core language features are implemented, it may not be suitable for all production use cases yet. Check the project status and roadmap for current capabilities.

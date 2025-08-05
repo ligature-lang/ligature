@@ -42,11 +42,13 @@ let config = EnhancedDiagnosticsConfig {
 ### Example Error Messages
 
 **Before (Basic):**
+
 ```
 Error: Undefined identifier: add
 ```
 
 **After (Enhanced):**
+
 ```
 Error: Undefined identifier 'add'. This variable or function hasn't been declared or imported. Check if you need to add an import statement or declare this identifier.
 
@@ -92,14 +94,16 @@ The completion provider analyzes the current context to provide relevant suggest
 ### Example Completions
 
 **Function Context:**
-```ligature
-fun myFunction(x: Int) -> Int = 
+
+```ocaml
+fun myFunction(x: Int) -> Int =
   // Completions include: let, in, if, then, else, match, case, etc.
 ```
 
 **Type Context:**
-```ligature
-type MyType = 
+
+```ocaml
+type MyType =
   // Completions include: =, |, ->, where, etc.
 ```
 
@@ -116,6 +120,7 @@ type MyType =
 ### Available Code Actions
 
 #### Quick Fixes
+
 - Add missing semicolon
 - Remove unexpected token
 - Add missing closing brace/bracket/parenthesis
@@ -124,6 +129,7 @@ type MyType =
 - Add missing imports
 
 #### Refactoring
+
 - Extract function
 - Inline variable
 - Rename symbol
@@ -131,6 +137,7 @@ type MyType =
 - Convert to function
 
 #### Code Generation
+
 - Generate function template
 - Generate type definition
 - Generate data type with constructors
@@ -140,11 +147,13 @@ type MyType =
 - Generate documentation
 
 #### Performance
+
 - Extract repeated calculations
 - Optimize list operations
 - Suggest more efficient algorithms
 
 #### Style
+
 - Wrap long lines
 - Remove trailing whitespace
 - Fix inconsistent indentation
@@ -314,16 +323,19 @@ To contribute to the enhanced LSP features:
 ### Common Issues
 
 **Slow Performance:**
+
 - Check if too many files are being indexed
 - Reduce `max_workspace_files` in configuration
 - Disable features you don't need
 
 **Memory Usage:**
+
 - Clear caches periodically
 - Reduce cache sizes
 - Use workspace-specific configurations
 
 **Missing Completions:**
+
 - Check if context-aware completions are enabled
 - Verify import resolution is working
 - Check for parse errors in the file
@@ -344,4 +356,4 @@ tracing_subscriber::fmt()
 
 The enhanced LSP features provide a significantly improved development experience for Ligature. With better error reporting, intelligent completions, and advanced refactoring capabilities, developers can write Ligature code more efficiently and with fewer errors.
 
-For more information, see the main LSP documentation and the individual module documentation. 
+For more information, see the main LSP documentation and the individual module documentation.

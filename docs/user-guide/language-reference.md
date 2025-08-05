@@ -18,7 +18,7 @@ This document provides a comprehensive reference for the Ligature language synta
 
 ### Comments
 
-```ligature
+```ocaml
 // Single-line comment
 /* Multi-line
    comment */
@@ -33,7 +33,7 @@ This document provides a comprehensive reference for the Ligature language synta
 
 ### Keywords
 
-```ligature
+```ocaml
 let, in, fun, type, data, case, of, if, then, else,
 import, export, module, typeclass, instance, where,
 match, when, Some, None, true, false
@@ -41,7 +41,7 @@ match, when, Some, None, true, false
 
 ### Literals
 
-```ligature
+```ocaml
 // Integers
 42, -17, 0
 
@@ -65,7 +65,7 @@ true, false
 
 ### Basic Types
 
-```ligature
+```ocaml
 Integer    // 64-bit signed integers
 Float      // 64-bit floating point
 String     // UTF-8 strings
@@ -75,7 +75,7 @@ Unit       // Unit type ()
 
 ### Function Types
 
-```ligature
+```ocaml
 Integer -> String                    // Function from Integer to String
 Integer -> Integer -> Integer        // Curried function
 (Integer, String) -> Boolean        // Function taking tuple
@@ -83,7 +83,7 @@ Integer -> Integer -> Integer        // Curried function
 
 ### Record Types
 
-```ligature
+```ocaml
 {
     name: String,
     age: Integer,
@@ -93,7 +93,7 @@ Integer -> Integer -> Integer        // Curried function
 
 ### Union Types
 
-```ligature
+```ocaml
 type Option = Some a | None;
 type Result = Success a | Error String;
 type List = Cons a (List a) | Nil;
@@ -101,13 +101,13 @@ type List = Cons a (List a) | Nil;
 
 ### Type Aliases
 
-```ligature
+```ocaml
 type UserId = Integer;
 ```
 
 ### Type Variables
 
-```ligature
+```ocaml
 'a, 'b, 'c    // Type variables for generic types
 ```
 
@@ -115,7 +115,7 @@ type UserId = Integer;
 
 ### Literals
 
-```ligature
+```ocaml
 42              // Integer literal
 3.14            // Float literal
 "Hello"         // String literal
@@ -126,14 +126,14 @@ true            // Boolean literal
 
 ### Variables
 
-```ligature
+```ocaml
 x               // Variable reference
 user_name       // Variable with underscore
 ```
 
 ### Function Application
 
-```ligature
+```ocaml
 f x             // Function application
 f x y           // Curried application
 f (x, y)        // Tuple application
@@ -141,7 +141,7 @@ f (x, y)        // Tuple application
 
 ### Lambda Expressions
 
-```ligature
+```ocaml
 \x -> x + 1                     // Simple lambda
 \x y -> x + y                   // Multi-parameter lambda
 \x: Integer -> x * 2            // Typed lambda
@@ -149,7 +149,7 @@ f (x, y)        // Tuple application
 
 ### Let Expressions
 
-```ligature
+```ocaml
 let x = 42 in x + 1             // Simple let
 let x = 42; y = 10 in x + y     // Multiple bindings
 let rec fact = \n -> if n == 0 then 1 else n * fact (n - 1) in fact 5  // Recursive
@@ -157,13 +157,13 @@ let rec fact = \n -> if n == 0 then 1 else n * fact (n - 1) in fact 5  // Recurs
 
 ### If Expressions
 
-```ligature
+```ocaml
 if x > 0 then "positive" else "negative"
 ```
 
 ### Match Expressions
 
-```ligature
+```ocaml
 match value of
     Some x => x + 1,
     None => 0;
@@ -171,7 +171,7 @@ match value of
 
 ### Record Expressions
 
-```ligature
+```ocaml
 {
     name = "Alice",
     age = 30,
@@ -181,13 +181,13 @@ match value of
 
 ### Field Access
 
-```ligature
+```ocaml
 user.name       // Access record field
 ```
 
 ### Union Constructors
 
-```ligature
+```ocaml
 Some 42         // Union constructor with value
 None            // Union constructor without value
 ```
@@ -196,13 +196,13 @@ None            // Union constructor without value
 
 ### Variable Patterns
 
-```ligature
+```ocaml
 x               // Bind to variable
 ```
 
 ### Literal Patterns
 
-```ligature
+```ocaml
 42              // Match integer literal
 "hello"         // Match string literal
 true            // Match boolean literal
@@ -210,21 +210,21 @@ true            // Match boolean literal
 
 ### Constructor Patterns
 
-```ligature
+```ocaml
 Some x          // Match union constructor with binding
 None            // Match union constructor without binding
 ```
 
 ### Record Patterns
 
-```ligature
+```ocaml
 { name = n, age = a }   // Match record with field bindings
 { name = n, .. }        // Match record with rest pattern
 ```
 
 ### Guard Patterns
 
-```ligature
+```ocaml
 x when x > 0    // Pattern with guard condition
 ```
 
@@ -232,7 +232,7 @@ x when x > 0    // Pattern with guard condition
 
 ### Value Declarations
 
-```ligature
+```ocaml
 let x = 42;                     // Simple value
 let x: Integer = 42;            // Typed value
 let rec fact = \n -> if n == 0 then 1 else n * fact (n - 1);  // Recursive
@@ -240,21 +240,21 @@ let rec fact = \n -> if n == 0 then 1 else n * fact (n - 1);  // Recursive
 
 ### Type Aliases
 
-```ligature
+```ocaml
 type UserId = Integer;
 type Point = { x: Float, y: Float };
 ```
 
 ### Type Constructors
 
-```ligature
+```ocaml
 type Option = Some a | None;
 type List = Cons a (List a) | Nil;
 ```
 
 ### Type Classes
 
-```ligature
+```ocaml
 typeclass Eq 'a where
     eq : 'a -> 'a -> Bool;
 
@@ -265,7 +265,7 @@ typeclass Ord 'a where
 
 ### Instance Declarations
 
-```ligature
+```ocaml
 // Simple instance
 instance Eq Int where
     eq = \x y -> x == y;
@@ -283,13 +283,13 @@ instance (Eq 'a, Eq 'b) => Eq (Pair 'a 'b) where
 
 ### Module Declaration
 
-```ligature
+```ocaml
 module Math;
 ```
 
 ### Export Declarations
 
-```ligature
+```ocaml
 export let add = \x y -> x + y;
 export type Point = { x: Float, y: Float };
 ```
@@ -298,14 +298,14 @@ export type Point = { x: Float, y: Float };
 
 ### Type Class Definition
 
-```ligature
+```ocaml
 typeclass Show 'a where
     show : 'a -> String;
 ```
 
 ### Superclasses
 
-```ligature
+```ocaml
 typeclass Ord 'a where
     superclass Eq 'a;
     compare : 'a -> 'a -> Ordering;
@@ -313,7 +313,7 @@ typeclass Ord 'a where
 
 ### Method Signatures
 
-```ligature
+```ocaml
 typeclass Num 'a where
     add : 'a -> 'a -> 'a;
     multiply : 'a -> 'a -> 'a;
@@ -322,7 +322,7 @@ typeclass Num 'a where
 
 ### Instance Implementation
 
-```ligature
+```ocaml
 instance Show Int where
     show = \x -> toString x;
 
@@ -332,8 +332,8 @@ instance Show Bool where
 
 ### Constrained Functions
 
-```ligature
-let max : Ord 'a => 'a -> 'a -> 'a = \x y -> 
+```ocaml
+let max : Ord 'a => 'a -> 'a -> 'a = \x y ->
     if compare x y == GT then x else y;
 ```
 
@@ -341,7 +341,7 @@ let max : Ord 'a => 'a -> 'a -> 'a = \x y ->
 
 ### Basic Imports
 
-```ligature
+```ocaml
 import std.collections.list;
 import "./utils";
 import "../shared/types";
@@ -349,21 +349,21 @@ import "../shared/types";
 
 ### Aliased Imports
 
-```ligature
+```ocaml
 import std.collections as collections;
 import "./math" as math;
 ```
 
 ### Selective Imports
 
-```ligature
+```ocaml
 import "std.math" { sqrt, pow, log };
 import "./utils" { format, parse };
 ```
 
 ### Import Combinations
 
-```ligature
+```ocaml
 import "std.collections" as collections { map, filter, fold };
 ```
 
@@ -371,7 +371,7 @@ import "std.collections" as collections { map, filter, fold };
 
 ### Arithmetic
 
-```ligature
+```ocaml
 + : Integer -> Integer -> Integer
 - : Integer -> Integer -> Integer
 * : Integer -> Integer -> Integer
@@ -381,7 +381,7 @@ import "std.collections" as collections { map, filter, fold };
 
 ### Comparison
 
-```ligature
+```ocaml
 == : 'a -> 'a -> Bool
 != : 'a -> 'a -> Bool
 < : Integer -> Integer -> Bool
@@ -392,7 +392,7 @@ import "std.collections" as collections { map, filter, fold };
 
 ### Logical
 
-```ligature
+```ocaml
 && : Bool -> Bool -> Bool
 || : Bool -> Bool -> Bool
 ! : Bool -> Bool
@@ -400,7 +400,7 @@ import "std.collections" as collections { map, filter, fold };
 
 ### String
 
-```ligature
+```ocaml
 ++ : String -> String -> String
 toString : Integer -> String
 parseInt : String -> Option Integer
@@ -408,7 +408,7 @@ parseInt : String -> Option Integer
 
 ### List
 
-```ligature
+```ocaml
 head : List 'a -> Option 'a
 tail : List 'a -> Option (List 'a)
 length : List 'a -> Integer
@@ -417,7 +417,7 @@ append : List 'a -> List 'a -> List 'a
 
 ### Control Flow
 
-```ligature
+```ocaml
 if : Bool -> 'a -> 'a -> 'a
 ```
 
@@ -447,7 +447,7 @@ Ligature uses Hindley-Milner type inference with the following features:
 
 ### Module Structure
 
-```ligature
+```ocaml
 module MyModule;
 
 import std.collections.list;
@@ -471,4 +471,4 @@ let internal_function = \x -> x * 2;  // Not exported
 - **Go to definition** across module boundaries
 - **Find references** across entire workspace
 - **Completion** from imported modules
-- **Type checking** across module boundaries 
+- **Type checking** across module boundaries

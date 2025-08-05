@@ -1,9 +1,25 @@
+// Copyright 2024 Ligature Language Team
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 //! Command-line interface for the Ligature language.
 
 use clap::{Parser, Subcommand};
 use ligature_eval::Evaluator;
 use ligature_parser::Parser as LigatureParser;
 use ligature_types::type_check_program;
+
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 mod xdg_config;
 use xdg_config::xdg_config_for_cli;
@@ -44,18 +60,18 @@ enum Commands {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<()> {
     // Initialize XDG configuration
     let xdg_config = match xdg_config_for_cli().await {
         Ok(config) => {
             // Ensure XDG directories exist
             if let Err(e) = config.ensure_directories().await {
-                eprintln!("Warning: Failed to ensure XDG directories: {}", e);
+                eprintln!("Warning: Failed to ensure XDG directories: {e}");
             }
             Some(config)
         }
         Err(e) => {
-            eprintln!("Warning: Failed to initialize XDG configuration: {}", e);
+            eprintln!("Warning: Failed to initialize XDG configuration: {e}");
             None
         }
     };
@@ -101,7 +117,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     Ok(())
                 }
                 Err(e) => {
-                    println!("✗ Parsing failed: {:?}", e);
+                    println!("✗ Parsing failed: {e:?}");
                     Err(Box::new(e))
                 }
             }
@@ -152,17 +168,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             match output_format.as_str() {
                 "json" => {
                     // TODO: Implement proper Value serialization
-                    println!(
-                        "{}",
-                        serde_json::to_string_pretty(&format!("{:?}", result))?
-                    );
+                    println!("{}", serde_json::to_string_pretty(&format!("{result:?}"))?);
                 }
                 "yaml" => {
                     // TODO: Implement proper Value serialization
-                    println!("{}", serde_yaml::to_string(&format!("{:?}", result))?);
+                    println!("{}", serde_yaml::to_string(&format!("{result:?}"))?);
                 }
                 _ => {
-                    println!("  Result: {:?}", result);
+                    println!("  Result: {result:?}");
                 }
             }
             Ok(())
@@ -185,7 +198,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             };
 
             if show_progress {
-                println!("Processing file: {}", file);
+                println!("Processing file: {file}");
             }
 
             // Parse
@@ -220,17 +233,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             match output_format.as_str() {
                 "json" => {
                     // TODO: Implement proper Value serialization
-                    println!(
-                        "{}",
-                        serde_json::to_string_pretty(&format!("{:?}", result))?
-                    );
+                    println!("{}", serde_json::to_string_pretty(&format!("{result:?}"))?);
                 }
                 "yaml" => {
                     // TODO: Implement proper Value serialization
-                    println!("{}", serde_yaml::to_string(&format!("{:?}", result))?);
+                    println!("{}", serde_yaml::to_string(&format!("{result:?}"))?);
                 }
                 _ => {
-                    println!("  Final result: {:?}", result);
+                    println!("  Final result: {result:?}");
                 }
             }
             Ok(())

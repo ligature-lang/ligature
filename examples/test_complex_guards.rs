@@ -24,7 +24,7 @@ fn main() -> AstResult<()> {
             evaluator.evaluate_program(&program)?;
             println!("✓ Multiple arithmetic operations test passed");
         }
-        Err(e) => println!("✗ Error: {:?}", e),
+        Err(e) => println!("✗ Error: {e:?}"),
     }
 
     // Test 2: Nested function calls in guard
@@ -45,7 +45,7 @@ fn main() -> AstResult<()> {
             evaluator.evaluate_program(&program)?;
             println!("✓ Nested function calls test passed");
         }
-        Err(e) => println!("✗ Error: {:?}", e),
+        Err(e) => println!("✗ Error: {e:?}"),
     }
 
     // Test 3: Complex boolean logic in guard
@@ -65,7 +65,7 @@ fn main() -> AstResult<()> {
             evaluator.evaluate_program(&program)?;
             println!("✓ Complex boolean logic test passed");
         }
-        Err(e) => println!("✗ Error: {:?}", e),
+        Err(e) => println!("✗ Error: {e:?}"),
     }
 
     // Test 4: String operations in guard
@@ -85,7 +85,7 @@ fn main() -> AstResult<()> {
             evaluator.evaluate_program(&program)?;
             println!("✓ String operations test passed");
         }
-        Err(e) => println!("✗ Error: {:?}", e),
+        Err(e) => println!("✗ Error: {e:?}"),
     }
 
     // Test 5: Record pattern matching with complex guards
@@ -104,7 +104,7 @@ fn main() -> AstResult<()> {
             evaluator.evaluate_program(&program)?;
             println!("✓ Record pattern with complex guards test passed");
         }
-        Err(e) => println!("✗ Error: {:?}", e),
+        Err(e) => println!("✗ Error: {e:?}"),
     }
 
     // Test 6: List pattern matching with arithmetic
@@ -123,7 +123,7 @@ fn main() -> AstResult<()> {
             evaluator.evaluate_program(&program)?;
             println!("✓ List pattern with arithmetic test passed");
         }
-        Err(e) => println!("✗ Error: {:?}", e),
+        Err(e) => println!("✗ Error: {e:?}"),
     }
 
     // Test 7: Union pattern with nested conditions
@@ -144,7 +144,7 @@ fn main() -> AstResult<()> {
             evaluator.evaluate_program(&program)?;
             println!("✓ Union pattern with nested conditions test passed");
         }
-        Err(e) => println!("✗ Error: {:?}", e),
+        Err(e) => println!("✗ Error: {e:?}"),
     }
 
     // Test 8: Multiple guards with different patterns
@@ -166,7 +166,7 @@ fn main() -> AstResult<()> {
             evaluator.evaluate_program(&program)?;
             println!("✓ Multiple guards test passed");
         }
-        Err(e) => println!("✗ Error: {:?}", e),
+        Err(e) => println!("✗ Error: {e:?}"),
     }
 
     // Test 9: Complex nested expressions
@@ -186,7 +186,7 @@ fn main() -> AstResult<()> {
             evaluator.evaluate_program(&program)?;
             println!("✓ Complex nested expressions test passed");
         }
-        Err(e) => println!("✗ Error: {:?}", e),
+        Err(e) => println!("✗ Error: {e:?}"),
     }
 
     // Test 10: Guard with field access
@@ -205,7 +205,7 @@ fn main() -> AstResult<()> {
             evaluator.evaluate_program(&program)?;
             println!("✓ Guard with field access test passed");
         }
-        Err(e) => println!("✗ Error: {:?}", e),
+        Err(e) => println!("✗ Error: {e:?}"),
     }
 
     println!("All complex guard expression tests completed!");

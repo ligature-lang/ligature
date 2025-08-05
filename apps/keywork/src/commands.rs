@@ -4,11 +4,11 @@ use crate::dependency::{install_dependencies, resolve_dependencies_from_manifest
 use crate::register::Register;
 use crate::registry::Registry;
 use crate::xdg_config::KeyworkXdgConfig;
-use miette::{miette, IntoDiagnostic, Result};
+use miette::{IntoDiagnostic, Result, miette};
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
-pub async fn init_register(name: &str, directory: &PathBuf) -> Result<()> {
+pub async fn init_register(name: &str, directory: &Path) -> Result<()> {
     let register_dir = directory.join(name);
 
     if register_dir.exists() {
@@ -34,7 +34,7 @@ pub async fn init_register(name: &str, directory: &PathBuf) -> Result<()> {
     // Create register.toml
     let manifest_content = format!(
         r#"[register]
-name = "{}"
+name = "{name}"
 version = "0.1.0"
 description = "A Ligature register"
 authors = ["Your Name <your.email@example.com>"]
@@ -50,8 +50,7 @@ license = "Apache-2.0"
 
 [metadata]
 tags = []
-"#,
-        name
+"#
     );
 
     fs::write(register_dir.join("register.toml"), manifest_content)
@@ -106,7 +105,7 @@ let testResult = exampleFunction("test")
     Ok(())
 }
 
-pub async fn build_register(path: &PathBuf, output: &PathBuf) -> Result<()> {
+pub async fn build_register(path: &Path, output: &Path) -> Result<()> {
     let register = Register::load(path).map_err(|e| miette!("Failed to load register: {}", e))?;
 
     println!("Building register '{}'...", register.name());
@@ -141,10 +140,7 @@ pub async fn install_register(
         .unwrap_or_else(|_| Registry::default());
 
     let version = version.unwrap_or("latest");
-    println!(
-        "Installing register '{}' version '{}'...",
-        register_name, version
-    );
+    println!("Installing register '{register_name}' version '{version}'...");
 
     // Resolve the actual version if "latest" was specified
     let actual_version = if version == "latest" {
@@ -181,7 +177,7 @@ pub async fn install_register(
         .into_diagnostic()
         .map_err(|e| miette!("Failed to create install directory: {}", e))?;
 
-    let register_install_path = install_path.join(format!("{}-{}", register_name, actual_version));
+    let register_install_path = install_path.join(format!("{register_name}-{actual_version}"));
 
     // Extract the package
     crate::dependency::extract_package(&cached_file, &register_install_path).await?;
@@ -195,7 +191,7 @@ pub async fn install_register(
     Ok(())
 }
 
-pub async fn publish_register(path: &PathBuf, registry_url: Option<&str>) -> Result<()> {
+pub async fn publish_register(path: &Path, registry_url: Option<&str>) -> Result<()> {
     let register = Register::load(path).map_err(|e| miette!("Failed to load register: {}", e))?;
 
     // Validate before publishing
@@ -207,7 +203,7 @@ pub async fn publish_register(path: &PathBuf, registry_url: Option<&str>) -> Res
     if !validation.valid {
         println!("✗ Register validation failed:");
         for error in &validation.errors {
-            println!("  - {}", error);
+            println!("  - {error}");
         }
         return Err(miette!("Cannot publish invalid register"));
     }
@@ -215,7 +211,7 @@ pub async fn publish_register(path: &PathBuf, registry_url: Option<&str>) -> Res
     if !validation.warnings.is_empty() {
         println!("⚠️  Warnings:");
         for warning in &validation.warnings {
-            println!("  - {}", warning);
+            println!("  - {warning}");
         }
     }
 
@@ -288,32 +284,30 @@ pub async fn list_registers(verbose: bool, global: bool) -> Result<()> {
         .into_diagnostic()
         .map_err(|e| miette!("Failed to read install directory: {}", e))?;
 
-    for entry in entries {
-        if let Ok(entry) = entry {
-            let path = entry.path();
-            if path.is_dir() {
-                let name = path
-                    .file_name()
-                    .and_then(|n| n.to_str())
-                    .unwrap_or("unknown");
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_dir() {
+            let name = path
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or("unknown");
 
-                if verbose {
-                    // Try to load register info
-                    if let Ok(register) = Register::load(&path) {
-                        println!(
-                            "  {}@{} - {}",
-                            register.name(),
-                            register.version(),
-                            register.description()
-                        );
-                        println!("    License: {}", register.license());
-                        println!("    Authors: {}", register.authors().join(", "));
-                    } else {
-                        println!("  {} (invalid register)", name);
-                    }
+            if verbose {
+                // Try to load register info
+                if let Ok(register) = Register::load(&path) {
+                    println!(
+                        "  {}@{} - {}",
+                        register.name(),
+                        register.version(),
+                        register.description()
+                    );
+                    println!("    License: {}", register.license());
+                    println!("    Authors: {}", register.authors().join(", "));
                 } else {
-                    println!("  {}", name);
+                    println!("  {name} (invalid register)");
                 }
+            } else {
+                println!("  {name}");
             }
         }
     }
@@ -343,24 +337,22 @@ pub async fn remove_register(register_name: &str, global: bool) -> Result<()> {
         .map_err(|e| miette!("Failed to read install directory: {}", e))?;
 
     let mut found = false;
-    for entry in entries {
-        if let Ok(entry) = entry {
-            let path = entry.path();
-            if path.is_dir() {
-                let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_dir() {
+            let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
 
-                if name.starts_with(register_name) {
-                    std::fs::remove_dir_all(&path)
-                        .into_diagnostic()
-                        .map_err(|e| miette!("Failed to remove register: {}", e))?;
-                    println!(
-                        "✓ Removed register '{}' from {}",
-                        name,
-                        install_path.display()
-                    );
-                    found = true;
-                    break;
-                }
+            if name.starts_with(register_name) {
+                std::fs::remove_dir_all(&path)
+                    .into_diagnostic()
+                    .map_err(|e| miette!("Failed to remove register: {}", e))?;
+                println!(
+                    "✓ Removed register '{}' from {}",
+                    name,
+                    install_path.display()
+                );
+                found = true;
+                break;
             }
         }
     }
@@ -376,11 +368,7 @@ pub async fn remove_register(register_name: &str, global: bool) -> Result<()> {
     Ok(())
 }
 
-pub async fn update_dependencies(
-    path: &PathBuf,
-    all: bool,
-    dependency: Option<&str>,
-) -> Result<()> {
+pub async fn update_dependencies(path: &Path, all: bool, dependency: Option<&str>) -> Result<()> {
     let register = Register::load(path).map_err(|e| miette!("Failed to load register: {}", e))?;
 
     if all {
@@ -419,7 +407,7 @@ pub async fn update_dependencies(
 
         // Update the specific dependency in the manifest
         // This would typically update the register.toml file
-        println!("✓ Updated {} to version {}", dep, latest_version);
+        println!("✓ Updated {dep} to version {latest_version}");
     } else {
         return Err(miette!("Must specify either --all or --dependency"));
     }
@@ -444,14 +432,14 @@ pub async fn show_register_info(register_name: &str) -> Result<()> {
         if !register.dependencies().is_empty() {
             println!("Dependencies:");
             for (name, version) in register.dependencies() {
-                println!("  {}@{}", name, version);
+                println!("  {name}@{version}");
             }
         }
 
         if !register.exports().is_empty() {
             println!("Exports:");
             for (name, module_path) in register.exports() {
-                println!("  {} -> {}", name, module_path);
+                println!("  {name} -> {module_path}");
             }
         }
 
@@ -469,7 +457,7 @@ pub async fn show_register_info(register_name: &str) -> Result<()> {
         if !validation.warnings.is_empty() {
             println!("Warnings:");
             for warning in &validation.warnings {
-                println!("  - {}", warning);
+                println!("  - {warning}");
             }
         }
     } else {
@@ -485,13 +473,13 @@ pub async fn show_register_info(register_name: &str) -> Result<()> {
                 println!("License: {}", package.license);
 
                 if let Some(repo) = package.repository {
-                    println!("Repository: {}", repo);
+                    println!("Repository: {repo}");
                 }
 
                 if !package.dependencies.is_empty() {
                     println!("Dependencies:");
                     for (name, version) in &package.dependencies {
-                        println!("  {}@{}", name, version);
+                        println!("  {name}@{version}");
                     }
                 }
 
@@ -505,11 +493,8 @@ pub async fn show_register_info(register_name: &str) -> Result<()> {
                 }
             }
             Err(_) => {
-                println!(
-                    "Register '{}' not found locally or in registry",
-                    register_name
-                );
-                println!("Try: keywork search {}", register_name);
+                println!("Register '{register_name}' not found locally or in registry");
+                println!("Try: keywork search {register_name}");
             }
         }
     }
@@ -550,7 +535,7 @@ pub async fn search_registers(query: &str, registry_url: Option<&str>, limit: us
             }
         }
         Err(e) => {
-            println!("Search failed: {}", e);
+            println!("Search failed: {e}");
             return Err(e);
         }
     }
@@ -558,7 +543,7 @@ pub async fn search_registers(query: &str, registry_url: Option<&str>, limit: us
     Ok(())
 }
 
-pub async fn validate_register(path: &PathBuf, verbose: bool) -> Result<()> {
+pub async fn validate_register(path: &Path, verbose: bool) -> Result<()> {
     let register = Register::load(path).map_err(|e| miette!("Failed to load register: {}", e))?;
 
     println!("Validating register '{}'...", register.name());
@@ -585,13 +570,13 @@ pub async fn validate_register(path: &PathBuf, verbose: bool) -> Result<()> {
         if !validation.warnings.is_empty() {
             println!("⚠️  Warnings:");
             for warning in &validation.warnings {
-                println!("  - {}", warning);
+                println!("  - {warning}");
             }
         }
     } else {
         println!("✗ Register validation failed:");
         for error in &validation.errors {
-            println!("  - {}", error);
+            println!("  - {error}");
         }
 
         if verbose {
@@ -615,9 +600,9 @@ pub async fn discover_packages(category: Option<&str>, limit: usize) -> Result<(
     let category_text = if query.is_empty() {
         "".to_string()
     } else {
-        format!(" in category '{}'", query)
+        format!(" in category '{query}'")
     };
-    println!("Discovering packages{}...", category_text);
+    println!("Discovering packages{category_text}...");
 
     match registry.search(query, limit).await {
         Ok(result) => {
@@ -638,7 +623,7 @@ pub async fn discover_packages(category: Option<&str>, limit: usize) -> Result<(
             }
         }
         Err(e) => {
-            println!("Discovery failed: {}", e);
+            println!("Discovery failed: {e}");
             return Err(e);
         }
     }
@@ -646,7 +631,7 @@ pub async fn discover_packages(category: Option<&str>, limit: usize) -> Result<(
     Ok(())
 }
 
-pub async fn install_dependencies_for_project(path: &PathBuf) -> Result<()> {
+pub async fn install_dependencies_for_project(path: &Path) -> Result<()> {
     let register = Register::load(path).map_err(|e| miette!("Failed to load register: {}", e))?;
 
     if register.dependencies().is_empty() {
@@ -705,15 +690,13 @@ pub async fn clean_cache() -> Result<()> {
         .map_err(|e| miette!("Failed to read cache directory: {}", e))?;
 
     let mut removed_count = 0;
-    for entry in entries {
-        if let Ok(entry) = entry {
-            let path = entry.path();
-            if path.is_file() {
-                std::fs::remove_file(&path)
-                    .into_diagnostic()
-                    .map_err(|e| miette!("Failed to remove cache file: {}", e))?;
-                removed_count += 1;
-            }
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_file() {
+            std::fs::remove_file(&path)
+                .into_diagnostic()
+                .map_err(|e| miette!("Failed to remove cache file: {}", e))?;
+            removed_count += 1;
         }
     }
 
@@ -730,13 +713,13 @@ pub async fn show_package_stats(register_name: &str) -> Result<()> {
 
     match registry.get_package_stats(register_name).await {
         Ok(stats) => {
-            println!("Statistics for package '{}':", register_name);
+            println!("Statistics for package '{register_name}':");
             for (key, value) in &stats {
-                println!("  {}: {}", key, value);
+                println!("  {key}: {value}");
             }
         }
         Err(e) => {
-            println!("Failed to get package stats: {}", e);
+            println!("Failed to get package stats: {e}");
             return Err(e);
         }
     }
@@ -749,7 +732,7 @@ pub async fn list_available_versions(register_name: &str) -> Result<()> {
 
     match registry.list_versions(register_name).await {
         Ok(versions) => {
-            println!("Available versions for package '{}':", register_name);
+            println!("Available versions for package '{register_name}':");
             for version in &versions {
                 let status = if version.yanked { "[YANKED]" } else { "" };
                 println!(
@@ -759,7 +742,7 @@ pub async fn list_available_versions(register_name: &str) -> Result<()> {
             }
         }
         Err(e) => {
-            println!("Failed to get versions: {}", e);
+            println!("Failed to get versions: {e}");
             return Err(e);
         }
     }

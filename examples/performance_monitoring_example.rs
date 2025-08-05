@@ -76,7 +76,7 @@ fn collect_sample_metrics(monitor: &Arc<PerformanceMonitor>) {
         let ast = match parse_program(expr) {
             Ok(ast) => ast,
             Err(e) => {
-                println!("    Error parsing: {:?}", e);
+                println!("    Error parsing: {e:?}");
                 continue;
             }
         };
@@ -99,10 +99,10 @@ fn collect_sample_metrics(monitor: &Arc<PerformanceMonitor>) {
             // Evaluate the expression
             match evaluate_program(&ast) {
                 Ok(result) => {
-                    println!("    Result: {:?}", result);
+                    println!("    Result: {result:?}");
                 }
                 Err(e) => {
-                    println!("    Evaluation error: {:?}", e);
+                    println!("    Evaluation error: {e:?}");
                 }
             }
             // Guard automatically records metrics when dropped
@@ -237,7 +237,7 @@ fn benchmark_expressions(monitor: &Arc<PerformanceMonitor>) {
         let ast = match parse_program(expression) {
             Ok(ast) => ast,
             Err(e) => {
-                println!("    Error parsing: {:?}", e);
+                println!("    Error parsing: {e:?}");
                 continue;
             }
         };
@@ -271,7 +271,7 @@ fn benchmark_expressions(monitor: &Arc<PerformanceMonitor>) {
                 }
                 Err(e) => {
                     if i == 0 {
-                        println!("    Evaluation error: {:?}", e);
+                        println!("    Evaluation error: {e:?}");
                     }
                 }
             }
@@ -291,9 +291,9 @@ fn benchmark_expressions(monitor: &Arc<PerformanceMonitor>) {
         };
 
         println!("    - Success rate: {:.1}%", (successful_runs as f64 / iterations as f64) * 100.0);
-        println!("    - Average time: {:?}", avg_time);
+        println!("    - Average time: {avg_time:?}");
         println!("    - Throughput: {:.0} ops/sec", throughput);
-        println!("    - Total time: {:?}", total_duration);
+        println!("    - Total time: {total_duration:?}");
     }
 }
 

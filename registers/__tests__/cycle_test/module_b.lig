@@ -1,0 +1,7 @@
+module ModuleB;
+
+// Module B that imports Module A (creates a cycle)
+import cycle_test.module_a;
+
+let value_b = 100;
+export value_b; 

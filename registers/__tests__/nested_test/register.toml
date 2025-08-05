@@ -1,0 +1,13 @@
+[register]
+name = "nested_test"
+version = "1.0.0"
+description = "Test register for nested module testing"
+authors = ["Test Author <test@example.com>"]
+license = "MIT"
+
+[exports]
+mod = "mod.lig"
+submodule = "submodule/mod.lig"
+
+[metadata]
+tags = ["test", "nested"] 

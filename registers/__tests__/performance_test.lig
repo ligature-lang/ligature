@@ -1,0 +1,5 @@
+// Simple performance test for Ligature evaluation
+let x = 42;
+let y = x + 1;
+let z = y * 2;
+let result = z - 10; 

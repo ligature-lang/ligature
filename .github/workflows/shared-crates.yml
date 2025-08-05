@@ -1,0 +1,50 @@
+name: Shared Crates Configuration
+
+# This is a reusable workflow that loads crate configuration
+# It can be called by other workflows to get the list of crates
+
+on:
+  workflow_call:
+    outputs:
+      crates:
+        description: "List of all crates"
+        value: ${{ jobs.load-config.outputs.crates }}
+      publish-crates:
+        description: "List of crates to publish"
+        value: ${{ jobs.load-config.outputs.publish-crates }}
+      coverage-crates:
+        description: "List of crates for coverage"
+        value: ${{ jobs.load-config.outputs.coverage-crates }}
+
+jobs:
+  load-config:
+    runs-on: ubuntu-latest
+    outputs:
+      crates: ${{ steps.parse-config.outputs.crates }}
+      publish-crates: ${{ steps.parse-config.outputs.publish-crates }}
+      coverage-crates: ${{ steps.parse-config.outputs.coverage-crates }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Parse crate configuration
+        id: parse-config
+        run: |
+          # Parse the YAML configuration file and convert to JSON arrays
+          # This allows us to use fromJSON in the calling workflows
+
+          # Extract main crates list as JSON array (compact format)
+          CRATES_JSON=$(yq eval '.crates' .github/crates.config.yml -o=json -I0)
+          echo "crates=$CRATES_JSON" >> $GITHUB_OUTPUT
+
+          # Extract publish crates list as JSON array (compact format)
+          PUBLISH_CRATES_JSON=$(yq eval '.publish_crates' .github/crates.config.yml -o=json -I0)
+          echo "publish-crates=$PUBLISH_CRATES_JSON" >> $GITHUB_OUTPUT
+
+          # Extract coverage crates list as JSON array (compact format)
+          COVERAGE_CRATES_JSON=$(yq eval '.coverage_crates' .github/crates.config.yml -o=json -I0)
+          echo "coverage-crates=$COVERAGE_CRATES_JSON" >> $GITHUB_OUTPUT
+
+          echo "Loaded crates: $CRATES_JSON"
+          echo "Publish crates: $PUBLISH_CRATES_JSON"
+          echo "Coverage crates: $COVERAGE_CRATES_JSON"

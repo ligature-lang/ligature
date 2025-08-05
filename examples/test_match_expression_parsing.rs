@@ -17,10 +17,10 @@ fn main() -> AstResult<()> {
     match parser.parse_program(simple_match) {
         Ok(program) => {
             println!("✓ Simple match expression parsed successfully");
-            println!("  AST: {:?}", program);
+            println!("  AST: {program:?}");
         }
         Err(e) => {
-            println!("✗ Simple match expression failed: {:?}", e);
+            println!("✗ Simple match expression failed: {e:?}");
         }
     }
 
@@ -36,10 +36,10 @@ fn main() -> AstResult<()> {
     match parser.parse_program(union_match) {
         Ok(program) => {
             println!("✓ Union pattern match expression parsed successfully");
-            println!("  AST: {:?}", program);
+            println!("  AST: {program:?}");
         }
         Err(e) => {
-            println!("✗ Union pattern match expression failed: {:?}", e);
+            println!("✗ Union pattern match expression failed: {e:?}");
         }
     }
 
@@ -55,10 +55,10 @@ fn main() -> AstResult<()> {
     match parser.parse_program(binding_match) {
         Ok(program) => {
             println!("✓ Variable binding match expression parsed successfully");
-            println!("  AST: {:?}", program);
+            println!("  AST: {program:?}");
         }
         Err(e) => {
-            println!("✗ Variable binding match expression failed: {:?}", e);
+            println!("✗ Variable binding match expression failed: {e:?}");
         }
     }
 
@@ -75,10 +75,10 @@ fn main() -> AstResult<()> {
     match parser.parse_program(literal_match) {
         Ok(program) => {
             println!("✓ Literal pattern match expression parsed successfully");
-            println!("  AST: {:?}", program);
+            println!("  AST: {program:?}");
         }
         Err(e) => {
-            println!("✗ Literal pattern match expression failed: {:?}", e);
+            println!("✗ Literal pattern match expression failed: {e:?}");
         }
     }
 
@@ -94,10 +94,10 @@ fn main() -> AstResult<()> {
     match parser.parse_program(record_match) {
         Ok(program) => {
             println!("✓ Record pattern match expression parsed successfully");
-            println!("  AST: {:?}", program);
+            println!("  AST: {program:?}");
         }
         Err(e) => {
-            println!("✗ Record pattern match expression failed: {:?}", e);
+            println!("✗ Record pattern match expression failed: {e:?}");
         }
     }
 
@@ -114,10 +114,10 @@ fn main() -> AstResult<()> {
     match parser.parse_program(list_match) {
         Ok(program) => {
             println!("✓ List pattern match expression parsed successfully");
-            println!("  AST: {:?}", program);
+            println!("  AST: {program:?}");
         }
         Err(e) => {
-            println!("✗ List pattern match expression failed: {:?}", e);
+            println!("✗ List pattern match expression failed: {e:?}");
         }
     }
 
@@ -134,10 +134,10 @@ fn main() -> AstResult<()> {
     match parser.parse_program(nested_match) {
         Ok(program) => {
             println!("✓ Nested match expression parsed successfully");
-            println!("  AST: {:?}", program);
+            println!("  AST: {program:?}");
         }
         Err(e) => {
-            println!("✗ Nested match expression failed: {:?}", e);
+            println!("✗ Nested match expression failed: {e:?}");
         }
     }
 
@@ -155,10 +155,10 @@ fn main() -> AstResult<()> {
     match parser.parse_program(complex_match) {
         Ok(program) => {
             println!("✓ Complex match expression parsed successfully");
-            println!("  AST: {:?}", program);
+            println!("  AST: {program:?}");
         }
         Err(e) => {
-            println!("✗ Complex match expression failed: {:?}", e);
+            println!("✗ Complex match expression failed: {e:?}");
         }
     }
 
@@ -174,10 +174,10 @@ fn main() -> AstResult<()> {
     match parser.parse_program(func_match) {
         Ok(program) => {
             println!("✓ Function call match expression parsed successfully");
-            println!("  AST: {:?}", program);
+            println!("  AST: {program:?}");
         }
         Err(e) => {
-            println!("✗ Function call match expression failed: {:?}", e);
+            println!("✗ Function call match expression failed: {e:?}");
         }
     }
 
@@ -193,10 +193,10 @@ fn main() -> AstResult<()> {
     match parser.parse_program(if_match) {
         Ok(program) => {
             println!("✓ If case match expression parsed successfully");
-            println!("  AST: {:?}", program);
+            println!("  AST: {program:?}");
         }
         Err(e) => {
-            println!("✗ If case match expression failed: {:?}", e);
+            println!("✗ If case match expression failed: {e:?}");
         }
     }
 

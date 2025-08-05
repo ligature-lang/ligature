@@ -41,9 +41,7 @@ fn main() {
             println!("Parse tree: {pairs:#?}");
         }
         Err(e) => {
-            println!(
-                "❌ 'instance_declaration_with_args with Int where' failed: {e}",
-            );
+            println!("❌ 'instance_declaration_with_args with Int where' failed: {e}",);
         }
     }
 
@@ -58,9 +56,7 @@ fn main() {
             println!("Parse tree: {pairs:#?}");
         }
         Err(e) => {
-            println!(
-                "❌ 'instance_declaration_no_args without args where' failed: {e}",
-            );
+            println!("❌ 'instance_declaration_no_args without args where' failed: {e}",);
         }
     }
 

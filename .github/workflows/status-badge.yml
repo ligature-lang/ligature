@@ -14,7 +14,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Generate status badge
         uses: schneegans/dynamic-badges-action@v1.6.0
         with:
@@ -25,4 +24,4 @@ jobs:
           message: ${{ github.event.workflow_run.conclusion }}
           namedLogo: github
           color: ${{ github.event.workflow_run.conclusion == 'success' && 'green' || 'red' }}
-          style: flat 
+          style: flat

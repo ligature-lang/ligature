@@ -7,13 +7,19 @@ words:
   - Deque
   - dtolnay
   - flate2
+  - indexmap
   - Interner
+  - Justfile
   - keywork
   - krox
   - miette
+  - mockall
   - proptest
+  - reqwest
+  - rstest
   - serde
   - subtyping
+  - sysinfo
   - thiserror
   - walkdir
 ignoreWords: []

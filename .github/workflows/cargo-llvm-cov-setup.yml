@@ -1,0 +1,46 @@
+name: Cargo LLVM Coverage Setup
+
+# This is a reusable workflow that sets up cargo-llvm-cov with isolated caching
+# It can be called by other workflows to get a cached cargo-llvm-cov installation
+
+on:
+  workflow_call:
+    inputs:
+      cache-key:
+        description: "Additional cache key suffix for isolation"
+        required: false
+        type: string
+        default: ""
+    outputs:
+      cache-hit:
+        description: "Whether the cargo-llvm-cov cache was hit"
+        value: ${{ jobs.setup.outputs.cache-hit }}
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      cache-hit: ${{ steps.cache-cargo-llvm-cov.outputs.cache-hit }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo-llvm-cov installation
+        id: cache-cargo-llvm-cov
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo/bin/cargo-llvm-cov
+          key: ${{ runner.os }}-cargo-llvm-cov-${{ inputs.cache-key }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-llvm-cov-${{ inputs.cache-key }}-
+            ${{ runner.os }}-cargo-llvm-cov-
+
+      - name: Install cargo-llvm-cov
+        if: steps.cache-cargo-llvm-cov.outputs.cache-hit != 'true'
+        run: cargo install cargo-llvm-cov
+
+      - name: Verify cargo-llvm-cov installation
+        run: cargo llvm-cov --version

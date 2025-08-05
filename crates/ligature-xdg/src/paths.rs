@@ -27,8 +27,7 @@ impl XdgPaths {
     pub fn new(component: &str) -> Result<Self> {
         Self::validate_component_name(component)?;
 
-        let xdg = BaseDirectories::with_prefix("ligature")
-            .map_err(XdgError::XdgBaseDirError)?;
+        let xdg = BaseDirectories::with_prefix("ligature").map_err(XdgError::XdgBaseDirError)?;
 
         Ok(Self {
             component: component.to_string(),
@@ -77,7 +76,9 @@ impl XdgPaths {
     /// Returns `/run/user/{uid}/ligature/{component}/` on XDG systems,
     /// or a fallback path on other systems.
     pub fn runtime_dir(&self) -> Result<PathBuf> {
-        let runtime_dir = self.xdg.get_runtime_directory()
+        let runtime_dir = self
+            .xdg
+            .get_runtime_directory()
             .map_err(XdgError::XdgBaseDirError)?
             .join(&self.component);
         Ok(runtime_dir)
@@ -186,7 +187,10 @@ impl XdgPaths {
 
         // Check system-wide config directories
         for config_dir in self.xdg.get_config_dirs() {
-            let system_config = config_dir.join("ligature").join(&self.component).join(filename);
+            let system_config = config_dir
+                .join("ligature")
+                .join(&self.component)
+                .join(filename);
             if system_config.exists() {
                 return Ok(Some(system_config));
             }
@@ -217,7 +221,10 @@ impl XdgPaths {
 
         // Check system-wide data directories
         for data_dir in self.xdg.get_data_dirs() {
-            let system_data = data_dir.join("ligature").join(&self.component).join(filename);
+            let system_data = data_dir
+                .join("ligature")
+                .join(&self.component)
+                .join(filename);
             if system_data.exists() {
                 return Ok(Some(system_data));
             }
@@ -247,7 +254,10 @@ impl XdgPaths {
             });
         }
 
-        if !component.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_') {
+        if !component
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+        {
             return Err(XdgError::InvalidComponentName {
                 name: component.to_string(),
                 reason: "Component name can only contain ASCII alphanumeric characters, hyphens, and underscores".to_string(),
@@ -268,10 +278,15 @@ impl XdgPaths {
             });
         }
 
-        if component.contains("--") || component.contains("__") || component.contains("-_") || component.contains("_-") {
+        if component.contains("--")
+            || component.contains("__")
+            || component.contains("-_")
+            || component.contains("_-")
+        {
             return Err(XdgError::InvalidComponentName {
                 name: component.to_string(),
-                reason: "Component name cannot contain consecutive hyphens or underscores".to_string(),
+                reason: "Component name cannot contain consecutive hyphens or underscores"
+                    .to_string(),
             });
         }
 
@@ -285,8 +300,16 @@ mod tests {
 
     #[test]
     fn test_valid_component_names() {
-        let valid_names = ["keywork", "krox", "cli", "lsp", "cacophony", "test-component", "test_component"];
-        
+        let valid_names = [
+            "keywork",
+            "krox",
+            "cli",
+            "lsp",
+            "cacophony",
+            "test-component",
+            "test_component",
+        ];
+
         for name in &valid_names {
             assert!(XdgPaths::validate_component_name(name).is_ok());
         }
@@ -310,7 +333,10 @@ mod tests {
 
         for (name, reason) in &invalid_names {
             let result = XdgPaths::validate_component_name(name);
-            assert!(result.is_err(), "Component name '{}' should be invalid: {}", name, reason);
+            assert!(
+                result.is_err(),
+                "Component name '{name}' should be invalid: {reason}"
+            );
         }
     }
 
@@ -325,4 +351,4 @@ mod tests {
         let result = XdgPaths::new("-invalid");
         assert!(result.is_err());
     }
-} 
+}

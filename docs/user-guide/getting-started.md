@@ -37,7 +37,7 @@ cargo build --bin reed
 
 Let's start with a simple example. Create a file called `hello.lig`:
 
-```ligature
+```ocaml
 // A simple greeting function
 let greet = \name -> "Hello, " ++ name ++ "!";
 
@@ -57,7 +57,7 @@ cargo run --bin reed -- eval hello.lig
 
 Ligature has a rich type system with several built-in types:
 
-```ligature
+```ocaml
 // Basic literals
 let answer = 42;                    // Integer
 let pi = 3.14159;                  // Float
@@ -74,7 +74,7 @@ let message: String = "Hello";
 
 Records are collections of named fields:
 
-```ligature
+```ocaml
 // Create a record
 let user = {
     name = "Alice",
@@ -97,7 +97,7 @@ type User = {
 
 Functions are first-class values in Ligature:
 
-```ligature
+```ocaml
 // Function definition
 let add = \x y -> x + y;
 
@@ -113,11 +113,11 @@ let result = apply_twice (\x -> x * 2) 5;  // 20
 
 Pattern matching is a powerful feature for data validation:
 
-```ligature
+```ocaml
 // Union types
 type Option = Some a | None;
 
-let safe_divide = \x y -> 
+let safe_divide = \x y ->
     if y == 0 then None else Some (x / y);
 
 let handle_result = \result -> match result of
@@ -129,7 +129,7 @@ let handle_result = \result -> match result of
 
 Ligature supports type classes for extensible type systems:
 
-```ligature
+```ocaml
 // Define a type class
 typeclass Show 'a where
     show : 'a -> String;
@@ -149,7 +149,7 @@ let display : Show 'a => 'a -> String = \x -> "Value: " ++ show x;
 
 You can implement type classes for your own types:
 
-```ligature
+```ocaml
 // Define a custom type
 type Point = { x: Integer, y: Integer };
 
@@ -166,7 +166,7 @@ let display = show point;  // "Point(10, 20)"
 
 You can create instances that depend on other type class constraints:
 
-```ligature
+```ocaml
 // Type class for equality
 typeclass Eq 'a where
     eq : 'a -> 'a -> Bool;
@@ -187,7 +187,7 @@ instance (Eq 'a, Eq 'b) => Eq (Pair 'a 'b) where
 
 Organize your code into modules:
 
-```ligature
+```ocaml
 // math.lig
 module Math;
 
@@ -201,7 +201,7 @@ let internal_helper = \x -> x * 2;
 
 ### Importing Modules
 
-```ligature
+```ocaml
 // Import entire module
 import "./math";
 
@@ -218,7 +218,7 @@ let point = math.Point { x = 1.0, y = 2.0 };
 
 ### Standard Library Imports
 
-```ligature
+```ocaml
 // Import from standard library
 import "std.collections.list";
 import "std.string" { concat, split };
@@ -265,8 +265,8 @@ cargo run --bin reed -- ast program.lig
 
 Union types allow you to represent data with multiple variants:
 
-```ligature
-type Shape = 
+```ocaml
+type Shape =
     Circle { radius: Float } |
     Rectangle { width: Float, height: Float } |
     Triangle { a: Float, b: Float, c: Float };
@@ -274,7 +274,7 @@ type Shape =
 let area = \shape -> match shape of
     Circle { radius } => 3.14159 * radius * radius,
     Rectangle { width, height } => width * height,
-    Triangle { a, b, c } => 
+    Triangle { a, b, c } =>
         // Heron's formula
         let s = (a + b + c) / 2.0;
         sqrt (s * (s - a) * (s - b) * (s - c));
@@ -284,7 +284,7 @@ let area = \shape -> match shape of
 
 Add conditions to pattern matching:
 
-```ligature
+```ocaml
 let categorize = \age -> match age of
     a when a < 18 => "Minor",
     a when a < 65 => "Adult",
@@ -295,11 +295,11 @@ let categorize = \age -> match age of
 
 Define recursive functions with `let rec`:
 
-```ligature
-let rec factorial = \n -> 
+```ocaml
+let rec factorial = \n ->
     if n == 0 then 1 else n * factorial (n - 1);
 
-let rec fibonacci = \n -> 
+let rec fibonacci = \n ->
     if n <= 1 then n else fibonacci (n - 1) + fibonacci (n - 2);
 ```
 
@@ -307,7 +307,7 @@ let rec fibonacci = \n ->
 
 ### Application Configuration
 
-```ligature
+```ocaml
 type Environment = Development | Staging | Production;
 
 type LogLevel = Debug | Info | Warn | Error;
@@ -339,19 +339,19 @@ let default_config = {
 
 ### Data Validation
 
-```ligature
+```ocaml
 type ValidationResult = Valid | Invalid String;
 
 let validate_user = \user -> match user of
-    { name = n, age = a, email = e } when 
-        length n > 0 && 
-        a >= 0 && a <= 150 && 
+    { name = n, age = a, email = e } when
+        length n > 0 &&
+        a >= 0 && a <= 150 &&
         contains "@" e => Valid,
     _ => Invalid "Invalid user data";
 
 let validate_config = \config -> match config of
-    { port = p, host = h } when 
-        p > 0 && p <= 65535 && 
+    { port = p, host = h } when
+        p > 0 && p <= 65535 &&
         length h > 0 => Valid,
     _ => Invalid "Invalid configuration";
 ```
@@ -388,4 +388,4 @@ The LSP server works with any editor that supports the Language Server Protocol:
 - **Community**: Join discussions on GitHub
 - **Issues**: Report bugs or request features on GitHub
 
-Happy coding with Ligature! 
+Happy coding with Ligature!

@@ -1,0 +1,5 @@
+// Deep nested module for testing
+let deep_value = 100;
+let deep_string = "deep";
+
+export deep_value, deep_string; 

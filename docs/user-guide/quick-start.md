@@ -39,7 +39,7 @@ code --install-extension vscode-ligature-*.vsix
 2. **Create a new file** with `.lig` extension
 3. **Start typing** Ligature code:
 
-```ligature
+```ocaml
 // Test the extension
 fun add(x: Int, y: Int) -> Int = x + y
 let result = add(10, 20)
@@ -209,7 +209,7 @@ Try these examples to test different features:
 
 #### Function Definition
 
-```ligature
+```ocaml
 fun factorial(n: Int) -> Int =
   if n <= 1 then 1
   else n * factorial(n - 1)
@@ -217,7 +217,7 @@ fun factorial(n: Int) -> Int =
 
 #### Pattern Matching
 
-```ligature
+```ocaml
 fun safeDivide(x: Int, y: Int) -> Option<Int> =
   match y with
     | 0 -> None
@@ -226,7 +226,7 @@ fun safeDivide(x: Int, y: Int) -> Option<Int> =
 
 #### Type Definition
 
-```ligature
+```ocaml
 type Result<T, E> =
   | Ok of T
   | Error of E
@@ -234,7 +234,7 @@ type Result<T, E> =
 
 #### Import and Usage
 
-```ligature
+```ocaml
 import "stdlib/core" as core
 let result = core.add(10, 20)
 ```

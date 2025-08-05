@@ -67,8 +67,8 @@ fn benchmark_simple_function_calls() -> AstResult<()> {
 
     let stats = evaluator.cache_stats();
 
-    println!("Function calls per second: {:.0}", ops_per_sec);
-    println!("Total time: {:?}", duration);
+    println!("Function calls per second: {ops_per_sec:.0}");
+    println!("Total time: {duration:?}");
     println!("Stack evaluations: {}", stats.stack_evals);
     println!("Tail calls: {}", stats.tail_calls);
     println!("Cache hit rate: {:.2}%", stats.hit_rate());
@@ -113,8 +113,8 @@ fn benchmark_varied_function_calls() -> AstResult<()> {
 
     let stats = evaluator.cache_stats();
 
-    println!("Function calls per second: {:.0}", ops_per_sec);
-    println!("Total time: {:?}", duration);
+    println!("Function calls per second: {ops_per_sec:.0}");
+    println!("Total time: {duration:?}");
     println!("Stack evaluations: {}", stats.stack_evals);
     println!("Tail calls: {}", stats.tail_calls);
     println!("Cache hit rate: {:.2}%", stats.hit_rate());
@@ -174,8 +174,8 @@ fn benchmark_nested_function_calls() -> AstResult<()> {
 
     let stats = evaluator.cache_stats();
 
-    println!("Nested function calls per second: {:.0}", ops_per_sec);
-    println!("Total time: {:?}", duration);
+    println!("Nested function calls per second: {ops_per_sec:.0}");
+    println!("Total time: {duration:?}");
     println!("Stack evaluations: {}", stats.stack_evals);
     println!("Tail calls: {}", stats.tail_calls);
 
@@ -217,8 +217,8 @@ fn benchmark_closure_calls() -> AstResult<()> {
 
     let stats = evaluator.cache_stats();
 
-    println!("Closure calls per second: {:.0}", ops_per_sec);
-    println!("Total time: {:?}", duration);
+    println!("Closure calls per second: {ops_per_sec:.0}");
+    println!("Total time: {duration:?}");
     println!("Stack evaluations: {}", stats.stack_evals);
     println!("Tail calls: {}", stats.tail_calls);
 
@@ -273,11 +273,11 @@ fn benchmark_optimization_impact() -> AstResult<()> {
 
     let improvement = optimized_ops_per_sec / basic_ops_per_sec;
 
-    println!("Basic (no optimizations): {:.0} ops/sec", basic_ops_per_sec);
-    println!("Optimized: {:.0} ops/sec", optimized_ops_per_sec);
-    println!("Improvement: {:.1}x", improvement);
-    println!("Basic time: {:?}", basic_duration);
-    println!("Optimized time: {:?}", optimized_duration);
+    println!("Basic (no optimizations): {basic_ops_per_sec:.0} ops/sec");
+    println!("Optimized: {optimized_ops_per_sec:.0} ops/sec");
+    println!("Improvement: {improvement:.1}x");
+    println!("Basic time: {basic_duration:?}");
+    println!("Optimized time: {optimized_duration:?}");
 
     Ok(())
 }

@@ -7,6 +7,7 @@ This document provides a detailed comparison between Ligature and Cuelang, two c
 ## Core Philosophy & Design Goals
 
 ### Ligature
+
 - **Dependently-typed foundation** based on Lean 4 type theory
 - **Configuration-native** design with strong validation focus
 - **Correctness over performance** - prioritizes formal verification
@@ -14,6 +15,7 @@ This document provides a detailed comparison between Ligature and Cuelang, two c
 - **Verification-ready** - foundation for formal proofs
 
 ### Cuelang
+
 - **Constraint-based validation** with powerful data modeling
 - **JSON superset** with schema validation capabilities
 - **Performance-focused** design for large-scale data
@@ -26,7 +28,7 @@ This document provides a detailed comparison between Ligature and Cuelang, two c
 
 Ligature provides a sophisticated functional programming type system:
 
-```ligature
+```ocaml
 // Dependent types (Pi and Sigma)
 type Vector n = { length: n, elements: List n }
 
@@ -79,18 +81,18 @@ user: #User & {
 
 ## Language Features Comparison
 
-| Feature | Ligature | Cuelang |
-|---------|----------|---------|
-| **Dependent Types** | ✅ Full support (Pi/Sigma) | ❌ Not supported |
-| **Type Classes** | ✅ Complete implementation | ❌ Not supported |
-| **Higher-Kinded Types** | ✅ Supported | ❌ Not supported |
-| **Pattern Matching** | ✅ Advanced with guards | ✅ Basic support |
-| **Union Types** | ✅ Complex with payloads | ✅ Simple unions |
-| **Module System** | ✅ Imports/exports/aliases | ✅ Package system |
-| **Formal Verification** | ✅ Lean 4 integration | ❌ Not supported |
-| **JSON/YAML Integration** | 🔄 Planned | ✅ Native support |
-| **Constraint Solving** | 🔄 Basic support | ✅ Advanced system |
-| **Data Validation** | ✅ Type-level | ✅ Schema-based |
+| Feature                   | Ligature                   | Cuelang            |
+| ------------------------- | -------------------------- | ------------------ |
+| **Dependent Types**       | ✅ Full support (Pi/Sigma) | ❌ Not supported   |
+| **Type Classes**          | ✅ Complete implementation | ❌ Not supported   |
+| **Higher-Kinded Types**   | ✅ Supported               | ❌ Not supported   |
+| **Pattern Matching**      | ✅ Advanced with guards    | ✅ Basic support   |
+| **Union Types**           | ✅ Complex with payloads   | ✅ Simple unions   |
+| **Module System**         | ✅ Imports/exports/aliases | ✅ Package system  |
+| **Formal Verification**   | ✅ Lean 4 integration      | ❌ Not supported   |
+| **JSON/YAML Integration** | 🔄 Planned                 | ✅ Native support  |
+| **Constraint Solving**    | 🔄 Basic support           | ✅ Advanced system |
+| **Data Validation**       | ✅ Type-level              | ✅ Schema-based    |
 
 ## Configuration Focus
 
@@ -98,7 +100,7 @@ user: #User & {
 
 Ligature is designed for configuration with advanced type-level validation:
 
-```ligature
+```ocaml
 // Schema-based validation with constraints
 type UserConfig = {
   name: String where length > 0,
@@ -189,7 +191,7 @@ service: #ServiceConfig & {
 
 Ligature uses its type system for validation:
 
-```ligature
+```ocaml
 // Type-level constraints
 type ValidEmail = String where isValidEmail
 type ValidPort = Integer where 1024 <= port <= 65535
@@ -204,7 +206,7 @@ type User = {
 
 // Pattern matching for validation
 let validateUser = \user -> match user {
-  { name, age, email } when length name > 0 && 0 <= age <= 150 => 
+  { name, age, email } when length name > 0 && 0 <= age <= 150 =>
     Some user,
   _ => None
 }
@@ -219,10 +221,10 @@ Cuelang provides powerful constraint solving:
 #NetworkConfig: {
   // Port must be in valid range
   port: int & >=1024 & <=65535
-  
+
   // Hostname must be valid
   hostname: string & regexp("^[a-zA-Z0-9.-]+$")
-  
+
   // SSL configuration
   ssl: {
     enabled: bool
@@ -258,7 +260,7 @@ Cuelang provides powerful constraint solving:
 
 Ligature uses functional programming syntax:
 
-```ligature
+```ocaml
 // ML-inspired syntax
 let add = \x -> \y -> x + y
 
@@ -270,7 +272,7 @@ let result = match value {
 }
 
 // Type annotations
-let processUser: User -> String = \user -> 
+let processUser: User -> String = \user ->
   match user {
     Admin { name } => "Admin: " ++ name,
     Regular { name, role } => "User: " ++ name ++ " (" ++ role ++ ")"
@@ -289,7 +291,7 @@ config: {
     timeout: 30
     retries: 3
   }
-  
+
   database: {
     host: "localhost"
     port: 5432
@@ -314,6 +316,7 @@ config: {
 ## Integration & Ecosystem
 
 ### Ligature
+
 - **Package management** via `keywork` system
 - **Client SDKs** via `krox` framework
 - **Language server** for IDE support
@@ -322,6 +325,7 @@ config: {
 - **Comprehensive test suite** (100+ tests)
 
 ### Cuelang
+
 - **Kubernetes integration** with native tooling
 - **JSON/YAML output** with validation
 - **CLI tools** for validation and generation
@@ -332,6 +336,7 @@ config: {
 ## Error Handling & Safety
 
 ### Ligature
+
 - **Comprehensive error reporting** with source locations
 - **Type-level error prevention** via dependent types
 - **Formal error semantics** defined in Lean 4
@@ -339,6 +344,7 @@ config: {
 - **Advanced type inference** with constraint solving
 
 ### Cuelang
+
 - **Detailed validation errors** with field paths
 - **Constraint violation reporting** with context
 - **Schema validation** with clear error messages
@@ -348,6 +354,7 @@ config: {
 ## Performance & Scalability
 
 ### Ligature
+
 - **Correctness over performance** design
 - **Formal verification** overhead
 - **Rich type system** complexity
@@ -355,6 +362,7 @@ config: {
 - **Early development** stage
 
 ### Cuelang
+
 - **Performance-optimized** for large data
 - **Efficient constraint solving** algorithms
 - **Fast JSON/YAML processing**
@@ -364,6 +372,7 @@ config: {
 ## Use Cases
 
 ### Ligature Best For
+
 - **Critical configuration** requiring formal verification
 - **Complex validation** with dependent types
 - **Research and academic** applications
@@ -373,6 +382,7 @@ config: {
 - **Systems requiring formal proofs**
 
 ### Cuelang Best For
+
 - **Kubernetes configuration** management
 - **Large-scale data validation** and processing
 - **JSON/YAML schema validation**
@@ -384,6 +394,7 @@ config: {
 ## Development Status
 
 ### Ligature
+
 - **Early development** stage
 - **Core infrastructure** in place
 - **Comprehensive test suite** (100+ tests, 100% pass rate)
@@ -391,6 +402,7 @@ config: {
 - **Active development** with clear roadmap
 
 ### Cuelang
+
 - **Mature and stable** language
 - **Production-ready** with extensive usage
 - **Well-documented** with tutorials and examples
@@ -400,12 +412,14 @@ config: {
 ## Learning Curve
 
 ### Ligature
+
 - **Steeper learning curve** due to advanced type system
 - **Requires understanding** of dependent types
 - **Formal verification** concepts may be unfamiliar
 - **More powerful** but more complex
 
 ### Cuelang
+
 - **Gentler learning curve** for JSON/Go developers
 - **Familiar syntax** for configuration management
 - **Practical focus** on data validation
@@ -414,6 +428,7 @@ config: {
 ## Future Directions
 
 ### Ligature
+
 - **Formal verification** integration
 - **Advanced type system** features
 - **Configuration-specific** optimizations
@@ -421,6 +436,7 @@ config: {
 - **Safety-critical** system adoption
 
 ### Cuelang
+
 - **Enhanced Kubernetes** integration
 - **Performance improvements** for large datasets
 - **Extended constraint** solving capabilities
@@ -445,4 +461,4 @@ config: {
 
 5. **Maturity**: Cuelang is production-ready with Google backing, while Ligature is in early development with ambitious goals.
 
-The choice between Ligature and Cuelang depends on your specific needs: if you require advanced type system features and formal verification, Ligature is the better choice. If you need powerful data validation, constraint solving, and Kubernetes integration, Cuelang is the better choice. 
+The choice between Ligature and Cuelang depends on your specific needs: if you require advanced type system features and formal verification, Ligature is the better choice. If you need powerful data validation, constraint solving, and Kubernetes integration, Cuelang is the better choice.

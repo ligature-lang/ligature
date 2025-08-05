@@ -149,7 +149,7 @@ Ligature already has the foundational infrastructure for type-level computation:
 
 Type-level functions are defined using the existing type system with extensions:
 
-```ligature
+```ocaml
 -- Basic type-level function
 type Id 'T = 'T;
 
@@ -166,7 +166,7 @@ type ProjectField 'FieldName 'RecordType =
 
 Type-level function application uses the existing `TypeKind::Application`:
 
-```ligature
+```ocaml
 -- Apply a type-level function
 type AppliedType = Id Int;  -- Results in Int
 type ComposedType = Compose List Option Int;  -- Results in List (Option Int)
@@ -212,7 +212,7 @@ The implementation integrates with existing components:
 
 Create a new module `registers/stdlib/type-level/mod.lig` with common type-level functions:
 
-```ligature
+```ocaml
 -- Type-level standard library
 module TypeLevel;
 

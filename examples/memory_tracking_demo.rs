@@ -3,9 +3,10 @@
 //! This example demonstrates how to use the memory tracking functionality
 //! to monitor memory usage during program evaluation.
 
-use ligature_eval::{get_current_memory_stats, Evaluator, MemoryTracker};
+use ligature_eval::{Evaluator, MemoryTracker, get_current_memory_stats};
 use ligature_parser::parse_program;
 
+#[allow(clippy::type_complexity)]
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("=== Ligature Memory Tracking Demo ===\n");
 
@@ -49,7 +50,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Evaluate the program
     let result = evaluator.evaluate_program(&program)?;
-    println!("Evaluation result: {:?}", result);
+    println!("Evaluation result: {result:?}");
 
     // Get final memory usage
     let final_stats = memory_tracker.get_current_usage()?;

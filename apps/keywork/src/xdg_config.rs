@@ -1,12 +1,15 @@
 //! XDG-based configuration for Keywork package manager.
 
-use ligature_xdg::{config_for_component, XdgPaths};
+use ligature_xdg::{XdgPaths, config_for_component};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 
+/// Type alias for error results to reduce complexity
+type ConfigResult<T> = Result<T, Box<dyn std::error::Error>>;
+
 /// Keywork package manager configuration.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct KeyworkConfig {
     /// Registry configuration
     pub registry: RegistryConfig,
@@ -70,17 +73,6 @@ pub struct LoggingConfig {
     pub include_timestamps: bool,
 }
 
-impl Default for KeyworkConfig {
-    fn default() -> Self {
-        Self {
-            registry: RegistryConfig::default(),
-            cache: CacheConfig::default(),
-            installation: InstallationConfig::default(),
-            logging: LoggingConfig::default(),
-        }
-    }
-}
-
 impl Default for RegistryConfig {
     fn default() -> Self {
         Self {
@@ -130,14 +122,16 @@ pub struct KeyworkXdgConfig {
     /// XDG paths for keywork
     paths: XdgPaths,
     /// Configuration manager
+    #[allow(dead_code)]
     config_manager: ligature_xdg::XdgConfig,
     /// Current configuration
     config: KeyworkConfig,
 }
 
+#[allow(dead_code)]
 impl KeyworkXdgConfig {
     /// Create a new Keywork XDG configuration manager.
-    pub async fn new() -> Result<Self, Box<dyn std::error::Error>> {
+    pub async fn new() -> ConfigResult<Self> {
         let paths = XdgPaths::new("keywork")?;
         let config_manager = config_for_component("keywork")?;
 
@@ -162,23 +156,27 @@ impl KeyworkXdgConfig {
     }
 
     /// Get the current configuration.
+    #[allow(dead_code)]
     pub fn config(&self) -> &KeyworkConfig {
         &self.config
     }
 
     /// Get a mutable reference to the configuration.
+    #[allow(dead_code)]
     pub fn config_mut(&mut self) -> &mut KeyworkConfig {
         &mut self.config
     }
 
     /// Save the current configuration.
-    pub async fn save(&self) -> Result<(), Box<dyn std::error::Error>> {
+    #[allow(dead_code)]
+    pub async fn save(&self) -> ConfigResult<()> {
         self.config_manager.save(&self.config).await?;
         Ok(())
     }
 
     /// Reload configuration from file.
-    pub async fn reload(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+    #[allow(dead_code)]
+    pub async fn reload(&mut self) -> ConfigResult<()> {
         if let Some(loaded_config) = self.config_manager.load::<KeyworkConfig>().await? {
             self.config = loaded_config;
         }
@@ -186,37 +184,37 @@ impl KeyworkXdgConfig {
     }
 
     /// Get the cache directory path.
-    pub fn cache_dir(&self) -> Result<PathBuf, Box<dyn std::error::Error>> {
+    pub fn cache_dir(&self) -> ConfigResult<PathBuf> {
         Ok(self.paths.cache_dir()?)
     }
 
     /// Get the data directory path.
-    pub fn data_dir(&self) -> Result<PathBuf, Box<dyn std::error::Error>> {
+    pub fn data_dir(&self) -> ConfigResult<PathBuf> {
         Ok(self.paths.data_dir()?)
     }
 
     /// Get the state directory path.
-    pub fn state_dir(&self) -> Result<PathBuf, Box<dyn std::error::Error>> {
+    pub fn state_dir(&self) -> ConfigResult<PathBuf> {
         Ok(self.paths.state_dir()?)
     }
 
     /// Get the config directory path.
-    pub fn config_dir(&self) -> Result<PathBuf, Box<dyn std::error::Error>> {
+    pub fn config_dir(&self) -> ConfigResult<PathBuf> {
         Ok(self.paths.config_dir()?)
     }
 
     /// Get a cache file path.
-    pub fn cache_file(&self, filename: &str) -> Result<PathBuf, Box<dyn std::error::Error>> {
+    pub fn cache_file(&self, filename: &str) -> ConfigResult<PathBuf> {
         Ok(self.paths.cache_file(filename)?)
     }
 
     /// Get a data file path.
-    pub fn data_file(&self, filename: &str) -> Result<PathBuf, Box<dyn std::error::Error>> {
+    pub fn data_file(&self, filename: &str) -> ConfigResult<PathBuf> {
         Ok(self.paths.data_file(filename)?)
     }
 
     /// Get a state file path.
-    pub fn state_file(&self, filename: &str) -> Result<PathBuf, Box<dyn std::error::Error>> {
+    pub fn state_file(&self, filename: &str) -> ConfigResult<PathBuf> {
         Ok(self.paths.state_file(filename)?)
     }
 
@@ -241,11 +239,7 @@ impl KeyworkXdgConfig {
     }
 
     /// Set an auth token for a registry.
-    pub async fn set_auth_token(
-        &mut self,
-        registry: &str,
-        token: String,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn set_auth_token(&mut self, registry: &str, token: String) -> ConfigResult<()> {
         self.config
             .registry
             .auth_tokens
@@ -279,10 +273,7 @@ impl KeyworkXdgConfig {
     }
 
     /// Set the default installation directory.
-    pub async fn set_default_installation_dir(
-        &mut self,
-        dir: Option<String>,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn set_default_installation_dir(&mut self, dir: Option<String>) -> ConfigResult<()> {
         self.config.installation.default_directory = dir;
         self.save().await
     }
@@ -303,7 +294,7 @@ impl KeyworkXdgConfig {
     }
 
     /// Set the log level.
-    pub async fn set_log_level(&mut self, level: String) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn set_log_level(&mut self, level: String) -> ConfigResult<()> {
         self.config.logging.level = level;
         self.save().await
     }
@@ -319,10 +310,7 @@ impl KeyworkXdgConfig {
     }
 
     /// Set the log file path.
-    pub async fn set_log_file(
-        &mut self,
-        file: Option<String>,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn set_log_file(&mut self, file: Option<String>) -> ConfigResult<()> {
         self.config.logging.file = file;
         self.save().await
     }
@@ -331,7 +319,6 @@ impl KeyworkXdgConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::tempdir;
 
     #[tokio::test]
     async fn test_keywork_config_creation() {
@@ -349,8 +336,7 @@ mod tests {
         let log_level = config.log_level();
         assert!(
             log_level == "info" || log_level == "debug",
-            "Expected 'info' or 'debug', got '{}'",
-            log_level
+            "Expected 'info' or 'debug', got '{log_level}'"
         );
         assert!(config.structured_logging());
     }
