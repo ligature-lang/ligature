@@ -309,7 +309,7 @@ mod tests {
     use super::*;
     use crate::traits::{EnginePlugin, VerificationEngine};
     use crate::engine::{EngineCapabilities, EngineInfo, EngineStatus};
-    use baton_protocol::prelude::*;
+    
     use async_trait::async_trait;
 
     // Mock plugin for testing

@@ -6,7 +6,6 @@ use async_trait::async_trait;
 use baton_engine_plugin::engine::PerformanceCharacteristics;
 use baton_engine_plugin::prelude::*;
 use baton_engine_plugin::traits::{EngineHealthStatus, EngineStats};
-use baton_protocol::prelude::*;
 use serde_json::json;
 
 /// A simple mock verification engine
