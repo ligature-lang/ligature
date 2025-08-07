@@ -1,29 +1,29 @@
 [package]
 name = "ligature-parser"
 version.workspace = true
-edition.workspace = true
 authors.workspace = true
+edition.workspace = true
 description = "Parser for the Ligature language"
-license.workspace = true
 repository.workspace = true
+license.workspace = true
 keywords.workspace = true
 categories.workspace = true
-include = ["src/**/*", "../../grammar.pest"]
+include = ["../../.lang/grammar.pest", "src/**/*"]
+
+[[bin]]
+name = "test_type_class"
+path = "src/test_type_class.rs"
 
 [dependencies]
 ligature-ast = { path = "../ligature-ast" }
+miette = { workspace = true, features = ["fancy"] }
 pest = { workspace = true }
 pest_derive = { workspace = true }
 thiserror = { workspace = true }
-miette = { workspace = true, features = ["fancy"] }
-
-[build-dependencies]
-pest = { workspace = true }
-pest_derive = { workspace = true }
 
 [dev-dependencies]
 criterion = { workspace = true }
 
-[[bin]]
-name = "test_type_class"
-path = "src/test_type_class.rs" 
+[build-dependencies]
+pest = { workspace = true }
+pest_derive = { workspace = true }

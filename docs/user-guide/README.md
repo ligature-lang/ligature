@@ -110,5 +110,5 @@ If you find issues with the documentation or have suggestions for improvements:
 
 - **[Project README](../../README.md)** - Main project documentation
 - **[Architecture Documentation](../architecture/)** - Technical architecture details
-- **[Specification](../.lang/spec/)** - Formal language specification
+- **[Specification](../../engines/lean/spec/)** - Formal language specification
 - **[Contributing Guide](../../CONTRIBUTING.md)** - How to contribute to Ligature

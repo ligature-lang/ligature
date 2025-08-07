@@ -48,7 +48,7 @@ ligature/
 │   ├── keywork/               # Package manager for registers
 │   ├── performance-monitor/   # Performance monitoring tool
 │   └── cacophony/             # CLI orchestration tool (simplified)
-├── .lang/spec/                # Lean specifications
+├── engines/lean/spec/         # Lean specifications
 ├── tests/
 │   ├── property/              # Property-based tests
 │   ├── differential/          # Tests against Lean reference

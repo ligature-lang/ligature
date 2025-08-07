@@ -1,21 +1,18 @@
 [package]
-name = "baton-verification"
+name = "baton-engine-plugin"
 version = "0.1.0"
 edition = "2021"
-description = "Verification engine for Baton formal verification"
+description = "Plugin interface for Baton verification engines"
 license = "Apache-2.0"
 
 [dependencies]
 anyhow = "1.0"
-baton-client = { path = "../baton-client" }
+async-trait = "0.1"
 baton-core = { path = "../baton-core" }
-baton-engine-plugin = { path = "../baton-engine-plugin" }
 baton-error = { path = "../baton-error" }
 baton-protocol = { path = "../baton-protocol" }
-baton-specification = { path = "../baton-specification" }
-path-absolutize = "3.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-tempfile = "3.0"
+thiserror = "1.0"
 tokio = { version = "1.0", features = ["full"] }
 uuid = { version = "1.0", features = ["v4"] }

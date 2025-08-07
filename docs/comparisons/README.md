@@ -140,4 +140,4 @@ These comparisons are based on current understanding of each language. If you fi
 - [Ligature Language Reference](../user-guide/language-reference.md)
 - [Ligature Architecture](../architecture/)
 - [Ligature Examples](../../examples/)
-- [Ligature Specification](../../.lang/spec/)
+- [Ligature Specification](../../engines/lean/spec/)

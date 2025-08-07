@@ -3,7 +3,7 @@
 use pest_derive::Parser;
 
 #[derive(Parser)]
-#[grammar = "../../grammar.pest"]
+#[grammar = "../../.lang/grammar.pest"]
 pub struct LigatureParser;
 
 // Re-export the pest-generated Rule enum

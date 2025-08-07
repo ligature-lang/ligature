@@ -6,12 +6,13 @@ description = "Specification management for Baton formal verification"
 license = "Apache-2.0"
 
 [dependencies]
+anyhow = "1.0"
 baton-core = { path = "../baton-core" }
+baton-engine-plugin = { path = "../baton-engine-plugin" }
 baton-error = { path = "../baton-error" }
+path-absolutize = "3.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-tokio = { version = "1.0", features = ["full"] }
-anyhow = "1.0"
 tempfile = "3.0"
-path-absolutize = "3.0"
-uuid = { version = "1.0", features = ["v4"] } 
+tokio = { version = "1.0", features = ["full"] }
+uuid = { version = "1.0", features = ["v4"] }

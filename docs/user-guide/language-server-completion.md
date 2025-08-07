@@ -47,7 +47,7 @@ A complete VS Code extension has been created with:
 vscode-ligature/
 ├── src/
 │   └── extension.ts          # Main extension code
-├── .lang/syntaxes/
+├── .lang/
 │   └── ligature.tmLanguage.json  # Syntax highlighting
 ├── snippets/
 │   └── ligature.json         # Code snippets
@@ -301,7 +301,7 @@ ligature-lsp/
 vscode-ligature/
 ├── src/
 │   └── extension.ts              # Main extension code
-├── .lang/syntaxes/
+├── .lang/
 │   └── ligature.tmLanguage.json  # Syntax highlighting grammar
 ├── snippets/
 │   └── ligature.json             # Code snippets

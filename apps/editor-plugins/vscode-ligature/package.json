@@ -54,7 +54,7 @@
       {
         "language": "ligature",
         "scopeName": "source.ligature",
-        "path": "./.lang/syntaxes/ligature.tmLanguage.json"
+        "path": "./.lang/ligature.tmLanguage.json"
       }
     ],
     "snippets": [

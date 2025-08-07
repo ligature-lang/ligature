@@ -121,7 +121,7 @@ async fn main() -> anyhow::Result<()> {
                     } else {
                         println!("{}", "✗ Specification build failed".red());
                         for error in build_status.errors {
-                            println!("Error: {}", error);
+                            println!("Error: {error}");
                         }
                     }
                 }
@@ -140,7 +140,7 @@ async fn main() -> anyhow::Result<()> {
                     } else {
                         println!("{}", "✗ Evaluation verification failed".red());
                         if let Some(error) = response.error_message() {
-                            println!("Error: {}", error);
+                            println!("Error: {error}");
                         }
                     }
                 }
@@ -159,7 +159,7 @@ async fn main() -> anyhow::Result<()> {
                     } else {
                         println!("{}", "✗ Type checking verification failed".red());
                         if let Some(error) = response.error_message() {
-                            println!("Error: {}", error);
+                            println!("Error: {error}");
                         }
                     }
                 }
@@ -191,7 +191,7 @@ async fn main() -> anyhow::Result<()> {
                     } else {
                         println!("{}", "✗ Differential test failed".red());
                         if let Some(error) = response.error_message() {
-                            println!("Error: {}", error);
+                            println!("Error: {error}");
                         }
                     }
                 }
@@ -210,7 +210,7 @@ async fn main() -> anyhow::Result<()> {
                     } else {
                         println!("{}", "✗ Type safety verification failed".red());
                         if let Some(error) = response.error_message() {
-                            println!("Error: {}", error);
+                            println!("Error: {error}");
                         }
                     }
                 }
@@ -229,7 +229,7 @@ async fn main() -> anyhow::Result<()> {
                     } else {
                         println!("{}", "✗ Termination verification failed".red());
                         if let Some(error) = response.error_message() {
-                            println!("Error: {}", error);
+                            println!("Error: {error}");
                         }
                     }
                 }
@@ -248,7 +248,7 @@ async fn main() -> anyhow::Result<()> {
                     } else {
                         println!("{}", "✗ Determinism verification failed".red());
                         if let Some(error) = response.error_message() {
-                            println!("Error: {}", error);
+                            println!("Error: {error}");
                         }
                     }
                 }
@@ -311,7 +311,7 @@ async fn main() -> anyhow::Result<()> {
             let expressions: Vec<&str> = expressions.split(',').collect();
             
             let mut success_count = 0;
-            let mut total_count = expressions.len();
+            let total_count = expressions.len();
 
             for expression in expressions {
                 let expr = expression.trim();
@@ -319,7 +319,7 @@ async fn main() -> anyhow::Result<()> {
                     continue;
                 }
 
-                println!("Verifying: {}", expr);
+                println!("Verifying: {expr}");
                 match engine.verify_evaluation(expr, "expected", None).await {
                     Ok(response) => {
                         if response.is_success() {
@@ -336,7 +336,7 @@ async fn main() -> anyhow::Result<()> {
             }
 
             println!("\nVerification suite completed:");
-            println!("Success: {}/{}", success_count, total_count);
+            println!("Success: {success_count}/{total_count}");
             if success_count == total_count {
                 println!("{}", "✓ All verifications passed".green());
             } else {
