@@ -1,9 +1,9 @@
 [package]
-name = "ligature-xdg"
+name = "embouchure-xdg"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
-description = "XDG base directory support for Ligature components"
+description = "XDG base directory support for Embouchure ecosystem components"
 license.workspace = true
 repository.workspace = true
 keywords.workspace = true

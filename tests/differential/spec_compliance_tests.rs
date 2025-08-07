@@ -5,8 +5,8 @@
 
 use crate::differential::*;
 
-#[test]
-fn test_literal_compliance() {
+#[tokio::test]
+async fn test_literal_compliance() {
     // Test that literals are handled according to the specification
     let test_cases = vec![
         "42",
@@ -18,7 +18,7 @@ fn test_literal_compliance() {
     ];
     
     for test_case in test_cases {
-        let result = run_differential_test(test_case);
+        let result = run_differential_test(test_case).await;
         assert!(result.is_ok(), "Failed to run differential test for: {}", test_case);
         assert!(result.unwrap(), "Differential test failed for: {}", test_case);
     }

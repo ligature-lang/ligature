@@ -1,6 +1,6 @@
 //! Basic usage example for the ligature-xdg crate.
 
-use ligature_xdg::{XdgPaths, config_for_component};
+use embouchure_xdg::{XdgPaths, config_for_component};
 use serde::{Deserialize, Serialize};
 
 /// Type alias for main function result
@@ -80,12 +80,12 @@ async fn main() -> MainResult {
     println!("   JSON config saved to: {}", json_path.display());
 
     // YAML config
-    let yaml_config = ligature_xdg::yaml_config_for_component("example-yaml")?;
+    let yaml_config = embouchure_xdg::yaml_config_for_component("example-yaml")?;
     let yaml_path = yaml_config.save(&sample_config).await?;
     println!("   YAML config saved to: {}", yaml_path.display());
 
     // TOML config
-    let toml_config = ligature_xdg::toml_config_for_component("example-toml")?;
+    let toml_config = embouchure_xdg::toml_config_for_component("example-toml")?;
     let toml_path = toml_config.save(&sample_config).await?;
     println!("   TOML config saved to: {}", toml_path.display());
     println!();

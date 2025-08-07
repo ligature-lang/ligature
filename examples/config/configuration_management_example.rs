@@ -1,7 +1,6 @@
-use ligature_xdg::{
-    ConfigValidator, ConfigSchema, FieldSchema, FieldType, FieldConstraint, Constraint,
-    ConfigHotReloader, HotReloadConfig, ConfigChangeEvent, ConfigReloadCallback,
-    XdgConfig, XdgPaths
+use embouchure_xdg::{
+    ConfigChangeEvent, ConfigHotReloader, ConfigReloadCallback, ConfigSchema, ConfigValidator,
+    Constraint, FieldConstraint, FieldSchema, FieldType, HotReloadConfig, XdgConfig, XdgPaths,
 };
 use serde_json::json;
 use std::collections::HashMap;
@@ -35,7 +34,7 @@ async fn create_configuration_examples() -> Result<(), Box<dyn std::error::Error
     // Initialize XDG paths
     let xdg_paths = XdgPaths::new("ligature-example")?;
     let config_dir = xdg_paths.config_dir()?;
-    
+
     // Ensure config directory exists
     tokio::fs::create_dir_all(&config_dir).await?;
 
@@ -156,70 +155,87 @@ fn setup_configuration_validation() -> Result<ConfigValidator, Box<dyn std::erro
     let cli_schema = ConfigSchema {
         fields: {
             let mut fields = HashMap::new();
-            
+
             // Logging section
-            fields.insert("logging".to_string(), FieldSchema {
-                field_type: FieldType::Object,
-                required: true,
-                default: None,
-                description: Some("Logging configuration".to_string()),
-                constraints: vec![],
-                allowed_values: None,
-                pattern: None,
-                min_value: None,
-                max_value: None,
-                min_length: None,
-                max_length: None,
-            });
+            fields.insert(
+                "logging".to_string(),
+                FieldSchema {
+                    field_type: FieldType::Object,
+                    required: true,
+                    default: None,
+                    description: Some("Logging configuration".to_string()),
+                    constraints: vec![],
+                    allowed_values: None,
+                    pattern: None,
+                    min_value: None,
+                    max_value: None,
+                    min_length: None,
+                    max_length: None,
+                },
+            );
 
             // Performance section
-            fields.insert("performance".to_string(), FieldSchema {
-                field_type: FieldType::Object,
-                required: true,
-                default: None,
-                description: Some("Performance settings".to_string()),
-                constraints: vec![],
-                allowed_values: None,
-                pattern: None,
-                min_value: None,
-                max_value: None,
-                min_length: None,
-                max_length: None,
-            });
+            fields.insert(
+                "performance".to_string(),
+                FieldSchema {
+                    field_type: FieldType::Object,
+                    required: true,
+                    default: None,
+                    description: Some("Performance settings".to_string()),
+                    constraints: vec![],
+                    allowed_values: None,
+                    pattern: None,
+                    min_value: None,
+                    max_value: None,
+                    min_length: None,
+                    max_length: None,
+                },
+            );
 
             // Defaults section
-            fields.insert("defaults".to_string(), FieldSchema {
-                field_type: FieldType::Object,
-                required: true,
-                default: None,
-                description: Some("Default settings".to_string()),
-                constraints: vec![],
-                allowed_values: None,
-                pattern: None,
-                min_value: None,
-                max_value: None,
-                min_length: None,
-                max_length: None,
-            });
+            fields.insert(
+                "defaults".to_string(),
+                FieldSchema {
+                    field_type: FieldType::Object,
+                    required: true,
+                    default: None,
+                    description: Some("Default settings".to_string()),
+                    constraints: vec![],
+                    allowed_values: None,
+                    pattern: None,
+                    min_value: None,
+                    max_value: None,
+                    min_length: None,
+                    max_length: None,
+                },
+            );
 
             // Cache section
-            fields.insert("cache".to_string(), FieldSchema {
-                field_type: FieldType::Object,
-                required: true,
-                default: None,
-                description: Some("Cache settings".to_string()),
-                constraints: vec![],
-                allowed_values: None,
-                pattern: None,
-                min_value: None,
-                max_value: None,
-                min_length: None,
-                max_length: None,
-            });
+            fields.insert(
+                "cache".to_string(),
+                FieldSchema {
+                    field_type: FieldType::Object,
+                    required: true,
+                    default: None,
+                    description: Some("Cache settings".to_string()),
+                    constraints: vec![],
+                    allowed_values: None,
+                    pattern: None,
+                    min_value: None,
+                    max_value: None,
+                    min_length: None,
+                    max_length: None,
+                },
+            );
 
             fields
         },
-        required_fields: vec!["logging".to_string(), "performance".to_string(), "defaults".to_string(), "cache".to_string()],
+        required_fields: vec![
+            "logging".to_string(),
+            "performance".to_string(),
+            "defaults".to_string(),
+            "cache".to_string(),
+        ],
         optional_fields: vec![],
         dependencies: HashMap::new(),
         constraints: vec![],
@@ -229,81 +245,101 @@ fn setup_configuration_validation() -> Result<ConfigValidator, Box<dyn std::erro
     let cacophony_schema = ConfigSchema {
         fields: {
             let mut fields = HashMap::new();
-            
-            fields.insert("project".to_string(), FieldSchema {
-                field_type: FieldType::Object,
-                required: true,
-                default: None,
-                description: Some("Project configuration".to_string()),
-                constraints: vec![],
-                allowed_values: None,
-                pattern: None,
-                min_value: None,
-                max_value: None,
-                min_length: None,
-                max_length: None,
-            });
 
-            fields.insert("environments".to_string(), FieldSchema {
-                field_type: FieldType::Object,
-                required: false,
-                default: None,
-                description: Some("Environment configurations".to_string()),
-                constraints: vec![],
-                allowed_values: None,
-                pattern: None,
-                min_value: None,
-                max_value: None,
-                min_length: None,
-                max_length: None,
-            });
+            fields.insert(
+                "project".to_string(),
+                FieldSchema {
+                    field_type: FieldType::Object,
+                    required: true,
+                    default: None,
+                    description: Some("Project configuration".to_string()),
+                    constraints: vec![],
+                    allowed_values: None,
+                    pattern: None,
+                    min_value: None,
+                    max_value: None,
+                    min_length: None,
+                    max_length: None,
+                },
+            );
 
-            fields.insert("collections".to_string(), FieldSchema {
-                field_type: FieldType::Object,
-                required: false,
-                default: None,
-                description: Some("Collection configurations".to_string()),
-                constraints: vec![],
-                allowed_values: None,
-                pattern: None,
-                min_value: None,
-                max_value: None,
-                min_length: None,
-                max_length: None,
-            });
+            fields.insert(
+                "environments".to_string(),
+                FieldSchema {
+                    field_type: FieldType::Object,
+                    required: false,
+                    default: None,
+                    description: Some("Environment configurations".to_string()),
+                    constraints: vec![],
+                    allowed_values: None,
+                    pattern: None,
+                    min_value: None,
+                    max_value: None,
+                    min_length: None,
+                    max_length: None,
+                },
+            );
 
-            fields.insert("plugins".to_string(), FieldSchema {
-                field_type: FieldType::Array,
-                required: false,
-                default: None,
-                description: Some("Plugin configurations".to_string()),
-                constraints: vec![],
-                allowed_values: None,
-                pattern: None,
-                min_value: None,
-                max_value: None,
-                min_length: None,
-                max_length: None,
-            });
+            fields.insert(
+                "collections".to_string(),
+                FieldSchema {
+                    field_type: FieldType::Object,
+                    required: false,
+                    default: None,
+                    description: Some("Collection configurations".to_string()),
+                    constraints: vec![],
+                    allowed_values: None,
+                    pattern: None,
+                    min_value: None,
+                    max_value: None,
+                    min_length: None,
+                    max_length: None,
+                },
+            );
 
-            fields.insert("operations".to_string(), FieldSchema {
-                field_type: FieldType::Object,
-                required: false,
-                default: None,
-                description: Some("Operation configurations".to_string()),
-                constraints: vec![],
-                allowed_values: None,
-                pattern: None,
-                min_value: None,
-                max_value: None,
-                min_length: None,
-                max_length: None,
-            });
+            fields.insert(
+                "plugins".to_string(),
+                FieldSchema {
+                    field_type: FieldType::Array,
+                    required: false,
+                    default: None,
+                    description: Some("Plugin configurations".to_string()),
+                    constraints: vec![],
+                    allowed_values: None,
+                    pattern: None,
+                    min_value: None,
+                    max_value: None,
+                    min_length: None,
+                    max_length: None,
+                },
+            );
+
+            fields.insert(
+                "operations".to_string(),
+                FieldSchema {
+                    field_type: FieldType::Object,
+                    required: false,
+                    default: None,
+                    description: Some("Operation configurations".to_string()),
+                    constraints: vec![],
+                    allowed_values: None,
+                    pattern: None,
+                    min_value: None,
+                    max_value: None,
+                    min_length: None,
+                    max_length: None,
+                },
+            );
 
             fields
         },
         required_fields: vec!["project".to_string()],
-        optional_fields: vec!["environments".to_string(), "collections".to_string(), "plugins".to_string(), "operations".to_string()],
+        optional_fields: vec![
+            "environments".to_string(),
+            "collections".to_string(),
+            "plugins".to_string(),
+            "operations".to_string(),
+        ],
         dependencies: HashMap::new(),
         constraints: vec![],
     };
@@ -312,66 +348,83 @@ fn setup_configuration_validation() -> Result<ConfigValidator, Box<dyn std::erro
     let lsp_schema = ConfigSchema {
         fields: {
             let mut fields = HashMap::new();
-            
-            fields.insert("server".to_string(), FieldSchema {
-                field_type: FieldType::Object,
-                required: true,
-                default: None,
-                description: Some("Server configuration".to_string()),
-                constraints: vec![],
-                allowed_values: None,
-                pattern: None,
-                min_value: None,
-                max_value: None,
-                min_length: None,
-                max_length: None,
-            });
 
-            fields.insert("diagnostics".to_string(), FieldSchema {
-                field_type: FieldType::Object,
-                required: true,
-                default: None,
-                description: Some("Diagnostics configuration".to_string()),
-                constraints: vec![],
-                allowed_values: None,
-                pattern: None,
-                min_value: None,
-                max_value: None,
-                min_length: None,
-                max_length: None,
-            });
+            fields.insert(
+                "server".to_string(),
+                FieldSchema {
+                    field_type: FieldType::Object,
+                    required: true,
+                    default: None,
+                    description: Some("Server configuration".to_string()),
+                    constraints: vec![],
+                    allowed_values: None,
+                    pattern: None,
+                    min_value: None,
+                    max_value: None,
+                    min_length: None,
+                    max_length: None,
+                },
+            );
 
-            fields.insert("completion".to_string(), FieldSchema {
-                field_type: FieldType::Object,
-                required: true,
-                default: None,
-                description: Some("Completion configuration".to_string()),
-                constraints: vec![],
-                allowed_values: None,
-                pattern: None,
-                min_value: None,
-                max_value: None,
-                min_length: None,
-                max_length: None,
-            });
+            fields.insert(
+                "diagnostics".to_string(),
+                FieldSchema {
+                    field_type: FieldType::Object,
+                    required: true,
+                    default: None,
+                    description: Some("Diagnostics configuration".to_string()),
+                    constraints: vec![],
+                    allowed_values: None,
+                    pattern: None,
+                    min_value: None,
+                    max_value: None,
+                    min_length: None,
+                    max_length: None,
+                },
+            );
 
-            fields.insert("formatting".to_string(), FieldSchema {
-                field_type: FieldType::Object,
-                required: true,
-                default: None,
-                description: Some("Formatting configuration".to_string()),
-                constraints: vec![],
-                allowed_values: None,
-                pattern: None,
-                min_value: None,
-                max_value: None,
-                min_length: None,
-                max_length: None,
-            });
+            fields.insert(
+                "completion".to_string(),
+                FieldSchema {
+                    field_type: FieldType::Object,
+                    required: true,
+                    default: None,
+                    description: Some("Completion configuration".to_string()),
+                    constraints: vec![],
+                    allowed_values: None,
+                    pattern: None,
+                    min_value: None,
+                    max_value: None,
+                    min_length: None,
+                    max_length: None,
+                },
+            );
+
+            fields.insert(
+                "formatting".to_string(),
+                FieldSchema {
+                    field_type: FieldType::Object,
+                    required: true,
+                    default: None,
+                    description: Some("Formatting configuration".to_string()),
+                    constraints: vec![],
+                    allowed_values: None,
+                    pattern: None,
+                    min_value: None,
+                    max_value: None,
+                    min_length: None,
+                    max_length: None,
+                },
+            );
 
             fields
         },
-        required_fields: vec!["server".to_string(), "diagnostics".to_string(), "completion".to_string(), "formatting".to_string()],
+        required_fields: vec![
+            "server".to_string(),
+            "diagnostics".to_string(),
+            "completion".to_string(),
+            "formatting".to_string(),
+        ],
         optional_fields: vec![],
         dependencies: HashMap::new(),
         constraints: vec![],
@@ -388,12 +441,12 @@ fn setup_configuration_validation() -> Result<ConfigValidator, Box<dyn std::erro
             if port > 0 && port <= 65535 {
                 Ok(())
             } else {
-                Err(ligature_xdg::ValidationError::ConstraintViolation(
-                    format!("Port must be between 1 and 65535, got {}", port)
+                Err(embouchure_xdg::ValidationError::ConstraintViolation(
+                    format!("Port must be between 1 and 65535, got {}", port),
                 ))
             }
         } else {
-            Err(ligature_xdg::ValidationError::TypeMismatch {
+            Err(embouchure_xdg::ValidationError::TypeMismatch {
                 expected: "port number".to_string(),
                 actual: "non-number".to_string(),
             })
@@ -405,7 +458,9 @@ fn setup_configuration_validation() -> Result<ConfigValidator, Box<dyn std::erro
 }
 
 /// Demonstrate configuration validation
-async fn demonstrate_configuration_validation(validator: &ConfigValidator) -> Result<(), Box<dyn std::error::Error>> {
+async fn demonstrate_configuration_validation(
+    validator: &ConfigValidator,
+) -> Result<(), Box<dyn std::error::Error>> {
     println!("3. Demonstrating configuration validation...");
 
     // Test valid CLI configuration
@@ -456,7 +511,10 @@ async fn demonstrate_configuration_validation(validator: &ConfigValidator) -> Re
 
     match validator.validate_config(&invalid_cli_config, "cli") {
         Ok(()) => println!("   ✗ Invalid CLI configuration unexpectedly passed validation"),
-        Err(e) => println!("   ✓ Invalid CLI configuration correctly failed validation: {}", e),
+        Err(e) => println!(
+            "   ✓ Invalid CLI configuration correctly failed validation: {}",
+            e
+        ),
     }
 
     // Test valid Cacophony configuration
@@ -482,7 +540,10 @@ async fn demonstrate_configuration_validation(validator: &ConfigValidator) -> Re
 
     match validator.validate_config(&valid_cacophony_config, "cacophony") {
         Ok(()) => println!("   ✓ Valid Cacophony configuration passed validation"),
-        Err(e) => println!("   ✗ Valid Cacophony configuration failed validation: {}", e),
+        Err(e) => println!(
+            "   ✗ Valid Cacophony configuration failed validation: {}",
+            e
+        ),
     }
 
     println!("   Configuration validation demonstration completed!\n");
@@ -490,7 +551,9 @@ async fn demonstrate_configuration_validation(validator: &ConfigValidator) -> Re
 }
 
 /// Demonstrate hot-reloading functionality
-async fn demonstrate_hot_reloading(validator: &ConfigValidator) -> Result<(), Box<dyn std::error::Error>> {
+async fn demonstrate_hot_reloading(
+    validator: &ConfigValidator,
+) -> Result<(), Box<dyn std::error::Error>> {
     println!("4. Demonstrating configuration hot-reloading...");
 
     // Create a temporary directory for testing
@@ -535,7 +598,11 @@ enabled = true
                 println!("   🗑️  Configuration file deleted: {}", path.display());
             }
             ConfigChangeEvent::Renamed { from, to } => {
-                println!("   🔄 Configuration file renamed: {} -> {}", from.display(), to.display());
+                println!(
+                    "   🔄 Configuration file renamed: {} -> {}",
+                    from.display(),
+                    to.display()
+                );
             }
         }
         Ok(())
@@ -545,7 +612,10 @@ enabled = true
 
     // Start watching
     reloader.start_watching(config_dir).await?;
-    println!("   🔍 Started watching configuration directory: {}", config_dir.display());
+    println!(
+        "   🔍 Started watching configuration directory: {}",
+        config_dir.display()
+    );
 
     // Simulate configuration changes
     tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
@@ -582,4 +652,4 @@ setting = "new_value"
 
     println!("   Configuration hot-reloading demonstration completed!\n");
     Ok(())
-} 
+}

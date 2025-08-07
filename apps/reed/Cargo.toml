@@ -18,7 +18,7 @@ ligature-ast = { path = "../../crates/ligature-ast" }
 ligature-parser = { path = "../../crates/ligature-parser" }
 ligature-types = { path = "../../crates/ligature-types" }
 ligature-eval = { path = "../../crates/ligature-eval" }
-ligature-xdg = { path = "../../crates/ligature-xdg" }
+embouchure-xdg = { path = "../../crates/embouchure-xdg" }
 clap = { workspace = true, features = ["derive"] }
 thiserror = { workspace = true }
 miette = { workspace = true, features = ["fancy"] }

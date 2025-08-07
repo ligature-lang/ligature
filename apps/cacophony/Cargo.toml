@@ -26,7 +26,7 @@ toml = "0.8"
 # yaml-rust = "0.4"  # Removed: unmaintained crate, using serde_yaml instead
 tempfile = "3.8"
 walkdir = "2.4"
-ligature-xdg = { path = "../../crates/ligature-xdg" }
+embouchure-xdg = { path = "../../crates/embouchure-xdg" }
 
 
 

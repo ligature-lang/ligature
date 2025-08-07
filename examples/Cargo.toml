@@ -1,20 +1,87 @@
 [package]
 name = "ligature-examples"
 version.workspace = true
-edition.workspace = true
 authors.workspace = true
+edition.workspace = true
 description = "Examples for the Ligature language ecosystem"
-license.workspace = true
 repository.workspace = true
+license.workspace = true
 
-[dependencies]
-krox = { path = "../krox" }
-ligature-ast = { path = "../crates/ligature-ast" }
-ligature-parser = { path = "../crates/ligature-parser" }
-ligature-types = { path = "../crates/ligature-types" }
-ligature-eval = { path = "../crates/ligature-eval" }
-tokio = { version = "1.0", features = ["full"] }
-pest = "2.7"
+[[bin]]
+name = "test_union_evaluation"
+path = "test_union_evaluation.rs"
+
+[[bin]]
+name = "test_union_pattern_matching"
+path = "test_union_pattern_matching.rs"
+
+[[bin]]
+name = "test_advanced_union_patterns"
+path = "test_advanced_union_patterns.rs"
+
+[[bin]]
+name = "test_match_expression_parsing"
+path = "test_match_expression_parsing.rs"
+
+[[bin]]
+name = "test_simple_union_pattern"
+path = "test_simple_union_pattern.rs"
+
+[[bin]]
+name = "debug_union_pattern"
+path = "debug_union_pattern.rs"
+
+[[bin]]
+name = "test_if_parsing"
+path = "test_if_parsing.rs"
+
+[[bin]]
+name = "debug_grammar"
+path = "debug_grammar.rs"
+
+[[bin]]
+name = "debug_if_parsing"
+path = "debug_if_parsing.rs"
+
+[[bin]]
+name = "test_caching"
+path = "test_caching.rs"
+
+[[bin]]
+name = "test_comprehensive_performance"
+path = "test_comprehensive_performance.rs"
+
+[[bin]]
+name = "function_call_benchmark"
+path = "function_call_benchmark.rs"
+
+[[bin]]
+name = "test_expression_caching"
+path = "test_expression_caching.rs"
+
+[[bin]]
+name = "performance_benchmark"
+path = "performance_benchmark.rs"
+
+[[bin]]
+name = "performance_optimization_benchmark"
+path = "performance_optimization_benchmark.rs"
+
+[[bin]]
+name = "simple_performance_test"
+path = "simple_performance_test.rs"
+
+[[bin]]
+name = "test_value_optimization"
+path = "test_value_optimization.rs"
+
+[[bin]]
+name = "function_call_performance_test"
+path = "function_call_performance_test.rs"
+
+[[example]]
+name = "enhanced_differential_test_example"
+path = "enhanced_differential_test_example.rs"
 
 [[example]]
 name = "krox_example"
@@ -93,74 +160,36 @@ path = "debug_pest.rs"
 name = "memory_tracking_demo"
 path = "memory_tracking_demo.rs"
 
-[[bin]]
-name = "test_union_evaluation"
-path = "test_union_evaluation.rs"
+[[example]]
+name = "lean_integration_example"
+path = "lean_integration_example.rs"
 
-[[bin]]
-name = "test_union_pattern_matching"
-path = "test_union_pattern_matching.rs"
+[[example]]
+name = "debug_lean_communication"
+path = "debug_lean_communication.rs"
 
-[[bin]]
-name = "test_advanced_union_patterns"
-path = "test_advanced_union_patterns.rs"
+[[example]]
+name = "simple_lean_test"
+path = "simple_lean_test.rs"
 
-[[bin]]
-name = "test_match_expression_parsing"
-path = "test_match_expression_parsing.rs"
+[[example]]
+name = "working_lean_test"
+path = "working_lean_test.rs"
 
-[[bin]]
-name = "test_simple_union_pattern"
-path = "test_simple_union_pattern.rs"
+[dependencies]
+anyhow = "1.0"
+# Lean integration dependencies (optional)
+baton-client = { optional = true, path = "../crates/baton-client" }
+baton-protocol = { optional = true, path = "../crates/baton-protocol" }
+baton-verification = { optional = true, path = "../crates/baton-verification" }
+krox = { path = "../krox" }
+ligature-ast = { path = "../crates/ligature-ast" }
+ligature-eval = { path = "../crates/ligature-eval" }
+ligature-parser = { path = "../crates/ligature-parser" }
+ligature-types = { path = "../crates/ligature-types" }
+pest = "2.7"
+tokio = { version = "1.0", features = ["full"] }
 
-[[bin]]
-name = "debug_union_pattern"
-path = "debug_union_pattern.rs"
-
-[[bin]]
-name = "test_if_parsing"
-path = "test_if_parsing.rs"
-
-[[bin]]
-name = "debug_grammar"
-path = "debug_grammar.rs"
-
-[[bin]]
-name = "debug_if_parsing"
-path = "debug_if_parsing.rs"
-
-[[bin]]
-name = "test_caching"
-path = "test_caching.rs"
-
-[[bin]]
-name = "test_comprehensive_performance"
-path = "test_comprehensive_performance.rs"
-
-[[bin]]
-name = "function_call_benchmark"
-path = "function_call_benchmark.rs"
-
-[[bin]]
-name = "test_expression_caching"
-path = "test_expression_caching.rs"
-
-[[bin]]
-name = "performance_benchmark"
-path = "performance_benchmark.rs"
-
-[[bin]]
-name = "performance_optimization_benchmark"
-path = "performance_optimization_benchmark.rs"
-
-[[bin]]
-name = "simple_performance_test"
-path = "simple_performance_test.rs"
-
-[[bin]]
-name = "test_value_optimization"
-path = "test_value_optimization.rs"
-
-[[bin]]
-name = "function_call_performance_test"
-path = "function_call_performance_test.rs" 
+[features]
+default = []
+lean-integration = ["baton-client", "baton-protocol", "baton-verification"]

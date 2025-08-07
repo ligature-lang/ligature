@@ -1,6 +1,6 @@
 //! XDG-based configuration for Keywork package manager.
 
-use ligature_xdg::{XdgPaths, config_for_component};
+use embouchure_xdg::{XdgPaths, config_for_component};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -123,7 +123,7 @@ pub struct KeyworkXdgConfig {
     paths: XdgPaths,
     /// Configuration manager
     #[allow(dead_code)]
-    config_manager: ligature_xdg::XdgConfig,
+    config_manager: embouchure_xdg::XdgConfig,
     /// Current configuration
     config: KeyworkConfig,
 }

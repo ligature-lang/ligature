@@ -23,16 +23,4 @@ lean_lib ConfigurationLanguage {
 }
 
 -- Add dependencies on mathlib
-require mathlib from git "https://github.com/leanprover-community/mathlib4.git" @ "v4.8.0"
-
--- Add test targets
-@[default_target]
-lean_exe test_spec {
-  root := `TestSpec
-}
-
--- Add documentation target
-@[default_target]
-lean_exe docs {
-  root := `Docs
-}
+require mathlib from git "https://github.com/leanprover-community/mathlib4.git" @ "v4.7.0"

@@ -1,0 +1,14 @@
+[package]
+name = "baton-protocol"
+version = "0.1.0"
+edition = "2021"
+description = "Protocol definitions for Baton formal verification"
+license = "Apache-2.0"
+
+[dependencies]
+baton-core = { path = "../baton-core" }
+baton-error = { path = "../baton-error" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.0", features = ["full"] }
+anyhow = "1.0" 

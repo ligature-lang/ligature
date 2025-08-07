@@ -13,7 +13,7 @@ categories.workspace = true
 ligature-ast = { path = "../ligature-ast" }
 ligature-types = { path = "../ligature-types" }
 ligature-parser = { path = "../ligature-parser" }
-ligature-xdg = { path = "../ligature-xdg" }
+embouchure-xdg = { path = "../embouchure-xdg" }
 thiserror = { workspace = true }
 miette = { workspace = true, features = ["fancy"] }
 serde_json = { workspace = true }

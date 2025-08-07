@@ -1,0 +1,18 @@
+[package]
+name = "baton-client"
+version = "0.1.0"
+edition = "2021"
+description = "Lean client for Baton formal verification"
+license = "Apache-2.0"
+
+[dependencies]
+baton-core = { path = "../baton-core" }
+baton-error = { path = "../baton-error" }
+baton-protocol = { path = "../baton-protocol" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.0", features = ["full"] }
+anyhow = "1.0"
+tempfile = "3.0"
+path-absolutize = "3.0"
+uuid = { version = "1.0", features = ["v4"] } 

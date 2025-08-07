@@ -20,7 +20,7 @@ ligature-ast = { path = "../ligature-ast" }
 ligature-parser = { path = "../ligature-parser" }
 ligature-types = { path = "../ligature-types" }
 ligature-eval = { path = "../ligature-eval" }
-ligature-xdg = { path = "../ligature-xdg" }
+embouchure-xdg = { path = "../embouchure-xdg" }
 tower-lsp = { workspace = true }
 lsp-types = { workspace = true }
 thiserror = { workspace = true }

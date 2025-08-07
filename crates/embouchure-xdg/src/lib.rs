@@ -1,7 +1,7 @@
-//! XDG base directory support for Ligature components.
+//! XDG base directory support for Embouchure ecosystem components.
 //!
 //! This crate provides a unified interface for accessing XDG base directories
-//! across all Ligature components, with fallback support for non-XDG systems.
+//! across all Embouchure ecosystem components, with fallback support for non-XDG systems.
 
 pub mod config;
 pub mod error;

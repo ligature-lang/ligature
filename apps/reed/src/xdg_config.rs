@@ -1,4 +1,4 @@
-use ligature_xdg::{XdgConfig, XdgPaths};
+use embouchure_xdg::{XdgConfig, XdgPaths};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use thiserror::Error;
@@ -6,7 +6,7 @@ use thiserror::Error;
 #[derive(Error, Debug)]
 pub enum CliXdgError {
     #[error("XDG configuration error: {0}")]
-    XdgError(#[from] ligature_xdg::error::XdgError),
+    XdgError(#[from] embouchure_xdg::error::XdgError),
     #[error("IO error: {0}")]
     IoError(#[from] std::io::Error),
     #[error("Serialization error: {0}")]

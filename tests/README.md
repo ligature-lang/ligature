@@ -48,16 +48,25 @@ tests/
 ### Running All Tests
 
 ```bash
-# Run all tests
+# Run all tests (without Lean integration)
 cargo test
+
+# Run all tests with Lean integration enabled
+cargo test --features lean-integration
 
 # Run tests with output
 cargo test -- --nocapture
+
+# Run tests with Lean integration and output
+cargo test --features lean-integration -- --nocapture
 
 # Run specific test categories
 cargo test integration
 cargo test property
 cargo test differential
+
+# Run differential tests with Lean integration
+cargo test differential --features lean-integration
 ```
 
 ### Running Specific Test Suites
@@ -93,12 +102,14 @@ cargo test -- --nocapture --test-threads=1
 Integration tests verify that the different components of the language work together correctly. They test the complete pipeline from parsing through type checking to evaluation.
 
 **Key Features:**
+
 - Complete pipeline testing
 - Error handling verification
 - End-to-end functionality testing
 - Real-world usage scenarios
 
 **Test Coverage:**
+
 - Parser functionality (literals, expressions, programs)
 - Evaluation engine (arithmetic, logical, conditional operations)
 - Type system (type checking, inference, error handling)
@@ -110,12 +121,14 @@ Integration tests verify that the different components of the language work toge
 Property-based tests use randomly generated inputs to verify that the language satisfies various properties and invariants. These tests help catch edge cases and ensure robustness.
 
 **Key Features:**
+
 - Random input generation
 - Property verification
 - Invariant testing
 - Edge case discovery
 
 **Test Coverage:**
+
 - Parser properties (idempotency, whitespace invariance, error consistency)
 - Evaluation properties (termination, arithmetic properties, logical properties)
 - Type system properties (type inference correctness, error handling)
@@ -126,16 +139,56 @@ Property-based tests use randomly generated inputs to verify that the language s
 Differential tests compare the Rust implementation against the formal specification written in Lean. This ensures that the implementation correctly follows the formal semantics.
 
 **Key Features:**
+
 - Specification compliance verification
 - Formal semantics testing
-- Lean integration (planned)
+- Enhanced comparison logic with detailed error reporting
 - Mathematical correctness validation
+- **Optional Lean Integration**: Available via the `lean-integration` feature flag
 
 **Test Coverage:**
+
 - Specification compliance (literals, operations, expressions)
 - Operational semantics (evaluation rules, type rules)
 - Type system compliance (type checking, inference)
 - Configuration language compliance
+
+**🔧 Feature Flag System:**
+The Lean integration is now behind the `lean-integration` feature flag:
+
+```bash
+# Run without Lean integration (faster builds)
+cargo test
+
+# Run with Lean integration enabled
+cargo test --features lean-integration
+
+# Run examples with Lean integration
+cargo run --example working_lean_test --features lean-integration
+```
+
+**⚠️ Current Implementation Status:**
+The differential testing framework includes several stubs and placeholder implementations:
+
+1. **Legacy Function Stubs**: The following functions are currently stubs that return placeholder results:
+
+   - `run_type_check_differential_test()` - Always returns `Ok(true)`
+   - `run_operational_semantics_test()` - Always returns `Ok(true)`
+   - `run_configuration_test()` - Always returns `Ok(true)`
+
+2. **Lean Integration Placeholders**: The actual Lean process communication is not yet implemented:
+
+   - `run_lean_evaluation()` - Returns placeholder results
+   - `run_lean_type_checking()` - Returns placeholder results
+   - `run_lean_operational_semantics()` - Returns placeholder results
+
+3. **Enhanced Framework Ready**: The enhanced comparison logic and error reporting infrastructure is complete and ready for integration with the actual Lean specification.
+
+**Next Steps:**
+
+- Implement actual Lean process communication
+- Replace stub functions with real Lean integration
+- Add comprehensive test cases from the Lean specification
 
 ## Test Dependencies
 
@@ -161,6 +214,7 @@ fake = "2.9"               # Fake data generation
 4. Use helper functions from the test modules
 
 Example:
+
 ```rust
 use ligature_parser::parse_expression;
 use ligature_ast::AstResult;
@@ -180,6 +234,7 @@ fn test_my_new_feature() -> AstResult<()> {
 3. Write property verification logic
 
 Example:
+
 ```rust
 use proptest::prelude::*;
 
@@ -199,6 +254,7 @@ proptest! {
 3. Ensure specification compliance
 
 Example:
+
 ```rust
 use crate::differential::run_differential_test;
 
@@ -253,12 +309,20 @@ The testing infrastructure is designed to work with CI/CD pipelines:
 
 ### Lean Specification Integration
 
-The differential tests currently use placeholder functions for Lean integration. Future work will include:
+The differential tests currently use placeholder functions for Lean integration. The enhanced framework infrastructure is complete, but the actual Lean integration needs to be implemented:
 
-1. **Lean Process Communication** - Direct communication with Lean processes
-2. **Specification Extraction** - Automatic test case extraction from Lean files
-3. **Result Comparison** - Sophisticated comparison of Rust and Lean results
-4. **Specification Validation** - Verification against formal semantics
+1. **Lean Process Communication** - Direct communication with Lean processes (stub functions in place)
+2. **Specification Extraction** - Automatic test case extraction from Lean files (framework ready)
+3. **Result Comparison** - Sophisticated comparison of Rust and Lean results (✅ implemented)
+4. **Specification Validation** - Verification against formal semantics (framework ready)
+
+**Current Status:**
+
+- ✅ Enhanced comparison logic and error reporting implemented
+- ✅ Detailed difference analysis with severity levels
+- ✅ Comprehensive test result structures
+- 🔄 Lean process communication (stubs in place, ready for implementation)
+- 🔄 Specification test case extraction (framework ready)
 
 ## Contributing
 
@@ -309,23 +373,27 @@ The test runner provides comprehensive reporting:
 The following test files were moved from the project root to the `tests/` directory to improve organization:
 
 #### Moved to `tests/integration/`:
+
 - `test_parser.rs` - Simple parser test script
-- `test_simple.rs` - Basic functionality test script  
+- `test_simple.rs` - Basic functionality test script
 - `test_parse.rs` - Parse expression test script
 
 #### Moved to `tests/fixtures/`:
+
 - `test_simple.lig` - Simple Ligature expression file
 - `test_let.lig` - Let expression test file
 
 ### References Updated
 
 The following files were updated to reflect the new locations:
+
 - `examples/Cargo.toml` - Updated path for `test_parser` example
 - `docs/README.md` - Added note about moved `test_simple.lig` file
 
 ### Benefits
 
 This reorganization provides:
+
 - **Better Organization** - All tests are now in a dedicated directory
 - **Clearer Structure** - Test files are categorized by type and purpose
 - **Easier Maintenance** - Related test files are grouped together
@@ -333,4 +401,4 @@ This reorganization provides:
 
 ## Conclusion
 
-This testing infrastructure provides comprehensive verification of the Ligature language implementation. It ensures correctness, reliability, and compliance with the formal specification while providing fast feedback for development. 
+This testing infrastructure provides comprehensive verification of the Ligature language implementation. It ensures correctness, reliability, and compliance with the formal specification while providing fast feedback for development.

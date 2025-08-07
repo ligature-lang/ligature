@@ -1,7 +1,7 @@
 //! Configuration management for the Ligature evaluator.
 
-use ligature_xdg::config::XdgConfig;
-use ligature_xdg::error::XdgError;
+use embouchure_xdg::config::XdgConfig;
+use embouchure_xdg::error::XdgError;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 

@@ -18,7 +18,7 @@ jobs:
         uses: schneegans/dynamic-badges-action@v1.6.0
         with:
           auth: ${{ secrets.GIST_SECRET }}
-          gistID: your-gist-id-here
+          gistID: 5ff6a38a1f63f5f55c96abadb54534a9
           filename: ligature-status.json
           label: Ligature CI
           message: ${{ github.event.workflow_run.conclusion }}
