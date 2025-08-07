@@ -42,8 +42,7 @@ impl VerificationEngine for MockEngine {
         } else {
             LeanResponse::VerificationFailure {
                 error: format!(
-                    "Mock engine cannot verify {} = {}",
-                    expression, expected_value
+                    "Mock engine cannot verify {expression} = {expected_value}"
                 ),
                 details: None,
                 error_type: Some(baton_protocol::ErrorType::Semantics),
@@ -363,7 +362,7 @@ async fn main() -> BatonResult<()> {
 
     // Check plugin status
     let status = plugin.status().await?;
-    println!("✅ Plugin status: {:?}", status);
+    println!("✅ Plugin status: {status:?}");
 
     // Get engine info
     let info = plugin.engine_info();
@@ -382,11 +381,11 @@ async fn main() -> BatonResult<()> {
 
     // Test a simple verification
     let result = engine.verify_evaluation("1 + 1", "2", None).await?;
-    println!("✅ Verification result: {:?}", result);
+    println!("✅ Verification result: {result:?}");
 
     // Test an invalid verification
     let result = engine.verify_evaluation("1 + 1", "3", None).await?;
-    println!("✅ Invalid verification result: {:?}", result);
+    println!("✅ Invalid verification result: {result:?}");
 
     // Shutdown the plugin
     plugin.shutdown().await?;

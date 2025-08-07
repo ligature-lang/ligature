@@ -8,8 +8,10 @@ use ligature_ast::{
 };
 use ligature_eval::{AsyncEvaluator, AsyncEvaluatorConfig};
 
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<()> {
     println!("=== Async Evaluation Example ===\n");
 
     // Create an async evaluator with custom configuration
@@ -32,7 +34,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let result = evaluator.evaluate_expression(&expr).await?;
-    println!("Expression result: {:?}", result);
+    println!("Expression result: {result:?}");
 
     // Example 2: Evaluate a binary operation
     println!("\n--- Example 2: Binary Operation ---");
@@ -52,7 +54,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let result = evaluator.evaluate_expression(&binary_expr).await?;
-    println!("Binary operation result: {:?}", result);
+    println!("Binary operation result: {result:?}");
 
     // Example 3: Evaluate a program
     println!("\n--- Example 3: Program Evaluation ---");
@@ -74,7 +76,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let result = evaluator.evaluate_program(&program).await?;
-    println!("Program result: {:?}", result);
+    println!("Program result: {result:?}");
 
     // Example 4: Progress tracking
     println!("\n--- Example 4: Progress Tracking ---");

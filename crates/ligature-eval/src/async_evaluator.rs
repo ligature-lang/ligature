@@ -148,6 +148,12 @@ pub struct AsyncEvaluator {
     worker_handle: JoinHandle<()>,
 }
 
+impl Default for AsyncEvaluator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AsyncEvaluator {
     /// Create a new async evaluator with default configuration
     pub fn new() -> Self {
@@ -426,7 +432,7 @@ impl AsyncEvaluator {
     /// Convert AstResult to AsyncEvalResult
     fn convert_result(result: ligature_ast::AstResult<Value>) -> AsyncEvalResult<Value> {
         result.map_err(|ast_error| EvaluationError::RuntimeError {
-            message: format!("AST error: {:?}", ast_error),
+            message: format!("AST error: {ast_error:?}"),
             span: Span::default(),
         })
     }

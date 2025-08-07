@@ -191,8 +191,8 @@ jobs:
         uses: schneegans/dynamic-badges-action@v1.7.0
         with:
           auth: ${{ secrets.GIST_SECRET }}
-          gistID: your-gist-id-here
-          filename: coverage.json
+          gistID: 5ff6a38a1f63f5f55c96abadb54534a9
+          filename: ligature-status.json
           label: coverage
           message: ${{ steps.coverage.outputs.coverage }}%
           namedLogo: rust

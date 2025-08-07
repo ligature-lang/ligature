@@ -26,12 +26,12 @@ async fn main() -> anyhow::Result<()> {
     ];
 
     for (source, description) in test_cases {
-        println!("Testing: {} ({})", source, description);
+        println!("Testing: {source} ({description})");
 
         // Run Rust evaluation
         let rust_result = match run_rust_evaluation(source) {
-            Ok(result) => format!("{:?}", result),
-            Err(e) => format!("error: {}", e),
+            Ok(result) => format!("{result:?}"),
+            Err(e) => format!("error: {e}"),
         };
 
         // Simulate Lean result (in practice, this would come from the Lean specification)
@@ -100,6 +100,7 @@ struct Difference {
 /// Severity level
 #[derive(Debug)]
 enum DifferenceSeverity {
+    #[allow(dead_code)]
     Info,
     Warning,
     Error,
@@ -127,8 +128,8 @@ fn compare_results_detailed(
         matches = false;
         differences.push(Difference {
             field: "success_status".to_string(),
-            rust_value: format!("{}", rust_success),
-            lean_value: format!("{}", lean_success),
+            rust_value: format!("{rust_success}"),
+            lean_value: format!("{lean_success}"),
             severity: DifferenceSeverity::Critical,
             description: "Success/failure status mismatch".to_string(),
         });
@@ -175,8 +176,7 @@ fn compare_results_detailed(
 fn normalize_result(result: &str) -> String {
     result
         .trim()
-        .replace('\n', " ")
-        .replace('\r', " ")
+        .replace(['\n', '\r'], " ")
         .split_whitespace()
         .collect::<Vec<_>>()
         .join(" ")
@@ -214,12 +214,7 @@ fn print_comparison_summary(comparison: &ComparisonResult) {
     if !comparison.matches {
         println!("  Differences:");
         for (i, diff) in comparison.differences.iter().enumerate() {
-            println!(
-                "    {}. {} ({}):",
-                i + 1,
-                diff.field,
-                format!("{:?}", diff.severity)
-            );
+            println!("    {}. {} ({:?}):", i + 1, diff.field, diff.severity);
             println!("       Rust:  {}", diff.rust_value);
             println!("       Lean:  {}", diff.lean_value);
             println!("       Description: {}", diff.description);
