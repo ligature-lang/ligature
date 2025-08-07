@@ -429,4 +429,4 @@ pub struct VerificationResponse {
     pub request_id: Option<String>,
     /// Response timestamp
     pub timestamp: Option<u64>,
-} 
+}

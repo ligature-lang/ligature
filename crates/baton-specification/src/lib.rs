@@ -3,8 +3,8 @@
 //! This crate provides specification management for the Baton
 //! formal verification system.
 
-pub mod types;
 pub mod specification;
+pub mod types;
 
 pub use specification::Specification;
 pub use types::*;

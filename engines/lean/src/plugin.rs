@@ -363,7 +363,7 @@ mod tests {
 
         // The initialization might fail if Lean is not available, but that's expected
         let init_result = plugin.initialize(&config).await;
-        
+
         // If initialization succeeds, verify the plugin state
         if init_result.is_ok() {
             assert!(plugin.initialized);
@@ -384,10 +384,10 @@ mod tests {
                 "lean_path": "/nonexistent/lean"
             }
         });
-        
+
         // The initialization might fail if Lean is not available, but that's expected
         let init_result = plugin.initialize(&config).await;
-        
+
         // If initialization succeeds, test shutdown
         if init_result.is_ok() {
             assert!(plugin.initialized);
@@ -414,9 +414,9 @@ mod tests {
                 "lean_path": "/nonexistent/lean"
             }
         });
-        
+
         let init_result = plugin.initialize(&config).await;
-        
+
         if init_result.is_ok() {
             // Status should be Ready or Error after successful initialization
             let status = plugin.status().await.unwrap();

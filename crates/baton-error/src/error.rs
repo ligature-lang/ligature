@@ -114,4 +114,4 @@ pub enum BatonError {
 }
 
 /// Result type for Baton operations.
-pub type BatonResult<T> = Result<T, BatonError>; 
+pub type BatonResult<T> = Result<T, BatonError>;

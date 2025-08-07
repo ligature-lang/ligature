@@ -69,7 +69,7 @@ pub use adaptive_optimizer::{
 };
 pub use advanced_optimizations::*;
 pub use async_evaluator::{
-    AsyncEvaluator, AsyncEvaluatorConfig, AsyncEvalResult, EvaluationProgress,
+    AsyncEvalResult, AsyncEvaluator, AsyncEvaluatorConfig, EvaluationProgress,
 };
 pub use benchmarks::*;
 pub use config::*;

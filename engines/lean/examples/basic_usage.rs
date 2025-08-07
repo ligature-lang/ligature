@@ -68,4 +68,4 @@ async fn main() -> BatonResult<()> {
 
     println!("\n=== Example completed successfully ===");
     Ok(())
-} 
+}

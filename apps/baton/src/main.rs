@@ -1,9 +1,9 @@
 //! CLI tool for Baton formal verification.
 
+use baton_protocol::prelude::*;
+use baton_verification::prelude::*;
 use clap::{Parser, Subcommand};
 use colored::*;
-use baton_verification::prelude::*;
-use baton_protocol::prelude::*;
 
 #[derive(Parser)]
 #[command(name = "baton")]
@@ -129,10 +129,16 @@ async fn main() -> anyhow::Result<()> {
             }
         }
 
-        Commands::VerifyEvaluation { expression, expected_value } => {
+        Commands::VerifyEvaluation {
+            expression,
+            expected_value,
+        } => {
             println!("{}", "Verifying expression evaluation...".blue());
             let engine = VerificationEngine::new()?;
-            match engine.verify_evaluation(&expression, &expected_value, None).await {
+            match engine
+                .verify_evaluation(&expression, &expected_value, None)
+                .await
+            {
                 Ok(response) => {
                     if response.is_success() {
                         println!("{}", "✓ Evaluation verification successful".green());
@@ -148,10 +154,16 @@ async fn main() -> anyhow::Result<()> {
             }
         }
 
-        Commands::VerifyTypeCheck { expression, expected_type } => {
+        Commands::VerifyTypeCheck {
+            expression,
+            expected_type,
+        } => {
             println!("{}", "Verifying type checking...".blue());
             let engine = VerificationEngine::new()?;
-            match engine.verify_type_check(&expression, &expected_type, None).await {
+            match engine
+                .verify_type_check(&expression, &expected_type, None)
+                .await
+            {
                 Ok(response) => {
                     if response.is_success() {
                         println!("{}", "✓ Type checking verification successful".green());
@@ -167,10 +179,13 @@ async fn main() -> anyhow::Result<()> {
             }
         }
 
-        Commands::DifferentialTest { test_case, test_type } => {
+        Commands::DifferentialTest {
+            test_case,
+            test_type,
+        } => {
             println!("{}", "Running differential test...".blue());
             let engine = VerificationEngine::new()?;
-            
+
             let test_type_enum = match test_type.as_str() {
                 "evaluation" => DifferentialTestType::Evaluation,
                 "typecheck" => DifferentialTestType::TypeCheck,
@@ -183,7 +198,10 @@ async fn main() -> anyhow::Result<()> {
                 }
             };
 
-            match engine.run_differential_test(&test_case, test_type_enum, None).await {
+            match engine
+                .run_differential_test(&test_case, test_type_enum, None)
+                .await
+            {
                 Ok(response) => {
                     if response.is_success() {
                         println!("{}", "✓ Differential test successful".green());
@@ -309,7 +327,7 @@ async fn main() -> anyhow::Result<()> {
             println!("{}", "Running verification suite...".blue());
             let engine = VerificationEngine::new()?;
             let expressions: Vec<&str> = expressions.split(',').collect();
-            
+
             let mut success_count = 0;
             let total_count = expressions.len();
 
@@ -346,4 +364,4 @@ async fn main() -> anyhow::Result<()> {
     }
 
     Ok(())
-} 
+}

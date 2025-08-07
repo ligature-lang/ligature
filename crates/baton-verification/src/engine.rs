@@ -1,10 +1,13 @@
 //! Core verification engine implementation.
 
-use crate::types::{CachedResult, EngineHealthStatus, TaskStatus, VerificationConfig, VerificationEngine, VerificationMetrics, VerificationTask};
+use crate::types::{
+    CachedResult, EngineHealthStatus, TaskStatus, VerificationConfig, VerificationEngine,
+    VerificationMetrics, VerificationTask,
+};
 use baton_client::prelude::*;
 use baton_engine_plugin::{BuildConfig, EngineConfig};
 use baton_protocol::{LeanRequest, LeanResponse, VerificationRequest, VerificationResponse};
-use baton_specification::{LeanSpecification, ValidationResult, BuildStatus};
+use baton_specification::{BuildStatus, LeanSpecification, ValidationResult};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -24,7 +27,7 @@ impl VerificationEngine {
                 "temporary".to_string(),
             ],
         };
-        
+
         let config = VerificationConfig {
             enable_cache: true,
             cache_ttl: 3600, // 1 hour
@@ -40,7 +43,7 @@ impl VerificationEngine {
             client_config: LeanClientConfig::default(),
             build_config: BuildConfig::default(),
         };
-        
+
         Self::with_config(config)
     }
 
@@ -226,7 +229,9 @@ impl VerificationEngine {
             test_type: None,
         });
 
-        let response = self.execute_with_retry(request, "extract_test_cases").await?;
+        let response = self
+            .execute_with_retry(request, "extract_test_cases")
+            .await?;
 
         match response.response {
             LeanResponse::TestCasesExtracted { test_cases, .. } => Ok(test_cases),
@@ -243,7 +248,9 @@ impl VerificationEngine {
             check_type: baton_protocol::SpecificationCheckType::All,
         });
 
-        let response = self.execute_with_retry(request, "check_specification").await?;
+        let response = self
+            .execute_with_retry(request, "check_specification")
+            .await?;
 
         match response.response {
             LeanResponse::SpecificationCheckResult { success, .. } => Ok(success),
@@ -303,7 +310,10 @@ impl VerificationEngine {
     pub async fn get_cache_stats(&self) -> (usize, usize) {
         let cache = self.cache.lock().await;
         let metrics = self.metrics.lock().await;
-        (cache.len(), (metrics.cache_hits + metrics.cache_misses) as usize)
+        (
+            cache.len(),
+            (metrics.cache_hits + metrics.cache_misses) as usize,
+        )
     }
 
     /// Execute verification with caching and retry logic.
@@ -517,4 +527,4 @@ impl VerificationEngine {
             uptime,
         }
     }
-} 
+}

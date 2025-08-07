@@ -37,4 +37,4 @@ impl ClientStats {
     pub fn update_last_request_time(&mut self) {
         self.last_request_time = Some(Instant::now());
     }
-} 
+}

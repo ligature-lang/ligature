@@ -13,6 +13,4 @@ pub use plugin::LeanEnginePlugin;
 pub mod prelude {
     pub use super::{LeanEngine, LeanEnginePlugin};
     pub use baton_engine_plugin::prelude::*;
-    
-    
 }

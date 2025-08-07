@@ -11,4 +11,4 @@ pub struct EngineConnection {
     pub stdout: BufReader<ChildStdout>,
     pub last_used: Instant,
     pub request_count: u64,
-} 
+}

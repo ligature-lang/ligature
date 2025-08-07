@@ -160,4 +160,4 @@ pub struct SpecStatistics {
     pub warning_count: usize,
     /// File types present
     pub file_types: Vec<SpecFileType>,
-} 
+}

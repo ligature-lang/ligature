@@ -6,14 +6,29 @@ use baton_core::RequestPriority;
 impl std::fmt::Display for LeanRequest {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            LeanRequest::VerifyEvaluation { expression, expected_value, .. } => {
+            LeanRequest::VerifyEvaluation {
+                expression,
+                expected_value,
+                ..
+            } => {
                 write!(f, "VerifyEvaluation({expression} = {expected_value})")
             }
-            LeanRequest::VerifyTypeCheck { expression, expected_type, .. } => {
+            LeanRequest::VerifyTypeCheck {
+                expression,
+                expected_type,
+                ..
+            } => {
                 write!(f, "VerifyTypeCheck({expression}: {expected_type})")
             }
-            LeanRequest::VerifyOperationalSemantics { expression, expected_steps, .. } => {
-                write!(f, "VerifyOperationalSemantics({expression} -> {expected_steps:?})")
+            LeanRequest::VerifyOperationalSemantics {
+                expression,
+                expected_steps,
+                ..
+            } => {
+                write!(
+                    f,
+                    "VerifyOperationalSemantics({expression} -> {expected_steps:?})"
+                )
             }
             LeanRequest::VerifyTypeSafety { expression, .. } => {
                 write!(f, "VerifyTypeSafety({expression})")
@@ -24,41 +39,103 @@ impl std::fmt::Display for LeanRequest {
             LeanRequest::VerifyDeterminism { expression, .. } => {
                 write!(f, "VerifyDeterminism({expression})")
             }
-            LeanRequest::VerifyConfigurationValidation { configuration, schema, .. } => {
-                write!(f, "VerifyConfigurationValidation({configuration} against {schema})")
+            LeanRequest::VerifyConfigurationValidation {
+                configuration,
+                schema,
+                ..
+            } => {
+                write!(
+                    f,
+                    "VerifyConfigurationValidation({configuration} against {schema})"
+                )
             }
-            LeanRequest::ExtractTestCases { specification_file, test_type } => {
+            LeanRequest::ExtractTestCases {
+                specification_file,
+                test_type,
+            } => {
                 write!(f, "ExtractTestCases({specification_file}, {test_type:?})")
             }
-            LeanRequest::CompareResults { rust_result, lean_result, comparison_type } => {
-                write!(f, "CompareResults({rust_result} vs {lean_result}, {comparison_type:?})")
+            LeanRequest::CompareResults {
+                rust_result,
+                lean_result,
+                comparison_type,
+            } => {
+                write!(
+                    f,
+                    "CompareResults({rust_result} vs {lean_result}, {comparison_type:?})"
+                )
             }
-            LeanRequest::RunDifferentialTest { test_case, test_type, .. } => {
+            LeanRequest::RunDifferentialTest {
+                test_case,
+                test_type,
+                ..
+            } => {
                 write!(f, "RunDifferentialTest({test_case}, {test_type:?})")
             }
-            LeanRequest::CheckSpecification { specification_file, check_type } => {
-                write!(f, "CheckSpecification({specification_file}, {check_type:?})")
+            LeanRequest::CheckSpecification {
+                specification_file,
+                check_type,
+            } => {
+                write!(
+                    f,
+                    "CheckSpecification({specification_file}, {check_type:?})"
+                )
             }
             LeanRequest::GetVersion => write!(f, "GetVersion"),
             LeanRequest::Ping => write!(f, "Ping"),
-            LeanRequest::VerifyTheorem { theorem, proof, timeout, .. } => {
-                write!(f, "VerifyTheorem({}, proof: {}, timeout: {:?})", 
-                       theorem, proof.is_some(), timeout)
+            LeanRequest::VerifyTheorem {
+                theorem,
+                proof,
+                timeout,
+                ..
+            } => {
+                write!(
+                    f,
+                    "VerifyTheorem({}, proof: {}, timeout: {:?})",
+                    theorem,
+                    proof.is_some(),
+                    timeout
+                )
             }
-            LeanRequest::VerifyLemma { lemma, proof, dependencies, .. } => {
-                write!(f, "VerifyLemma({}, proof: {}, deps: {:?})", 
-                       lemma, proof.is_some(), dependencies)
+            LeanRequest::VerifyLemma {
+                lemma,
+                proof,
+                dependencies,
+                ..
+            } => {
+                write!(
+                    f,
+                    "VerifyLemma({}, proof: {}, deps: {:?})",
+                    lemma,
+                    proof.is_some(),
+                    dependencies
+                )
             }
-            LeanRequest::CheckConsistency { specification_files, check_type } => {
-                write!(f, "CheckConsistency({specification_files:?}, {check_type:?})")
+            LeanRequest::CheckConsistency {
+                specification_files,
+                check_type,
+            } => {
+                write!(
+                    f,
+                    "CheckConsistency({specification_files:?}, {check_type:?})"
+                )
             }
             LeanRequest::GenerateCounterexample { property, .. } => {
                 write!(f, "GenerateCounterexample({property})")
             }
-            LeanRequest::VerifyInvariant { invariant, expression, .. } => {
+            LeanRequest::VerifyInvariant {
+                invariant,
+                expression,
+                ..
+            } => {
                 write!(f, "VerifyInvariant({invariant} for {expression})")
             }
-            LeanRequest::VerifyRefinement { abstract_spec, concrete_spec, refinement_relation, .. } => {
+            LeanRequest::VerifyRefinement {
+                abstract_spec,
+                concrete_spec,
+                refinement_relation,
+                ..
+            } => {
                 write!(f, "VerifyRefinement({abstract_spec} -> {concrete_spec} via {refinement_relation})")
             }
         }
@@ -137,13 +214,19 @@ impl VerificationResponse {
             self.response,
             LeanResponse::VerificationSuccess { .. }
                 | LeanResponse::TestCasesExtracted { .. }
-                | LeanResponse::ResultsComparison { match_result: true, .. }
+                | LeanResponse::ResultsComparison {
+                    match_result: true,
+                    ..
+                }
                 | LeanResponse::DifferentialTestResult { success: true, .. }
                 | LeanResponse::SpecificationCheckResult { success: true, .. }
                 | LeanResponse::Version { .. }
                 | LeanResponse::Pong
                 | LeanResponse::TheoremVerificationResult { success: true, .. }
-                | LeanResponse::ConsistencyCheckResult { consistent: true, .. }
+                | LeanResponse::ConsistencyCheckResult {
+                    consistent: true,
+                    ..
+                }
                 | LeanResponse::CounterexampleResult { found: true, .. }
                 | LeanResponse::InvariantVerificationResult { holds: true, .. }
                 | LeanResponse::RefinementVerificationResult { valid: true, .. }
@@ -168,4 +251,4 @@ impl VerificationResponse {
     pub fn execution_time_s(&self) -> f64 {
         self.execution_time as f64 / 1000.0
     }
-} 
+}

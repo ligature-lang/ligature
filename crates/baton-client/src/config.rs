@@ -49,4 +49,4 @@ impl Default for EngineClientConfig {
 }
 
 // Legacy type alias for backward compatibility
-pub type LeanClientConfig = EngineClientConfig; 
+pub type LeanClientConfig = EngineClientConfig;

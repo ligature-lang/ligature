@@ -1,7 +1,7 @@
 //! Plugin manager for Baton verification engines.
 
-use crate::traits::{EnginePlugin, VerificationEngine};
 use crate::engine::{EngineCapabilities, EngineInfo, EngineStatus};
+use crate::traits::{EnginePlugin, VerificationEngine};
 use baton_error::prelude::*;
 use serde_json::Value;
 use std::collections::HashMap;
@@ -40,15 +40,15 @@ impl EnginePluginManager {
     pub async fn register_plugin(&self, plugin: PluginBox) -> BatonResult<()> {
         let plugin_name = plugin.name().to_string();
         let mut plugins = self.plugins.lock().await;
-        
+
         if plugins.contains_key(&plugin_name) {
-            return Err(BatonError::ConfigurationError(
-                format!("Plugin '{plugin_name}' is already registered")
-            ));
+            return Err(BatonError::ConfigurationError(format!(
+                "Plugin '{plugin_name}' is already registered"
+            )));
         }
 
         plugins.insert(plugin_name.clone(), plugin);
-        
+
         // Set as default if it's the first plugin
         let mut default_engine = self.default_engine.lock().await;
         if default_engine.is_none() {
@@ -88,7 +88,8 @@ impl EnginePluginManager {
         let mut plugins = self.plugins.lock().await;
         let mut configurations = self.configurations.lock().await;
 
-        let plugin = plugins.get_mut(name)
+        let plugin = plugins
+            .get_mut(name)
             .ok_or_else(|| BatonError::ConfigurationError(format!("Plugin '{name}' not found")))?;
 
         // Initialize the plugin
@@ -108,35 +109,41 @@ impl EnginePluginManager {
     /// Get a verification engine by name.
     pub async fn get_engine(&self, name: &str) -> BatonResult<Box<dyn VerificationEngine>> {
         let active_engines = self.active_engines.lock().await;
-        
+
         if let Some(_engine) = active_engines.get(name) {
             // Clone the engine trait object (this requires the engine to implement Clone)
             // For now, we'll return an error if the engine doesn't support cloning
             Err(BatonError::InternalError(
-                "Engine cloning not yet implemented".to_string()
+                "Engine cloning not yet implemented".to_string(),
             ))
         } else {
-            Err(BatonError::ConfigurationError(format!("Engine '{name}' not found or not initialized")))
+            Err(BatonError::ConfigurationError(format!(
+                "Engine '{name}' not found or not initialized"
+            )))
         }
     }
 
     /// Get the default verification engine.
     pub async fn get_default_engine(&self) -> BatonResult<Box<dyn VerificationEngine>> {
         let default_engine = self.default_engine.lock().await;
-        
+
         if let Some(ref name) = *default_engine {
             self.get_engine(name).await
         } else {
-            Err(BatonError::ConfigurationError("No default engine set".to_string()))
+            Err(BatonError::ConfigurationError(
+                "No default engine set".to_string(),
+            ))
         }
     }
 
     /// Set the default engine.
     pub async fn set_default_engine(&self, name: &str) -> BatonResult<()> {
         let plugins = self.plugins.lock().await;
-        
+
         if !plugins.contains_key(name) {
-            return Err(BatonError::ConfigurationError(format!("Plugin '{name}' not found")));
+            return Err(BatonError::ConfigurationError(format!(
+                "Plugin '{name}' not found"
+            )));
         }
 
         let mut default_engine = self.default_engine.lock().await;
@@ -148,8 +155,9 @@ impl EnginePluginManager {
     /// Get plugin information.
     pub async fn get_plugin_info(&self, name: &str) -> BatonResult<EngineInfo> {
         let plugins = self.plugins.lock().await;
-        
-        let plugin = plugins.get(name)
+
+        let plugin = plugins
+            .get(name)
             .ok_or_else(|| BatonError::ConfigurationError(format!("Plugin '{name}' not found")))?;
 
         Ok(plugin.engine_info())
@@ -158,8 +166,9 @@ impl EnginePluginManager {
     /// Get plugin capabilities.
     pub async fn get_plugin_capabilities(&self, name: &str) -> BatonResult<EngineCapabilities> {
         let plugins = self.plugins.lock().await;
-        
-        let plugin = plugins.get(name)
+
+        let plugin = plugins
+            .get(name)
             .ok_or_else(|| BatonError::ConfigurationError(format!("Plugin '{name}' not found")))?;
 
         Ok(plugin.capabilities())
@@ -168,8 +177,9 @@ impl EnginePluginManager {
     /// Get plugin status.
     pub async fn get_plugin_status(&self, name: &str) -> BatonResult<EngineStatus> {
         let plugins = self.plugins.lock().await;
-        
-        let plugin = plugins.get(name)
+
+        let plugin = plugins
+            .get(name)
             .ok_or_else(|| BatonError::ConfigurationError(format!("Plugin '{name}' not found")))?;
 
         plugin.status().await
@@ -214,8 +224,9 @@ impl EnginePluginManager {
     /// Configure a plugin.
     pub async fn configure_plugin(&self, name: &str, config: &Value) -> BatonResult<()> {
         let mut plugins = self.plugins.lock().await;
-        
-        let plugin = plugins.get_mut(name)
+
+        let plugin = plugins
+            .get_mut(name)
             .ok_or_else(|| BatonError::ConfigurationError(format!("Plugin '{name}' not found")))?;
 
         plugin.configure(config).await?;
@@ -230,10 +241,10 @@ impl EnginePluginManager {
     /// Get plugin configuration.
     pub async fn get_plugin_config(&self, name: &str) -> BatonResult<Value> {
         let configurations = self.configurations.lock().await;
-        
-        configurations.get(name)
-            .cloned()
-            .ok_or_else(|| BatonError::ConfigurationError(format!("Configuration for plugin '{name}' not found")))
+
+        configurations.get(name).cloned().ok_or_else(|| {
+            BatonError::ConfigurationError(format!("Configuration for plugin '{name}' not found"))
+        })
     }
 
     /// Shutdown all plugins.
@@ -307,9 +318,9 @@ pub struct ManagerStats {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::traits::{EnginePlugin, VerificationEngine};
     use crate::engine::{EngineCapabilities, EngineInfo, EngineStatus};
-    
+    use crate::traits::{EnginePlugin, VerificationEngine};
+
     use async_trait::async_trait;
 
     // Mock plugin for testing
@@ -383,7 +394,9 @@ mod tests {
         }
 
         fn get_engine(&self) -> BatonResult<Box<dyn VerificationEngine>> {
-            Err(BatonError::InternalError("Mock engine not implemented".to_string()))
+            Err(BatonError::InternalError(
+                "Mock engine not implemented".to_string(),
+            ))
         }
     }
 
@@ -410,7 +423,7 @@ mod tests {
         // Register and then unregister
         assert!(manager.register_plugin(Box::new(plugin)).await.is_ok());
         assert!(manager.has_plugin("test").await);
-        
+
         assert!(manager.unregister_plugin("test").await.is_ok());
         assert!(!manager.has_plugin("test").await);
         assert_eq!(manager.plugin_count().await, 0);
@@ -423,15 +436,15 @@ mod tests {
 
         // Register plugin
         assert!(manager.register_plugin(Box::new(plugin)).await.is_ok());
-        
+
         // Should be set as default automatically
         let stats = manager.get_stats().await;
         assert_eq!(stats.default_engine, Some("test".to_string()));
 
         // Set different default
         assert!(manager.set_default_engine("test").await.is_ok());
-        
+
         // Try to set non-existent default
         assert!(manager.set_default_engine("nonexistent").await.is_err());
     }
-} 
+}

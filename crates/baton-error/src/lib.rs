@@ -3,11 +3,11 @@
 //! This crate provides comprehensive error handling for the Baton
 //! formal verification system.
 
-pub mod error;
 pub mod context;
+pub mod error;
 
+pub use context::{BatonErrorWithContext, BatonResultWithContext, ErrorContext};
 pub use error::{BatonError, BatonResult};
-pub use context::{ErrorContext, BatonErrorWithContext, BatonResultWithContext};
 
 /// Re-export commonly used types
 pub mod prelude {

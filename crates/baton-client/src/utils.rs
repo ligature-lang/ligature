@@ -12,8 +12,8 @@ macro_rules! debug_log {
 
 /// Find engine executable in PATH.
 pub fn find_engine_executable(engine_name: &str) -> crate::BatonResult<String> {
-    use std::process::Command;
     use baton_error::BatonError;
+    use std::process::Command;
 
     let possible_names = [
         engine_name.to_string(),
@@ -61,4 +61,4 @@ pub fn find_specification_path(engine_name: &str) -> crate::BatonResult<String> 
     })?;
 
     Ok(default_path)
-} 
+}

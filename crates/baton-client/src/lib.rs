@@ -2,11 +2,11 @@
 //!
 //! This crate provides the client for communicating with verification engines.
 
+pub mod client;
 pub mod config;
 pub mod connection;
 pub mod stats;
 pub mod utils;
-pub mod client;
 
 pub use baton_error::{BatonError, BatonResult};
 pub use client::EngineClient;
@@ -21,10 +21,10 @@ pub use config::LeanClientConfig;
 /// Re-export commonly used types
 pub mod prelude {
     pub use super::{
+        ClientStats,
         EngineClient,
         EngineClientConfig,
         EngineConnection,
-        ClientStats,
         // Legacy exports
         LeanClient,
         LeanClientConfig,

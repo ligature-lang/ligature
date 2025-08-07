@@ -81,4 +81,4 @@ impl std::fmt::Display for BatonErrorWithContext {
 impl std::error::Error for BatonErrorWithContext {}
 
 /// Result type for Baton operations with context.
-pub type BatonResultWithContext<T> = Result<T, BatonErrorWithContext>; 
+pub type BatonResultWithContext<T> = Result<T, BatonErrorWithContext>;

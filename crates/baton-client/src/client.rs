@@ -2,9 +2,9 @@
 
 use crate::config::EngineClientConfig;
 use crate::connection::EngineConnection;
+use crate::debug_log;
 use crate::stats::ClientStats;
 use crate::utils::{find_engine_executable, find_specification_path};
-use crate::debug_log;
 use baton_engine_plugin::prelude::*;
 use baton_error::{BatonError, BatonResult};
 use serde_json;
@@ -266,13 +266,12 @@ impl EngineClient {
             BatonError::SerializationError(format!("Failed to serialize request: {e}"))
         })?;
 
-        let mut temp_file = NamedTempFile::new().map_err(|e| {
-            BatonError::FileSystemError(format!("Failed to create temp file: {e}"))
-        })?;
+        let mut temp_file = NamedTempFile::new()
+            .map_err(|e| BatonError::FileSystemError(format!("Failed to create temp file: {e}")))?;
 
-        temp_file.write_all(content.as_bytes()).map_err(|e| {
-            BatonError::FileSystemError(format!("Failed to write temp file: {e}"))
-        })?;
+        temp_file
+            .write_all(content.as_bytes())
+            .map_err(|e| BatonError::FileSystemError(format!("Failed to write temp file: {e}")))?;
 
         Ok(temp_file)
     }
@@ -281,13 +280,12 @@ impl EngineClient {
     async fn create_engine_file(&self, input_file: &str) -> BatonResult<NamedTempFile> {
         let script = self.create_engine_script(input_file)?;
 
-        let mut temp_file = NamedTempFile::new().map_err(|e| {
-            BatonError::FileSystemError(format!("Failed to create temp file: {e}"))
-        })?;
+        let mut temp_file = NamedTempFile::new()
+            .map_err(|e| BatonError::FileSystemError(format!("Failed to create temp file: {e}")))?;
 
-        temp_file.write_all(script.as_bytes()).map_err(|e| {
-            BatonError::FileSystemError(format!("Failed to write temp file: {e}"))
-        })?;
+        temp_file
+            .write_all(script.as_bytes())
+            .map_err(|e| BatonError::FileSystemError(format!("Failed to write temp file: {e}")))?;
 
         Ok(temp_file)
     }
@@ -343,7 +341,9 @@ print "RESPONSE_END"
         if let Some(json_start) = trimmed.find('{') {
             if let Some(json_end) = trimmed.rfind('}') {
                 let json_str = &trimmed[json_start..=json_end];
-                if let Ok(engine_response) = serde_json::from_str::<EngineResponse>(json_str) { return Ok(engine_response) }
+                if let Ok(engine_response) = serde_json::from_str::<EngineResponse>(json_str) {
+                    return Ok(engine_response);
+                }
             }
         }
 
@@ -508,4 +508,4 @@ impl Drop for EngineClient {
 }
 
 // Legacy type alias for backward compatibility
-pub type LeanClient = EngineClient; 
+pub type LeanClient = EngineClient;
