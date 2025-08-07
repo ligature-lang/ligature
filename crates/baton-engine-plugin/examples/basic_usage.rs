@@ -41,9 +41,7 @@ impl VerificationEngine for MockEngine {
             }
         } else {
             LeanResponse::VerificationFailure {
-                error: format!(
-                    "Mock engine cannot verify {expression} = {expected_value}"
-                ),
+                error: format!("Mock engine cannot verify {expression} = {expected_value}"),
                 details: None,
                 error_type: Some(baton_protocol::ErrorType::Semantics),
                 suggestions: Some(vec!["Try a simpler expression".to_string()]),
