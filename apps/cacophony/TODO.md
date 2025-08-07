@@ -61,7 +61,32 @@
 
 ## 📋 TODO
 
-### Plugin System Implementation
+### 🔴 High Priority
+
+#### Ligature Integration Fixes
+
+- [ ] Fix Ligature evaluator to return proper configuration values instead of `Unit`
+- [ ] Implement proper AST traversal to extract configuration from parsed Ligature programs
+- [ ] Add support for more complex Ligature expressions and functions
+
+### 🟡 Medium Priority
+
+#### Async Evaluation Integration
+
+- [ ] **Integrate async evaluator for large configurations** (async evaluator available from ligature-eval)
+  - [ ] Add async evaluation support for large configuration files
+  - [ ] Implement progress reporting for long-running evaluations
+  - [ ] Add resource management for memory-intensive operations
+- [ ] **Parallel deployment support**
+  - [ ] Implement concurrent collection deployment
+  - [ ] Add parallel operation execution
+  - [ ] Add dependency-aware parallelization
+- [ ] **Progress tracking for deployments**
+  - [ ] Add real-time progress reporting
+  - [ ] Implement deployment status monitoring
+  - [ ] Add resource usage tracking
+
+#### Plugin System Implementation
 
 - [ ] **Plugin loading and management**
 
@@ -95,7 +120,9 @@
   - [ ] Docker Compose integration
   - [ ] Image registry management
 
-### Advanced Configuration Features
+### 🟢 Low Priority
+
+#### Advanced Configuration Features
 
 - [ ] **Environment-specific overrides**
 
@@ -118,14 +145,7 @@
   - [ ] Cross-reference validation
   - [ ] Configuration linting
 
-### Advanced Features
-
-- [ ] **Parallel execution support**
-
-  - [ ] Concurrent collection deployment
-  - [ ] Parallel operation execution
-  - [ ] Resource pool management
-  - [ ] Dependency-aware parallelization
+#### Advanced Features
 
 - [ ] **Dry-run mode for all commands**
 
@@ -243,22 +263,22 @@
 
 ### Immediate Priorities (Next 2-4 weeks)
 
-1. **Plugin System Foundation**
+1. **Async Evaluation Integration**
 
+   - [ ] Integrate async evaluator for large configurations (async evaluator ready from ligature-eval)
+   - [ ] Add progress reporting for long-running evaluations
+   - [ ] Implement parallel deployment support
+
+2. **Ligature Integration Fixes**
+
+   - [ ] Fix evaluator to return proper configuration values
+   - [ ] Implement proper AST traversal
+   - [ ] Add support for complex expressions
+
+3. **Plugin System Foundation**
    - [ ] Implement plugin loading and discovery
    - [ ] Create plugin interface and lifecycle management
    - [ ] Add basic Kubernetes plugin with validation
-
-2. **Enhanced Configuration Management**
-
-   - [ ] Implement environment-specific overrides
-   - [ ] Add variable interpolation and templating
-   - [ ] Improve configuration validation
-
-3. **Testing Infrastructure**
-   - [ ] Set up comprehensive test suite
-   - [ ] Add integration tests for CLI commands
-   - [ ] Implement performance benchmarks
 
 ### Medium-term Goals (Next 2-3 months)
 
@@ -305,6 +325,7 @@
 - **CLI Commands**: 100% complete ✅
 - **Project Management**: 100% complete ✅
 - **Plugin System**: 15% complete 🚧
+- **Async Evaluation Integration**: 0% complete 📋
 - **Testing**: 20% complete 📋
 - **Documentation**: 100% complete ✅
 - **Advanced Features**: 10% complete 📋
@@ -313,7 +334,15 @@
 
 ## 🚀 Next Milestone
 
-**Milestone 2: Plugin Ecosystem** (Target: 4 weeks)
+**Milestone 2: Async Evaluation Integration** (Target: 4 weeks)
+
+- [ ] Integrate async evaluator for large configurations (async evaluator ready from ligature-eval)
+- [ ] Add progress reporting for long-running evaluations
+- [ ] Implement parallel deployment support
+- [ ] Add resource management for memory-intensive operations
+- [ ] Comprehensive testing for async features
+
+**Milestone 3: Plugin Ecosystem** (Target: 8 weeks)
 
 - [ ] Complete plugin loading and discovery system
 - [ ] Implement Kubernetes plugin with basic operations
@@ -321,9 +350,8 @@
 - [ ] Comprehensive testing for plugin system
 - [ ] Plugin development documentation
 
-**Milestone 3: Production Features** (Target: 8 weeks)
+**Milestone 4: Production Features** (Target: 12 weeks)
 
-- [ ] Parallel execution support
 - [ ] Real-time monitoring and progress tracking
 - [ ] Secret management integration
 - [ ] Advanced configuration features
@@ -331,5 +359,5 @@
 
 ---
 
-_Last updated: 2025-08-04_
-_Status: Core Functionality Complete - Ready for Plugin Development_
+_Last updated: 2025-01-04_
+_Status: Core Functionality Complete - Ready for Async Evaluation Integration_

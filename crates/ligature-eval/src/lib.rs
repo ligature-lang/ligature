@@ -2,9 +2,57 @@
 //!
 //! This crate provides normalization-based evaluation for Ligature programs,
 //! ensuring termination through the Turing-incomplete design.
+//!
+//! ## Features
+//!
+//! - **Synchronous Evaluation**: Traditional evaluation of Ligature programs, modules, and expressions
+//! - **Async Evaluation**: Asynchronous evaluation with work queue management and progress tracking
+//! - **Performance Optimization**: Advanced caching, tail call optimization, and memory management
+//! - **Adaptive Optimization**: Runtime performance monitoring and optimization strategies
+//! - **Comprehensive Testing**: Extensive test suite with performance benchmarks
+//!
+//! ## Quick Start
+//!
+//! ### Synchronous Evaluation
+//!
+//! ```rust
+//! use ligature_eval::{evaluate_program, evaluate_expression};
+//! use ligature_ast::{Expr, ExprKind, Literal, Span};
+//!
+//! fn main() -> Result<(), Box<dyn std::error::Error>> {
+//!     let expr = Expr {
+//!         kind: ExprKind::Literal(Literal::Integer(42)),
+//!         span: Span::default(),
+//!     };
+//!
+//!     let result = evaluate_expression(&expr)?;
+//!     assert_eq!(result.as_integer(), Some(42));
+//!     Ok(())
+//! }
+//! ```
+//!
+//! ### Async Evaluation
+//!
+//! ```rust
+//! use ligature_eval::{AsyncEvaluator, evaluate_expression_async};
+//! use ligature_ast::{Expr, ExprKind, Literal, Span};
+//!
+//! #[tokio::main]
+//! async fn main() -> Result<(), Box<dyn std::error::Error>> {
+//!     let expr = Expr {
+//!         kind: ExprKind::Literal(Literal::Integer(42)),
+//!         span: Span::default(),
+//!     };
+//!
+//!     let result = evaluate_expression_async(&expr).await?;
+//!     assert_eq!(result.as_integer(), Some(42));
+//!     Ok(())
+//! }
+//! ```
 
 pub mod adaptive_optimizer;
 pub mod advanced_optimizations;
+pub mod async_evaluator;
 pub mod benchmarks;
 pub mod config;
 pub mod environment;
@@ -20,6 +68,9 @@ pub use adaptive_optimizer::{
     PerformanceState, SystemLoad,
 };
 pub use advanced_optimizations::*;
+pub use async_evaluator::{
+    AsyncEvaluator, AsyncEvaluatorConfig, AsyncEvalResult, EvaluationProgress,
+};
 pub use benchmarks::*;
 pub use config::*;
 pub use environment::*;
@@ -51,6 +102,24 @@ pub fn evaluate_module(module: &ligature_ast::Module) -> AstResult<Value> {
 pub fn evaluate_expression(expression: &ligature_ast::Expr) -> AstResult<Value> {
     let mut evaluator = Evaluator::new();
     evaluator.evaluate_expression(expression)
+}
+
+/// Evaluate a Ligature program asynchronously.
+pub async fn evaluate_program_async(program: &Program) -> AsyncEvalResult<Value> {
+    let evaluator = AsyncEvaluator::new();
+    evaluator.evaluate_program(program).await
+}
+
+/// Evaluate a Ligature module asynchronously.
+pub async fn evaluate_module_async(module: &ligature_ast::Module) -> AsyncEvalResult<Value> {
+    let evaluator = AsyncEvaluator::new();
+    evaluator.evaluate_module(module).await
+}
+
+/// Evaluate a single expression asynchronously.
+pub async fn evaluate_expression_async(expression: &ligature_ast::Expr) -> AsyncEvalResult<Value> {
+    let evaluator = AsyncEvaluator::new();
+    evaluator.evaluate_expression(expression).await
 }
 
 #[cfg(test)]

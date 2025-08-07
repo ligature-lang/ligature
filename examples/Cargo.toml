@@ -160,21 +160,21 @@ path = "debug_pest.rs"
 name = "memory_tracking_demo"
 path = "memory_tracking_demo.rs"
 
-[[example]]
-name = "lean_integration_example"
-path = "lean_integration_example.rs"
+# [[example]]
+# name = "lean_integration_example"
+# path = "lean_integration_example.rs"
 
-[[example]]
-name = "debug_lean_communication"
-path = "debug_lean_communication.rs"
+# [[example]]
+# name = "debug_lean_communication"
+# path = "debug_lean_communication.rs"
 
-[[example]]
-name = "simple_lean_test"
-path = "simple_lean_test.rs"
+# [[example]]
+# name = "simple_lean_test"
+# path = "simple_lean_test.rs"
 
-[[example]]
-name = "working_lean_test"
-path = "working_lean_test.rs"
+# [[example]]
+# name = "working_lean_test"
+# path = "working_lean_test.rs"
 
 [dependencies]
 anyhow = "1.0"

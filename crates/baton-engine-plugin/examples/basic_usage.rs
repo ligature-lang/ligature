@@ -2,9 +2,11 @@
 //!
 //! This example demonstrates how to create and use a simple verification engine plugin.
 
-use baton_engine_plugin::prelude::*;
-use baton_engine_plugin::traits::{EngineStats, EngineHealthStatus};
 use async_trait::async_trait;
+use baton_engine_plugin::engine::PerformanceCharacteristics;
+use baton_engine_plugin::prelude::*;
+use baton_engine_plugin::traits::{EngineHealthStatus, EngineStats};
+use baton_protocol::prelude::*;
 use serde_json::json;
 
 /// A simple mock verification engine
@@ -28,7 +30,7 @@ impl VerificationEngine for MockEngine {
         &self,
         expression: &str,
         expected_value: &str,
-        _context: Option<VerificationContext>,
+        _context: Option<baton_protocol::VerificationContext>,
     ) -> BatonResult<VerificationResponse> {
         // Simple mock implementation
         let result = if expression == "1 + 1" && expected_value == "2" {
@@ -40,9 +42,12 @@ impl VerificationEngine for MockEngine {
             }
         } else {
             LeanResponse::VerificationFailure {
-                error: format!("Mock engine cannot verify {} = {}", expression, expected_value),
+                error: format!(
+                    "Mock engine cannot verify {} = {}",
+                    expression, expected_value
+                ),
                 details: None,
-                error_type: Some(ErrorType::Semantics),
+                error_type: Some(baton_protocol::ErrorType::Semantics),
                 suggestions: Some(vec!["Try a simpler expression".to_string()]),
             }
         };
@@ -54,42 +59,52 @@ impl VerificationEngine for MockEngine {
         &self,
         _expression: &str,
         _expected_type: &str,
-        _context: Option<VerificationContext>,
+        _context: Option<baton_protocol::VerificationContext>,
     ) -> BatonResult<VerificationResponse> {
-        Err(BatonError::InternalError("Type checking not implemented".to_string()))
+        Err(BatonError::InternalError(
+            "Type checking not implemented".to_string(),
+        ))
     }
 
     async fn verify_operational_semantics(
         &self,
         _expression: &str,
         _expected_steps: &[String],
-        _context: Option<VerificationContext>,
+        _context: Option<baton_protocol::VerificationContext>,
     ) -> BatonResult<VerificationResponse> {
-        Err(BatonError::InternalError("Operational semantics not implemented".to_string()))
+        Err(BatonError::InternalError(
+            "Operational semantics not implemented".to_string(),
+        ))
     }
 
     async fn verify_type_safety(
         &self,
         _expression: &str,
-        _context: Option<VerificationContext>,
+        _context: Option<baton_protocol::VerificationContext>,
     ) -> BatonResult<VerificationResponse> {
-        Err(BatonError::InternalError("Type safety not implemented".to_string()))
+        Err(BatonError::InternalError(
+            "Type safety not implemented".to_string(),
+        ))
     }
 
     async fn verify_termination(
         &self,
         _expression: &str,
-        _context: Option<VerificationContext>,
+        _context: Option<baton_protocol::VerificationContext>,
     ) -> BatonResult<VerificationResponse> {
-        Err(BatonError::InternalError("Termination not implemented".to_string()))
+        Err(BatonError::InternalError(
+            "Termination not implemented".to_string(),
+        ))
     }
 
     async fn verify_determinism(
         &self,
         _expression: &str,
-        _context: Option<VerificationContext>,
+        _context: Option<baton_protocol::VerificationContext>,
     ) -> BatonResult<VerificationResponse> {
-        Err(BatonError::InternalError("Determinism not implemented".to_string()))
+        Err(BatonError::InternalError(
+            "Determinism not implemented".to_string(),
+        ))
     }
 
     async fn verify_theorem(
@@ -97,9 +112,11 @@ impl VerificationEngine for MockEngine {
         _theorem: &str,
         _proof: Option<&str>,
         _timeout: Option<u64>,
-        _context: Option<VerificationContext>,
+        _context: Option<baton_protocol::VerificationContext>,
     ) -> BatonResult<VerificationResponse> {
-        Err(BatonError::InternalError("Theorem verification not implemented".to_string()))
+        Err(BatonError::InternalError(
+            "Theorem verification not implemented".to_string(),
+        ))
     }
 
     async fn verify_lemma(
@@ -107,18 +124,22 @@ impl VerificationEngine for MockEngine {
         _lemma: &str,
         _proof: Option<&str>,
         _dependencies: &[String],
-        _context: Option<VerificationContext>,
+        _context: Option<baton_protocol::VerificationContext>,
     ) -> BatonResult<VerificationResponse> {
-        Err(BatonError::InternalError("Lemma verification not implemented".to_string()))
+        Err(BatonError::InternalError(
+            "Lemma verification not implemented".to_string(),
+        ))
     }
 
     async fn verify_invariant(
         &self,
         _invariant: &str,
         _expression: &str,
-        _context: Option<VerificationContext>,
+        _context: Option<baton_protocol::VerificationContext>,
     ) -> BatonResult<VerificationResponse> {
-        Err(BatonError::InternalError("Invariant verification not implemented".to_string()))
+        Err(BatonError::InternalError(
+            "Invariant verification not implemented".to_string(),
+        ))
     }
 
     async fn verify_refinement(
@@ -126,59 +147,73 @@ impl VerificationEngine for MockEngine {
         _abstract_spec: &str,
         _concrete_spec: &str,
         _refinement_relation: &str,
-        _context: Option<VerificationContext>,
+        _context: Option<baton_protocol::VerificationContext>,
     ) -> BatonResult<VerificationResponse> {
-        Err(BatonError::InternalError("Refinement verification not implemented".to_string()))
+        Err(BatonError::InternalError(
+            "Refinement verification not implemented".to_string(),
+        ))
     }
 
     async fn run_differential_test(
         &self,
         _test_case: &str,
-        _test_type: DifferentialTestType,
-        _context: Option<VerificationContext>,
+        _test_type: baton_protocol::DifferentialTestType,
+        _context: Option<baton_protocol::VerificationContext>,
     ) -> BatonResult<VerificationResponse> {
-        Err(BatonError::InternalError("Differential testing not implemented".to_string()))
+        Err(BatonError::InternalError(
+            "Differential testing not implemented".to_string(),
+        ))
     }
 
     async fn extract_test_cases(
         &self,
         _specification_file: &str,
-        _test_type: Option<TestType>,
+        _test_type: Option<baton_protocol::TestType>,
     ) -> BatonResult<Vec<String>> {
-        Err(BatonError::InternalError("Test extraction not implemented".to_string()))
+        Err(BatonError::InternalError(
+            "Test extraction not implemented".to_string(),
+        ))
     }
 
     async fn check_specification(
         &self,
         _specification_file: &str,
-        _check_type: SpecificationCheckType,
+        _check_type: baton_protocol::SpecificationCheckType,
     ) -> BatonResult<VerificationResponse> {
-        Err(BatonError::InternalError("Specification checking not implemented".to_string()))
+        Err(BatonError::InternalError(
+            "Specification checking not implemented".to_string(),
+        ))
     }
 
     async fn check_consistency(
         &self,
         _specification_files: &[String],
-        _check_type: ConsistencyCheckType,
+        _check_type: baton_protocol::ConsistencyCheckType,
     ) -> BatonResult<VerificationResponse> {
-        Err(BatonError::InternalError("Consistency checking not implemented".to_string()))
+        Err(BatonError::InternalError(
+            "Consistency checking not implemented".to_string(),
+        ))
     }
 
     async fn generate_counterexample(
         &self,
         _property: &str,
-        _context: Option<VerificationContext>,
+        _context: Option<baton_protocol::VerificationContext>,
     ) -> BatonResult<VerificationResponse> {
-        Err(BatonError::InternalError("Counterexample generation not implemented".to_string()))
+        Err(BatonError::InternalError(
+            "Counterexample generation not implemented".to_string(),
+        ))
     }
 
     async fn compare_results(
         &self,
         _rust_result: &str,
         _lean_result: &str,
-        _comparison_type: ComparisonType,
+        _comparison_type: baton_protocol::ComparisonType,
     ) -> BatonResult<VerificationResponse> {
-        Err(BatonError::InternalError("Result comparison not implemented".to_string()))
+        Err(BatonError::InternalError(
+            "Result comparison not implemented".to_string(),
+        ))
     }
 
     async fn get_version(&self) -> BatonResult<String> {
@@ -226,7 +261,7 @@ impl EnginePlugin for MockPlugin {
     }
 
     fn description(&self) -> &str {
-        "A simple mock verification engine for demonstration"
+        "A simple mock verification engine plugin for testing"
     }
 
     fn engine_info(&self) -> EngineInfo {
@@ -248,10 +283,26 @@ impl EnginePlugin for MockPlugin {
         EngineCapabilities {
             supports_evaluation: true,
             supports_type_checking: false,
+            supports_operational_semantics: false,
+            supports_type_safety: false,
+            supports_termination: false,
+            supports_determinism: false,
             supports_theorem_verification: false,
+            supports_lemma_verification: false,
+            supports_invariant_verification: false,
+            supports_refinement_verification: false,
             supports_differential_testing: false,
+            supports_test_extraction: false,
+            supports_specification_checking: false,
+            supports_consistency_checking: false,
+            supports_counterexample_generation: false,
             supports_result_comparison: false,
-            ..Default::default()
+            max_timeout: Some(30),
+            max_expression_size: Some(100),
+            max_theorem_complexity: Some("low".to_string()),
+            supported_input_formats: vec!["text".to_string()],
+            supported_output_formats: vec!["text".to_string()],
+            performance_characteristics: PerformanceCharacteristics::default(),
         }
     }
 
@@ -280,10 +331,12 @@ impl EnginePlugin for MockPlugin {
     }
 
     fn get_engine(&self) -> BatonResult<Box<dyn VerificationEngine>> {
-        if let Some(ref engine) = self.engine {
+        if let Some(engine) = &self.engine {
             Ok(Box::new(engine.clone()))
         } else {
-            Err(BatonError::InternalError("Engine not initialized".to_string()))
+            Err(BatonError::InternalError(
+                "Engine not initialized".to_string(),
+            ))
         }
     }
 }
@@ -299,58 +352,47 @@ impl Clone for MockEngine {
 
 #[tokio::main]
 async fn main() -> BatonResult<()> {
-    println!("=== Baton Engine Plugin Example ===\n");
+    println!("=== Mock Verification Engine Plugin Example ===");
 
-    // Create a plugin manager
-    let manager = EnginePluginManager::new();
-    println!("Created plugin manager");
-
-    // Create and register a mock plugin
-    let mock_plugin = MockPlugin::new("mock-engine");
-    manager.register_plugin(Box::new(mock_plugin)).await?;
-    println!("Registered mock plugin");
+    // Create a mock plugin
+    let mut plugin = MockPlugin::new("mock-engine");
+    println!("✅ Created mock plugin: {}", plugin.name());
 
     // Initialize the plugin
-    let config = json!({
-        "timeout": 30,
-        "memory_limit": 1024
-    });
-    manager.initialize_plugin("mock-engine", &config).await?;
-    println!("Initialized mock plugin");
+    plugin.initialize(&json!({})).await?;
+    println!("✅ Plugin initialized");
 
-    // Get plugin information
-    let info = manager.get_plugin_info("mock-engine").await?;
-    println!("Plugin info: {:?}", info);
+    // Check plugin status
+    let status = plugin.status().await?;
+    println!("✅ Plugin status: {:?}", status);
 
-    // Get plugin capabilities
-    let capabilities = manager.get_plugin_capabilities("mock-engine").await?;
-    println!("Plugin capabilities: {:?}", capabilities);
+    // Get engine info
+    let info = plugin.engine_info();
+    println!("✅ Engine info: {} v{}", info.name, info.version);
 
-    // Get plugin status
-    let status = manager.get_plugin_status("mock-engine").await?;
-    println!("Plugin status: {:?}", status);
+    // Get capabilities
+    let capabilities = plugin.capabilities();
+    println!(
+        "✅ Engine capabilities: evaluation={}",
+        capabilities.supports_evaluation
+    );
 
-    // List all plugins
-    let plugins = manager.list_plugins().await;
-    println!("Registered plugins: {:?}", plugins);
+    // Get the verification engine
+    let engine = plugin.get_engine()?;
+    println!("✅ Got verification engine");
 
-    // Get manager statistics
-    let stats = manager.get_stats().await;
-    println!("Manager stats: {:?}", stats);
+    // Test a simple verification
+    let result = engine.verify_evaluation("1 + 1", "2", None).await?;
+    println!("✅ Verification result: {:?}", result);
 
-    // Note: The current implementation doesn't support engine cloning,
-    // so we can't demonstrate actual verification usage yet.
-    // This would be implemented in a future version.
-    println!("\nNote: Engine usage demonstration requires engine cloning support");
+    // Test an invalid verification
+    let result = engine.verify_evaluation("1 + 1", "3", None).await?;
+    println!("✅ Invalid verification result: {:?}", result);
 
-    // Health check
-    let health = manager.health_check().await;
-    println!("Health status: {:?}", health);
+    // Shutdown the plugin
+    plugin.shutdown().await?;
+    println!("✅ Plugin shutdown complete");
 
-    // Shutdown
-    manager.shutdown_all().await?;
-    println!("Shutdown complete");
-
-    println!("\n=== Example completed successfully ===");
+    println!("=== Example completed successfully! ===");
     Ok(())
-} 
+}
