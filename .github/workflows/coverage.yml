@@ -53,13 +53,13 @@ jobs:
         run: |
           # Generate coverage for all crates
           # Note: krox is excluded due to cross-language support issues
-          cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info --exclude-from-test krox
+          cargo llvm-cov --workspace --lcov --output-path lcov.info --exclude-from-test krox
 
           # Generate HTML report
-          cargo llvm-cov --all-features --workspace --html --output-dir coverage-html --exclude-from-test krox
+          cargo llvm-cov --workspace --html --output-dir coverage-html --exclude-from-test krox
 
           # Generate coverage summary
-          cargo llvm-cov --all-features --workspace --text --exclude-from-test krox
+          cargo llvm-cov --workspace --text --exclude-from-test krox
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:

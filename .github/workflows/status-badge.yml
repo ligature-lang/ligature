@@ -19,7 +19,7 @@ jobs:
         with:
           auth: ${{ secrets.GIST_SECRET }}
           gistID: 5ff6a38a1f63f5f55c96abadb54534a9
-          filename: ligature-status.json
+          filename: ligature-status.md
           label: Ligature CI
           message: ${{ github.event.workflow_run.conclusion }}
           namedLogo: github
