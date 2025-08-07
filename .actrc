@@ -1,0 +1,28 @@
+# Act configuration for Ligature project
+
+# This file configures act for local GitHub Actions testing
+
+# Use medium-sized images for better performance
+
+-P ubuntu-latest=catthehacker/ubuntu:act-latest
+
+# Enable verbose output for debugging
+
+-v
+
+# Use bind mounts for better performance on macOS
+
+--bind
+
+# Set environment variables that might be needed
+
+--env CARGO_TERM_COLOR=always
+--env RUST_BACKTRACE=1
+
+# Use specific Docker platform for M1/M2 Macs
+
+--container-architecture linux/amd64
+
+# Enable reuse of containers for faster subsequent runs
+
+--reuse

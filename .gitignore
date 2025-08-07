@@ -73,6 +73,10 @@ coverage/
 config.local.*
 .env.local
 
+# Act configuration (may contain sensitive tokens)
+.secrets
+.env
+
 # Backup files
 *.bak
 *.backup 
