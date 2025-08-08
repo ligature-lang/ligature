@@ -47,6 +47,7 @@ Welcome to the Ligature documentation. This guide will help you get started with
 - **Termination Guarantee** - All programs are guaranteed to terminate
 - **Type Classes** - Advanced type system with type classes and instances
 - **Instance Declarations** - Support for constrained and unconstrained instances
+- **Constraint-Based Validation** - Refinement types and pattern constraints with runtime validation
 
 ### Advanced Features ✅
 

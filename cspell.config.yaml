@@ -4,6 +4,8 @@ dictionaryDefinitions: []
 dictionaries: []
 words:
   - clippy
+  - cpus
+  - dashmap
   - Deque
   - dtolnay
   - flate2
@@ -17,10 +19,12 @@ words:
   - proptest
   - reqwest
   - rstest
+  - scrutinee
   - serde
   - subtyping
   - sysinfo
   - thiserror
+  - usize
   - walkdir
 ignoreWords: []
 import: []

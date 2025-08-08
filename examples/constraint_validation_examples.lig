@@ -1,0 +1,178 @@
+// Constraint-Based Validation Examples
+// This file demonstrates Ligature's constraint-based validation features
+
+// =============================================================================
+// BASIC REFINEMENT TYPES
+// =============================================================================
+
+// Simple refinement types with predicates
+type PositiveInt = Integer where x > 0;
+type ValidAge = Integer where x >= 0 && x <= 150;
+type NonZero = Integer where x != 0;
+type EvenNumber = Integer where x % 2 == 0;
+
+// =============================================================================
+// PATTERN CONSTRAINTS
+// =============================================================================
+
+// Email validation with regex
+type ValidEmail = String with regexp("^[^@]+@[^@]+\\.[^@]+$");
+
+// Phone number validation
+type ValidPhone = String with regexp("^\\d{3}-\\d{3}-\\d{4}$");
+
+// URL validation
+type ValidURL = String with regexp("^https?://[^\\s]+$");
+
+// Username validation (alphanumeric with underscores, 3-20 characters)
+type ValidUsername = String with regexp("^[a-zA-Z0-9_]{3,20}$");
+
+// =============================================================================
+// VALUE CONSTRAINTS
+// =============================================================================
+
+// Port number validation
+type ValidPort = Integer with x > 0 && x <= 65535;
+
+// Timeout validation (1 second to 1 hour)
+type ValidTimeout = Integer with x > 0 && x <= 3600;
+
+// Percentage validation
+type ValidPercentage = Integer with x >= 0 && x <= 100;
+
+// Score validation (0-100, multiples of 5)
+type ValidScore = Integer with x >= 0 && x <= 100 && x % 5 == 0;
+
+// =============================================================================
+// MULTIPLE CONSTRAINTS
+// =============================================================================
+
+// Password validation (alphanumeric with special chars, minimum 8 chars)
+type ValidPassword = String with regexp("^[A-Za-z0-9@#$%^&+=]+$") with length >= 8;
+
+// Strong password (uppercase, lowercase, digit, special char, 8+ chars)
+type StrongPassword = String with regexp("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@#$%^&+=])[A-Za-z\\d@#$%^&+=]{8,}$");
+
+// Identifier validation (starts with letter/underscore, alphanumeric)
+type ValidIdentifier = String with regexp("^[a-zA-Z_][a-zA-Z0-9_]*$") with length > 0;
+
+// =============================================================================
+// CUSTOM VALIDATION FUNCTIONS
+// =============================================================================
+
+// Custom validation function for user data
+let isValidUser = \user -> 
+    length user.name > 0 && 
+    length user.name <= 50 &&
+    user.age >= 0 && 
+    user.age <= 150 &&
+    contains user.email "@" &&
+    length user.email > 5;
+
+// Custom validation function for configuration
+let isValidConfig = \config -> 
+    config.port > 0 && 
+    config.port <= 65535 &&
+    length config.host > 0 &&
+    config.timeout > 0 &&
+    config.timeout <= 3600;
+
+// =============================================================================
+// RECORD REFINEMENT TYPES
+// =============================================================================
+
+// User record with refinement type
+type ValidUser = { 
+    name: String, 
+    age: Integer, 
+    email: String 
+} where isValidUser x;
+
+// Configuration record with refinement type
+type ValidConfig = {
+    port: Integer,
+    host: String,
+    timeout: Integer
+} where isValidConfig x;
+
+// =============================================================================
+// EXAMPLE USAGE
+// =============================================================================
+
+// Create valid values
+let user_age: ValidAge = 25;
+let user_email: ValidEmail = "user@example.com";
+let server_port: ValidPort = 8080;
+let password: ValidPassword = "MyPass123";
+
+// Create user record (will be validated)
+let alice: ValidUser = {
+    name = "Alice",
+    age = 30,
+    email = "alice@example.com"
+};
+
+// Create configuration (will be validated)
+let dev_config: ValidConfig = {
+    port = 8080,
+    host = "localhost",
+    timeout = 30
+};
+
+// =============================================================================
+// VALIDATION FUNCTIONS
+// =============================================================================
+
+// Function that processes validated data
+let process_user = \user: ValidUser -> 
+    "Processing user: " ++ user.name ++ " (age: " ++ toString user.age ++ ")";
+
+// Function that processes validated configuration
+let start_server = \config: ValidConfig -> 
+    "Starting server on " ++ config.host ++ ":" ++ toString config.port;
+
+// =============================================================================
+// UTILITY FUNCTIONS
+// =============================================================================
+
+// Safe user creation function
+let safe_create_user = \name age email -> 
+    case (name, age, email) of
+        (n, a, e) when length n > 0 && a >= 0 && a <= 150 && contains e "@" => 
+            Some { name = n, age = a, email = e },
+        _ => None;
+
+// Safe configuration creation function
+let safe_create_config = \port host timeout -> 
+    case (port, host, timeout) of
+        (p, h, t) when p > 0 && p <= 65535 && length h > 0 && t > 0 && t <= 3600 => 
+            Some { port = p, host = h, timeout = t },
+        _ => None;
+
+// =============================================================================
+// TEST CASES
+// =============================================================================
+
+// Test email validation
+let test_email = \email -> 
+    case email of
+        "user@example.com" => true,   // Should pass
+        "invalid-email" => false,     // Should fail
+        "" => false,                  // Should fail
+        "user@" => false;             // Should fail
+
+// Test age validation
+let test_age = \age -> 
+    case age of
+        25 => true,    // Should pass
+        -5 => false,   // Should fail
+        200 => false,  // Should fail
+        0 => true;     // Should pass
+
+// Test port validation
+let test_port = \port -> 
+    case port of
+        8080 => true,  // Should pass
+        0 => false,    // Should fail
+        70000 => false, // Should fail
+        80 => true;    // Should pass 

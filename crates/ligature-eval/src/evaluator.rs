@@ -1,12 +1,12 @@
 //! Main evaluator for the Ligature language.
 
-use crate::ModuleResolver;
 use crate::advanced_optimizations::{
     AdvancedTailCallDetector, ClosureCaptureOptimizer, FunctionInliner, GenerationalGC,
     OptimizedEvaluator, ParallelEvaluator,
 };
 use crate::config::{ConfigError, ConfigFormat, EvaluatorConfig, EvaluatorConfigManager};
 use crate::environment::EvaluationEnvironment;
+use crate::resolver::ModuleResolver;
 use crate::validation::{ValidationEngine, ValidationResult, ValidationStats};
 use crate::value::{
     Value, ValueInterner, ValueInternerStats, ValueKind, ValueOptimizationStats, ValuePool,

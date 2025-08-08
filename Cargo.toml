@@ -84,6 +84,10 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 walkdir = "2.4"
 which = "6.0"
 xdg = "2.5"
+# Concurrent data structures
+dashmap = "5.5"
+futures = "0.3"
+uuid = { version = "1.0", features = ["v4"] }
 
 [workspace.features]
 default = []

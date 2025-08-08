@@ -6,7 +6,7 @@
 use ligature_ast::{
     Declaration, DeclarationKind, Expr, ExprKind, Literal, Program, Span, ValueDeclaration,
 };
-use ligature_eval::{AsyncEvaluator, AsyncEvaluatorConfig};
+use ligature_eval::{EnhancedAsyncEvaluator, EnhancedAsyncEvaluatorConfig};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -15,15 +15,19 @@ async fn main() -> Result<()> {
     println!("=== Async Evaluation Example ===\n");
 
     // Create an async evaluator with custom configuration
-    let config = AsyncEvaluatorConfig {
-        max_concurrent_tasks: 2,
-        work_queue_capacity: 100,
+    let config = EnhancedAsyncEvaluatorConfig {
+        num_workers: 2,
+        expression_cache_size: 100,
+        value_cache_size: 50,
+        max_cache_memory: 1000000,
         task_timeout: std::time::Duration::from_secs(10),
-        enable_parallel: true,
-        evaluator_config: ligature_eval::EvaluatorConfig::default(),
+        enable_concurrent_type_checking: true,
+        enable_expression_caching: true,
+        enable_value_caching: true,
+        enable_performance_monitoring: true,
     };
 
-    let evaluator = AsyncEvaluator::with_config(config);
+    let evaluator = EnhancedAsyncEvaluator::new(config)?;
     println!("✅ Created async evaluator");
 
     // Example 1: Evaluate a simple expression
@@ -33,7 +37,8 @@ async fn main() -> Result<()> {
         span: Span::default(),
     };
 
-    let result = evaluator.evaluate_expression(&expr).await?;
+    let env = ligature_eval::EvaluationEnvironment::new();
+    let result = evaluator.evaluate_expression(&expr, &env).await?;
     println!("Expression result: {result:?}");
 
     // Example 2: Evaluate a binary operation
@@ -53,7 +58,7 @@ async fn main() -> Result<()> {
         span: Span::default(),
     };
 
-    let result = evaluator.evaluate_expression(&binary_expr).await?;
+    let result = evaluator.evaluate_expression(&binary_expr, &env).await?;
     println!("Binary operation result: {result:?}");
 
     // Example 3: Evaluate a program
@@ -78,32 +83,37 @@ async fn main() -> Result<()> {
     let result = evaluator.evaluate_program(&program).await?;
     println!("Program result: {result:?}");
 
-    // Example 4: Progress tracking
-    println!("\n--- Example 4: Progress Tracking ---");
-    let progress = evaluator.get_progress().await;
-    println!("Total tasks: {}", progress.total_tasks);
-    println!("Completed tasks: {}", progress.completed_tasks);
-    println!("Failed tasks: {}", progress.failed_tasks);
-    println!("Active tasks: {}", progress.active_tasks);
+    // Example 4: Performance metrics
+    println!("\n--- Example 4: Performance Metrics ---");
+    let metrics = evaluator.performance_metrics().await;
+    println!("Total evaluation time: {:?}", metrics.total_evaluation_time);
+    println!("Type checking time: {:?}", metrics.type_checking_time);
     println!(
-        "Completion percentage: {:.1}%",
-        progress.completion_percentage()
+        "Expression evaluation time: {:?}",
+        metrics.expression_evaluation_time
     );
-    println!("Elapsed time: {:?}", progress.elapsed_time());
+    println!("Cache hits: {}", metrics.cache_hits);
+    println!("Cache misses: {}", metrics.cache_misses);
+    println!("Cache hit rate: {:.1}%", metrics.cache_hit_rate() * 100.0);
+    println!("Concurrent tasks: {}", metrics.concurrent_tasks);
+    println!(
+        "Average evaluation time: {:?}",
+        metrics.average_evaluation_time()
+    );
 
-    // Example 5: Performance metrics
-    println!("\n--- Example 5: Performance Metrics ---");
-    let metrics = evaluator.get_metrics();
-    println!("Recorded {} performance metrics", metrics.len());
+    // Example 5: Statistics
+    println!("\n--- Example 5: Statistics ---");
+    let stats = evaluator.stats();
+    println!("Recorded {} statistics", stats.len());
 
-    for metric in metrics.iter().take(3) {
-        println!("  - {}: {:?}", metric.operation_name, metric.execution_time);
+    for (key, value) in stats.iter().take(3) {
+        println!("  - {}: {}", key, value);
     }
 
-    // Clean shutdown
-    println!("\n--- Shutdown ---");
-    evaluator.shutdown().await;
-    println!("✅ Async evaluator shutdown complete");
+    // Cleanup
+    println!("\n--- Cleanup ---");
+    evaluator.clear_caches();
+    println!("✅ Caches cleared");
 
     println!("\n=== Example completed successfully! ===");
     Ok(())

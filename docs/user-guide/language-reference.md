@@ -111,6 +111,111 @@ type UserId = Integer;
 'a, 'b, 'c    // Type variables for generic types
 ```
 
+## Constraint-Based Validation
+
+Ligature supports constraint-based validation through refinement types and constraint types, allowing you to create types with runtime validation rules.
+
+### Refinement Types
+
+Refinement types allow you to create a type that is a subset of another type based on a predicate:
+
+```ocaml
+// Basic refinement type
+type PositiveInt = Integer where x > 0;
+
+// Refinement type with complex predicate
+type ValidAge = Integer where x >= 0 && x <= 150;
+
+// Refinement type for records
+type ValidUser = { name: String, age: Integer } where isValidUser x;
+```
+
+### Constraint Types
+
+Constraint types allow you to add multiple validation constraints to a base type:
+
+```ocaml
+// Pattern constraint with regex
+type ValidEmail = String with regexp("^[^@]+@[^@]+\\.[^@]+$");
+
+// Multiple constraints
+type NonEmptyAlpha = String with regexp("^[A-Za-z]+$") with length > 0;
+
+// Pattern constraint with simple pattern
+type ValidPhone = String with pattern("\\d{3}-\\d{3}-\\d{4}");
+```
+
+### Constraint Types
+
+The following constraint types are supported:
+
+#### Pattern Constraints
+
+```ocaml
+// Regex pattern constraint
+type ValidEmail = String with regexp("^[^@]+@[^@]+\\.[^@]+$");
+
+// Simple pattern constraint
+type ValidPhone = String with pattern("\\d{3}-\\d{3}-\\d{4}");
+```
+
+#### Value Constraints
+
+```ocaml
+// Boolean expression constraint
+type NonZero = Integer with x != 0;
+
+// Complex boolean constraint
+type ValidPort = Integer with x > 0 && x <= 65535;
+```
+
+### Validation Examples
+
+```ocaml
+// Define constrained types
+type PositiveInt = Integer where x > 0;
+type ValidEmail = String with regexp("^[^@]+@[^@]+\\.[^@]+$");
+type ValidUser = { name: String, age: Integer } where isValidUser x;
+
+// Use constrained types
+let user_age: PositiveInt = 25;  // Valid
+let user_email: ValidEmail = "user@example.com";  // Valid
+let user: ValidUser = { name = "Alice", age = 30 };  // Valid if isValidUser returns true
+
+// Invalid values will cause validation errors
+let invalid_age: PositiveInt = -5;  // Validation error
+let invalid_email: ValidEmail = "invalid-email";  // Validation error
+```
+
+### Validation Functions
+
+You can define custom validation functions for use in refinement types:
+
+```ocaml
+// Custom validation function
+let isValidUser = \user ->
+    length user.name > 0 &&
+    user.age >= 0 &&
+    user.age <= 150;
+
+// Use in refinement type
+type ValidUser = { name: String, age: Integer } where isValidUser x;
+```
+
+### Runtime Validation
+
+Constraint-based validation happens at runtime when values are created or assigned:
+
+```ocaml
+// Validation occurs when the value is used
+let process_user = \user: ValidUser ->
+    // user is guaranteed to be valid at this point
+    "Processing user: " ++ user.name;
+
+// Invalid values will cause runtime errors
+let invalid_user = { name = "", age = -5 };  // This would fail validation
+```
+
 ## Expressions
 
 ### Literals

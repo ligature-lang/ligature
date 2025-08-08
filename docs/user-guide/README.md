@@ -6,6 +6,7 @@ Welcome to the Ligature user guide! This guide provides comprehensive documentat
 
 - **[Getting Started](getting-started.md)** - Learn the basics of Ligature, installation, and your first program
 - **[Language Reference](language-reference.md)** - Complete reference for Ligature syntax and features
+- **[Constraint-Based Validation](constraint-validation.md)** - Create types with built-in validation rules
 - **[Examples](examples.md)** - Practical examples and use cases
 - **[Performance Guide](performance-guide.md)** - Performance optimization and monitoring
 
@@ -50,6 +51,7 @@ Ligature is a Turing-incomplete configuration and data management language desig
 - **Operator precedence** system
 - **Import resolution** and module loading
 - **Type-level computation** with advanced subtyping and dependent types
+- **Constraint-based validation** with refinement types and pattern constraints
 
 ### System Integration
 
@@ -94,6 +96,7 @@ This user guide is organized to help you learn Ligature effectively:
 
 - ✅ **Professional-Grade IDE Integration** - Complete LSP symbol finding with cross-file navigation
 - ✅ **Type-Level Computation System** - Advanced type-level programming with dependent types
+- ✅ **Constraint-Based Validation** - Refinement types and pattern constraints with runtime validation
 - ✅ **Performance Optimization** - 2.7x function call improvement with 1M+ ops/sec
 - ✅ **Configuration Management** - Schema-based validation and hot-reloading
 - ✅ **Performance Monitoring** - Real-time metrics and adaptive optimization

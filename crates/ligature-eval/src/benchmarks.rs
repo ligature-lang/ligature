@@ -1,6 +1,10 @@
 //! Benchmarking utilities for the Ligature evaluation engine.
 
-use crate::{CacheStats, Evaluator, MemoryStats, MemoryTracker};
+use crate::{
+    Evaluator,
+    evaluator::CacheStats,
+    memory::{MemoryStats, MemoryTracker},
+};
 use ligature_ast::{AstError, Span};
 use ligature_parser::parse_program;
 use std::time::{Duration, Instant};

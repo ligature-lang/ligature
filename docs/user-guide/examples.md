@@ -6,12 +6,13 @@ This guide provides practical examples of how to use Ligature for real-world con
 
 1. [Application Configuration](#application-configuration)
 2. [Data Validation](#data-validation)
-3. [Type Classes and Instances](#type-classes-and-instances)
-4. [API Configuration](#api-configuration)
-5. [Database Configuration](#database-configuration)
-6. [Build System Configuration](#build-system-configuration)
-7. [Microservices Configuration](#microservices-configuration)
-8. [Testing Configuration](#testing-configuration)
+3. [Constraint-Based Validation](#constraint-based-validation)
+4. [Type Classes and Instances](#type-classes-and-instances)
+5. [API Configuration](#api-configuration)
+6. [Database Configuration](#database-configuration)
+7. [Build System Configuration](#build-system-configuration)
+8. [Microservices Configuration](#microservices-configuration)
+9. [Testing Configuration](#testing-configuration)
 
 ## Application Configuration
 
@@ -98,7 +99,133 @@ module Environment {
 
 ## Data Validation
 
-### User Data Validation
+### Constraint-Based Validation
+
+Ligature's constraint-based validation system allows you to create types with built-in validation rules, ensuring data integrity at the type level.
+
+#### Basic Constraint Types
+
+```ocaml
+// constraints/basic.lig
+module BasicConstraints {
+    // Refinement types with predicates
+    type PositiveInt = Integer where x > 0;
+    type ValidAge = Integer where x >= 0 && x <= 150;
+    type NonZero = Integer where x != 0;
+
+    // Pattern constraints for strings
+    type ValidEmail = String with regexp("^[^@]+@[^@]+\\.[^@]+$");
+    type ValidPhone = String with pattern("\\d{3}-\\d{3}-\\d{4}");
+    type NonEmptyString = String with length > 0;
+
+    // Multiple constraints
+    type ValidPort = Integer with x > 0 && x <= 65535;
+    type AlphaString = String with regexp("^[A-Za-z]+$") with length > 0;
+}
+```
+
+#### User Data Validation with Constraints
+
+```ocaml
+// validation/user_constraints.lig
+module UserConstraintValidation {
+    // Define constrained types for user data
+    type ValidName = String with length > 0 && length <= 50;
+    type ValidAge = Integer where x >= 0 && x <= 150;
+    type ValidEmail = String with regexp("^[^@]+@[^@]+\\.[^@]+$");
+    type ValidUserRole = Admin | User | Guest;
+
+    // Custom validation function for complex user validation
+    let isValidUser = \user ->
+        length user.name > 0 &&
+        user.age >= 0 &&
+        user.age <= 150 &&
+        contains user.email "@";
+
+    // Refinement type using custom validation function
+    type ValidUser = {
+        name: ValidName,
+        age: ValidAge,
+        email: ValidEmail,
+        role: ValidUserRole
+    } where isValidUser x;
+
+    // Example usage
+    let create_user = \name age email role -> {
+        name = name,  // Will be validated as ValidName
+        age = age,    // Will be validated as ValidAge
+        email = email, // Will be validated as ValidEmail
+        role = role   // Will be validated as ValidUserRole
+    };
+
+    // Valid user creation
+    let alice = create_user "Alice" 25 "alice@example.com" User;
+
+    // Invalid user creation (will cause validation errors)
+    // let invalid_user = create_user "" -5 "invalid-email" InvalidRole;
+}
+```
+
+#### Configuration Validation with Constraints
+
+```ocaml
+// validation/config_constraints.lig
+module ConfigConstraintValidation {
+    // Constrained types for configuration
+    type ValidPort = Integer where x > 0 && x <= 65535;
+    type ValidHost = String with length > 0;
+    type ValidTimeout = Integer where x > 0 && x <= 3600;
+    type ValidLogLevel = Debug | Info | Warn | Error;
+
+    // Custom validation for configuration
+    let isValidConfig = \config ->
+        config.port > 0 &&
+        config.port <= 65535 &&
+        length config.host > 0 &&
+        config.timeout > 0 &&
+        config.timeout <= 3600;
+
+    // Refinement type for valid configuration
+    type ValidConfig = {
+        port: ValidPort,
+        host: ValidHost,
+        timeout: ValidTimeout,
+        log_level: ValidLogLevel
+    } where isValidConfig x;
+
+    // Environment-specific configurations
+    let development_config = {
+        port = 8080,           // Valid port
+        host = "localhost",    // Valid host
+        timeout = 30,          // Valid timeout
+        log_level = Debug      // Valid log level
+    };
+
+    let production_config = {
+        port = 80,             // Valid port
+        host = "api.example.com", // Valid host
+        timeout = 60,          // Valid timeout
+        log_level = Info       // Valid log level
+    };
+}
+```
+
+## Constraint-Based Validation
+
+For comprehensive constraint-based validation examples, see the dedicated [Constraint-Based Validation Guide](constraint-validation.md) and the example file `examples/constraint_validation_examples.lig`.
+
+### Key Features Demonstrated
+
+- **Refinement Types**: `type PositiveInt = Integer where x > 0;`
+- **Pattern Constraints**: `type ValidEmail = String with regexp("^[^@]+@[^@]+\\.[^@]+$");`
+- **Value Constraints**: `type ValidPort = Integer with x > 0 && x <= 65535;`
+- **Multiple Constraints**: `type ValidPassword = String with regexp("^[A-Za-z0-9@#$%^&+=]+$") with length >= 8;`
+- **Record Refinement Types**: Complex validation for structured data
+- **Custom Validation Functions**: User-defined validation logic
+
+### Traditional Validation Functions
+
+For cases where you need more complex validation logic or want to provide custom error messages, you can still use traditional validation functions:
 
 ```ocaml
 // validation/user.lig

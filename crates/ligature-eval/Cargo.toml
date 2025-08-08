@@ -28,6 +28,10 @@ sysinfo = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true, features = ["fs"] }
 toml = "0.8"
+# Concurrent data structures
+dashmap = { workspace = true }
+futures = { workspace = true }
+uuid = { workspace = true, features = ["v4"] }
 
 [dev-dependencies]
 criterion = { workspace = true }
