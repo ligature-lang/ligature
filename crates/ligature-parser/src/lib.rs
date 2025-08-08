@@ -389,4 +389,215 @@ mod tests {
 
         Ok(())
     }
+
+    /// Test refinement type parsing
+    #[test]
+    fn test_refinement_type_parsing() -> AstResult<()> {
+        let mut parser = Parser::new();
+
+        // Test basic refinement type: Int where x > 0
+        let source = "type PositiveInt = Int where x > 0;";
+        let program = parser.parse_program(source)?;
+        assert_eq!(program.declarations.len(), 1);
+
+        if let Some(alias) = program.declarations[0].as_type_alias() {
+            assert_eq!(alias.name, "PositiveInt");
+            assert!(alias.type_.is_refinement());
+
+            if let Some((base_type, predicate, _)) = alias.type_.as_refinement() {
+                assert!(matches!(base_type.kind, TypeKind::Integer));
+                // The predicate should be a binary operation x > 0
+                assert!(matches!(predicate.kind, ExprKind::BinaryOp { .. }));
+            } else {
+                panic!("Expected refinement type");
+            }
+        } else {
+            panic!("Expected type alias declaration");
+        }
+
+        Ok(())
+    }
+
+    /// Test constraint type parsing
+    #[test]
+    fn test_constraint_type_parsing() -> AstResult<()> {
+        let mut parser = Parser::new();
+
+        // Test constraint type: String with regexp("^[^@]+@[^@]+\\.[^@]+$")
+        let source = "type ValidEmail = String with regexp(\"^[^@]+@[^@]+\\.[^@]+$\");";
+
+        let program = parser.parse_program(source)?;
+        assert_eq!(program.declarations.len(), 1);
+
+        if let Some(alias) = program.declarations[0].as_type_alias() {
+            assert_eq!(alias.name, "ValidEmail");
+            assert!(alias.type_.is_constraint_type());
+
+            if let Some((base_type, constraints)) = alias.type_.as_constraint_type() {
+                assert!(matches!(base_type.kind, TypeKind::String));
+                assert_eq!(constraints.len(), 1);
+
+                println!("Debug: Constraint type: {:?}", constraints[0]);
+
+                if let ligature_ast::ty::Constraint::PatternConstraint { pattern, regex } =
+                    &constraints[0]
+                {
+                    println!("Debug: Pattern: {pattern}, Regex: {regex}");
+                    assert_eq!(pattern, "^[^@]+@[^@]+\\.[^@]+$");
+                    assert!(regex);
+                } else {
+                    panic!("Expected pattern constraint, got: {:?}", constraints[0]);
+                }
+            } else {
+                panic!("Expected constraint type");
+            }
+        } else {
+            panic!("Expected type alias declaration");
+        }
+
+        Ok(())
+    }
+
+    /// Test range constraint parsing
+    #[test]
+    fn test_range_constraint_parsing() -> AstResult<()> {
+        let mut parser = Parser::new();
+
+        // Test range constraint: Int with >= 0
+        let source = "type ValidAge = Int with >= 0;";
+        let program = parser.parse_program(source)?;
+        assert_eq!(program.declarations.len(), 1);
+
+        if let Some(alias) = program.declarations[0].as_type_alias() {
+            assert_eq!(alias.name, "ValidAge");
+            assert!(alias.type_.is_constraint_type());
+
+            if let Some((base_type, constraints)) = alias.type_.as_constraint_type() {
+                assert!(matches!(base_type.kind, TypeKind::Integer));
+                assert_eq!(constraints.len(), 1);
+
+                // Check constraint (>= 0)
+                if let ligature_ast::ty::Constraint::RangeConstraint { min, max, .. } =
+                    &constraints[0]
+                {
+                    assert!(min.is_some()); // >= 0 means min = 0
+                    assert!(max.is_none());
+                } else {
+                    panic!("Expected range constraint");
+                }
+            } else {
+                panic!("Expected constraint type");
+            }
+        } else {
+            panic!("Expected type alias declaration");
+        }
+
+        Ok(())
+    }
+
+    /// Test custom constraint parsing
+    #[test]
+    fn test_custom_constraint_parsing() -> AstResult<()> {
+        let mut parser = Parser::new();
+
+        // Test custom constraint: String with isValidEmail(x)
+        let source = "type ValidEmail = String with isValidEmail(x);";
+        let program = parser.parse_program(source)?;
+        assert_eq!(program.declarations.len(), 1);
+
+        if let Some(alias) = program.declarations[0].as_type_alias() {
+            assert_eq!(alias.name, "ValidEmail");
+            assert!(alias.type_.is_constraint_type());
+
+            if let Some((base_type, constraints)) = alias.type_.as_constraint_type() {
+                assert!(matches!(base_type.kind, TypeKind::String));
+                assert_eq!(constraints.len(), 1);
+
+                if let ligature_ast::ty::Constraint::CustomConstraint {
+                    function,
+                    arguments,
+                } = &constraints[0]
+                {
+                    assert_eq!(function, "isValidEmail");
+                    assert_eq!(arguments.len(), 1);
+                } else {
+                    panic!("Expected custom constraint");
+                }
+            } else {
+                panic!("Expected constraint type");
+            }
+        } else {
+            panic!("Expected type alias declaration");
+        }
+
+        Ok(())
+    }
+
+    /// Test complex refinement type parsing
+    #[test]
+    fn test_complex_refinement_type_parsing() -> AstResult<()> {
+        let mut parser = Parser::new();
+
+        // Test complex refinement type with record: { name: String, age: Int } where isValidUser x
+        let source = "type ValidUser = { name: String, age: Int } where isValidUser x;";
+        let program = parser.parse_program(source)?;
+        assert_eq!(program.declarations.len(), 1);
+
+        if let Some(alias) = program.declarations[0].as_type_alias() {
+            assert_eq!(alias.name, "ValidUser");
+            assert!(alias.type_.is_refinement());
+
+            if let Some((base_type, predicate, _)) = alias.type_.as_refinement() {
+                assert!(matches!(base_type.kind, TypeKind::Record { .. }));
+                // The predicate should be a function application isValidUser x
+                assert!(matches!(predicate.kind, ExprKind::Application { .. }));
+            } else {
+                panic!("Expected refinement type");
+            }
+        } else {
+            panic!("Expected type alias declaration");
+        }
+
+        Ok(())
+    }
+
+    /// Test multiple constraints parsing
+    #[test]
+    fn test_multiple_constraints_parsing() -> AstResult<()> {
+        let mut parser = Parser::new();
+
+        // Test multiple constraints: String with regexp("^[A-Za-z]+$") with isValidEmail(x)
+        let source =
+            "type NonEmptyAlpha = String with regexp(\"^[A-Za-z]+$\") with isValidEmail(x);";
+        let program = parser.parse_program(source)?;
+        assert_eq!(program.declarations.len(), 1);
+
+        if let Some(alias) = program.declarations[0].as_type_alias() {
+            assert_eq!(alias.name, "NonEmptyAlpha");
+            assert!(alias.type_.is_constraint_type());
+
+            if let Some((base_type, constraints)) = alias.type_.as_constraint_type() {
+                assert!(matches!(base_type.kind, TypeKind::String));
+                assert_eq!(constraints.len(), 2);
+
+                // First constraint should be pattern constraint
+                assert!(matches!(
+                    constraints[0],
+                    ligature_ast::ty::Constraint::PatternConstraint { .. }
+                ));
+
+                // Second constraint should be custom constraint
+                assert!(matches!(
+                    constraints[1],
+                    ligature_ast::ty::Constraint::CustomConstraint { .. }
+                ));
+            } else {
+                panic!("Expected constraint type");
+            }
+        } else {
+            panic!("Expected type alias declaration");
+        }
+
+        Ok(())
+    }
 }

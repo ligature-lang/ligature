@@ -18,6 +18,8 @@ use std::path::PathBuf;
 #[cfg(test)]
 mod module_tests;
 #[cfg(test)]
+mod refinement_type_tests;
+#[cfg(test)]
 mod resolver_tests;
 #[cfg(test)]
 mod type_class_tests;

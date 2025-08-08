@@ -4,7 +4,7 @@ use ligature_ast::{Type, TypeKind};
 use std::collections::HashMap;
 
 /// A type constraint.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Constraint {
     /// Equality constraint: left = right
     Equality(Type, Type),

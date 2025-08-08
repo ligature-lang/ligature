@@ -171,14 +171,12 @@ impl Spanned for TypeClassDeclaration {
 }
 
 /// A type class constraint.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct TypeClassConstraint {
     /// The type class name.
     pub class_name: String,
-
-    /// The type arguments.
+    /// Type arguments for the constraint.
     pub type_arguments: Vec<Type>,
-
     /// Source location.
     pub span: Span,
 }

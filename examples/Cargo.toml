@@ -100,6 +100,10 @@ name = "test_type_inference"
 path = "../tests/integration/test_type_inference.rs"
 
 [[example]]
+name = "runtime_validation_example"
+path = "runtime_validation_example.rs"
+
+[[example]]
 name = "test_evaluation"
 path = "../tests/integration/test_evaluation.rs"
 

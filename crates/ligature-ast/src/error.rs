@@ -4,7 +4,7 @@ use crate::span::Span;
 use thiserror::Error;
 
 /// Errors that can occur during AST construction or manipulation.
-#[derive(Error, Debug, Clone, PartialEq, Eq)]
+#[derive(Error, Debug, Clone, PartialEq)]
 pub enum AstError {
     #[error("Invalid identifier: {name}")]
     InvalidIdentifier { name: String, span: Span },

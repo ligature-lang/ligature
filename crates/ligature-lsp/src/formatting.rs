@@ -609,6 +609,33 @@ impl FormattingProvider {
                 let type_str = self.format_type(type_);
                 format!("{constraint_str} => {type_str}")
             }
+            ligature_ast::TypeKind::Refinement {
+                base_type,
+                predicate,
+                predicate_name,
+            } => {
+                let base_str = self.format_type(base_type);
+                let predicate_str = self.format_expression(predicate, 0);
+                match predicate_name {
+                    Some(name) => format!("{base_str} where {name}"),
+                    None => format!("{base_str} where {predicate_str}"),
+                }
+            }
+            ligature_ast::TypeKind::ConstraintType {
+                base_type,
+                constraints,
+            } => {
+                let base_str = self.format_type(base_type);
+                if constraints.is_empty() {
+                    base_str
+                } else {
+                    let constraint_strs: Vec<String> = constraints
+                        .iter()
+                        .map(|c| self.format_constraint(c))
+                        .collect();
+                    format!("{base_str} & {}", constraint_strs.join(" & "))
+                }
+            }
         }
     }
 
@@ -630,6 +657,52 @@ impl FormattingProvider {
             );
         }
         result
+    }
+
+    /// Format a validation constraint.
+    fn format_constraint(&self, constraint: &ligature_ast::ty::Constraint) -> String {
+        match constraint {
+            ligature_ast::ty::Constraint::ValueConstraint(expr) => self.format_expression(expr, 0),
+            ligature_ast::ty::Constraint::RangeConstraint {
+                min,
+                max,
+                inclusive,
+            } => {
+                let mut result = String::new();
+                if let Some(min_expr) = min {
+                    result.push_str(&self.format_expression(min_expr, 0));
+                }
+                result.push_str(if *inclusive { " <= " } else { " < " });
+                result.push('x');
+                if let Some(max_expr) = max {
+                    result.push_str(if *inclusive { " <= " } else { " < " });
+                    result.push_str(&self.format_expression(max_expr, 0));
+                }
+                result
+            }
+            ligature_ast::ty::Constraint::PatternConstraint { pattern, regex } => {
+                if *regex {
+                    format!("regexp(\"{pattern}\")")
+                } else {
+                    format!("pattern(\"{pattern}\")")
+                }
+            }
+            ligature_ast::ty::Constraint::CustomConstraint {
+                function,
+                arguments,
+            } => {
+                let arg_strs: Vec<String> = arguments
+                    .iter()
+                    .map(|arg| self.format_expression(arg, 0))
+                    .collect();
+                format!("{}({})", function, arg_strs.join(", "))
+            }
+            ligature_ast::ty::Constraint::CrossFieldConstraint { fields, predicate } => {
+                let field_str = fields.join(", ");
+                let predicate_str = self.format_expression(predicate, 0);
+                format!("cross_field({field_str}, {predicate_str})")
+            }
+        }
     }
 
     /// Format a pattern.

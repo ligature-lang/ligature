@@ -4,6 +4,8 @@
 
 pub mod binding_conflicts_tests;
 pub mod comprehensive_tests;
+pub mod constraint_validation_end_to_end_tests;
+pub mod constraint_validation_tests;
 pub mod end_to_end_tests;
 pub mod enhanced_error_reporting_tests;
 pub mod error_handling_tests;

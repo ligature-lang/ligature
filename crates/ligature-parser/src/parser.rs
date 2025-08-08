@@ -700,8 +700,17 @@ impl Parser {
             Rule::function_type => self.parse_function_type(pair.into_inner())?,
             Rule::union_type => self.parse_union_type(pair.into_inner())?,
             Rule::record_type => self.parse_record_type(pair.into_inner())?,
+            Rule::record_field_type => {
+                let field = self.parse_record_field_type(pair.into_inner())?;
+                // Convert a single field to a record type with one field
+                TypeKind::Record {
+                    fields: vec![field],
+                }
+            }
             Rule::list_type => self.parse_list_type(pair.into_inner())?,
             Rule::constrained_type => self.parse_constrained_type(pair.into_inner())?,
+            Rule::refinement_type => self.parse_refinement_type(pair.into_inner())?,
+            Rule::constraint_type => self.parse_constraint_type(pair.into_inner())?,
             Rule::parenthesized_type => self.parse_type_pairs(pair.into_inner())?.kind,
             Rule::type_expression => self.parse_type_pairs(pair.into_inner())?.kind,
             Rule::non_union_type_expression => self.parse_type_pairs(pair.into_inner())?.kind,
@@ -1850,6 +1859,271 @@ impl Parser {
             constraint: Box::new(constraint),
             type_: Box::new(constrained_type),
         })
+    }
+
+    fn parse_refinement_type(&mut self, pairs: Pairs<Rule>) -> AstResult<TypeKind> {
+        let pairs_iter = pairs.into_iter();
+        let mut base_type = None;
+        let mut predicate = None;
+
+        for pair in pairs_iter {
+            match pair.as_rule() {
+                Rule::basic_type => {
+                    let base_type_kind = match pair.as_str() {
+                        "Unit" => TypeKind::Unit,
+                        "Bool" => TypeKind::Bool,
+                        "String" => TypeKind::String,
+                        "Integer" => TypeKind::Integer,
+                        "Int" => TypeKind::Integer,
+                        "Float" => TypeKind::Float,
+                        _ => {
+                            return Err(AstError::ParseError {
+                                message: format!("Unknown basic type: {}", pair.as_str()),
+                                span: Span::default(),
+                            });
+                        }
+                    };
+                    base_type = Some(Type::new(base_type_kind, Span::default()));
+                }
+                Rule::record_type => {
+                    base_type = Some(self.parse_type_pairs(pair.into_inner())?);
+                }
+                Rule::value_expression => {
+                    predicate = Some(self.parse_expression_pairs(pair.into_inner())?);
+                }
+                _ => {}
+            }
+        }
+
+        let base_type = base_type.ok_or_else(|| AstError::ParseError {
+            message: "Expected base type in refinement type".to_string(),
+            span: Span::default(),
+        })?;
+
+        let predicate = predicate.ok_or_else(|| AstError::ParseError {
+            message: "Expected predicate in refinement type".to_string(),
+            span: Span::default(),
+        })?;
+
+        Ok(TypeKind::Refinement {
+            base_type: Box::new(base_type),
+            predicate: Box::new(predicate),
+            predicate_name: None,
+        })
+    }
+
+    fn parse_constraint_type(&mut self, pairs: Pairs<Rule>) -> AstResult<TypeKind> {
+        let pairs_iter = pairs.into_iter();
+        let mut base_type = None;
+        let mut constraints = Vec::new();
+
+        for pair in pairs_iter {
+            match pair.as_rule() {
+                Rule::basic_type => {
+                    let base_type_kind = match pair.as_str() {
+                        "Unit" => TypeKind::Unit,
+                        "Bool" => TypeKind::Bool,
+                        "String" => TypeKind::String,
+                        "Integer" => TypeKind::Integer,
+                        "Int" => TypeKind::Integer,
+                        "Float" => TypeKind::Float,
+                        _ => {
+                            return Err(AstError::ParseError {
+                                message: format!("Unknown basic type: {}", pair.as_str()),
+                                span: Span::default(),
+                            });
+                        }
+                    };
+                    base_type = Some(Type::new(base_type_kind, Span::default()));
+                }
+                Rule::record_type => {
+                    base_type = Some(self.parse_type_pairs(pair.into_inner())?);
+                }
+                Rule::constraint_expression => {
+                    let constraint = self.parse_constraint_expression(pair.into_inner())?;
+                    constraints.push(constraint);
+                }
+                _ => {}
+            }
+        }
+
+        let base_type = base_type.ok_or_else(|| AstError::ParseError {
+            message: "Expected base type in constraint type".to_string(),
+            span: Span::default(),
+        })?;
+
+        Ok(TypeKind::ConstraintType {
+            base_type: Box::new(base_type),
+            constraints,
+        })
+    }
+
+    fn parse_constraint_expression(
+        &mut self,
+        pairs: Pairs<Rule>,
+    ) -> AstResult<ligature_ast::ty::Constraint> {
+        let pair = pairs
+            .into_iter()
+            .next()
+            .ok_or_else(|| AstError::ParseError {
+                message: "Expected constraint expression".to_string(),
+                span: Span::default(),
+            })?;
+
+        println!(
+            "Debug: Constraint expression rule: {:?}, content: '{}'",
+            pair.as_rule(),
+            pair.as_str()
+        );
+
+        match pair.as_rule() {
+            Rule::range_constraint => {
+                let constraint_content = pair.as_str();
+                self.parse_range_constraint_with_content(pair.into_inner(), constraint_content)
+            }
+            Rule::pattern_constraint => {
+                let constraint_content = pair.as_str();
+                self.parse_pattern_constraint_with_content(pair.into_inner(), constraint_content)
+            }
+            Rule::custom_constraint => self.parse_custom_constraint(pair.into_inner()),
+            Rule::value_constraint => self.parse_value_constraint(pair.into_inner()),
+            _ => Err(AstError::ParseError {
+                message: format!("Unexpected constraint expression: {:?}", pair.as_rule()),
+                span: Span::default(),
+            }),
+        }
+    }
+
+    fn parse_range_constraint_with_content(
+        &mut self,
+        pairs: Pairs<Rule>,
+        constraint_content: &str,
+    ) -> AstResult<ligature_ast::ty::Constraint> {
+        let mut min = None;
+        let mut max = None;
+        let mut is_greater_than = false;
+        let inclusive = true;
+
+        println!("Debug: Range constraint with content: '{constraint_content}'");
+
+        if constraint_content.contains(">=") {
+            is_greater_than = true;
+            println!("Debug: Found >= operator");
+        } else if constraint_content.contains("<=") {
+            is_greater_than = false;
+            println!("Debug: Found <= operator");
+        }
+
+        let pairs_iter = pairs.into_iter();
+        // Parse range constraint: >= value or <= value
+        for pair in pairs_iter {
+            if pair.as_rule() == Rule::value_expression {
+                let expr = self.parse_expression_pairs(pair.into_inner())?;
+                if is_greater_than {
+                    min = Some(Box::new(expr.clone())); // >= value means min = value
+                    println!("Debug: Set min = {expr:?}");
+                } else {
+                    max = Some(Box::new(expr.clone())); // <= value means max = value
+                    println!("Debug: Set max = {expr:?}");
+                }
+            }
+        }
+
+        println!("Debug: Final range constraint - min: {min:?}, max: {max:?}");
+
+        Ok(ligature_ast::ty::Constraint::RangeConstraint {
+            min,
+            max,
+            inclusive,
+        })
+    }
+
+    fn parse_pattern_constraint_with_content(
+        &mut self,
+        pairs: Pairs<Rule>,
+        constraint_content: &str,
+    ) -> AstResult<ligature_ast::ty::Constraint> {
+        let mut pattern = None;
+        let mut regex = false;
+
+        println!("Debug: Pattern constraint with content: '{constraint_content}'");
+
+        // Check if the constraint content contains "regexp"
+        if constraint_content.contains("regexp") {
+            regex = true;
+            println!("Debug: Set regex = true from constraint content");
+        }
+
+        let pairs_iter = pairs.into_iter();
+        for pair in pairs_iter {
+            println!(
+                "Debug: Pattern constraint pair: {:?} = '{}'",
+                pair.as_rule(),
+                pair.as_str()
+            );
+            if pair.as_rule() == Rule::string_literal {
+                pattern = Some(pair.as_str().trim_matches('"').to_string());
+            }
+        }
+
+        println!("Debug: Final pattern: {pattern:?}, regex: {regex}");
+
+        let pattern = pattern.ok_or_else(|| AstError::ParseError {
+            message: "Expected pattern string in pattern constraint".to_string(),
+            span: Span::default(),
+        })?;
+
+        Ok(ligature_ast::ty::Constraint::PatternConstraint { pattern, regex })
+    }
+
+    fn parse_custom_constraint(
+        &mut self,
+        pairs: Pairs<Rule>,
+    ) -> AstResult<ligature_ast::ty::Constraint> {
+        let pairs_iter = pairs.into_iter();
+        let mut function = None;
+        let mut arguments = Vec::new();
+
+        for pair in pairs_iter {
+            match pair.as_rule() {
+                Rule::identifier => {
+                    function = Some(pair.as_str().to_string());
+                }
+                Rule::value_expression => {
+                    let expr = self.parse_expression_pairs(pair.into_inner())?;
+                    arguments.push(Box::new(expr));
+                }
+                _ => {}
+            }
+        }
+
+        let function = function.ok_or_else(|| AstError::ParseError {
+            message: "Expected function name in custom constraint".to_string(),
+            span: Span::default(),
+        })?;
+
+        Ok(ligature_ast::ty::Constraint::CustomConstraint {
+            function,
+            arguments,
+        })
+    }
+
+    fn parse_value_constraint(
+        &mut self,
+        pairs: Pairs<Rule>,
+    ) -> AstResult<ligature_ast::ty::Constraint> {
+        let pair = pairs
+            .into_iter()
+            .next()
+            .ok_or_else(|| AstError::ParseError {
+                message: "Expected value expression in value constraint".to_string(),
+                span: Span::default(),
+            })?;
+
+        let expr = self.parse_expression_pairs(pair.into_inner())?;
+        Ok(ligature_ast::ty::Constraint::ValueConstraint(Box::new(
+            expr,
+        )))
     }
 
     #[allow(dead_code)]

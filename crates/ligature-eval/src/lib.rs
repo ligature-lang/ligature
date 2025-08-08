@@ -61,6 +61,7 @@ pub mod evaluator;
 pub mod memory;
 pub mod performance;
 pub mod resolver;
+pub mod validation;
 pub mod value;
 
 pub use adaptive_optimizer::{
@@ -82,6 +83,7 @@ pub use performance::{
     PerformanceMetrics, PerformanceMonitor, PerformanceReport, RegressionAlert, RegressionSeverity,
 };
 pub use resolver::*;
+pub use validation::*;
 pub use value::*;
 
 use ligature_ast::{AstResult, Program};

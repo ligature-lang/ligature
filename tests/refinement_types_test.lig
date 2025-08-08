@@ -1,0 +1,31 @@
+// Test file for refinement types
+// This demonstrates the new constraint-based validation features
+
+// Basic refinement type definitions
+type PositiveInt = Int where x > 0;
+type ValidPort = Int where 1024 <= x <= 65535;
+type NonEmptyString = String where length x > 0;
+
+// Custom validator function
+let isValidEmail = \email ->
+  match email {
+    "" => false,
+    s => contains s "@" && contains s "." && length s > 5
+  };
+
+// Refinement type with custom predicate
+type ValidEmail = String where isValidEmail x;
+
+// Test values
+let positiveValue: PositiveInt = 42;
+let portValue: ValidPort = 8080;
+let stringValue: NonEmptyString = "hello";
+let emailValue: ValidEmail = "test@example.com";
+
+// Record with refinement types
+let user = {
+  name = "John" : NonEmptyString,
+  age = 25 : PositiveInt,
+  email = "john@example.com" : ValidEmail,
+  port = 8080 : ValidPort
+}; 

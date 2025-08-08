@@ -1,11 +1,41 @@
 //! Type definitions for the Ligature language.
 
 use crate::decl::TypeClassConstraint;
+use crate::expr::Expr;
 use crate::span::{Span, Spanned};
 use serde::{Deserialize, Serialize};
 
+/// A validation constraint for constraint-based types.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum Constraint {
+    /// Value constraint: expression must be true
+    ValueConstraint(Box<Expr>),
+
+    /// Range constraint: value must be in range
+    RangeConstraint {
+        min: Option<Box<Expr>>,
+        max: Option<Box<Expr>>,
+        inclusive: bool,
+    },
+
+    /// Pattern constraint: value must match pattern
+    PatternConstraint { pattern: String, regex: bool },
+
+    /// Custom constraint: user-defined validation function
+    CustomConstraint {
+        function: String,
+        arguments: Vec<Box<Expr>>,
+    },
+
+    /// Cross-field constraint: depends on multiple fields
+    CrossFieldConstraint {
+        fields: Vec<String>,
+        predicate: Box<Expr>,
+    },
+}
+
 /// A Ligature type.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Type {
     /// The kind of type.
     pub kind: TypeKind,
@@ -20,7 +50,7 @@ impl Spanned for Type {
 }
 
 /// The different kinds of types in Ligature.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum TypeKind {
     /// Unit type ().
     Unit,
@@ -89,10 +119,23 @@ pub enum TypeKind {
         constraint: Box<TypeClassConstraint>,
         type_: Box<Type>,
     },
+
+    /// Refinement type: base_type where predicate
+    Refinement {
+        base_type: Box<Type>,
+        predicate: Box<Expr>,
+        predicate_name: Option<String>,
+    },
+
+    /// Constraint type: type with additional constraints
+    ConstraintType {
+        base_type: Box<Type>,
+        constraints: Vec<Constraint>,
+    },
 }
 
 /// A field in a record type.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct TypeField {
     /// Field name.
     pub name: String,
@@ -109,7 +152,7 @@ impl Spanned for TypeField {
 }
 
 /// A variant in a union type.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct TypeVariant {
     /// Variant name.
     pub name: String,
@@ -230,6 +273,34 @@ impl Type {
         Self::new(TypeKind::Module { name }, span)
     }
 
+    /// Create a refinement type.
+    pub fn refinement(
+        base_type: Type,
+        predicate: Expr,
+        predicate_name: Option<String>,
+        span: Span,
+    ) -> Self {
+        Self::new(
+            TypeKind::Refinement {
+                base_type: Box::new(base_type),
+                predicate: Box::new(predicate),
+                predicate_name,
+            },
+            span,
+        )
+    }
+
+    /// Create a constraint type.
+    pub fn constraint_type(base_type: Type, constraints: Vec<Constraint>, span: Span) -> Self {
+        Self::new(
+            TypeKind::ConstraintType {
+                base_type: Box::new(base_type),
+                constraints,
+            },
+            span,
+        )
+    }
+
     /// Check if this type is a function type.
     pub fn is_function(&self) -> bool {
         matches!(self.kind, TypeKind::Function { .. })
@@ -258,6 +329,16 @@ impl Type {
     /// Check if this type is a module type.
     pub fn is_module(&self) -> bool {
         matches!(self.kind, TypeKind::Module { .. })
+    }
+
+    /// Check if this type is a refinement type.
+    pub fn is_refinement(&self) -> bool {
+        matches!(self.kind, TypeKind::Refinement { .. })
+    }
+
+    /// Check if this type is a constraint type.
+    pub fn is_constraint_type(&self) -> bool {
+        matches!(self.kind, TypeKind::ConstraintType { .. })
     }
 
     /// Get the name if this is a type variable.
@@ -299,6 +380,29 @@ impl Type {
     pub fn as_union(&self) -> Option<&[TypeVariant]> {
         match &self.kind {
             TypeKind::Union { variants } => Some(variants),
+            _ => None,
+        }
+    }
+
+    /// Get the base type and predicate if this is a refinement type.
+    pub fn as_refinement(&self) -> Option<(&Type, &Expr, &Option<String>)> {
+        match &self.kind {
+            TypeKind::Refinement {
+                base_type,
+                predicate,
+                predicate_name,
+            } => Some((base_type, predicate, predicate_name)),
+            _ => None,
+        }
+    }
+
+    /// Get the base type and constraints if this is a constraint type.
+    pub fn as_constraint_type(&self) -> Option<(&Type, &[Constraint])> {
+        match &self.kind {
+            TypeKind::ConstraintType {
+                base_type,
+                constraints,
+            } => Some((base_type, constraints)),
             _ => None,
         }
     }

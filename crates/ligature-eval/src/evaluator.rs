@@ -7,11 +7,13 @@ use crate::advanced_optimizations::{
 };
 use crate::config::{ConfigError, ConfigFormat, EvaluatorConfig, EvaluatorConfigManager};
 use crate::environment::EvaluationEnvironment;
+use crate::validation::{ValidationEngine, ValidationResult, ValidationStats};
 use crate::value::{
     Value, ValueInterner, ValueInternerStats, ValueKind, ValueOptimizationStats, ValuePool,
 };
 use ligature_ast::{
-    AstError, AstResult, BinaryOperator, Expr, ExprKind, Literal, Program, Span, UnaryOperator,
+    AstError, AstResult, BinaryOperator, Expr, ExprKind, Literal, Program, Span, Type,
+    UnaryOperator,
 };
 use std::collections::hash_map::DefaultHasher;
 use std::collections::{HashMap, VecDeque};
@@ -580,6 +582,8 @@ pub struct Evaluator {
     generational_gc: Option<GenerationalGC>,
     /// Optimized evaluator for function calls
     optimized_evaluator: OptimizedEvaluator,
+    /// Runtime validation engine for constraint-based validation
+    validation_engine: ValidationEngine,
 }
 
 impl Evaluator {
@@ -616,6 +620,7 @@ impl Evaluator {
                 None
             },
             optimized_evaluator: OptimizedEvaluator::new(),
+            validation_engine: ValidationEngine::new(),
         }
     }
 
@@ -654,6 +659,7 @@ impl Evaluator {
                 None
             },
             optimized_evaluator: OptimizedEvaluator::new(),
+            validation_engine: ValidationEngine::new(),
         }
     }
 
@@ -750,6 +756,7 @@ impl Evaluator {
             parallel_evaluator: None,
             generational_gc: None,
             optimized_evaluator: OptimizedEvaluator::new(),
+            validation_engine: ValidationEngine::new(),
         }
     }
 
@@ -778,6 +785,7 @@ impl Evaluator {
             parallel_evaluator: None,
             generational_gc: None,
             optimized_evaluator: OptimizedEvaluator::new(),
+            validation_engine: ValidationEngine::new(),
         }
     }
 
@@ -1571,6 +1579,7 @@ impl Evaluator {
                     parallel_evaluator: self.parallel_evaluator.clone(),
                     generational_gc: self.generational_gc.clone(),
                     optimized_evaluator: self.optimized_evaluator.clone(),
+                    validation_engine: ValidationEngine::new(),
                 };
                 let_evaluator.evaluate_expression_internal(body)
             })
@@ -1662,6 +1671,7 @@ impl Evaluator {
                     parallel_evaluator: self.parallel_evaluator.clone(),
                     generational_gc: self.generational_gc.clone(),
                     optimized_evaluator: self.optimized_evaluator.clone(),
+                    validation_engine: ValidationEngine::new(),
                 };
 
                 if let Some(guard) = &case.guard {
@@ -1868,6 +1878,26 @@ impl Evaluator {
         let list_savings = interner_stats.list_count.saturating_sub(1) * 32; // Approximate list overhead
 
         string_savings + integer_savings + float_savings + boolean_savings + list_savings
+    }
+
+    /// Validate a value against a type using the runtime validation engine
+    pub fn validate_value(&mut self, value: &Value, type_: &Type) -> AstResult<ValidationResult> {
+        self.validation_engine.validate_value(value, type_)
+    }
+
+    /// Get validation engine statistics
+    pub fn validation_stats(&self) -> ValidationStats {
+        self.validation_engine.stats()
+    }
+
+    /// Enable or disable validation caching
+    pub fn set_validation_caching(&mut self, enable: bool) {
+        self.validation_engine.set_caching(enable);
+    }
+
+    /// Clear validation cache
+    pub fn clear_validation_cache(&mut self) {
+        self.validation_engine.clear_cache();
     }
 }
 

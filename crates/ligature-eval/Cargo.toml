@@ -1,32 +1,33 @@
 [package]
 name = "ligature-eval"
 version.workspace = true
-edition.workspace = true
 authors.workspace = true
+edition.workspace = true
 description = "Evaluation engine for the Ligature language"
-license.workspace = true
 repository.workspace = true
+license.workspace = true
 keywords.workspace = true
 categories.workspace = true
 
 [dependencies]
-ligature-ast = { path = "../ligature-ast" }
-ligature-types = { path = "../ligature-types" }
-ligature-parser = { path = "../ligature-parser" }
 embouchure-xdg = { path = "../embouchure-xdg" }
-thiserror = { workspace = true }
-miette = { workspace = true, features = ["fancy"] }
-serde_json = { workspace = true }
 indexmap = { workspace = true }
-serde = { workspace = true, features = ["derive"] }
-toml = "0.8"
-serde_yaml = "0.9"
-tokio = { workspace = true, features = ["fs"] }
+ligature-ast = { path = "../ligature-ast" }
+ligature-parser = { path = "../ligature-parser" }
+ligature-types = { path = "../ligature-types" }
+miette = { workspace = true, features = ["fancy"] }
+num_cpus = "1.0"
 rand = "0.8"
-
+# Validation dependencies
+regex = "1.0"
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+serde_yaml = "0.9"
 # Memory profiling dependencies
 sysinfo = { workspace = true }
-num_cpus = "1.0"
+thiserror = { workspace = true }
+tokio = { workspace = true, features = ["fs"] }
+toml = "0.8"
 
 [dev-dependencies]
-criterion = { workspace = true } 
+criterion = { workspace = true }

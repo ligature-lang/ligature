@@ -4,6 +4,7 @@ use crate::constraints::ConstraintSolver;
 use crate::environment::TypeEnvironment;
 use crate::error::TypeError;
 use crate::resolver::ModuleResolver;
+use ligature_ast::ty::Constraint;
 use ligature_ast::{
     AstError, AstResult, BinaryOperator, Declaration, Expr, ExprKind, Import, Literal, MatchCase,
     Module, Pattern, Program, RecordField, Span, Type, TypeAlias, TypeConstructor, TypeKind,
@@ -1114,7 +1115,7 @@ impl TypeChecker {
     }
 
     /// Check that a type is well-formed.
-    pub fn check_type(&self, type_: &Type) -> AstResult<()> {
+    pub fn check_type(&mut self, type_: &Type) -> AstResult<()> {
         match &type_.kind {
             TypeKind::Unit
             | TypeKind::Bool
@@ -1187,6 +1188,58 @@ impl TypeChecker {
                 } else {
                     Err(AstError::InvalidTypeAnnotation { span: type_.span })
                 }
+            }
+            TypeKind::Refinement {
+                base_type,
+                predicate,
+                ..
+            } => {
+                // Check that the base type is well-formed
+                self.check_type(base_type)?;
+
+                // Check that the predicate is well-formed
+                // For now, we'll just check that it's a valid expression
+                // In a full implementation, we would also check that it returns a boolean
+                let _predicate_type = self.infer_expression(predicate)?;
+
+                Ok(())
+            }
+            TypeKind::ConstraintType {
+                base_type,
+                constraints,
+            } => {
+                // Check that the base type is well-formed
+                self.check_type(base_type)?;
+
+                // Check that all constraints are well-formed
+                for constraint in constraints {
+                    match constraint {
+                        Constraint::ValueConstraint(expr) => {
+                            let _expr_type = self.infer_expression(expr)?;
+                        }
+                        Constraint::RangeConstraint { min, max, .. } => {
+                            if let Some(min_expr) = min {
+                                let _min_type = self.infer_expression(min_expr)?;
+                            }
+                            if let Some(max_expr) = max {
+                                let _max_type = self.infer_expression(max_expr)?;
+                            }
+                        }
+                        Constraint::CustomConstraint { arguments, .. } => {
+                            for arg in arguments {
+                                let _arg_type = self.infer_expression(arg)?;
+                            }
+                        }
+                        Constraint::CrossFieldConstraint { predicate, .. } => {
+                            let _predicate_type = self.infer_expression(predicate)?;
+                        }
+                        Constraint::PatternConstraint { .. } => {
+                            // Pattern constraints don't need expression checking
+                        }
+                    }
+                }
+
+                Ok(())
             }
         }
     }
@@ -1366,6 +1419,56 @@ impl TypeChecker {
 
                 // Compare the constrained types
                 self.types_equal_internal(t1, t2, substitution, depth + 1)
+            }
+
+            // Refinement types
+            (
+                TypeKind::Refinement {
+                    base_type: b1,
+                    predicate: _p1,
+                    predicate_name: n1,
+                },
+                TypeKind::Refinement {
+                    base_type: b2,
+                    predicate: _p2,
+                    predicate_name: n2,
+                },
+            ) => {
+                // Compare base types
+                let base_equal = self.types_equal_internal(b1, b2, substitution, depth + 1)?;
+
+                // For now, we'll consider refinement types equal if their base types are equal
+                // and their predicate names match (if both have names)
+                // In a full implementation, we would also compare the predicates structurally
+                let name_equal = match (n1, n2) {
+                    (Some(name1), Some(name2)) => name1 == name2,
+                    (None, None) => true,
+                    _ => false,
+                };
+
+                Ok(base_equal && name_equal)
+            }
+
+            // Constraint types
+            (
+                TypeKind::ConstraintType {
+                    base_type: b1,
+                    constraints: c1,
+                },
+                TypeKind::ConstraintType {
+                    base_type: b2,
+                    constraints: c2,
+                },
+            ) => {
+                // Compare base types
+                let base_equal = self.types_equal_internal(b1, b2, substitution, depth + 1)?;
+
+                // For now, we'll consider constraint types equal if their base types are equal
+                // and they have the same number of constraints
+                // In a full implementation, we would also compare the constraints structurally
+                let constraints_equal = c1.len() == c2.len();
+
+                Ok(base_equal && constraints_equal)
             }
 
             // Different types

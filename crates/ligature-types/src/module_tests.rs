@@ -120,7 +120,7 @@ fn test_module_type_equality() {
 
 #[test]
 fn test_module_type_checking() {
-    let inference = TypeChecker::new();
+    let mut inference = TypeChecker::new();
 
     // Create a module type
     let module_type = Type::module("test_module".to_string(), Span::default());
