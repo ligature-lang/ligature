@@ -1,0 +1,34 @@
+[package]
+name = "ligature-parser-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+ligature-parser = { path = "../", features = ["fuzzing"] }
+libfuzzer-sys = "0.4"
+proptest = "1.3"
+rand = "0.8"
+
+[[bin]]
+name = "parser_fuzz"
+path = "fuzz_targets/parser_fuzz.rs"
+
+[[bin]]
+name = "expression_fuzz"
+path = "fuzz_targets/expression_fuzz.rs"
+
+[[bin]]
+name = "program_fuzz"
+path = "fuzz_targets/program_fuzz.rs"
+
+[[bin]]
+name = "mutation_fuzz"
+path = "fuzz_targets/mutation_fuzz.rs"
+
+[[bin]]
+name = "grammar_fuzz"
+path = "fuzz_targets/grammar_fuzz.rs" 

@@ -5,6 +5,12 @@ use crate::expr::Expr;
 use crate::span::{Span, Spanned};
 use serde::{Deserialize, Serialize};
 
+/// Type alias for refinement type components
+pub type RefinementComponents<'a> = (&'a Type, &'a Expr, &'a Option<String>);
+
+/// Type alias for constraint type components  
+pub type ConstraintTypeComponents<'a> = (&'a Type, &'a [Constraint]);
+
 /// A validation constraint for constraint-based types.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Constraint {
@@ -385,7 +391,7 @@ impl Type {
     }
 
     /// Get the base type and predicate if this is a refinement type.
-    pub fn as_refinement(&self) -> Option<(&Type, &Expr, &Option<String>)> {
+    pub fn as_refinement(&self) -> Option<RefinementComponents<'_>> {
         match &self.kind {
             TypeKind::Refinement {
                 base_type,
@@ -397,7 +403,7 @@ impl Type {
     }
 
     /// Get the base type and constraints if this is a constraint type.
-    pub fn as_constraint_type(&self) -> Option<(&Type, &[Constraint])> {
+    pub fn as_constraint_type(&self) -> Option<ConstraintTypeComponents<'_>> {
         match &self.kind {
             TypeKind::ConstraintType {
                 base_type,

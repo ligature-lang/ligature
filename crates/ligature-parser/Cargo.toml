@@ -20,6 +20,9 @@ miette = { workspace = true, features = ["fancy"] }
 pest = { workspace = true }
 pest_derive = { workspace = true }
 thiserror = { workspace = true }
+# Fuzzing dependencies
+proptest = { workspace = true, optional = true }
+rand = { version = "0.8", optional = true }
 
 [dev-dependencies]
 criterion = { workspace = true }
@@ -27,3 +30,6 @@ criterion = { workspace = true }
 [build-dependencies]
 pest = { workspace = true }
 pest_derive = { workspace = true }
+
+[features]
+fuzzing = ["proptest", "rand"]

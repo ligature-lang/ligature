@@ -14,7 +14,9 @@ use ligature_ast::ty::Constraint;
 use ligature_ast::{Expr, ExprKind, Literal, Span, Type};
 use ligature_eval::{Evaluator, Value};
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+type MainResult = Result<(), Box<dyn std::error::Error>>;
+
+fn main() -> MainResult {
     println!("=== Ligature Runtime Validation Engine Example ===\n");
 
     let mut evaluator = Evaluator::new();

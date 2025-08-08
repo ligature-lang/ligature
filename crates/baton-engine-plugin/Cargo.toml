@@ -5,6 +5,10 @@ edition = "2021"
 description = "Plugin interface for Baton verification engines"
 license = "Apache-2.0"
 
+[[example]]
+name = "plugin_basic_usage"
+path = "examples/basic_usage.rs"
+
 [dependencies]
 anyhow = "1.0"
 async-trait = "0.1"

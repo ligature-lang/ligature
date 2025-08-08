@@ -7,6 +7,9 @@ pub mod error;
 pub mod grammar;
 pub mod parser;
 
+#[cfg(feature = "fuzzing")]
+pub mod fuzzing;
+
 pub use error::ParserError;
 pub use parser::Parser;
 

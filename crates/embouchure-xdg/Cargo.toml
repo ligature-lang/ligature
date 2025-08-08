@@ -24,4 +24,8 @@ url = "2.4"
 tempfile = { version = "3.8", optional = true }
 
 [dev-dependencies]
-tempfile = "3.8" 
+tempfile = "3.8"
+
+[[example]]
+name = "xdg_basic_usage"
+path = "examples/basic_usage.rs" 
