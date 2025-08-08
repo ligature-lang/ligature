@@ -3,10 +3,8 @@
 //! This example demonstrates how to use the memory tracking functionality
 //! to monitor memory usage during program evaluation.
 
-use ligature_eval::{
-    Evaluator,
-    memory::{MemoryTracker, get_current_memory_stats},
-};
+use ligature_eval::Evaluator;
+use ligature_eval::memory::{MemoryTracker, get_current_memory_stats};
 use ligature_parser::parse_program;
 
 #[allow(clippy::type_complexity)]

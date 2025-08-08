@@ -10,16 +10,17 @@ pub mod utils;
 
 pub use baton_error::{BatonError, BatonResult};
 pub use client::EngineClient;
-pub use config::EngineClientConfig;
+// Legacy type aliases for backward compatibility
+pub use client::LeanClient;
+pub use config::{EngineClientConfig, LeanClientConfig};
 pub use connection::EngineConnection;
 pub use stats::ClientStats;
 
-// Legacy type aliases for backward compatibility
-pub use client::LeanClient;
-pub use config::LeanClientConfig;
-
 /// Re-export commonly used types
 pub mod prelude {
+    pub use baton_engine_plugin::prelude::*;
+    pub use baton_error::{BatonError, BatonResult};
+
     pub use super::{
         ClientStats,
         EngineClient,
@@ -29,6 +30,4 @@ pub mod prelude {
         LeanClient,
         LeanClientConfig,
     };
-    pub use baton_engine_plugin::prelude::*;
-    pub use baton_error::{BatonError, BatonResult};
 }

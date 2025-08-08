@@ -1,8 +1,9 @@
 //! Simple performance test for Ligature optimizations.
 
+use std::time::Instant;
+
 use ligature_ast::{AstResult, BinaryOperator, Expr, ExprKind, Literal, Span};
 use ligature_eval::Evaluator;
-use std::time::Instant;
 
 fn main() -> AstResult<()> {
     println!("Simple Ligature Performance Test");

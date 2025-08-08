@@ -1,8 +1,9 @@
 //! Tests for module system functionality.
 
+use ligature_ast::{Import, Span, Type};
+
 use crate::checker::TypeChecker;
 use crate::type_check_program_with_paths;
-use ligature_ast::{Import, Span, Type};
 
 #[test]
 fn test_basic_import_resolution() {

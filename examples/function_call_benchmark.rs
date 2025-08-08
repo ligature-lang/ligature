@@ -1,9 +1,10 @@
 //! Benchmark example demonstrating the performance improvements
 //! of the new function call architecture.
 
+use std::time::Instant;
+
 use ligature_ast::{AstResult, BinaryOperator, Expr, ExprKind, Literal, Span};
 use ligature_eval::Evaluator;
-use std::time::Instant;
 
 fn main() -> AstResult<()> {
     println!("Function Call Architecture Benchmark");

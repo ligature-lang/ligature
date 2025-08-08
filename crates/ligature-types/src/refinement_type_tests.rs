@@ -1,5 +1,6 @@
-use crate::checker::TypeChecker;
 use ligature_ast::{Expr, ExprKind, Literal, Span, Type};
+
+use crate::checker::TypeChecker;
 
 #[test]
 fn test_refinement_type_creation() {

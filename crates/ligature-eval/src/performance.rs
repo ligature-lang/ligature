@@ -3,10 +3,11 @@
 //! This module provides runtime performance metrics collection, adaptive optimization
 //! strategies, and performance regression detection to maintain long-term performance.
 
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
+
+use serde::{Deserialize, Serialize};
 
 /// Performance metrics for a single operation
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -420,7 +421,8 @@ impl PerformanceReport {
                         complexity_threshold,
                     } => {
                         println!(
-                            "Enable expression caching for expressions with complexity > {complexity_threshold}",
+                            "Enable expression caching for expressions with complexity > \
+                             {complexity_threshold}",
                         );
                     }
                     OptimizationStrategy::OptimizeMemoryAllocation {
@@ -503,8 +505,9 @@ impl Drop for PerformanceGuard {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::time::Duration;
+
+    use super::*;
 
     #[test]
     fn test_performance_monitor_creation() {

@@ -14,10 +14,10 @@ use ligature_ast::{
     RecordPatternField, Span, Type, TypeAlias, TypeConstructor, TypeKind, TypeVariant,
     UnaryOperator,
 };
-use pest::{Parser as PestParser, iterators::Pairs};
+use pest::Parser as PestParser;
+use pest::iterators::Pairs;
 
-use crate::grammar::LigatureParser;
-use crate::grammar::Rule;
+use crate::grammar::{LigatureParser, Rule};
 
 /// Main parser for the Ligature language.
 pub struct Parser {

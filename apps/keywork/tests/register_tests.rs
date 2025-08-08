@@ -1,5 +1,6 @@
-use keywork::register::Register;
 use std::path::Path;
+
+use keywork::register::Register;
 
 #[test]
 fn test_load_stdlib_register() {

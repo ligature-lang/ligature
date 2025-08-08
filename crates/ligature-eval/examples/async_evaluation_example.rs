@@ -107,7 +107,7 @@ async fn main() -> Result<()> {
     println!("Recorded {} statistics", stats.len());
 
     for (key, value) in stats.iter().take(3) {
-        println!("  - {}: {}", key, value);
+        println!("  - {key}: {value}");
     }
 
     // Cleanup

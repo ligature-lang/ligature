@@ -22,13 +22,13 @@
 //! async fn main() -> Result<(), Box<dyn std::error::Error>> {
 //!     // Create a client
 //!     let mut client = Client::new(ExecutionMode::Native).await?;
-//!     
+//!
 //!     // Execute a Ligature program
 //!     let result = client.execute_file("config.lig").await?;
-//!     
+//!
 //!     // Access the result
 //!     println!("Result: {:?}", result);
-//!     
+//!
 //!     Ok(())
 //! }
 //! ```
@@ -48,9 +48,8 @@ pub use client::*;
 pub use config::*;
 pub use error::*;
 pub use executor::*;
-pub use sdk::*;
-
 use ligature_eval::Value;
+pub use sdk::*;
 use serde::{Deserialize, Serialize};
 
 /// The result of executing a Ligature program.

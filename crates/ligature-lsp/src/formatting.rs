@@ -1,8 +1,9 @@
 //! Formatting provider for the Ligature LSP server.
 
-use crate::config::FormattingConfig;
 use ligature_ast::{Declaration, DeclarationKind, Expr, ExprKind, Program};
 use lsp_types::{Position, Range, TextEdit};
+
+use crate::config::FormattingConfig;
 
 /// Provider for code formatting.
 #[derive(Clone)]
@@ -519,7 +520,7 @@ impl FormattingProvider {
             ligature_ast::Literal::String(s) => format!("\"{s}\""),
             ligature_ast::Literal::Boolean(b) => b.to_string(),
             ligature_ast::Literal::Unit => "()".to_string(),
-            ligature_ast::Literal::List(_) => "[...]".to_string(), // Placeholder for list formatting
+            ligature_ast::Literal::List(_) => "[...]".to_string(), /* Placeholder for list formatting */
         }
     }
 
@@ -732,7 +733,7 @@ impl FormattingProvider {
                 result.push('}');
                 result
             }
-            ligature_ast::Pattern::List { .. } => "[...]".to_string(), // Placeholder for list pattern formatting
+            ligature_ast::Pattern::List { .. } => "[...]".to_string(), /* Placeholder for list pattern formatting */
             ligature_ast::Pattern::Wildcard => "_".to_string(),
         }
     }

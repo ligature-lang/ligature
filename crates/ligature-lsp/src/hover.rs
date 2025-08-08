@@ -1,10 +1,11 @@
 //! Hover provider for the Ligature LSP server.
 
+use std::collections::HashMap;
+
 use ligature_ast::{
     DeclarationKind, Expr, ExprKind, Program, TypeAlias, TypeConstructor, ValueDeclaration,
 };
 use lsp_types::{Hover, HoverContents, MarkedString, Position};
-use std::collections::HashMap;
 
 /// Provider for hover information.
 #[derive(Clone)]
@@ -104,37 +105,55 @@ impl HoverProvider {
             "head",
             BuiltinInfo {
                 signature: "head : List a -> Maybe a".to_string(),
-                documentation:
-                    "Returns the first element of a list, or Nothing if the list is empty."
-                        .to_string(),
+                documentation: "Returns the first element of a list, or Nothing if the list is \
+                                empty."
+                    .to_string(),
                 examples: vec![
                     "head [1, 2, 3] = Just 1".to_string(),
                     "head [] = Nothing".to_string(),
                 ],
             },
         );
-        builtins.insert("tail", BuiltinInfo {
-            signature: "tail : List a -> Maybe (List a)".to_string(),
-            documentation: "Returns all elements of a list except the first, or Nothing if the list is empty.".to_string(),
-            examples: vec!["tail [1, 2, 3] = Just [2, 3]".to_string(), "tail [] = Nothing".to_string()],
-        });
-        builtins.insert("map", BuiltinInfo {
-            signature: "map : (a -> b) -> List a -> List b".to_string(),
-            documentation: "Applies a function to each element of a list, returning a new list with the results.".to_string(),
-            examples: vec!["map (\\x -> x * 2) [1, 2, 3] = [2, 4, 6]".to_string()],
-        });
-        builtins.insert("filter", BuiltinInfo {
-            signature: "filter : (a -> Bool) -> List a -> List a".to_string(),
-            documentation: "Filters a list based on a predicate function, keeping only elements that satisfy the condition.".to_string(),
-            examples: vec!["filter (\\x -> x > 2) [1, 2, 3, 4] = [3, 4]".to_string()],
-        });
+        builtins.insert(
+            "tail",
+            BuiltinInfo {
+                signature: "tail : List a -> Maybe (List a)".to_string(),
+                documentation: "Returns all elements of a list except the first, or Nothing if \
+                                the list is empty."
+                    .to_string(),
+                examples: vec![
+                    "tail [1, 2, 3] = Just [2, 3]".to_string(),
+                    "tail [] = Nothing".to_string(),
+                ],
+            },
+        );
+        builtins.insert(
+            "map",
+            BuiltinInfo {
+                signature: "map : (a -> b) -> List a -> List b".to_string(),
+                documentation: "Applies a function to each element of a list, returning a new \
+                                list with the results."
+                    .to_string(),
+                examples: vec!["map (\\x -> x * 2) [1, 2, 3] = [2, 4, 6]".to_string()],
+            },
+        );
+        builtins.insert(
+            "filter",
+            BuiltinInfo {
+                signature: "filter : (a -> Bool) -> List a -> List a".to_string(),
+                documentation: "Filters a list based on a predicate function, keeping only \
+                                elements that satisfy the condition."
+                    .to_string(),
+                examples: vec!["filter (\\x -> x > 2) [1, 2, 3, 4] = [3, 4]".to_string()],
+            },
+        );
         builtins.insert(
             "fold",
             BuiltinInfo {
                 signature: "fold : (b -> a -> b) -> b -> List a -> b".to_string(),
-                documentation:
-                    "Folds a list with a function and initial value, accumulating a result."
-                        .to_string(),
+                documentation: "Folds a list with a function and initial value, accumulating a \
+                                result."
+                    .to_string(),
                 examples: vec!["fold (\\acc x -> acc + x) 0 [1, 2, 3] = 6".to_string()],
             },
         );

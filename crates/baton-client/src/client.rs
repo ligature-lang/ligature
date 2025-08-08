@@ -1,19 +1,21 @@
 //! Main client implementation for communicating with verification engines.
 
-use crate::config::EngineClientConfig;
-use crate::connection::EngineConnection;
-use crate::debug_log;
-use crate::stats::ClientStats;
-use crate::utils::{find_engine_executable, find_specification_path};
-use baton_engine_plugin::prelude::*;
-use baton_error::{BatonError, BatonResult};
-use serde_json;
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader, Write};
 use std::process::{ChildStdout, Command, Stdio};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
+
+use baton_engine_plugin::prelude::*;
+use baton_error::{BatonError, BatonResult};
+use serde_json;
 use tempfile::NamedTempFile;
+
+use crate::config::EngineClientConfig;
+use crate::connection::EngineConnection;
+use crate::debug_log;
+use crate::stats::ClientStats;
+use crate::utils::{find_engine_executable, find_specification_path};
 
 /// Generic client for communicating with verification engines.
 pub struct EngineClient {

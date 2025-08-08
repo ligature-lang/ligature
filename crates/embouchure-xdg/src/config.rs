@@ -1,8 +1,9 @@
 //! Configuration file management using XDG base directories.
 
-use serde::{Serialize, de::DeserializeOwned};
-use std::path::Path;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+
+use serde::Serialize;
+use serde::de::DeserializeOwned;
 
 use crate::error::{Result, XdgError};
 use crate::paths::XdgPaths;
@@ -246,8 +247,9 @@ pub fn toml_config_for_component(component: &str) -> Result<XdgConfig> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use serde::{Deserialize, Serialize};
+
+    use super::*;
 
     #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
     struct TestConfig {

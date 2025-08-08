@@ -1,12 +1,14 @@
 //! Caching system for Ligature program results.
 
-use crate::error::{Error, Result};
-use ligature_eval::Value;
-use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
+
+use ligature_eval::Value;
+use serde::{Deserialize, Serialize};
 use tokio::fs;
 use tracing::{debug, info, warn};
+
+use crate::error::{Error, Result};
 
 /// Cache statistics.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -351,9 +353,10 @@ impl Cache {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use ligature_eval::Value;
     use tempfile::tempdir;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_cache_creation() {

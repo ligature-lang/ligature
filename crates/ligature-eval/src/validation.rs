@@ -7,12 +7,14 @@
 //! The validation engine integrates with the evaluator to check values
 //! against their declared types at runtime.
 
-use crate::environment::EvaluationEnvironment;
-use crate::value::Value;
+use std::collections::HashMap;
+
 use ligature_ast::ty::Constraint;
 use ligature_ast::{AstResult, Expr, Type, TypeKind};
 use regex::Regex;
-use std::collections::HashMap;
+
+use crate::environment::EvaluationEnvironment;
+use crate::value::Value;
 
 /// Result of a validation operation
 #[derive(Debug, Clone, PartialEq)]
@@ -341,9 +343,10 @@ impl Default for ValidationEngine {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use ligature_ast::ty::Constraint;
     use ligature_ast::{Span, Type};
+
+    use super::*;
 
     #[test]
     fn test_basic_type_validation() {

@@ -1,11 +1,13 @@
 //! Type inference for the Ligature language.
 
-use crate::constraints::{Constraint, ConstraintSolver};
-use crate::environment::TypeEnvironment;
-use ligature_ast::{AstError, AstResult, Expr, ExprKind, Literal, Span, Type, TypeKind};
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::time::Instant;
+
+use ligature_ast::{AstError, AstResult, Expr, ExprKind, Literal, Span, Type, TypeKind};
+
+use crate::constraints::{Constraint, ConstraintSolver};
+use crate::environment::TypeEnvironment;
 
 /// Performance metrics for type inference.
 #[derive(Debug, Clone)]
@@ -1334,6 +1336,7 @@ impl TypeInference {
     /// Parse register.toml to understand exports.
     pub fn parse_register_toml(&self, manifest_path: &Path) -> AstResult<HashMap<String, String>> {
         use std::fs;
+
         use toml::Value;
 
         let content = fs::read_to_string(manifest_path).map_err(|e| AstError::ParseError {

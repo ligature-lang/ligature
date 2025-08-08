@@ -1,14 +1,16 @@
 //! Workspace management for the Ligature LSP server.
 
-use crate::config::LspConfiguration;
-use ligature_ast::Program;
-use ligature_parser;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
+
+use ligature_ast::Program;
+use ligature_parser;
 use tokio::sync::RwLock;
 use tower_lsp::lsp_types::*;
 use tracing::info;
+
+use crate::config::LspConfiguration;
 
 /// Workspace file information
 #[derive(Debug, Clone)]

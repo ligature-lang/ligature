@@ -3,13 +3,15 @@
 //! This module provides parallel type checking capabilities including
 //! concurrent type inference, constraint solving, and module-level parallelism.
 
-use crate::concurrent::ConcurrentTypeEnvironment;
+use std::sync::Arc;
+use std::time::Duration;
+
 use dashmap::DashMap;
 use futures::future::join_all;
 use ligature_ast::{AstError, AstResult, Expr, Module, Program, Span, Type, TypeKind};
-use std::sync::Arc;
-use std::time::Duration;
 use uuid::Uuid;
+
+use crate::concurrent::ConcurrentTypeEnvironment;
 
 /// Unique identifier for a constraint
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -628,8 +630,9 @@ impl ConcurrentTypeChecker {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use ligature_ast::{Expr, ExprKind, Literal, Span};
+
+    use super::*;
 
     #[tokio::test]
     async fn test_constraint_solver() {

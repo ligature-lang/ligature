@@ -1,5 +1,15 @@
 //! Main evaluator for the Ligature language.
 
+use std::collections::hash_map::DefaultHasher;
+use std::collections::{HashMap, VecDeque};
+use std::hash::{Hash, Hasher};
+use std::path::PathBuf;
+
+use ligature_ast::{
+    AstError, AstResult, BinaryOperator, Expr, ExprKind, Literal, Program, Span, Type,
+    UnaryOperator,
+};
+
 use crate::advanced_optimizations::{
     AdvancedTailCallDetector, ClosureCaptureOptimizer, FunctionInliner, GenerationalGC,
     OptimizedEvaluator, ParallelEvaluator,
@@ -11,14 +21,6 @@ use crate::validation::{ValidationEngine, ValidationResult, ValidationStats};
 use crate::value::{
     Value, ValueInterner, ValueInternerStats, ValueKind, ValueOptimizationStats, ValuePool,
 };
-use ligature_ast::{
-    AstError, AstResult, BinaryOperator, Expr, ExprKind, Literal, Program, Span, Type,
-    UnaryOperator,
-};
-use std::collections::hash_map::DefaultHasher;
-use std::collections::{HashMap, VecDeque};
-use std::hash::{Hash, Hasher};
-use std::path::PathBuf;
 
 /// Type alias for union components
 type UnionComponents<'a> = (&'a str, Option<&'a Value>);
@@ -1022,7 +1024,8 @@ impl Evaluator {
                 ImportConflictStrategy::Error => {
                     return Err(AstError::ParseError {
                         message: format!(
-                            "Import conflict: '{original_name}' from module '{module_path}' conflicts with existing binding",
+                            "Import conflict: '{original_name}' from module '{module_path}' \
+                             conflicts with existing binding",
                         ),
                         span: Span::default(),
                     });

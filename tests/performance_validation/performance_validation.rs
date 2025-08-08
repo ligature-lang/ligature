@@ -5,9 +5,10 @@
 //! 3. Memory Usage: 40-80% reduction
 //! 4. Cache Hit Rates: 80-95%
 
+use std::time::Instant;
+
 use ligature_ast::{AstResult, BinaryOperator, Expr, ExprKind, Literal, Span};
 use ligature_eval::Evaluator;
-use std::time::Instant;
 
 fn main() -> AstResult<()> {
     println!("Ligature Performance Validation");

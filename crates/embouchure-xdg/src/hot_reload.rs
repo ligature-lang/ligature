@@ -1,12 +1,14 @@
-use crate::validation::ConfigValidator;
-use notify::{RecommendedWatcher, RecursiveMode, Watcher};
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
+
+use notify::{RecommendedWatcher, RecursiveMode, Watcher};
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use tokio::sync::mpsc;
+
+use crate::validation::ConfigValidator;
 
 #[derive(Error, Debug)]
 pub enum HotReloadError {
@@ -579,9 +581,11 @@ impl Drop for ConfigHotReloader {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::fs;
+
     use tempfile::tempdir;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_hot_reload_basic() {

@@ -3,9 +3,11 @@
 //! This module provides bindings for different programming languages,
 //! allowing you to use Krox from Python, Node.js, Java, and Go.
 
-use crate::{Client, ExecutionMode, ExecutionResult, Result};
 use std::sync::Arc;
+
 use tokio::sync::Mutex;
+
+use crate::{Client, ExecutionMode, ExecutionResult, Result};
 
 /// A thread-safe wrapper around the Krox client for use in language bindings.
 #[derive(Clone)]
@@ -52,9 +54,10 @@ impl SdkClient {
 #[allow(unsafe_op_in_unsafe_fn)]
 #[allow(non_local_definitions)]
 pub mod python {
-    use super::*;
     use pyo3::prelude::*;
     use pyo3::types::PyDict;
+
+    use super::*;
 
     #[pyclass]
     pub struct PyKroxClient {
@@ -186,8 +189,9 @@ pub mod python {
 /// Node.js bindings for Krox.
 #[cfg(feature = "node")]
 pub mod node {
-    use super::*;
     use napi_derive::napi;
+
+    use super::*;
 
     #[napi]
     pub struct NodeKroxClient {
@@ -292,10 +296,12 @@ pub mod node {
 /// Java bindings for Krox.
 #[cfg(feature = "java")]
 pub mod java {
-    use super::*;
     use jni::JNIEnv;
     use jni::objects::{JClass, JObject, JString};
     use jni::sys::jobject;
+    use ligature_eval::value::ValueKind;
+
+    use super::*;
 
     pub struct JavaKroxClient {
         client: SdkClient,
@@ -338,29 +344,25 @@ pub mod java {
 
             // Convert result to JSON - create a simple representation
             let json_value = match &result.value.kind {
-                ligature_eval::ValueKind::Unit => serde_json::Value::Null,
-                ligature_eval::ValueKind::Boolean(b) => serde_json::Value::Bool(**b),
-                ligature_eval::ValueKind::String(s) => serde_json::Value::String((**s).clone()),
-                ligature_eval::ValueKind::Integer(i) => {
-                    serde_json::Value::Number(serde_json::Number::from(**i))
-                }
-                ligature_eval::ValueKind::Float(f) => serde_json::Value::Number(
+                ValueKind::Unit => serde_json::Value::Null,
+                ValueKind::Boolean(b) => serde_json::Value::Bool(**b),
+                ValueKind::String(s) => serde_json::Value::String((**s).clone()),
+                ValueKind::Integer(i) => serde_json::Value::Number(serde_json::Number::from(**i)),
+                ValueKind::Float(f) => serde_json::Value::Number(
                     serde_json::Number::from_f64(**f).unwrap_or(serde_json::Number::from(0)),
                 ),
-                ligature_eval::ValueKind::Record(fields) => {
+                ValueKind::Record(fields) => {
                     let mut obj = serde_json::Map::new();
                     for (k, v) in fields.iter() {
                         // Recursively convert nested values
                         let v_json = match &v.kind {
-                            ligature_eval::ValueKind::Unit => serde_json::Value::Null,
-                            ligature_eval::ValueKind::Boolean(b) => serde_json::Value::Bool(**b),
-                            ligature_eval::ValueKind::String(s) => {
-                                serde_json::Value::String((**s).clone())
-                            }
-                            ligature_eval::ValueKind::Integer(i) => {
+                            ValueKind::Unit => serde_json::Value::Null,
+                            ValueKind::Boolean(b) => serde_json::Value::Bool(**b),
+                            ValueKind::String(s) => serde_json::Value::String((**s).clone()),
+                            ValueKind::Integer(i) => {
                                 serde_json::Value::Number(serde_json::Number::from(**i))
                             }
-                            ligature_eval::ValueKind::Float(f) => serde_json::Value::Number(
+                            ValueKind::Float(f) => serde_json::Value::Number(
                                 serde_json::Number::from_f64(**f)
                                     .unwrap_or(serde_json::Number::from(0)),
                             ),
@@ -370,19 +372,17 @@ pub mod java {
                     }
                     serde_json::Value::Object(obj)
                 }
-                ligature_eval::ValueKind::List(elements) => {
+                ValueKind::List(elements) => {
                     let mut arr = Vec::new();
                     for element in elements.iter() {
                         let elem_json = match &element.kind {
-                            ligature_eval::ValueKind::Unit => serde_json::Value::Null,
-                            ligature_eval::ValueKind::Boolean(b) => serde_json::Value::Bool(**b),
-                            ligature_eval::ValueKind::String(s) => {
-                                serde_json::Value::String((**s).clone())
-                            }
-                            ligature_eval::ValueKind::Integer(i) => {
+                            ValueKind::Unit => serde_json::Value::Null,
+                            ValueKind::Boolean(b) => serde_json::Value::Bool(**b),
+                            ValueKind::String(s) => serde_json::Value::String((**s).clone()),
+                            ValueKind::Integer(i) => {
                                 serde_json::Value::Number(serde_json::Number::from(**i))
                             }
-                            ligature_eval::ValueKind::Float(f) => serde_json::Value::Number(
+                            ValueKind::Float(f) => serde_json::Value::Number(
                                 serde_json::Number::from_f64(**f)
                                     .unwrap_or(serde_json::Number::from(0)),
                             ),
@@ -438,29 +438,25 @@ pub mod java {
 
             // Convert result to JSON - create a simple representation
             let json_value = match &result.value.kind {
-                ligature_eval::ValueKind::Unit => serde_json::Value::Null,
-                ligature_eval::ValueKind::Boolean(b) => serde_json::Value::Bool(**b),
-                ligature_eval::ValueKind::String(s) => serde_json::Value::String((**s).clone()),
-                ligature_eval::ValueKind::Integer(i) => {
-                    serde_json::Value::Number(serde_json::Number::from(**i))
-                }
-                ligature_eval::ValueKind::Float(f) => serde_json::Value::Number(
+                ValueKind::Unit => serde_json::Value::Null,
+                ValueKind::Boolean(b) => serde_json::Value::Bool(**b),
+                ValueKind::String(s) => serde_json::Value::String((**s).clone()),
+                ValueKind::Integer(i) => serde_json::Value::Number(serde_json::Number::from(**i)),
+                ValueKind::Float(f) => serde_json::Value::Number(
                     serde_json::Number::from_f64(**f).unwrap_or(serde_json::Number::from(0)),
                 ),
-                ligature_eval::ValueKind::Record(fields) => {
+                ValueKind::Record(fields) => {
                     let mut obj = serde_json::Map::new();
                     for (k, v) in fields.iter() {
                         // Recursively convert nested values
                         let v_json = match &v.kind {
-                            ligature_eval::ValueKind::Unit => serde_json::Value::Null,
-                            ligature_eval::ValueKind::Boolean(b) => serde_json::Value::Bool(**b),
-                            ligature_eval::ValueKind::String(s) => {
-                                serde_json::Value::String((**s).clone())
-                            }
-                            ligature_eval::ValueKind::Integer(i) => {
+                            ValueKind::Unit => serde_json::Value::Null,
+                            ValueKind::Boolean(b) => serde_json::Value::Bool(**b),
+                            ValueKind::String(s) => serde_json::Value::String((**s).clone()),
+                            ValueKind::Integer(i) => {
                                 serde_json::Value::Number(serde_json::Number::from(**i))
                             }
-                            ligature_eval::ValueKind::Float(f) => serde_json::Value::Number(
+                            ValueKind::Float(f) => serde_json::Value::Number(
                                 serde_json::Number::from_f64(**f)
                                     .unwrap_or(serde_json::Number::from(0)),
                             ),
@@ -470,19 +466,17 @@ pub mod java {
                     }
                     serde_json::Value::Object(obj)
                 }
-                ligature_eval::ValueKind::List(elements) => {
+                ValueKind::List(elements) => {
                     let mut arr = Vec::new();
                     for element in elements.iter() {
                         let elem_json = match &element.kind {
-                            ligature_eval::ValueKind::Unit => serde_json::Value::Null,
-                            ligature_eval::ValueKind::Boolean(b) => serde_json::Value::Bool(**b),
-                            ligature_eval::ValueKind::String(s) => {
-                                serde_json::Value::String((**s).clone())
-                            }
-                            ligature_eval::ValueKind::Integer(i) => {
+                            ValueKind::Unit => serde_json::Value::Null,
+                            ValueKind::Boolean(b) => serde_json::Value::Bool(**b),
+                            ValueKind::String(s) => serde_json::Value::String((**s).clone()),
+                            ValueKind::Integer(i) => {
                                 serde_json::Value::Number(serde_json::Number::from(**i))
                             }
-                            ligature_eval::ValueKind::Float(f) => serde_json::Value::Number(
+                            ValueKind::Float(f) => serde_json::Value::Number(
                                 serde_json::Number::from_f64(**f)
                                     .unwrap_or(serde_json::Number::from(0)),
                             ),
@@ -552,9 +546,12 @@ pub mod java {
 /// Go bindings for Krox.
 #[cfg(feature = "go")]
 pub mod go {
-    use super::*;
     use std::ffi::{CStr, CString};
     use std::os::raw::c_char;
+
+    use ligature_eval::value::ValueKind;
+
+    use super::*;
 
     pub struct GoKroxClient {
         client: SdkClient,
@@ -590,29 +587,25 @@ pub mod go {
 
             // Convert result to JSON - create a simple representation
             let json_value = match &result.value.kind {
-                ligature_eval::ValueKind::Unit => serde_json::Value::Null,
-                ligature_eval::ValueKind::Boolean(b) => serde_json::Value::Bool(**b),
-                ligature_eval::ValueKind::String(s) => serde_json::Value::String((**s).clone()),
-                ligature_eval::ValueKind::Integer(i) => {
-                    serde_json::Value::Number(serde_json::Number::from(**i))
-                }
-                ligature_eval::ValueKind::Float(f) => serde_json::Value::Number(
+                ValueKind::Unit => serde_json::Value::Null,
+                ValueKind::Boolean(b) => serde_json::Value::Bool(**b),
+                ValueKind::String(s) => serde_json::Value::String((**s).clone()),
+                ValueKind::Integer(i) => serde_json::Value::Number(serde_json::Number::from(**i)),
+                ValueKind::Float(f) => serde_json::Value::Number(
                     serde_json::Number::from_f64(**f).unwrap_or(serde_json::Number::from(0)),
                 ),
-                ligature_eval::ValueKind::Record(fields) => {
+                ValueKind::Record(fields) => {
                     let mut obj = serde_json::Map::new();
                     for (k, v) in fields.iter() {
                         // Recursively convert nested values
                         let v_json = match &v.kind {
-                            ligature_eval::ValueKind::Unit => serde_json::Value::Null,
-                            ligature_eval::ValueKind::Boolean(b) => serde_json::Value::Bool(**b),
-                            ligature_eval::ValueKind::String(s) => {
-                                serde_json::Value::String((**s).clone())
-                            }
-                            ligature_eval::ValueKind::Integer(i) => {
+                            ValueKind::Unit => serde_json::Value::Null,
+                            ValueKind::Boolean(b) => serde_json::Value::Bool(**b),
+                            ValueKind::String(s) => serde_json::Value::String((**s).clone()),
+                            ValueKind::Integer(i) => {
                                 serde_json::Value::Number(serde_json::Number::from(**i))
                             }
-                            ligature_eval::ValueKind::Float(f) => serde_json::Value::Number(
+                            ValueKind::Float(f) => serde_json::Value::Number(
                                 serde_json::Number::from_f64(**f)
                                     .unwrap_or(serde_json::Number::from(0)),
                             ),
@@ -622,19 +615,17 @@ pub mod go {
                     }
                     serde_json::Value::Object(obj)
                 }
-                ligature_eval::ValueKind::List(elements) => {
+                ValueKind::List(elements) => {
                     let mut arr = Vec::new();
                     for element in elements.iter() {
                         let elem_json = match &element.kind {
-                            ligature_eval::ValueKind::Unit => serde_json::Value::Null,
-                            ligature_eval::ValueKind::Boolean(b) => serde_json::Value::Bool(**b),
-                            ligature_eval::ValueKind::String(s) => {
-                                serde_json::Value::String((**s).clone())
-                            }
-                            ligature_eval::ValueKind::Integer(i) => {
+                            ValueKind::Unit => serde_json::Value::Null,
+                            ValueKind::Boolean(b) => serde_json::Value::Bool(**b),
+                            ValueKind::String(s) => serde_json::Value::String((**s).clone()),
+                            ValueKind::Integer(i) => {
                                 serde_json::Value::Number(serde_json::Number::from(**i))
                             }
-                            ligature_eval::ValueKind::Float(f) => serde_json::Value::Number(
+                            ValueKind::Float(f) => serde_json::Value::Number(
                                 serde_json::Number::from_f64(**f)
                                     .unwrap_or(serde_json::Number::from(0)),
                             ),
@@ -686,29 +677,25 @@ pub mod go {
 
             // Convert result to JSON - create a simple representation
             let json_value = match &result.value.kind {
-                ligature_eval::ValueKind::Unit => serde_json::Value::Null,
-                ligature_eval::ValueKind::Boolean(b) => serde_json::Value::Bool(**b),
-                ligature_eval::ValueKind::String(s) => serde_json::Value::String((**s).clone()),
-                ligature_eval::ValueKind::Integer(i) => {
-                    serde_json::Value::Number(serde_json::Number::from(**i))
-                }
-                ligature_eval::ValueKind::Float(f) => serde_json::Value::Number(
+                ValueKind::Unit => serde_json::Value::Null,
+                ValueKind::Boolean(b) => serde_json::Value::Bool(**b),
+                ValueKind::String(s) => serde_json::Value::String((**s).clone()),
+                ValueKind::Integer(i) => serde_json::Value::Number(serde_json::Number::from(**i)),
+                ValueKind::Float(f) => serde_json::Value::Number(
                     serde_json::Number::from_f64(**f).unwrap_or(serde_json::Number::from(0)),
                 ),
-                ligature_eval::ValueKind::Record(fields) => {
+                ValueKind::Record(fields) => {
                     let mut obj = serde_json::Map::new();
                     for (k, v) in fields.iter() {
                         // Recursively convert nested values
                         let v_json = match &v.kind {
-                            ligature_eval::ValueKind::Unit => serde_json::Value::Null,
-                            ligature_eval::ValueKind::Boolean(b) => serde_json::Value::Bool(**b),
-                            ligature_eval::ValueKind::String(s) => {
-                                serde_json::Value::String((**s).clone())
-                            }
-                            ligature_eval::ValueKind::Integer(i) => {
+                            ValueKind::Unit => serde_json::Value::Null,
+                            ValueKind::Boolean(b) => serde_json::Value::Bool(**b),
+                            ValueKind::String(s) => serde_json::Value::String((**s).clone()),
+                            ValueKind::Integer(i) => {
                                 serde_json::Value::Number(serde_json::Number::from(**i))
                             }
-                            ligature_eval::ValueKind::Float(f) => serde_json::Value::Number(
+                            ValueKind::Float(f) => serde_json::Value::Number(
                                 serde_json::Number::from_f64(**f)
                                     .unwrap_or(serde_json::Number::from(0)),
                             ),
@@ -718,19 +705,17 @@ pub mod go {
                     }
                     serde_json::Value::Object(obj)
                 }
-                ligature_eval::ValueKind::List(elements) => {
+                ValueKind::List(elements) => {
                     let mut arr = Vec::new();
                     for element in elements.iter() {
                         let elem_json = match &element.kind {
-                            ligature_eval::ValueKind::Unit => serde_json::Value::Null,
-                            ligature_eval::ValueKind::Boolean(b) => serde_json::Value::Bool(**b),
-                            ligature_eval::ValueKind::String(s) => {
-                                serde_json::Value::String((**s).clone())
-                            }
-                            ligature_eval::ValueKind::Integer(i) => {
+                            ValueKind::Unit => serde_json::Value::Null,
+                            ValueKind::Boolean(b) => serde_json::Value::Bool(**b),
+                            ValueKind::String(s) => serde_json::Value::String((**s).clone()),
+                            ValueKind::Integer(i) => {
                                 serde_json::Value::Number(serde_json::Number::from(**i))
                             }
-                            ligature_eval::ValueKind::Float(f) => serde_json::Value::Number(
+                            ValueKind::Float(f) => serde_json::Value::Number(
                                 serde_json::Number::from_f64(**f)
                                     .unwrap_or(serde_json::Number::from(0)),
                             ),

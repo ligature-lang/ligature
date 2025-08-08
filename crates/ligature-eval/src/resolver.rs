@@ -1,12 +1,14 @@
 //! Module resolution for the Ligature evaluation engine.
 
-use crate::Value;
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
+
 use ligature_ast::{AstError, AstResult};
 use ligature_parser::parse_module;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::path::{Path, PathBuf};
 use toml;
+
+use crate::Value;
 
 /// Register manifest structure for parsing register.toml files.
 #[derive(Debug, Clone, Serialize, Deserialize)]

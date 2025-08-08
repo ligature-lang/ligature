@@ -1,8 +1,9 @@
 //! Expression definitions for the Ligature language.
 
+use serde::{Deserialize, Serialize};
+
 use crate::Type;
 use crate::span::{Span, Spanned};
-use serde::{Deserialize, Serialize};
 
 /// A Ligature expression.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

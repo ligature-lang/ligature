@@ -1,9 +1,10 @@
 //! Inlay hints provider for the Ligature LSP server.
 
+use std::collections::HashMap;
+
 use ligature_ast::{DeclarationKind, Expr, ExprKind, Program, Span, Type, TypeKind};
 use ligature_types::checker::TypeChecker;
 use lsp_types::{InlayHint, InlayHintKind, InlayHintLabel, Position, Range};
-use std::collections::HashMap;
 
 /// Provider for inlay hints (type annotations and parameter names).
 pub struct InlayHintsProvider {

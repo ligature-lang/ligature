@@ -1,8 +1,9 @@
 //! Type definitions for the Baton protocol.
 
+use std::collections::HashMap;
+
 use baton_core::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 /// Request sent to Lean for verification.
 #[derive(Debug, Clone, Serialize, Deserialize)]

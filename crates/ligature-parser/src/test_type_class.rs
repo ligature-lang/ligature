@@ -1,5 +1,4 @@
 use ligature_parser::grammar::LigatureParser;
-
 use pest::Parser as PestParser;
 
 fn main() {

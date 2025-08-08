@@ -1,8 +1,9 @@
 //! Comprehensive performance benchmark for Ligature optimizations.
 
+use std::time::Instant;
+
 use ligature_ast::{AstResult, BinaryOperator, Expr, ExprKind, Literal, Span};
 use ligature_eval::Evaluator;
-use std::time::Instant;
 
 fn main() -> AstResult<()> {
     println!("Ligature Performance Optimization Benchmark");

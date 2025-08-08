@@ -1,12 +1,14 @@
 //! Enhanced diagnostics provider for the Ligature LSP server with improved error reporting.
 
+use std::collections::HashMap;
+
 use ligature_ast::{Program, Span};
 use ligature_parser::parse_program;
-use ligature_types::{checker::TypeChecker, type_check_program};
+use ligature_types::checker::TypeChecker;
+use ligature_types::type_check_program;
 use lsp_types::{
     Diagnostic, DiagnosticRelatedInformation, DiagnosticSeverity, NumberOrString, Position, Range,
 };
-use std::collections::HashMap;
 
 /// Enhanced provider for diagnostics with improved error reporting.
 pub struct EnhancedDiagnosticsProvider {
@@ -213,7 +215,9 @@ impl EnhancedDiagnosticsProvider {
             } => {
                 let message = if self.config.enable_detailed_explanations {
                     format!(
-                        "Type mismatch in method '{method}': expected type '{expected:?}', but found type '{found:?}'. This usually means the arguments don't match the function's expected parameter types."
+                        "Type mismatch in method '{method}': expected type '{expected:?}', but \
+                         found type '{found:?}'. This usually means the arguments don't match the \
+                         function's expected parameter types."
                     )
                 } else {
                     format!(
@@ -248,7 +252,9 @@ impl EnhancedDiagnosticsProvider {
             ligature_ast::AstError::UndefinedIdentifier { name, span } => {
                 let message = if self.config.enable_detailed_explanations {
                     format!(
-                        "Undefined identifier '{name}'. This variable or function hasn't been declared or imported. Check if you need to add an import statement or declare this identifier."
+                        "Undefined identifier '{name}'. This variable or function hasn't been \
+                         declared or imported. Check if you need to add an import statement or \
+                         declare this identifier."
                     )
                 } else {
                     format!("Undefined identifier: {name}")
@@ -329,7 +335,9 @@ impl EnhancedDiagnosticsProvider {
                 if !import_name.is_empty() && !self.is_import_used(import_name, content) {
                     let message = if self.config.enable_detailed_explanations {
                         format!(
-                            "Unused import '{import_name}'. This import statement brings in functionality that isn't being used in the current file. Consider removing it to keep your code clean."
+                            "Unused import '{import_name}'. This import statement brings in \
+                             functionality that isn't being used in the current file. Consider \
+                             removing it to keep your code clean."
                         )
                     } else {
                         format!("Unused import: {import_name}")
@@ -390,7 +398,8 @@ impl EnhancedDiagnosticsProvider {
                     if !self.is_variable_used(var_name, content) {
                         let message = if self.config.enable_detailed_explanations {
                             format!(
-                                "Unused variable '{var_name}'. This variable is declared but never used. Consider removing it or using it in your code."
+                                "Unused variable '{var_name}'. This variable is declared but \
+                                 never used. Consider removing it or using it in your code."
                             )
                         } else {
                             format!("Unused variable: {var_name}")
@@ -445,7 +454,8 @@ impl EnhancedDiagnosticsProvider {
         for (line_num, line) in lines.iter().enumerate() {
             if line.len() > 100 {
                 let message = if self.config.enable_detailed_explanations {
-                    "This line is quite long (over 100 characters). Consider breaking it into multiple lines for better readability."
+                    "This line is quite long (over 100 characters). Consider breaking it into \
+                     multiple lines for better readability."
                 } else {
                     "Line too long"
                 };
@@ -489,7 +499,8 @@ impl EnhancedDiagnosticsProvider {
         for (line_num, line) in lines.iter().enumerate() {
             if line.ends_with(' ') || line.ends_with('\t') {
                 let message = if self.config.enable_detailed_explanations {
-                    "This line has trailing whitespace. While this doesn't affect functionality, it's considered bad practice and can cause issues in version control."
+                    "This line has trailing whitespace. While this doesn't affect functionality, \
+                     it's considered bad practice and can cause issues in version control."
                 } else {
                     "Trailing whitespace"
                 };
@@ -542,7 +553,8 @@ impl EnhancedDiagnosticsProvider {
             // Check for hardcoded secrets (simplified)
             if line.contains("password") && line.contains("=") {
                 let message = if self.config.enable_detailed_explanations {
-                    "Potential security issue: This line appears to contain a hardcoded password. Consider using environment variables or a secure configuration system instead."
+                    "Potential security issue: This line appears to contain a hardcoded password. \
+                     Consider using environment variables or a secure configuration system instead."
                 } else {
                     "Potential hardcoded password"
                 };
@@ -610,7 +622,8 @@ impl EnhancedDiagnosticsProvider {
             let indent = line.len() - line.trim_start().len();
             if indent % 2 != 0 && !trimmed.starts_with("//") {
                 let message = if self.config.enable_detailed_explanations {
-                    "Inconsistent indentation. This line uses an odd number of spaces for indentation, which may indicate inconsistent formatting."
+                    "Inconsistent indentation. This line uses an odd number of spaces for \
+                     indentation, which may indicate inconsistent formatting."
                 } else {
                     "Inconsistent indentation"
                 };

@@ -1,8 +1,9 @@
 //! Package management CLI for Ligature registers.
 
+use std::path::PathBuf;
+
 use clap::{Parser, Subcommand};
 use miette::Result;
-use std::path::PathBuf;
 
 mod commands;
 mod dependency;

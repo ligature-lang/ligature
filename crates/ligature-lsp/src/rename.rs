@@ -1,8 +1,9 @@
 //! Rename provider for the Ligature LSP server.
 
+use std::collections::HashMap;
+
 use ligature_ast::{DeclarationKind, Expr, ExprKind, Program, Span};
 use lsp_types::{Position, Range, TextEdit, Url, WorkspaceEdit};
-use std::collections::HashMap;
 
 /// Provider for symbol renaming.
 #[derive(Clone)]

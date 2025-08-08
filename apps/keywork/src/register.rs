@@ -1,15 +1,16 @@
 //! Register manifest handling and validation.
 
-use crate::dependency::{install_dependencies, resolve_dependencies_from_manifest};
-use crate::xdg_config::KeyworkXdgConfig;
-use miette::{IntoDiagnostic, Result, miette};
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
+
+use miette::{IntoDiagnostic, Result, miette};
+use serde::{Deserialize, Serialize};
 use tokio::fs as tokio_fs;
 use walkdir::WalkDir;
+
+use crate::dependency::{install_dependencies, resolve_dependencies_from_manifest};
+use crate::xdg_config::KeyworkXdgConfig;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Register {

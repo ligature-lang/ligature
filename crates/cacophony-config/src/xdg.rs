@@ -1,5 +1,6 @@
-use cacophony_core::error::{CacophonyError, Result};
 use std::path::PathBuf;
+
+use cacophony_core::error::{CacophonyError, Result};
 
 #[derive(Debug, Clone)]
 pub struct CacophonyXdgConfig {

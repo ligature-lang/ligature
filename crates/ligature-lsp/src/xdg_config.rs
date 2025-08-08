@@ -1,6 +1,7 @@
+use std::path::PathBuf;
+
 use embouchure_xdg::{XdgConfig, XdgPaths};
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 use thiserror::Error;
 
 #[derive(Error, Debug)]

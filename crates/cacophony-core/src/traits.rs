@@ -1,8 +1,10 @@
-use crate::error::Result;
-use crate::types::{Collection, Environment};
+use std::collections::HashMap;
+
 use async_trait::async_trait;
 use serde_json::Value;
-use std::collections::HashMap;
+
+use crate::error::Result;
+use crate::types::{Collection, Environment};
 
 #[async_trait]
 pub trait Plugin: Send + Sync {

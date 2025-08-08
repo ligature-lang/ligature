@@ -1,9 +1,10 @@
 //! Tests for type system enhancements in the Ligature language.
 
 #[allow(unused_imports)]
-use crate::inference::TypeInference;
-#[allow(unused_imports)]
 use ligature_ast::{Span, Type, TypeKind};
+
+#[allow(unused_imports)]
+use crate::inference::TypeInference;
 
 #[test]
 fn test_cycle_detection() {

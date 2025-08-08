@@ -1,10 +1,12 @@
 //! Diagnostics provider for the Ligature LSP server.
 
+use std::collections::HashMap;
+
 use ligature_ast::{Program, Span};
 use ligature_parser::parse_program;
-use ligature_types::{checker::TypeChecker, type_check_program};
+use ligature_types::checker::TypeChecker;
+use ligature_types::type_check_program;
 use lsp_types::{Diagnostic, DiagnosticSeverity, Position, Range};
-use std::collections::HashMap;
 
 /// Provider for diagnostics (errors and warnings).
 pub struct DiagnosticsProvider {

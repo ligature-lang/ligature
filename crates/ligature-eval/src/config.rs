@@ -1,9 +1,10 @@
 //! Configuration management for the Ligature evaluator.
 
+use std::path::PathBuf;
+
 use embouchure_xdg::config::XdgConfig;
 use embouchure_xdg::error::XdgError;
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 
 /// Configuration for the Ligature evaluator with cache tuning options.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]

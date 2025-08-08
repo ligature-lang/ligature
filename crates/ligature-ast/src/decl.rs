@@ -1,8 +1,9 @@
 //! Declaration definitions for the Ligature language.
 
+use serde::{Deserialize, Serialize};
+
 use crate::span::{Span, Spanned};
 use crate::{Expr, Import, Type, TypeAlias, TypeConstructor};
-use serde::{Deserialize, Serialize};
 
 /// A Ligature declaration.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

@@ -1,9 +1,11 @@
 //! Configuration management for Krox.
 
-use crate::error::{Error, Result};
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+
+use serde::{Deserialize, Serialize};
+
+use crate::error::{Error, Result};
 
 /// Global configuration for Krox.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -325,8 +327,9 @@ impl Default for ConfigManager {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tempfile::tempdir;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_config_creation() {

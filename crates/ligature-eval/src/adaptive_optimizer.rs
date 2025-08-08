@@ -3,10 +3,11 @@
 //! This module provides intelligent optimization strategies that automatically
 //! adapt based on runtime performance metrics and learn from their effectiveness.
 
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
+
+use serde::{Deserialize, Serialize};
 
 /// Type alias for complex strategy map
 type StrategyMap = Arc<Mutex<HashMap<String, AdaptiveOptimizationStrategy>>>;
@@ -352,7 +353,8 @@ impl AdaptiveOptimizer {
                 let expected_improvement = complexity_ratio * 0.15; // Assume 15% improvement for complex expressions
 
                 let reasoning = format!(
-                    "{complex_expressions} of {total_expressions} expressions are complex (>{complexity_threshold})",
+                    "{complex_expressions} of {total_expressions} expressions are complex \
+                     (>{complexity_threshold})",
                 );
 
                 (confidence, expected_improvement, reasoning)
@@ -598,8 +600,9 @@ impl OptimizationReport {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::time::Duration;
+
+    use super::*;
 
     #[test]
     fn test_adaptive_optimizer_creation() {

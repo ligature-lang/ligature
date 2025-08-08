@@ -1,8 +1,9 @@
 //! References provider for the Ligature LSP server.
 
+use std::collections::HashMap;
+
 use ligature_ast::{Declaration, DeclarationKind, Expr, ExprKind, Program, Span};
 use lsp_types::{Location, Position, Range, ReferenceContext, Url};
-use std::collections::HashMap;
 
 /// Provider for finding references to symbols.
 #[derive(Clone)]

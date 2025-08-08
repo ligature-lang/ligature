@@ -1,9 +1,11 @@
 //! Command-line interface for Krox.
 
-use crate::{Client, ClientBuilder, Error, ExecutionMode, Result};
-use clap::{Parser, Subcommand};
 use std::path::PathBuf;
+
+use clap::{Parser, Subcommand};
 use tracing::{error, info};
+
+use crate::{Client, ClientBuilder, Error, ExecutionMode, Result};
 
 /// Krox - Client SDKs for invoking Ligature programs as side effects
 #[derive(Parser)]

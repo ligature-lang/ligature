@@ -1,15 +1,16 @@
 //! Type checker for the Ligature language.
 
-use crate::constraints::ConstraintSolver;
-use crate::environment::TypeEnvironment;
-use crate::error::TypeError;
-use crate::resolver::ModuleResolver;
 use ligature_ast::ty::Constraint;
 use ligature_ast::{
     AstError, AstResult, BinaryOperator, Declaration, Expr, ExprKind, Import, Literal, MatchCase,
     Module, Pattern, Program, RecordField, Span, Type, TypeAlias, TypeConstructor, TypeKind,
     TypeVariant, UnaryOperator, ValueDeclaration,
 };
+
+use crate::constraints::ConstraintSolver;
+use crate::environment::TypeEnvironment;
+use crate::error::TypeError;
+use crate::resolver::ModuleResolver;
 
 /// Type checker for Ligature programs.
 pub struct TypeChecker {

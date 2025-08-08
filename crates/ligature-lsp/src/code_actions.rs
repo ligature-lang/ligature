@@ -1,12 +1,13 @@
 //! Enhanced code actions provider for the Ligature LSP server.
 
+use std::collections::HashMap;
+
 use ligature_ast::{Program, Span};
 use ligature_types::checker::TypeChecker;
 use lsp_types::{
     CodeAction, CodeActionContext, CodeActionKind, CodeActionOrCommand, Command, Diagnostic,
     Position, Range, TextEdit, Url, WorkspaceEdit,
 };
-use std::collections::HashMap;
 
 /// Enhanced provider for code actions and quick fixes.
 pub struct CodeActionsProvider {
@@ -802,8 +803,7 @@ impl CodeActionsProvider {
         _content: &str,
         _ast: Option<&Program>,
     ) -> Vec<CodeActionOrCommand> {
-        let actions = vec![
-            CodeActionOrCommand::CodeAction(CodeAction {
+        let actions = vec![CodeActionOrCommand::CodeAction(CodeAction {
             title: "Generate match expression".to_string(),
             kind: Some(CodeActionKind::REFACTOR_EXTRACT),
             diagnostics: None,
@@ -812,7 +812,9 @@ impl CodeActionsProvider {
                     Url::parse(uri).ok().unwrap(),
                     vec![TextEdit {
                         range,
-                        new_text: "match ${1:expression} of\n  ${2:pattern1} => ${3:result1}\n  ${4:pattern2} => ${5:result2}".to_string(),
+                        new_text: "match ${1:expression} of\n  ${2:pattern1} => ${3:result1}\n  \
+                                   ${4:pattern2} => ${5:result2}"
+                            .to_string(),
                     }],
                 )])),
                 document_changes: None,
@@ -1936,7 +1938,6 @@ impl CodeActionsProvider {
                 disabled: None,
                 data: None,
             }),
-
             // Generate type class
             CodeActionOrCommand::CodeAction(CodeAction {
                 title: "Generate type class".to_string(),
@@ -1947,7 +1948,9 @@ impl CodeActionsProvider {
                         Url::parse(uri).ok().unwrap(),
                         vec![TextEdit {
                             range,
-                            new_text: "class ${1:ClassName} a where\n  ${2:method1} :: a -> ${3:ResultType}\n  ${4:method2} :: a -> ${5:ResultType}".to_string(),
+                            new_text: "class ${1:ClassName} a where\n  ${2:method1} :: a -> \
+                                       ${3:ResultType}\n  ${4:method2} :: a -> ${5:ResultType}"
+                                .to_string(),
                         }],
                     )])),
                     document_changes: None,
@@ -1980,7 +1983,9 @@ impl CodeActionsProvider {
                         Url::parse(uri).ok().unwrap(),
                         vec![TextEdit {
                             range,
-                            new_text: "match ${1:expression} of\n  ${2:pattern1} => ${3:result1}\n  ${4:pattern2} => ${5:result2}".to_string(),
+                            new_text: "match ${1:expression} of\n  ${2:pattern1} => \
+                                       ${3:result1}\n  ${4:pattern2} => ${5:result2}"
+                                .to_string(),
                         }],
                     )])),
                     document_changes: None,
@@ -1991,7 +1996,6 @@ impl CodeActionsProvider {
                 disabled: None,
                 data: None,
             }),
-
             // Generate if-else expression
             CodeActionOrCommand::CodeAction(CodeAction {
                 title: "Generate if-else expression".to_string(),
@@ -2002,9 +2006,9 @@ impl CodeActionsProvider {
                         Url::parse(uri).ok().unwrap(),
                         vec![TextEdit {
                             range,
-                            new_text:
-                                "if ${1:condition} then\n  ${2:then_branch}\nelse\n  ${3:else_branch}"
-                                    .to_string(),
+                            new_text: "if ${1:condition} then\n  ${2:then_branch}\nelse\n  \
+                                       ${3:else_branch}"
+                                .to_string(),
                         }],
                     )])),
                     document_changes: None,
@@ -2048,7 +2052,6 @@ impl CodeActionsProvider {
                 disabled: None,
                 data: None,
             }),
-
             // Generate property test
             CodeActionOrCommand::CodeAction(CodeAction {
                 title: "Generate property test".to_string(),
@@ -2059,9 +2062,9 @@ impl CodeActionsProvider {
                         Url::parse(uri).ok().unwrap(),
                         vec![TextEdit {
                             range,
-                            new_text:
-                                "property \"${1:property_name}\" = forAll ${2:generator} ${3:property}"
-                                    .to_string(),
+                            new_text: "property \"${1:property_name}\" = forAll ${2:generator} \
+                                       ${3:property}"
+                                .to_string(),
                         }],
                     )])),
                     document_changes: None,
@@ -2094,7 +2097,9 @@ impl CodeActionsProvider {
                         Url::parse(uri).ok().unwrap(),
                         vec![TextEdit {
                             range,
-                            new_text: "/// ${1:Function description}\n/// @param ${2:param_name} ${3:param_description}\n/// @return ${4:return_description}".to_string(),
+                            new_text: "/// ${1:Function description}\n/// @param ${2:param_name} \
+                                       ${3:param_description}\n/// @return ${4:return_description}"
+                                .to_string(),
                         }],
                     )])),
                     document_changes: None,
@@ -2105,7 +2110,6 @@ impl CodeActionsProvider {
                 disabled: None,
                 data: None,
             }),
-
             // Generate module documentation
             CodeActionOrCommand::CodeAction(CodeAction {
                 title: "Generate module documentation".to_string(),
@@ -2116,7 +2120,9 @@ impl CodeActionsProvider {
                         Url::parse(uri).ok().unwrap(),
                         vec![TextEdit {
                             range,
-                            new_text: "/// ${1:Module description}\n/// @author ${2:author_name}\n/// @version ${3:version}".to_string(),
+                            new_text: "/// ${1:Module description}\n/// @author \
+                                       ${2:author_name}\n/// @version ${3:version}"
+                                .to_string(),
                         }],
                     )])),
                     document_changes: None,

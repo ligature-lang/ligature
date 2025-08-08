@@ -4,9 +4,10 @@
 //! 2. Complete Expression Caching: Framework is in place but needs implementation
 //! 3. Value Representation Optimization: Reduce cloning overhead with Arc<Value> and value interning
 
+use std::time::Instant;
+
 use ligature_ast::{AstResult, BinaryOperator, Expr, ExprKind, Literal, Span};
 use ligature_eval::Evaluator;
-use std::time::Instant;
 
 fn main() -> AstResult<()> {
     println!("Ligature Performance Optimization Benchmark");

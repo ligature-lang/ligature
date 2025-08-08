@@ -31,26 +31,24 @@ pub mod symbols;
 pub mod workspace;
 pub mod xdg_config;
 
-use ligature_ast::Program;
-use tower_lsp::LspService;
-
 // Original providers
 pub use code_actions::CodeActionsProvider;
 pub use completion::CompletionProvider;
 pub use definition::DefinitionProvider;
 pub use diagnostics::DiagnosticsProvider;
+// Enhanced providers (temporarily disabled due to tower-lsp compatibility issues)
+pub use enhanced_completion::{EnhancedCompletionConfig, EnhancedCompletionProvider};
+pub use enhanced_diagnostics::{EnhancedDiagnosticsConfig, EnhancedDiagnosticsProvider};
 pub use formatting::FormattingProvider;
 pub use hover::HoverProvider;
 pub use import_resolution::ImportResolutionService;
 pub use inlay_hints::InlayHintsProvider;
+use ligature_ast::Program;
 pub use references::ReferencesProvider;
 pub use rename::RenameProvider;
 pub use server::LigatureLspServer;
 pub use symbols::SymbolsProvider;
-
-// Enhanced providers (temporarily disabled due to tower-lsp compatibility issues)
-pub use enhanced_completion::{EnhancedCompletionConfig, EnhancedCompletionProvider};
-pub use enhanced_diagnostics::{EnhancedDiagnosticsConfig, EnhancedDiagnosticsProvider};
+use tower_lsp::LspService;
 // pub use enhanced_server::{EnhancedLigatureLspServer, EnhancedWorkspaceConfiguration};
 
 /// State for a document in the LSP server.
@@ -88,7 +86,6 @@ pub async fn run_server() {
 // }
 /// Re-export commonly used LSP types for convenience.
 pub use lsp_types;
-
 /// Re-export tower-lsp for advanced usage.
 pub use tower_lsp;
 

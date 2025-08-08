@@ -1,7 +1,8 @@
 //! Tests for the type class system implementation.
 
-use crate::type_check_program;
 use ligature_parser::parse_program;
+
+use crate::type_check_program;
 
 #[test]
 fn test_basic_type_class_definition() {

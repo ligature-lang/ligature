@@ -1,13 +1,14 @@
 //! Type definitions for verification engine.
 
+use std::collections::HashMap;
+use std::sync::Arc;
+use std::time::{Duration, Instant};
+
 use baton_client::{ClientStats, LeanClient, LeanClientConfig};
 use baton_engine_plugin::BuildConfig;
 use baton_error::BatonError;
 use baton_protocol::{VerificationRequest, VerificationResponse};
 use baton_specification::LeanSpecification;
-use std::collections::HashMap;
-use std::sync::Arc;
-use std::time::{Duration, Instant};
 use tokio::sync::Mutex;
 
 /// Verification engine for coordinating Lean verification operations.

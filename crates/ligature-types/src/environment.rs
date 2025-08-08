@@ -385,7 +385,10 @@ impl TypeEnvironment {
                             .enumerate()
                         {
                             if !self.types_compatible(instance_arg, provided_arg) {
-                                debug_info.push_str(&format!("    Reason: Argument {j} incompatible: {instance_arg:?} vs {provided_arg:?}\n"));
+                                debug_info.push_str(&format!(
+                                    "    Reason: Argument {j} incompatible: {instance_arg:?} vs \
+                                     {provided_arg:?}\n"
+                                ));
                             }
                         }
                     }

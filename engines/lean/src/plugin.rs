@@ -338,8 +338,9 @@ impl Default for LeanEnginePlugin {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use serde_json::json;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_plugin_creation() {

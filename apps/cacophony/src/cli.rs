@@ -1,8 +1,9 @@
+use std::fs;
+use std::path::Path;
+
 use clap::Subcommand;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use std::fs;
-use std::path::Path;
 use tracing::{error, info, warn};
 
 use crate::config::{CacophonyXdgConfig, ConfigManager};
@@ -247,7 +248,8 @@ impl Commands {
 
                 if dry_run {
                     info!(
-                        "🔍 DRY RUN: Would deploy collection '{collection}' to environment '{environment}'",
+                        "🔍 DRY RUN: Would deploy collection '{collection}' to environment \
+                         '{environment}'",
                     );
                     info!(
                         "   Collection: {}",
@@ -271,7 +273,8 @@ impl Commands {
 
                 // Execute deployment operations
                 info!(
-                    "🚀 Starting deployment of collection '{collection}' to environment '{environment}'",
+                    "🚀 Starting deployment of collection '{collection}' to environment \
+                     '{environment}'",
                 );
 
                 for operation_name in &collection_config.operations {
@@ -301,7 +304,8 @@ impl Commands {
                                 Ok(output) => {
                                     if output.status.success() {
                                         info!(
-                                            "  ✅ Operation '{operation_name}' completed successfully",
+                                            "  ✅ Operation '{operation_name}' completed \
+                                             successfully",
                                         );
                                         if !output.stdout.is_empty() {
                                             info!(
@@ -332,7 +336,8 @@ impl Commands {
                                     if !force {
                                         return Err(crate::error::CacophonyError::Operation(
                                             format!(
-                                                "Failed to execute operation '{operation_name}': {e}"
+                                                "Failed to execute operation '{operation_name}': \
+                                                 {e}"
                                             ),
                                         ));
                                     }
@@ -340,7 +345,8 @@ impl Commands {
                             }
                         } else {
                             warn!(
-                                "  ⚠️  Operation '{operation_name}' has no script defined, skipping",
+                                "  ⚠️  Operation '{operation_name}' has no script defined, \
+                                 skipping",
                             );
                         }
                     } else {
@@ -349,7 +355,8 @@ impl Commands {
                 }
 
                 info!(
-                    "✅ Deployment of collection '{collection}' to environment '{environment}' completed",
+                    "✅ Deployment of collection '{collection}' to environment '{environment}' \
+                     completed",
                 );
                 Ok(())
             }
@@ -794,7 +801,8 @@ impl Commands {
                         let collection_config = config.collections.get(coll_name).unwrap();
                         if !collection_config.environments.contains(env_name) {
                             return Err(crate::error::CacophonyError::Config(format!(
-                                "Collection '{coll_name}' does not support environment '{env_name}'"
+                                "Collection '{coll_name}' does not support environment \
+                                 '{env_name}'"
                             )));
                         }
                     }

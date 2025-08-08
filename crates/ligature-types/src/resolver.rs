@@ -1,11 +1,11 @@
 //! Module resolution for the Ligature type system.
 
+use std::collections::{HashMap, HashSet};
+use std::path::{Path, PathBuf};
+
 use ligature_ast::{AstError, AstResult, Module, Span};
 use ligature_parser::parse_module;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::collections::HashSet;
-use std::path::{Path, PathBuf};
 use toml;
 
 /// Type alias for import path result

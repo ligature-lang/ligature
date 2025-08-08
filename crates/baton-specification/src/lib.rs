@@ -14,6 +14,8 @@ pub type LeanSpecification = Specification;
 
 /// Re-export commonly used types
 pub mod prelude {
+    pub use baton_engine_plugin::prelude::*;
+
     pub use super::{
         BuildStatus,
         ErrorSeverity,
@@ -29,5 +31,4 @@ pub mod prelude {
         ValidationWarning,
         ValidationWarningType,
     };
-    pub use baton_engine_plugin::prelude::*;
 }

@@ -1,9 +1,10 @@
 //! Type definitions for the Ligature language.
 
+use serde::{Deserialize, Serialize};
+
 use crate::decl::TypeClassConstraint;
 use crate::expr::Expr;
 use crate::span::{Span, Spanned};
-use serde::{Deserialize, Serialize};
 
 /// Type alias for refinement type components
 pub type RefinementComponents<'a> = (&'a Type, &'a Expr, &'a Option<String>);

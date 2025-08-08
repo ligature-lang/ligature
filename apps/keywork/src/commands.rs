@@ -1,12 +1,14 @@
 //! Command implementations for keywork CLI.
 
+use std::fs;
+use std::path::{Path, PathBuf};
+
+use miette::{IntoDiagnostic, Result, miette};
+
 use crate::dependency::{install_dependencies, resolve_dependencies_from_manifest};
 use crate::register::Register;
 use crate::registry::Registry;
 use crate::xdg_config::KeyworkXdgConfig;
-use miette::{IntoDiagnostic, Result, miette};
-use std::fs;
-use std::path::{Path, PathBuf};
 
 pub async fn init_register(name: &str, directory: &Path) -> Result<()> {
     let register_dir = directory.join(name);

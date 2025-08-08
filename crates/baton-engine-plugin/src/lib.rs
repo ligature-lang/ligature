@@ -23,6 +23,9 @@ pub use traits::{EnginePlugin, VerificationEngine};
 
 /// Re-export commonly used types
 pub mod prelude {
+    pub use baton_error::prelude::*;
+    pub use baton_protocol::prelude::*;
+
     pub use super::{
         BuildConfig, ClientStats, ComparisonType, ConsistencyCheckType, CoverageInfo,
         DetailedComparison, Difference, DifferenceSeverity, DifferentialTestType,
@@ -32,6 +35,4 @@ pub mod prelude {
         RequestPriority, RetryConfig, SpecificationCheckType, TestType, TheoremInfo,
         VerificationContext, VerificationEngine,
     };
-    pub use baton_error::prelude::*;
-    pub use baton_protocol::prelude::*;
 }

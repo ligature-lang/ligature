@@ -1,7 +1,8 @@
 //! Error types for the Ligature AST and compiler.
 
-use crate::span::Span;
 use thiserror::Error;
+
+use crate::span::Span;
 
 /// Errors that can occur during AST construction or manipulation.
 #[derive(Error, Debug, Clone, PartialEq)]

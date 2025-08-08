@@ -1,12 +1,13 @@
 //! Tests for module resolution functionality.
 
-use crate::checker::TypeChecker;
-use crate::resolver::ModuleResolver;
-use crate::type_check_program_with_paths;
+use std::path::PathBuf;
 
 use ligature_ast::AstError;
 use ligature_parser::parse_program;
-use std::path::PathBuf;
+
+use crate::checker::TypeChecker;
+use crate::resolver::ModuleResolver;
+use crate::type_check_program_with_paths;
 
 #[test]
 fn test_basic_import_resolution() {

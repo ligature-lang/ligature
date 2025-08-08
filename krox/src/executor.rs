@@ -1,15 +1,15 @@
 //! Executors for different Ligature program execution modes.
 
-use crate::{
-    ClientConfig,
-    error::{Error, Result},
-};
+use std::path::Path;
+
 use ligature_ast::Program;
 use ligature_eval::Value;
 use ligature_parser::parse_program;
 use serde::Serialize;
-use std::path::Path;
 use tracing::{debug, warn};
+
+use crate::ClientConfig;
+use crate::error::{Error, Result};
 
 /// Trait for executing Ligature programs.
 #[async_trait::async_trait]
@@ -102,6 +102,7 @@ impl Executor for NativeExecutor {
 
     async fn execute_source(&self, source: &str) -> Result<Value> {
         use std::io::Write;
+
         use tempfile::NamedTempFile;
 
         // Create a temporary file with the source code

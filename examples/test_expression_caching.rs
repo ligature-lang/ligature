@@ -1,9 +1,9 @@
 //! Simple test to verify expression caching implementation works
 
 use ligature_ast::{Expr, ExprKind, Literal, Span};
-use ligature_eval::{
-    Evaluator,
-    config::{CacheConfig, CacheableExpressions, EvaluatorConfig, PerformanceConfig},
+use ligature_eval::Evaluator;
+use ligature_eval::config::{
+    CacheConfig, CacheableExpressions, EvaluatorConfig, PerformanceConfig,
 };
 
 fn main() {

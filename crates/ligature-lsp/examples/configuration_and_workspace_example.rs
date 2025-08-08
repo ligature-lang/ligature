@@ -1,7 +1,9 @@
 //! Example demonstrating configuration and workspace management features.
 
-use ligature_lsp::{config::ConfigurationManager, workspace::WorkspaceManager};
 use std::sync::Arc;
+
+use ligature_lsp::config::ConfigurationManager;
+use ligature_lsp::workspace::WorkspaceManager;
 use tokio::sync::RwLock;
 
 type MainResult = Result<(), Box<dyn std::error::Error>>;

@@ -1,12 +1,13 @@
 //! Symbols provider for the Ligature LSP server.
 
+use std::collections::HashMap;
+
 #[allow(deprecated)]
 use ligature_ast::{Declaration, DeclarationKind, Program, Span, ValueDeclaration};
 use lsp_types::{
     DocumentSymbol, Location, Position, Range, SymbolInformation, SymbolKind, SymbolTag, Url,
     WorkspaceSymbol, WorkspaceSymbolParams,
 };
-use std::collections::HashMap;
 
 /// Provider for document and workspace symbols.
 pub struct SymbolsProvider {
@@ -297,7 +298,7 @@ impl SymbolsProvider {
                     ),
                     detail: Some("type class instance".to_string()),
                     kind: SymbolKind::CLASS,
-                    tags: Some(vec![SymbolTag::DEPRECATED]), // Instances are typically not shown in outline
+                    tags: Some(vec![SymbolTag::DEPRECATED]), /* Instances are typically not shown in outline */
                     #[allow(deprecated)]
                     deprecated: None,
                     range: self.span_to_range(instance.span),

@@ -1,9 +1,11 @@
 //! Performance benchmarks for type inference.
 
-use crate::inference::TypeInference;
+use std::time::Instant;
+
 use ligature_ast::{Span, Type};
 use ligature_parser::parse_program;
-use std::time::Instant;
+
+use crate::inference::TypeInference;
 
 /// Run performance benchmarks for type inference.
 pub fn run_performance_benchmarks() {

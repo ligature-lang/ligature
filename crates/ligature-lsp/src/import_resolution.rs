@@ -7,13 +7,13 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use tokio::sync::RwLock;
-use tower_lsp::lsp_types::{Location, Position, Range, SymbolInformation, SymbolKind, Url};
-use tracing::{debug, info, warn};
 
 use ligature_ast::{AstError, AstResult, Module, Span};
 use ligature_parser::parse_module;
 use ligature_types::resolver::ModuleResolver;
+use tokio::sync::RwLock;
+use tower_lsp::lsp_types::{Location, Position, Range, SymbolInformation, SymbolKind, Url};
+use tracing::{debug, info, warn};
 
 /// A module cache entry containing the loaded module and its metadata.
 #[derive(Debug, Clone)]
@@ -708,9 +708,11 @@ impl Default for ImportResolutionService {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::fs;
+
     use tempfile::TempDir;
+
+    use super::*;
 
     #[tokio::test]
     async fn test_import_resolution_service_creation() {

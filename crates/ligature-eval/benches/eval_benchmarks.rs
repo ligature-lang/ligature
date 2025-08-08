@@ -1,7 +1,6 @@
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use ligature_ast::AstResult;
-use ligature_eval::Value;
-use ligature_eval::evaluate_expression;
+use ligature_eval::{Value, evaluate_expression};
 use ligature_parser::parse_expression;
 
 /// Benchmark data for different types of expressions
@@ -160,7 +159,8 @@ fn eval_benchmark_cases() -> Vec<EvalBenchmarkData> {
         },
         EvalBenchmarkData {
             name: "very_complex_expression",
-            input: "let config = { threshold: 100, enabled: true } in if config.enabled && 150 > config.threshold then 42 else 0",
+            input: "let config = { threshold: 100, enabled: true } in if config.enabled && 150 > \
+                    config.threshold then 42 else 0",
             category: "complex",
         },
         EvalBenchmarkData {
@@ -300,11 +300,13 @@ fn bench_end_to_end(c: &mut Criterion) {
         ),
         (
             "conditional_config",
-            "let env = \"production\" in if env == \"production\" then { debug: false, port: 443 } else { debug: true, port: 3000 }",
+            "let env = \"production\" in if env == \"production\" then { debug: false, port: 443 \
+             } else { debug: true, port: 3000 }",
         ),
         (
             "nested_config",
-            "let base = { timeout: 30 } in let extended = { base, retries: 3 } in extended.timeout * extended.retries",
+            "let base = { timeout: 30 } in let extended = { base, retries: 3 } in \
+             extended.timeout * extended.retries",
         ),
     ];
 

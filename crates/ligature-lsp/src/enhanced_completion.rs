@@ -1,12 +1,13 @@
 //! Enhanced completion provider for the Ligature LSP server with improved IDE integration.
 
+use std::collections::HashMap;
+
 use ligature_ast::{Program, Type};
 use ligature_types::checker::TypeChecker;
 use lsp_types::{
     CompletionContext, CompletionItem, CompletionItemKind, CompletionResponse, InsertTextFormat,
     MarkupContent, MarkupKind, Position,
 };
-use std::collections::HashMap;
 
 /// Enhanced provider for code completion suggestions with improved IDE integration.
 pub struct EnhancedCompletionProvider {
@@ -654,7 +655,11 @@ impl EnhancedCompletionProvider {
                 })),
                 sort_text: Some("1_snippet_match".to_string()),
                 filter_text: Some("match".to_string()),
-                insert_text: Some("match ${1:expression} of\n  ${2:pattern1} => ${3:result1}\n  ${4:pattern2} => ${5:result2}".to_string()),
+                insert_text: Some(
+                    "match ${1:expression} of\n  ${2:pattern1} => ${3:result1}\n  ${4:pattern2} \
+                     => ${5:result2}"
+                        .to_string(),
+                ),
                 insert_text_format: Some(InsertTextFormat::SNIPPET),
                 text_edit: None,
                 additional_text_edits: None,

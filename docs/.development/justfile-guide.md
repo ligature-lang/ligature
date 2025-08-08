@@ -117,11 +117,13 @@ just bench            # Run all benchmarks
 ### Daily Workflow
 
 1. **Start of day:**
+
    ```bash
    just dev-setup      # Ensure everything is working
    ```
 
 2. **During development:**
+
    ```bash
    just check          # Quick syntax check
    just test           # Run tests
@@ -197,18 +199,21 @@ just perf-monitor --report         # Generate performance report
 ### Common Issues
 
 1. **Command not found:**
+
    ```bash
    # Install just
    cargo install just
    ```
 
 2. **Build failures:**
+
    ```bash
    just clean          # Clean build artifacts
    just build-debug    # Try debug build first
    ```
 
 3. **Test failures:**
+
    ```bash
    just test-verbose   # See detailed test output
    ```
@@ -235,14 +240,15 @@ Add to your VS Code settings:
 
 ```json
 {
-    "just.runOnSave": true,
-    "just.command": "just"
+  "just.runOnSave": true,
+  "just.command": "just"
 }
 ```
 
 ### Other IDEs
 
 Most IDEs can integrate with just by:
+
 1. Adding just to your PATH
 2. Using `just <command>` as a build task
 3. Setting up just commands as custom run configurations
@@ -264,8 +270,8 @@ Example of adding a new command:
 ```makefile
 # Format and lint code
 fmt-lint:
-    cargo fmt
+    cargo +nightly fmt
     cargo clippy
 ```
 
-This follows the existing pattern and provides a clear, descriptive name. 
+This follows the existing pattern and provides a clear, descriptive name.

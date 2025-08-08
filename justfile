@@ -37,7 +37,24 @@ install-performance-monitor:
 
 # Run tests
 test:
-    cargo test
+    cargo test --all-features \
+        --package ligature-ast \
+        --package ligature-parser \
+        --package ligature-types \
+        --package ligature-eval \
+        --package ligature-lsp \
+        --package embouchure-xdg \
+        --package cacophony-core \
+        --package cacophony-config \
+        --package cacophony-plugin \
+        --package baton-client \
+        --package baton-core \
+        --package baton-engine-plugin \
+        --package baton-error \
+        --package baton-protocol \
+        --package baton-specification \
+        --package baton-verification \
+        --package ligature-performance-validation
 
 # Run tests with output
 test-verbose:
@@ -50,17 +67,25 @@ test-integration:
 test-performance:
     cargo test --test performance_regression_tests
 
+# Test krox crate (requires Node.js runtime)
+test-krox:
+    cargo test --package krox --all-features
+
+# Test all crates including krox (requires Node.js runtime)
+test-all:
+    cargo test --all-features
+
 # Check code without building
 check:
-    cargo check
+    cargo check --package ligature-ast --package ligature-parser --package ligature-types --package ligature-eval --package ligature-lsp --package embouchure-xdg --package cacophony-core --package cacophony-config --package cacophony-plugin --package baton-client --package baton-core --package baton-engine-plugin --package baton-error --package baton-protocol --package baton-specification --package baton-verification --package ligature-performance-validation --all-targets --all-features
 
 # Format code
 fmt:
-    cargo fmt
+    cargo +nightly fmt
 
 # Lint code
 lint:
-    cargo clippy
+    cargo clippy --all-targets --all-features -- -D warnings
 
 # Clean build artifacts
 clean:

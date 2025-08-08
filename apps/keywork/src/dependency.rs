@@ -1,10 +1,12 @@
 //! Dependency resolution and management.
 
-use crate::registry::Registry;
-use miette::{Result, miette};
-use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
+
+use miette::{Result, miette};
+use serde::{Deserialize, Serialize};
+
+use crate::registry::Registry;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Dependency {

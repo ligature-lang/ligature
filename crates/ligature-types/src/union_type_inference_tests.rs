@@ -1,9 +1,10 @@
 //! Tests for union type inference in the Ligature language.
 
-use crate::inference::TypeInference;
-use crate::type_check_program;
 use ligature_ast::{Expr, ExprKind, Literal, Span, Type, TypeKind, TypeVariant};
 use ligature_parser::parse_program;
+
+use crate::inference::TypeInference;
+use crate::type_check_program;
 
 #[test]
 fn test_basic_union_construction() {

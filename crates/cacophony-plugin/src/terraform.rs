@@ -1,12 +1,12 @@
-use async_trait::async_trait;
-use serde_json::Value;
 use std::collections::HashMap;
 use std::process::Command;
 
+use async_trait::async_trait;
 use cacophony_core::{
     CacophonyError, Collection, Environment, Operation, OperationResult, Plugin, Result,
     ValidationResult,
 };
+use serde_json::Value;
 
 /// Terraform plugin for infrastructure management
 pub struct TerraformPlugin {
@@ -597,8 +597,9 @@ impl Operation for TerraformDestroyOperation {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use serde_json::json;
+
+    use super::*;
 
     // Mock types for testing
     #[allow(dead_code)]

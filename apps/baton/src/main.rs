@@ -192,8 +192,12 @@ async fn main() -> anyhow::Result<()> {
                 "operational" => DifferentialTestType::OperationalSemantics,
                 "config" => DifferentialTestType::ConfigurationValidation,
                 _ => {
-                    println!("{}: Invalid test type '{}'. Use: evaluation, typecheck, operational, config", 
-                             "✗ Error".red(), test_type);
+                    println!(
+                        "{}: Invalid test type '{}'. Use: evaluation, typecheck, operational, \
+                         config",
+                        "✗ Error".red(),
+                        test_type
+                    );
                     return Ok(());
                 }
             };

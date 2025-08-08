@@ -4,6 +4,7 @@
 //! performance benchmarking and optimization.
 
 use std::process;
+
 use thiserror::Error;
 
 #[derive(Error, Debug)]

@@ -1,6 +1,7 @@
 //! XDG base directory path resolution with fallback support.
 
 use std::path::PathBuf;
+
 use xdg::BaseDirectories;
 
 use crate::error::{Result, XdgError};
@@ -260,7 +261,9 @@ impl XdgPaths {
         {
             return Err(XdgError::InvalidComponentName {
                 name: component.to_string(),
-                reason: "Component name can only contain ASCII alphanumeric characters, hyphens, and underscores".to_string(),
+                reason: "Component name can only contain ASCII alphanumeric characters, hyphens, \
+                         and underscores"
+                    .to_string(),
             });
         }
 

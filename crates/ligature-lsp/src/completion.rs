@@ -1,12 +1,13 @@
 //! Completion provider for the Ligature LSP server.
 
+use std::collections::HashMap;
+
 use ligature_ast::{DeclarationKind, Program, Type, TypeKind};
 use ligature_types::checker::TypeChecker;
 use lsp_types::{
     CompletionItem, CompletionItemKind, CompletionResponse, InsertTextFormat, MarkupContent,
     MarkupKind, Position,
 };
-use std::collections::HashMap;
 
 /// Provider for code completion suggestions.
 pub struct CompletionProvider {
@@ -705,7 +706,11 @@ impl CompletionProvider {
                 deprecated: None,
                 sort_text: Some("5_match".to_string()),
                 filter_text: Some("match".to_string()),
-                insert_text: Some("match ${1:expression} of\n  ${2:pattern} => ${3:result}\n  ${4:_} => ${5:default}".to_string()),
+                insert_text: Some(
+                    "match ${1:expression} of\n  ${2:pattern} => ${3:result}\n  ${4:_} => \
+                     ${5:default}"
+                        .to_string(),
+                ),
                 insert_text_format: Some(InsertTextFormat::SNIPPET),
                 text_edit: None,
                 additional_text_edits: None,
@@ -733,7 +738,11 @@ impl CompletionProvider {
                 deprecated: None,
                 sort_text: Some("5_case".to_string()),
                 filter_text: Some("case".to_string()),
-                insert_text: Some("case ${1:expression} of\n  ${2:pattern} => ${3:result}\n  ${4:_} => ${5:default}".to_string()),
+                insert_text: Some(
+                    "case ${1:expression} of\n  ${2:pattern} => ${3:result}\n  ${4:_} => \
+                     ${5:default}"
+                        .to_string(),
+                ),
                 insert_text_format: Some(InsertTextFormat::SNIPPET),
                 text_edit: None,
                 additional_text_edits: None,

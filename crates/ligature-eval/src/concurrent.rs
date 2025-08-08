@@ -3,11 +3,14 @@
 //! This module provides thread-safe data structures optimized for
 //! concurrent access patterns in the evaluation engine.
 
-use crate::{environment::EvaluationEnvironment, value::Value};
-use dashmap::DashMap;
-use ligature_ast::{Expr, Type};
 use std::collections::HashMap;
 use std::sync::Arc;
+
+use dashmap::DashMap;
+use ligature_ast::{Expr, Type};
+
+use crate::environment::EvaluationEnvironment;
+use crate::value::Value;
 
 /// Cache key for expression evaluation
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -621,8 +624,9 @@ impl Default for ConcurrentPatternMatcher {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use ligature_ast::{Expr, ExprKind, Literal, Span};
+
+    use super::*;
 
     #[test]
     fn test_concurrent_expression_cache() {

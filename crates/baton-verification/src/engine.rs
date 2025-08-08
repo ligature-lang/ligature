@@ -1,17 +1,19 @@
 //! Core verification engine implementation.
 
-use crate::types::{
-    CachedResult, EngineHealthStatus, TaskStatus, VerificationConfig, VerificationEngine,
-    VerificationMetrics, VerificationTask,
-};
+use std::collections::HashMap;
+use std::sync::Arc;
+use std::time::{Duration, Instant};
+
 use baton_client::prelude::*;
 use baton_engine_plugin::{BuildConfig, EngineConfig};
 use baton_protocol::{LeanRequest, LeanResponse, VerificationRequest, VerificationResponse};
 use baton_specification::{BuildStatus, LeanSpecification, ValidationResult};
-use std::collections::HashMap;
-use std::sync::Arc;
-use std::time::{Duration, Instant};
 use tokio::sync::Mutex;
+
+use crate::types::{
+    CachedResult, EngineHealthStatus, TaskStatus, VerificationConfig, VerificationEngine,
+    VerificationMetrics, VerificationTask,
+};
 
 impl VerificationEngine {
     /// Create a new verification engine with default configuration.

@@ -11,6 +11,7 @@ pub use plugin::LeanEnginePlugin;
 
 /// Re-export commonly used types
 pub mod prelude {
-    pub use super::{LeanEngine, LeanEnginePlugin};
     pub use baton_engine_plugin::prelude::*;
+
+    pub use super::{LeanEngine, LeanEnginePlugin};
 }

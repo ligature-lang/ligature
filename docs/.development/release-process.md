@@ -49,6 +49,7 @@ Use the release preparation script:
 ```
 
 The script will:
+
 - Validate the working directory is clean
 - Calculate the new version
 - Update `Cargo.toml`
@@ -71,6 +72,7 @@ https://github.com/ligature-lang/ligature/actions
 ## Workflow Jobs
 
 ### 1. Pre-release Checks
+
 - **Code formatting** with `rustfmt`
 - **Linting** with `clippy`
 - **All tests** (unit, integration, property, differential)
@@ -78,17 +80,21 @@ https://github.com/ligature-lang/ligature/actions
 - **Documentation** checks
 
 ### 2. Version Validation
+
 - **Format validation** (semantic versioning)
 - **Cargo.toml consistency** check
 - **Tag uniqueness** verification
 
 ### 3. Changelog Generation
+
 - **Automatic changelog** from git commits
 - **Filtered commits** (excludes merge commits)
 - **Formatted output** for GitHub release
 
 ### 4. Crate Publishing
+
 Publishes all crates in parallel:
+
 - `ligature-ast`
 - `ligature-parser`
 - `ligature-types`
@@ -99,6 +105,7 @@ Publishes all crates in parallel:
 - `keywork`
 
 ### 5. GitHub Release
+
 - **Creates release** with generated changelog
 - **Includes installation** instructions
 - **Links to documentation**
@@ -118,6 +125,7 @@ The project follows [Semantic Versioning](https://semver.org/):
 Versions must follow the format: `vX.Y.Z[-prerelease][+build]`
 
 Examples:
+
 - `v0.1.0` - Standard release
 - `v0.1.0-alpha.1` - Prerelease
 - `v0.1.0+20231219` - Build metadata
@@ -136,7 +144,7 @@ version = "0.1.0"
 Before creating a release, ensure:
 
 - [ ] All tests pass locally
-- [ ] Code is formatted (`cargo fmt`)
+- [ ] Code is formatted (`cargo +nightly fmt`)
 - [ ] No clippy warnings (`cargo clippy`)
 - [ ] Documentation is up to date
 - [ ] Changelog is meaningful
@@ -148,27 +156,35 @@ Before creating a release, ensure:
 ### Common Issues
 
 #### 1. Version Already Exists
+
 ```
 Error: Version v0.1.0 already exists as a tag
 ```
+
 **Solution**: Use a different version or delete the existing tag.
 
 #### 2. Working Directory Not Clean
+
 ```
 Error: Working directory is not clean
 ```
+
 **Solution**: Commit or stash your changes, or use `--force`.
 
 #### 3. Cargo Registry Token Missing
+
 ```
 Error: 401 Unauthorized
 ```
+
 **Solution**: Add `CARGO_REGISTRY_TOKEN` to GitHub secrets.
 
 #### 4. Crate Already Published
+
 ```
 Error: crate already exists
 ```
+
 **Solution**: Bump the version before publishing.
 
 ### Manual Release
@@ -217,4 +233,4 @@ For issues with the release process:
 1. Check the [GitHub Actions logs](https://github.com/ligature-lang/ligature/actions)
 2. Review this documentation
 3. Open an issue in the repository
-4. Contact the maintainers 
+4. Contact the maintainers

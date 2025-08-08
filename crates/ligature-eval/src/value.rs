@@ -1,8 +1,9 @@
 //! Value representation for the Ligature evaluation engine.
 
-use ligature_ast::{Expr, Literal, Span};
 use std::collections::HashMap;
 use std::sync::Arc;
+
+use ligature_ast::{Expr, Literal, Span};
 
 use crate::environment::EvaluationEnvironment;
 

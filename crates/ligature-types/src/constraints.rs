@@ -1,7 +1,8 @@
 //! Constraint solver for type inference.
 
-use ligature_ast::{Type, TypeKind};
 use std::collections::HashMap;
+
+use ligature_ast::{Type, TypeKind};
 
 /// A type constraint.
 #[derive(Debug, Clone, PartialEq)]
@@ -246,7 +247,8 @@ impl ConstraintSolver {
                     }
                     if !found {
                         return Err(format!(
-                            "Record subtyping failed: supertype missing required field '{}'. Available fields: [{}]",
+                            "Record subtyping failed: supertype missing required field '{}'. \
+                             Available fields: [{}]",
                             field2.name,
                             f1.iter()
                                 .map(|f| f.name.as_str())
@@ -276,7 +278,8 @@ impl ConstraintSolver {
                                 (None, None) => {}
                                 _ => {
                                     return Err(format!(
-                                        "Union subtyping failed: variants '{}' have different associated types",
+                                        "Union subtyping failed: variants '{}' have different \
+                                         associated types",
                                         variant1.name
                                     ));
                                 }
@@ -287,7 +290,8 @@ impl ConstraintSolver {
                     }
                     if !found {
                         return Err(format!(
-                            "Union subtyping failed: supertype missing required variant '{}'. Available variants: [{}]",
+                            "Union subtyping failed: supertype missing required variant '{}'. \
+                             Available variants: [{}]",
                             variant1.name,
                             v2.iter()
                                 .map(|v| v.name.as_str())
@@ -308,7 +312,8 @@ impl ConstraintSolver {
             // Incompatible types
             _ => Err(format!(
                 "Subtyping failed: cannot establish subtype relationship between {:?} and {:?}. \
-                     Consider if these types should be related or if there's a type error in your code.",
+                 Consider if these types should be related or if there's a type error in your \
+                 code.",
                 left.kind, right.kind
             )),
         }
@@ -403,11 +408,13 @@ impl ConstraintSolver {
                 let available_instances = self.get_available_instances(&class);
                 if available_instances.is_empty() {
                     Err(format!(
-                        "No instance found for type {type_:?} in class {class}. No instances available for this class."
+                        "No instance found for type {type_:?} in class {class}. No instances \
+                         available for this class."
                     ))
                 } else {
                     Err(format!(
-                        "No instance found for type {type_:?} in class {class}. Available instances: {}",
+                        "No instance found for type {type_:?} in class {class}. Available \
+                         instances: {}",
                         available_instances.join(", ")
                     ))
                 }
@@ -422,7 +429,8 @@ impl ConstraintSolver {
             _ => {
                 // Multiple instances found - ambiguous
                 Err(format!(
-                    "Ambiguous type class resolution: type {type_:?} could match multiple instances of {class}: {}",
+                    "Ambiguous type class resolution: type {type_:?} could match multiple \
+                     instances of {class}: {}",
                     matching_instances.join(", ")
                 ))
             }

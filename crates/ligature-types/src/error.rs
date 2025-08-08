@@ -117,7 +117,8 @@ pub enum TypeError {
     },
 
     #[error(
-        "Type class constraint unsatisfied: {type_} does not implement {class}. Available instances: {available_instances}"
+        "Type class constraint unsatisfied: {type_} does not implement {class}. Available \
+         instances: {available_instances}"
     )]
     TypeClassConstraintUnsatisfiedWithInstances {
         type_: String,
@@ -453,7 +454,8 @@ impl TypeError {
                 span,
             } => AstError::InternalError {
                 message: format!(
-                    "Type class constraint unsatisfied: {type_} does not implement {class}. Available instances: {available_instances}"
+                    "Type class constraint unsatisfied: {type_} does not implement {class}. \
+                     Available instances: {available_instances}"
                 ),
                 span,
             },
@@ -464,7 +466,8 @@ impl TypeError {
                 span,
             } => AstError::InternalError {
                 message: format!(
-                    "Ambiguous type class resolution: {type_} could match multiple instances of {class}"
+                    "Ambiguous type class resolution: {type_} could match multiple instances of \
+                     {class}"
                 ),
                 span,
             },

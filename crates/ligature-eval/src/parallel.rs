@@ -3,14 +3,17 @@
 //! This module provides parallel evaluation capabilities including
 //! work distribution, task scheduling, and concurrent execution.
 
-use crate::{environment::EvaluationEnvironment, value::Value};
-use dashmap::DashMap;
-#[allow(unused_imports)]
-use ligature_ast::{AstError, AstResult, Expr, Program, Span, Type};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
+
+use dashmap::DashMap;
+#[allow(unused_imports)]
+use ligature_ast::{AstError, AstResult, Expr, Program, Span, Type};
 use uuid::Uuid;
+
+use crate::environment::EvaluationEnvironment;
+use crate::value::Value;
 
 /// Unique identifier for a task
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -455,8 +458,9 @@ impl Clone for Worker {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use ligature_ast::{Expr, ExprKind, Literal, Span};
+
+    use super::*;
 
     #[tokio::test]
     async fn test_work_queue() {

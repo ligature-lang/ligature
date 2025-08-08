@@ -6,10 +6,9 @@
 pub mod manager;
 pub mod terraform;
 
-pub use manager::PluginManager;
-pub use terraform::TerraformPlugin;
-
 // Re-export core types for convenience
 pub use cacophony_core::{
     CacophonyError, Operation, OperationResult, Plugin, Result, ValidationResult,
 };
+pub use manager::PluginManager;
+pub use terraform::TerraformPlugin;

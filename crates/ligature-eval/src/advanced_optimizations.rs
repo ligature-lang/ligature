@@ -1,12 +1,13 @@
 //! Advanced performance optimizations for the Ligature evaluator.
 
-use crate::environment::EvaluationEnvironment;
-use crate::value::{Value, ValueKind};
-use ligature_ast::{Expr, ExprKind, Span};
 use std::collections::HashMap;
 use std::hash::{DefaultHasher, Hash, Hasher};
-
 use std::time::Instant;
+
+use ligature_ast::{Expr, ExprKind, Span};
+
+use crate::environment::EvaluationEnvironment;
+use crate::value::{Value, ValueKind};
 
 /// Optimized function call cache for reducing function call overhead
 #[derive(Debug, Clone)]

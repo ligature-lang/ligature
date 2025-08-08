@@ -1,14 +1,14 @@
 //! Main client for executing Ligature programs.
 
-use crate::{
-    ClientConfig, ExecutionMode, ExecutionResult,
-    cache::Cache,
-    error::{Error, Result},
-    executor::{Executor, HttpExecutor, NativeExecutor},
-};
-use ligature_ast::Program;
 use std::path::Path;
+
+use ligature_ast::Program;
 use tracing::{debug, info, warn};
+
+use crate::cache::Cache;
+use crate::error::{Error, Result};
+use crate::executor::{Executor, HttpExecutor, NativeExecutor};
+use crate::{ClientConfig, ExecutionMode, ExecutionResult};
 
 /// The main Krox client for executing Ligature programs.
 pub struct Client {
@@ -223,9 +223,10 @@ impl Client {
 
 #[cfg(test)]
 mod tests {
+    use tempfile::tempdir;
+
     use super::*;
     use crate::ClientBuilder;
-    use tempfile::tempdir;
 
     #[tokio::test]
     async fn test_client_creation() {

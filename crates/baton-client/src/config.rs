@@ -1,7 +1,8 @@
 //! Configuration types for Baton client.
 
-use serde_json;
 use std::time::Duration;
+
+use serde_json;
 
 /// Configuration for engine client.
 #[derive(Debug, Clone)]

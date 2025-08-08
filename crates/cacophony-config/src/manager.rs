@@ -1,9 +1,11 @@
-use super::validation::ValidationResult;
-use super::xdg::CacophonyXdgConfig;
-use cacophony_core::config::*;
-use cacophony_core::error::{CacophonyError, Result};
 use std::collections::HashMap;
 use std::path::PathBuf;
+
+use cacophony_core::config::*;
+use cacophony_core::error::{CacophonyError, Result};
+
+use super::validation::ValidationResult;
+use super::xdg::CacophonyXdgConfig;
 
 pub struct ConfigManager {
     config: CacophonyConfig,

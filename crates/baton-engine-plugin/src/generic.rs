@@ -1,12 +1,13 @@
 //! Generic engine abstractions for engine-agnostic verification.
 
-use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::Duration;
 
-use crate::engine::{EngineCapabilities, EngineInfo};
+use async_trait::async_trait;
 use baton_error::prelude::*;
+use serde::{Deserialize, Serialize};
+
+use crate::engine::{EngineCapabilities, EngineInfo};
 
 /// Generic engine configuration that can be implemented by any verification engine.
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -1,6 +1,7 @@
 //! Core error types for Baton formal verification.
 
 use std::path::PathBuf;
+
 use thiserror::Error;
 
 /// Errors that can occur during Baton formal verification.

@@ -35,6 +35,8 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+
+use ligature_ast::{AstError, Span};
 use thiserror::Error;
 use tokio::sync::RwLock;
 use tower_lsp::jsonrpc::Result;
@@ -42,23 +44,20 @@ use tower_lsp::lsp_types::*;
 use tower_lsp::{Client, LanguageServer, LspService, Server};
 use tracing::{info, warn};
 
-use crate::{
-    code_actions::CodeActionsProvider,
-    completion::CompletionProvider,
-    config::{ConfigurationManager, LspConfiguration},
-    definition::DefinitionProvider,
-    diagnostics::DiagnosticsProvider,
-    formatting::FormattingProvider,
-    hover::HoverProvider,
-    import_resolution::ImportResolutionService,
-    inlay_hints::InlayHintsProvider,
-    references::ReferencesProvider,
-    rename::RenameProvider,
-    symbols::SymbolsProvider,
-    workspace::WorkspaceManager,
-    xdg_config::{LspConfig, LspXdgConfig},
-};
-use ligature_ast::{AstError, Span};
+use crate::code_actions::CodeActionsProvider;
+use crate::completion::CompletionProvider;
+use crate::config::{ConfigurationManager, LspConfiguration};
+use crate::definition::DefinitionProvider;
+use crate::diagnostics::DiagnosticsProvider;
+use crate::formatting::FormattingProvider;
+use crate::hover::HoverProvider;
+use crate::import_resolution::ImportResolutionService;
+use crate::inlay_hints::InlayHintsProvider;
+use crate::references::ReferencesProvider;
+use crate::rename::RenameProvider;
+use crate::symbols::SymbolsProvider;
+use crate::workspace::WorkspaceManager;
+use crate::xdg_config::{LspConfig, LspXdgConfig};
 
 // Constants
 const DEFAULT_SERVER_VERSION: &str = "0.1.0";

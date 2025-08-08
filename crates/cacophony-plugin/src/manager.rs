@@ -1,7 +1,7 @@
-use serde_json::Value;
 use std::collections::HashMap;
 
 use cacophony_core::{CacophonyError, Operation, Plugin, Result};
+use serde_json::Value;
 
 type PluginBox = Box<dyn Plugin>;
 

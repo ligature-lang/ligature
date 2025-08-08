@@ -2,18 +2,17 @@ pub mod manager;
 pub mod validation;
 pub mod xdg;
 
+// Re-export core config types for convenience
+pub use cacophony_core::config::*;
 pub use manager::ConfigManager;
 pub use validation::ValidationResult;
 pub use xdg::CacophonyXdgConfig;
 
-// Re-export core config types for convenience
-pub use cacophony_core::config::*;
-
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     use std::path::PathBuf;
+
+    use super::*;
 
     #[test]
     fn test_config_manager_creation() {

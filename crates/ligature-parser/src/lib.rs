@@ -11,8 +11,6 @@ pub mod parser;
 pub mod fuzzing;
 
 pub use error::ParserError;
-pub use parser::Parser;
-
 // Re-export commonly used types from ligature-ast
 pub use ligature_ast::{
     AstError, AstResult, Declaration, ExportDeclaration, ExportItem, Expr, ExprKind, Import,
@@ -20,6 +18,7 @@ pub use ligature_ast::{
     TypeAlias, TypeClassDeclaration, TypeConstructor, TypeField, TypeKind, TypeVariant,
     ValueDeclaration,
 };
+pub use parser::Parser;
 
 /// Parse a complete program from source text.
 pub fn parse_program(source: &str) -> AstResult<ligature_ast::Program> {

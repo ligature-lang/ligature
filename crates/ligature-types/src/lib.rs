@@ -11,8 +11,9 @@ pub mod error;
 pub mod inference;
 pub mod resolver;
 
-use ligature_ast::{AstResult, Module, Program};
 use std::path::PathBuf;
+
+use ligature_ast::{AstResult, Module, Program};
 
 // Test modules
 #[cfg(test)]
@@ -58,12 +59,13 @@ pub fn infer_expression(expr: &ligature_ast::Expr) -> AstResult<ligature_ast::Ty
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use ligature_ast::{
         Declaration, DeclarationKind, Expr, ExprKind, Literal, Program, Span, Type, TypeKind,
         ValueDeclaration,
     };
     use ligature_parser::parse_program;
+
+    use super::*;
 
     #[test]
     fn test_binding_conflicts_implementation() {

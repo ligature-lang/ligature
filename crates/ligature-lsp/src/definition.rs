@@ -1,8 +1,9 @@
 //! Definition provider for the Ligature LSP server.
 
+use std::collections::HashMap;
+
 use ligature_ast::{DeclarationKind, Program, Span};
 use lsp_types::{Location, Position, Range, Url};
-use std::collections::HashMap;
 
 /// Type alias for the definitions cache to reduce complexity
 type DefinitionsCache = HashMap<String, HashMap<String, Location>>;

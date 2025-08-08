@@ -123,7 +123,8 @@ fn benchmark_cases() -> Vec<BenchmarkData> {
         },
         BenchmarkData {
             name: "very_complex_expression",
-            input: "let config = { threshold: 100, enabled: true } in if config.enabled && value > config.threshold then process(value) else skip()",
+            input: "let config = { threshold: 100, enabled: true } in if config.enabled && value \
+                    > config.threshold then process(value) else skip()",
             category: "complex",
         },
     ]

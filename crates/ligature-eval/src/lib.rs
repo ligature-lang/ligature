@@ -34,6 +34,8 @@ pub use enhanced_async_evaluator::{EnhancedAsyncEvaluator, EnhancedAsyncEvaluato
 pub use environment::EvaluationEnvironment;
 pub use error::EvaluationError;
 pub use evaluator::Evaluator;
+// Re-export common types from dependencies
+pub use ligature_ast::{AstResult, Expr, Module, Program, Type};
 pub use parallel::{
     ParallelEvaluator, ParallelEvaluatorConfig, Task, TaskId, TaskStatus, WorkQueue, Worker,
 };
@@ -41,9 +43,6 @@ pub use performance::{
     PerformanceConfig, PerformanceMetrics, PerformanceMonitor, PerformanceReport,
 };
 pub use value::Value;
-
-// Re-export common types from dependencies
-pub use ligature_ast::{AstResult, Expr, Module, Program, Type};
 
 /// Evaluate a complete program using the default evaluator.
 pub fn evaluate_program(program: &Program) -> AstResult<Value> {

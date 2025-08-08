@@ -3,17 +3,19 @@
 //! This module provides advanced asynchronous evaluation capabilities
 //! including concurrent execution, caching, and performance optimizations.
 
-use crate::{
-    concurrent::{ConcurrentExpressionCache, ConcurrentTypeEnvironment, ConcurrentValueCache},
-    concurrent_type_checker::ConcurrentTypeChecker,
-    environment::EvaluationEnvironment,
-    value::Value,
-};
-use dashmap::DashMap;
-use ligature_ast::{AstError, AstResult, Expr, Program, Span};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
+
+use dashmap::DashMap;
+use ligature_ast::{AstError, AstResult, Expr, Program, Span};
 use tokio::sync::RwLock;
+
+use crate::concurrent::{
+    ConcurrentExpressionCache, ConcurrentTypeEnvironment, ConcurrentValueCache,
+};
+use crate::concurrent_type_checker::ConcurrentTypeChecker;
+use crate::environment::EvaluationEnvironment;
+use crate::value::Value;
 
 /// Configuration for the enhanced async evaluator
 #[derive(Debug, Clone)]
@@ -592,8 +594,9 @@ impl Clone for EnhancedAsyncEvaluator {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use ligature_ast::{Expr, ExprKind, Literal, Span, Type};
+
+    use super::*;
 
     #[tokio::test]
     async fn test_enhanced_async_evaluator() {

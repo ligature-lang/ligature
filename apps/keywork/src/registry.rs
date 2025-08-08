@@ -1,12 +1,14 @@
 //! Registry operations for remote package management.
 
-use crate::xdg_config::KeyworkXdgConfig;
-use miette::{IntoDiagnostic, Result, miette};
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::time::{Duration, SystemTime};
+
+use miette::{IntoDiagnostic, Result, miette};
+use serde::{Deserialize, Serialize};
 use tokio::fs;
+
+use crate::xdg_config::KeyworkXdgConfig;
 
 #[derive(Debug, Clone)]
 pub struct Registry {
@@ -62,7 +64,7 @@ impl Default for Registry {
             .join("keywork");
 
         Self {
-            url: "http://localhost:8080".to_string(), // Use localhost for development to trigger mock mode
+            url: "http://localhost:8080".to_string(), /* Use localhost for development to trigger mock mode */
             client: reqwest::Client::builder()
                 .timeout(Duration::from_secs(30))
                 .user_agent("keywork/1.0.0")

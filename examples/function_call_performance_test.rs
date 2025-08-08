@@ -1,9 +1,10 @@
 //! Realistic function call performance benchmark that tests actual function evaluation
 //! without relying on caching to get a true measure of function call overhead.
 
+use std::time::Instant;
+
 use ligature_ast::{AstResult, BinaryOperator, Expr, ExprKind, Literal, Span};
 use ligature_eval::Evaluator;
-use std::time::Instant;
 
 fn main() -> AstResult<()> {
     println!("Realistic Function Call Performance Benchmark");

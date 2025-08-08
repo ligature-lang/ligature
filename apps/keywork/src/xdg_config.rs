@@ -1,9 +1,10 @@
 //! XDG-based configuration for Keywork package manager.
 
-use embouchure_xdg::{XdgPaths, config_for_component};
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
+
+use embouchure_xdg::{XdgPaths, config_for_component};
+use serde::{Deserialize, Serialize};
 
 /// Type alias for error results to reduce complexity
 type ConfigResult<T> = Result<T, Box<dyn std::error::Error>>;

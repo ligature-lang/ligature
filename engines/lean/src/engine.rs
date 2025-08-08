@@ -1,11 +1,12 @@
 //! Lean verification engine implementation.
 
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use baton_engine_plugin::traits::{EngineHealthStatus, EngineStats, VerificationEngine};
 use baton_error::prelude::*;
 use baton_protocol::prelude::*;
 use baton_verification::prelude::*;
-use std::sync::Arc;
 use tokio::sync::Mutex;
 
 /// Lean verification engine that wraps the baton-verification functionality.
@@ -242,7 +243,8 @@ impl VerificationEngine for LeanEngine {
 
         // Create a theorem for refinement verification
         let theorem = format!(
-            "refinement: {concrete_spec} refines {abstract_spec} under relation {refinement_relation}"
+            "refinement: {concrete_spec} refines {abstract_spec} under relation \
+             {refinement_relation}"
         );
 
         let result = self

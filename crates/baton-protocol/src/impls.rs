@@ -1,7 +1,8 @@
 //! Implementations for protocol types.
 
-use crate::types::*;
 use baton_core::RequestPriority;
+
+use crate::types::*;
 
 impl std::fmt::Display for LeanRequest {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -136,7 +137,11 @@ impl std::fmt::Display for LeanRequest {
                 refinement_relation,
                 ..
             } => {
-                write!(f, "VerifyRefinement({abstract_spec} -> {concrete_spec} via {refinement_relation})")
+                write!(
+                    f,
+                    "VerifyRefinement({abstract_spec} -> {concrete_spec} via \
+                     {refinement_relation})"
+                )
             }
         }
     }

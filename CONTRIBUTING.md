@@ -118,7 +118,7 @@ To run the same checks locally that the CI performs:
 just check-all
 
 # Manual commands
-cargo fmt --all -- --check
+cargo +nightly fmt --all -- --check
 cargo clippy --all-targets --all-features -- -D warnings
 cargo test
 
@@ -136,7 +136,7 @@ cargo doc --no-deps --all
 ## Code Style
 
 - Follow Rust conventions
-- Use `cargo fmt` for formatting
+- Use `cargo +nightly fmt` for formatting
 - Use `cargo clippy` for linting
 - Write comprehensive documentation
 - Add tests for new features

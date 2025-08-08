@@ -1,13 +1,13 @@
 //! Benchmarking utilities for the Ligature evaluation engine.
 
-use crate::{
-    Evaluator,
-    evaluator::CacheStats,
-    memory::{MemoryStats, MemoryTracker},
-};
+use std::time::{Duration, Instant};
+
 use ligature_ast::{AstError, Span};
 use ligature_parser::parse_program;
-use std::time::{Duration, Instant};
+
+use crate::Evaluator;
+use crate::evaluator::CacheStats;
+use crate::memory::{MemoryStats, MemoryTracker};
 
 /// Benchmark results for a specific test.
 #[derive(Debug, Clone)]
@@ -229,22 +229,27 @@ impl BenchmarkSuite {
         if has_memory_data && has_cache_data {
             writeln!(
                 file,
-                "name,iterations,total_time_ns,avg_time_ns,min_time_ns,max_time_ns,throughput_ops_per_sec,memory_rss_bytes,memory_vms_bytes,memory_delta_bytes,cache_hits,cache_misses,cache_hit_rate,cache_evictions"
+                "name,iterations,total_time_ns,avg_time_ns,min_time_ns,max_time_ns,\
+                 throughput_ops_per_sec,memory_rss_bytes,memory_vms_bytes,memory_delta_bytes,\
+                 cache_hits,cache_misses,cache_hit_rate,cache_evictions"
             )?;
         } else if has_memory_data {
             writeln!(
                 file,
-                "name,iterations,total_time_ns,avg_time_ns,min_time_ns,max_time_ns,throughput_ops_per_sec,memory_rss_bytes,memory_vms_bytes,memory_delta_bytes"
+                "name,iterations,total_time_ns,avg_time_ns,min_time_ns,max_time_ns,\
+                 throughput_ops_per_sec,memory_rss_bytes,memory_vms_bytes,memory_delta_bytes"
             )?;
         } else if has_cache_data {
             writeln!(
                 file,
-                "name,iterations,total_time_ns,avg_time_ns,min_time_ns,max_time_ns,throughput_ops_per_sec,cache_hits,cache_misses,cache_hit_rate,cache_evictions"
+                "name,iterations,total_time_ns,avg_time_ns,min_time_ns,max_time_ns,\
+                 throughput_ops_per_sec,cache_hits,cache_misses,cache_hit_rate,cache_evictions"
             )?;
         } else {
             writeln!(
                 file,
-                "name,iterations,total_time_ns,avg_time_ns,min_time_ns,max_time_ns,throughput_ops_per_sec"
+                "name,iterations,total_time_ns,avg_time_ns,min_time_ns,max_time_ns,\
+                 throughput_ops_per_sec"
             )?;
         }
 

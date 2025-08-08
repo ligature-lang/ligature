@@ -3,16 +3,16 @@
 //! This tool provides comprehensive performance monitoring, regression testing,
 //! and adaptive optimization management.
 
-use clap::{Arg, ArgAction, Command};
-use ligature_eval::evaluate_program;
-use ligature_eval::{
-    AdaptiveOptimizer, AdaptiveOptimizerConfig, PerformanceConfig, PerformanceMonitor,
-    PerformanceReport,
-};
-use ligature_parser::parse_program;
 use std::io::Write;
 use std::path::PathBuf;
 use std::time::Duration;
+
+use clap::{Arg, ArgAction, Command};
+use ligature_eval::{
+    evaluate_program, AdaptiveOptimizer, AdaptiveOptimizerConfig, PerformanceConfig,
+    PerformanceMonitor, PerformanceReport,
+};
+use ligature_parser::parse_program;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 

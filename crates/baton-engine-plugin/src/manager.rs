@@ -1,12 +1,14 @@
 //! Plugin manager for Baton verification engines.
 
-use crate::engine::{EngineCapabilities, EngineInfo, EngineStatus};
-use crate::traits::{EnginePlugin, VerificationEngine};
-use baton_error::prelude::*;
-use serde_json::Value;
 use std::collections::HashMap;
 use std::sync::Arc;
+
+use baton_error::prelude::*;
+use serde_json::Value;
 use tokio::sync::Mutex;
+
+use crate::engine::{EngineCapabilities, EngineInfo, EngineStatus};
+use crate::traits::{EnginePlugin, VerificationEngine};
 
 type PluginBox = Box<dyn EnginePlugin>;
 
@@ -317,11 +319,11 @@ pub struct ManagerStats {
 
 #[cfg(test)]
 mod tests {
+    use async_trait::async_trait;
+
     use super::*;
     use crate::engine::{EngineCapabilities, EngineInfo, EngineStatus};
     use crate::traits::{EnginePlugin, VerificationEngine};
-
-    use async_trait::async_trait;
 
     // Mock plugin for testing
     struct MockPlugin {

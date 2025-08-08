@@ -1,6 +1,7 @@
+use std::time::Instant;
+
 use ligature_ast::{AstResult, Pattern, Span};
 use ligature_eval::{Evaluator, Value};
-use std::time::Instant;
 
 fn main() -> AstResult<()> {
     println!("Testing advanced union pattern matching...");

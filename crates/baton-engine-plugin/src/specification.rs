@@ -1,13 +1,14 @@
 //! Generic specification manager for engine-agnostic specification handling.
 
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use crate::generic::{BuildConfig, EngineConfig};
 use baton_error::prelude::*;
+use serde::{Deserialize, Serialize};
+
+use crate::generic::{BuildConfig, EngineConfig};
 
 /// Generic specification manager that can work with any verification engine.
 pub struct GenericSpecification {

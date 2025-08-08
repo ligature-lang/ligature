@@ -1,8 +1,9 @@
 //! Configuration management for the Ligature LSP server.
 
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
+
+use serde::{Deserialize, Serialize};
 
 /// Comprehensive LSP configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]

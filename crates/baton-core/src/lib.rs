@@ -3,9 +3,10 @@
 //! This crate provides the foundational types and traits used across
 //! the Baton formal verification system.
 
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::Duration;
+
+use serde::{Deserialize, Serialize};
 
 /// Request priority levels for verification operations
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]

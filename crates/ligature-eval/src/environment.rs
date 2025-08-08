@@ -1,8 +1,10 @@
 //! Evaluation environment for managing variable bindings during evaluation.
 
-use crate::value::Value;
-use ligature_ast::AstResult;
 use std::collections::HashMap;
+
+use ligature_ast::AstResult;
+
+use crate::value::Value;
 
 /// An evaluation environment that manages variable bindings during evaluation.
 #[derive(Debug, Clone, PartialEq)]

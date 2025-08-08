@@ -633,7 +633,8 @@ fn test_program_evaluation() -> bool {
                         // Programs should return unit
                         if !value.is_unit() {
                             println!(
-                                "     Failed program evaluation for '{source}': expected unit, got {value:?}",
+                                "     Failed program evaluation for '{source}': expected unit, \
+                                 got {value:?}",
                             );
                             return false;
                         }
