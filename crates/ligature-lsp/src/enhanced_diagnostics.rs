@@ -4,8 +4,8 @@ use std::collections::HashMap;
 
 use ligature_ast::{Program, Span};
 use ligature_parser::parse_program;
-use ligature_types::checker::TypeChecker;
-use ligature_types::type_check_program;
+// use ligature_types::checker::TypeChecker;
+// use ligature_types::type_check_program;
 use lsp_types::{
     Diagnostic, DiagnosticRelatedInformation, DiagnosticSeverity, NumberOrString, Position, Range,
 };
@@ -16,7 +16,7 @@ pub struct EnhancedDiagnosticsProvider {
     diagnostics_cache: HashMap<String, Vec<Diagnostic>>,
     /// Type checker for type-aware diagnostics.
     #[allow(dead_code)]
-    type_checker: TypeChecker,
+    // type_checker: TypeChecker,
     /// Configuration for enhanced diagnostics.
     config: EnhancedDiagnosticsConfig,
 }
@@ -59,7 +59,7 @@ impl EnhancedDiagnosticsProvider {
     pub fn new() -> Self {
         Self {
             diagnostics_cache: HashMap::new(),
-            type_checker: TypeChecker::new(),
+            // type_checker: TypeChecker::new(),
             config: EnhancedDiagnosticsConfig::default(),
         }
     }
@@ -68,7 +68,7 @@ impl EnhancedDiagnosticsProvider {
     pub fn with_config(config: EnhancedDiagnosticsConfig) -> Self {
         Self {
             diagnostics_cache: HashMap::new(),
-            type_checker: TypeChecker::new(),
+            // type_checker: TypeChecker::new(),
             config,
         }
     }
@@ -84,7 +84,25 @@ impl EnhancedDiagnosticsProvider {
 
         // Parse diagnostics with enhanced error reporting
         if let Err(parse_error) = parse_program(content) {
-            diagnostics.extend(self.convert_enhanced_parse_errors(&parse_error, uri));
+            match parse_error {
+                ligature_error::StandardError::Ligature(ligature_error) => {
+                    diagnostics.extend(self.convert_enhanced_parse_errors(&ligature_error, uri));
+                }
+                _ => {
+                    // Handle other standard errors as generic parse errors
+                    diagnostics.push(Diagnostic {
+                        range: Range::new(Position::new(0, 0), Position::new(0, 0)),
+                        severity: Some(DiagnosticSeverity::ERROR),
+                        code: Some(NumberOrString::String("P000".to_string())),
+                        code_description: None,
+                        source: Some("ligature-parser".to_string()),
+                        message: format!("Parse error: {}", parse_error),
+                        related_information: None,
+                        tags: None,
+                        data: None,
+                    });
+                }
+            }
         }
 
         // Type checking diagnostics with detailed explanations
@@ -128,7 +146,9 @@ impl EnhancedDiagnosticsProvider {
         let mut diagnostics = Vec::new();
 
         match error {
-            ligature_ast::AstError::ParseError { message: _, span } => {
+            ligature_ast::AstError::Parse {
+                message: _, span, ..
+            } => {
                 let message = if self.config.enable_detailed_explanations {
                     "Unexpected token. This token doesn't fit the expected syntax at this position."
                         .to_string()
@@ -149,7 +169,7 @@ impl EnhancedDiagnosticsProvider {
                 };
 
                 diagnostics.push(Diagnostic {
-                    range: self.span_to_range(*span),
+                    range: self.span_to_range(span.clone()),
                     severity: Some(DiagnosticSeverity::ERROR),
                     code: Some(NumberOrString::String("P001".to_string())),
                     code_description: None,
@@ -163,7 +183,8 @@ impl EnhancedDiagnosticsProvider {
             _ => {
                 // Handle other parse errors with basic conversion
                 diagnostics.push(Diagnostic {
-                    range: self.span_to_range(error.span()),
+                    range: self
+                        .span_to_range(error.span().unwrap_or_else(|| Span::new(0, 0, 0, 0))),
                     severity: Some(DiagnosticSeverity::ERROR),
                     code: Some(NumberOrString::String("P000".to_string())),
                     code_description: None,
@@ -188,9 +209,9 @@ impl EnhancedDiagnosticsProvider {
         let mut diagnostics = Vec::new();
 
         // Type check the program
-        if let Err(type_error) = type_check_program(program) {
-            diagnostics.extend(self.convert_enhanced_type_errors(&type_error, uri));
-        }
+        // if let Err(type_error) = type_check_program(program) {
+        //     diagnostics.extend(self.convert_enhanced_type_errors(&type_error, uri));
+        // }
 
         // Additional type-aware checks
         diagnostics.extend(self.check_enhanced_type_specific_issues(program, uri));
@@ -212,6 +233,7 @@ impl EnhancedDiagnosticsProvider {
                 expected,
                 found,
                 span,
+                ..
             } => {
                 let message = if self.config.enable_detailed_explanations {
                     format!(
@@ -238,7 +260,7 @@ impl EnhancedDiagnosticsProvider {
                 };
 
                 diagnostics.push(Diagnostic {
-                    range: self.span_to_range(*span),
+                    range: self.span_to_range(span.clone()),
                     severity: Some(DiagnosticSeverity::ERROR),
                     code: Some(NumberOrString::String("T001".to_string())),
                     code_description: None,
@@ -249,7 +271,7 @@ impl EnhancedDiagnosticsProvider {
                     data: None,
                 });
             }
-            ligature_ast::AstError::UndefinedIdentifier { name, span } => {
+            ligature_ast::AstError::UndefinedIdentifier { name, span, .. } => {
                 let message = if self.config.enable_detailed_explanations {
                     format!(
                         "Undefined identifier '{name}'. This variable or function hasn't been \
@@ -273,7 +295,7 @@ impl EnhancedDiagnosticsProvider {
                 };
 
                 diagnostics.push(Diagnostic {
-                    range: self.span_to_range(*span),
+                    range: self.span_to_range(span.clone()),
                     severity: Some(DiagnosticSeverity::ERROR),
                     code: Some(NumberOrString::String("T002".to_string())),
                     code_description: None,
@@ -287,7 +309,8 @@ impl EnhancedDiagnosticsProvider {
             _ => {
                 // Handle other type errors with basic conversion
                 diagnostics.push(Diagnostic {
-                    range: self.span_to_range(error.span()),
+                    range: self
+                        .span_to_range(error.span().unwrap_or_else(|| Span::new(0, 0, 0, 0))),
                     severity: Some(DiagnosticSeverity::ERROR),
                     code: Some(NumberOrString::String("T000".to_string())),
                     code_description: None,

@@ -1,5 +1,5 @@
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
-use ligature_ast::AstResult;
+use ligature_error::StandardResult;
 use ligature_parser::parse_expression;
 
 /// Benchmark data for different types of expressions
@@ -142,7 +142,7 @@ fn bench_parser(c: &mut Criterion) {
             &case.input,
             |b, input| {
                 b.iter(|| {
-                    let _result: AstResult<_> = parse_expression(input);
+                    let _result: StandardResult<_> = parse_expression(input);
                 });
             },
         );
@@ -171,7 +171,7 @@ fn bench_parser_with_errors(c: &mut Criterion) {
             &input,
             |b, input| {
                 b.iter(|| {
-                    let _result: AstResult<_> = parse_expression(input);
+                    let _result: StandardResult<_> = parse_expression(input);
                 });
             },
         );
@@ -215,7 +215,7 @@ fn bench_large_expressions(c: &mut Criterion) {
 
         group.bench_with_input(BenchmarkId::new("large", name), &input, |b, input| {
             b.iter(|| {
-                let _result: AstResult<_> = parse_expression(input);
+                let _result: StandardResult<_> = parse_expression(input);
             });
         });
     }
@@ -236,7 +236,7 @@ fn bench_memory_usage(c: &mut Criterion) {
         &complex_expr,
         |b, input| {
             b.iter(|| {
-                let _result: AstResult<_> = parse_expression(input);
+                let _result: StandardResult<_> = parse_expression(input);
             });
         },
     );

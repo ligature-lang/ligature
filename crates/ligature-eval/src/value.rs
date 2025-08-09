@@ -300,55 +300,55 @@ impl Value {
         match (operator, &self.kind, &other.kind) {
             // Arithmetic operators
             (ligature_ast::BinaryOperator::Add, ValueKind::Integer(a), ValueKind::Integer(b)) => {
-                Ok(Value::integer(**a + **b, self.span))
+                Ok(Value::integer(**a + **b, self.span.clone()))
             }
             (ligature_ast::BinaryOperator::Add, ValueKind::Float(a), ValueKind::Float(b)) => {
-                Ok(Value::float(**a + **b, self.span))
+                Ok(Value::float(**a + **b, self.span.clone()))
             }
             (ligature_ast::BinaryOperator::Add, ValueKind::Integer(a), ValueKind::Float(b)) => {
-                Ok(Value::float(**a as f64 + **b, self.span))
+                Ok(Value::float(**a as f64 + **b, self.span.clone()))
             }
             (ligature_ast::BinaryOperator::Add, ValueKind::Float(a), ValueKind::Integer(b)) => {
-                Ok(Value::float(**a + **b as f64, self.span))
+                Ok(Value::float(**a + **b as f64, self.span.clone()))
             }
 
             (
                 ligature_ast::BinaryOperator::Subtract,
                 ValueKind::Integer(a),
                 ValueKind::Integer(b),
-            ) => Ok(Value::integer(**a - **b, self.span)),
+            ) => Ok(Value::integer(**a - **b, self.span.clone())),
             (ligature_ast::BinaryOperator::Subtract, ValueKind::Float(a), ValueKind::Float(b)) => {
-                Ok(Value::float(**a - **b, self.span))
+                Ok(Value::float(**a - **b, self.span.clone()))
             }
             (
                 ligature_ast::BinaryOperator::Subtract,
                 ValueKind::Integer(a),
                 ValueKind::Float(b),
-            ) => Ok(Value::float(**a as f64 - **b, self.span)),
+            ) => Ok(Value::float(**a as f64 - **b, self.span.clone())),
             (
                 ligature_ast::BinaryOperator::Subtract,
                 ValueKind::Float(a),
                 ValueKind::Integer(b),
-            ) => Ok(Value::float(**a - **b as f64, self.span)),
+            ) => Ok(Value::float(**a - **b as f64, self.span.clone())),
 
             (
                 ligature_ast::BinaryOperator::Multiply,
                 ValueKind::Integer(a),
                 ValueKind::Integer(b),
-            ) => Ok(Value::integer(**a * **b, self.span)),
+            ) => Ok(Value::integer(**a * **b, self.span.clone())),
             (ligature_ast::BinaryOperator::Multiply, ValueKind::Float(a), ValueKind::Float(b)) => {
-                Ok(Value::float(**a * **b, self.span))
+                Ok(Value::float(**a * **b, self.span.clone()))
             }
             (
                 ligature_ast::BinaryOperator::Multiply,
                 ValueKind::Integer(a),
                 ValueKind::Float(b),
-            ) => Ok(Value::float(**a as f64 * **b, self.span)),
+            ) => Ok(Value::float(**a as f64 * **b, self.span.clone())),
             (
                 ligature_ast::BinaryOperator::Multiply,
                 ValueKind::Float(a),
                 ValueKind::Integer(b),
-            ) => Ok(Value::float(**a * **b as f64, self.span)),
+            ) => Ok(Value::float(**a * **b as f64, self.span.clone())),
 
             (
                 ligature_ast::BinaryOperator::Divide,
@@ -358,28 +358,28 @@ impl Value {
                 if **b == 0 {
                     Err("Division by zero".to_string())
                 } else {
-                    Ok(Value::integer(**a / **b, self.span))
+                    Ok(Value::integer(**a / **b, self.span.clone()))
                 }
             }
             (ligature_ast::BinaryOperator::Divide, ValueKind::Float(a), ValueKind::Float(b)) => {
                 if **b == 0.0 {
                     Err("Division by zero".to_string())
                 } else {
-                    Ok(Value::float(**a / **b, self.span))
+                    Ok(Value::float(**a / **b, self.span.clone()))
                 }
             }
             (ligature_ast::BinaryOperator::Divide, ValueKind::Integer(a), ValueKind::Float(b)) => {
                 if **b == 0.0 {
                     Err("Division by zero".to_string())
                 } else {
-                    Ok(Value::float(**a as f64 / **b, self.span))
+                    Ok(Value::float(**a as f64 / **b, self.span.clone()))
                 }
             }
             (ligature_ast::BinaryOperator::Divide, ValueKind::Float(a), ValueKind::Integer(b)) => {
                 if **b == 0 {
                     Err("Division by zero".to_string())
                 } else {
-                    Ok(Value::float(**a / **b as f64, self.span))
+                    Ok(Value::float(**a / **b as f64, self.span.clone()))
                 }
             }
 
@@ -391,173 +391,173 @@ impl Value {
                 if **b == 0 {
                     Err("Modulo by zero".to_string())
                 } else {
-                    Ok(Value::integer(**a % **b, self.span))
+                    Ok(Value::integer(**a % **b, self.span.clone()))
                 }
             }
             (ligature_ast::BinaryOperator::Modulo, ValueKind::Float(a), ValueKind::Float(b)) => {
                 if **b == 0.0 {
                     Err("Modulo by zero".to_string())
                 } else {
-                    Ok(Value::float(**a % **b, self.span))
+                    Ok(Value::float(**a % **b, self.span.clone()))
                 }
             }
             (ligature_ast::BinaryOperator::Modulo, ValueKind::Integer(a), ValueKind::Float(b)) => {
                 if **b == 0.0 {
                     Err("Modulo by zero".to_string())
                 } else {
-                    Ok(Value::float(**a as f64 % **b, self.span))
+                    Ok(Value::float(**a as f64 % **b, self.span.clone()))
                 }
             }
             (ligature_ast::BinaryOperator::Modulo, ValueKind::Float(a), ValueKind::Integer(b)) => {
                 if **b == 0 {
                     Err("Modulo by zero".to_string())
                 } else {
-                    Ok(Value::float(**a % **b as f64, self.span))
+                    Ok(Value::float(**a % **b as f64, self.span.clone()))
                 }
             }
 
             // Comparison operators
             (ligature_ast::BinaryOperator::Equal, ValueKind::Integer(a), ValueKind::Integer(b)) => {
-                Ok(Value::boolean(a == b, self.span))
+                Ok(Value::boolean(a == b, self.span.clone()))
             }
             (ligature_ast::BinaryOperator::Equal, ValueKind::Float(a), ValueKind::Float(b)) => {
-                Ok(Value::boolean(a == b, self.span))
+                Ok(Value::boolean(a == b, self.span.clone()))
             }
             (ligature_ast::BinaryOperator::Equal, ValueKind::Boolean(a), ValueKind::Boolean(b)) => {
-                Ok(Value::boolean(a == b, self.span))
+                Ok(Value::boolean(a == b, self.span.clone()))
             }
             (ligature_ast::BinaryOperator::Equal, ValueKind::String(a), ValueKind::String(b)) => {
-                Ok(Value::boolean(a == b, self.span))
+                Ok(Value::boolean(a == b, self.span.clone()))
             }
             (ligature_ast::BinaryOperator::Equal, ValueKind::Integer(a), ValueKind::Float(b)) => {
-                Ok(Value::boolean((**a as f64) == **b, self.span))
+                Ok(Value::boolean((**a as f64) == **b, self.span.clone()))
             }
             (ligature_ast::BinaryOperator::Equal, ValueKind::Float(a), ValueKind::Integer(b)) => {
-                Ok(Value::boolean(**a == **b as f64, self.span))
+                Ok(Value::boolean(**a == **b as f64, self.span.clone()))
             }
 
             (
                 ligature_ast::BinaryOperator::NotEqual,
                 ValueKind::Integer(a),
                 ValueKind::Integer(b),
-            ) => Ok(Value::boolean(**a != **b, self.span)),
+            ) => Ok(Value::boolean(**a != **b, self.span.clone())),
             (ligature_ast::BinaryOperator::NotEqual, ValueKind::Float(a), ValueKind::Float(b)) => {
-                Ok(Value::boolean(**a != **b, self.span))
+                Ok(Value::boolean(**a != **b, self.span.clone()))
             }
             (
                 ligature_ast::BinaryOperator::NotEqual,
                 ValueKind::Boolean(a),
                 ValueKind::Boolean(b),
-            ) => Ok(Value::boolean(**a != **b, self.span)),
+            ) => Ok(Value::boolean(**a != **b, self.span.clone())),
             (
                 ligature_ast::BinaryOperator::NotEqual,
                 ValueKind::String(a),
                 ValueKind::String(b),
-            ) => Ok(Value::boolean(a != b, self.span)),
+            ) => Ok(Value::boolean(a != b, self.span.clone())),
             (
                 ligature_ast::BinaryOperator::NotEqual,
                 ValueKind::Integer(a),
                 ValueKind::Float(b),
-            ) => Ok(Value::boolean((**a as f64) != **b, self.span)),
+            ) => Ok(Value::boolean((**a as f64) != **b, self.span.clone())),
             (
                 ligature_ast::BinaryOperator::NotEqual,
                 ValueKind::Float(a),
                 ValueKind::Integer(b),
-            ) => Ok(Value::boolean(**a != **b as f64, self.span)),
+            ) => Ok(Value::boolean(**a != **b as f64, self.span.clone())),
 
             (
                 ligature_ast::BinaryOperator::LessThan,
                 ValueKind::Integer(a),
                 ValueKind::Integer(b),
-            ) => Ok(Value::boolean(**a < **b, self.span)),
+            ) => Ok(Value::boolean(**a < **b, self.span.clone())),
             (ligature_ast::BinaryOperator::LessThan, ValueKind::Float(a), ValueKind::Float(b)) => {
-                Ok(Value::boolean(**a < **b, self.span))
+                Ok(Value::boolean(**a < **b, self.span.clone()))
             }
             (
                 ligature_ast::BinaryOperator::LessThan,
                 ValueKind::Integer(a),
                 ValueKind::Float(b),
-            ) => Ok(Value::boolean((**a as f64) < **b, self.span)),
+            ) => Ok(Value::boolean((**a as f64) < **b, self.span.clone())),
             (
                 ligature_ast::BinaryOperator::LessThan,
                 ValueKind::Float(a),
                 ValueKind::Integer(b),
-            ) => Ok(Value::boolean(**a < **b as f64, self.span)),
+            ) => Ok(Value::boolean(**a < **b as f64, self.span.clone())),
 
             (
                 ligature_ast::BinaryOperator::LessThanOrEqual,
                 ValueKind::Integer(a),
                 ValueKind::Integer(b),
-            ) => Ok(Value::boolean(**a <= **b, self.span)),
+            ) => Ok(Value::boolean(**a <= **b, self.span.clone())),
             (
                 ligature_ast::BinaryOperator::LessThanOrEqual,
                 ValueKind::Float(a),
                 ValueKind::Float(b),
-            ) => Ok(Value::boolean(**a <= **b, self.span)),
+            ) => Ok(Value::boolean(**a <= **b, self.span.clone())),
             (
                 ligature_ast::BinaryOperator::LessThanOrEqual,
                 ValueKind::Integer(a),
                 ValueKind::Float(b),
-            ) => Ok(Value::boolean((**a as f64) <= **b, self.span)),
+            ) => Ok(Value::boolean((**a as f64) <= **b, self.span.clone())),
             (
                 ligature_ast::BinaryOperator::LessThanOrEqual,
                 ValueKind::Float(a),
                 ValueKind::Integer(b),
-            ) => Ok(Value::boolean(**a <= **b as f64, self.span)),
+            ) => Ok(Value::boolean(**a <= **b as f64, self.span.clone())),
 
             (
                 ligature_ast::BinaryOperator::GreaterThan,
                 ValueKind::Integer(a),
                 ValueKind::Integer(b),
-            ) => Ok(Value::boolean(**a > **b, self.span)),
+            ) => Ok(Value::boolean(**a > **b, self.span.clone())),
             (
                 ligature_ast::BinaryOperator::GreaterThan,
                 ValueKind::Float(a),
                 ValueKind::Float(b),
-            ) => Ok(Value::boolean(**a > **b, self.span)),
+            ) => Ok(Value::boolean(**a > **b, self.span.clone())),
             (
                 ligature_ast::BinaryOperator::GreaterThan,
                 ValueKind::Integer(a),
                 ValueKind::Float(b),
-            ) => Ok(Value::boolean((**a as f64) > **b, self.span)),
+            ) => Ok(Value::boolean((**a as f64) > **b, self.span.clone())),
             (
                 ligature_ast::BinaryOperator::GreaterThan,
                 ValueKind::Float(a),
                 ValueKind::Integer(b),
-            ) => Ok(Value::boolean(**a > **b as f64, self.span)),
+            ) => Ok(Value::boolean(**a > **b as f64, self.span.clone())),
 
             (
                 ligature_ast::BinaryOperator::GreaterThanOrEqual,
                 ValueKind::Integer(a),
                 ValueKind::Integer(b),
-            ) => Ok(Value::boolean(**a >= **b, self.span)),
+            ) => Ok(Value::boolean(**a >= **b, self.span.clone())),
             (
                 ligature_ast::BinaryOperator::GreaterThanOrEqual,
                 ValueKind::Float(a),
                 ValueKind::Float(b),
-            ) => Ok(Value::boolean(**a >= **b, self.span)),
+            ) => Ok(Value::boolean(**a >= **b, self.span.clone())),
             (
                 ligature_ast::BinaryOperator::GreaterThanOrEqual,
                 ValueKind::Integer(a),
                 ValueKind::Float(b),
-            ) => Ok(Value::boolean((**a as f64) >= **b, self.span)),
+            ) => Ok(Value::boolean((**a as f64) >= **b, self.span.clone())),
             (
                 ligature_ast::BinaryOperator::GreaterThanOrEqual,
                 ValueKind::Float(a),
                 ValueKind::Integer(b),
-            ) => Ok(Value::boolean(**a >= **b as f64, self.span)),
+            ) => Ok(Value::boolean(**a >= **b as f64, self.span.clone())),
 
             // Logical operators
             (ligature_ast::BinaryOperator::And, ValueKind::Boolean(a), ValueKind::Boolean(b)) => {
-                Ok(Value::boolean(**a && **b, self.span))
+                Ok(Value::boolean(**a && **b, self.span.clone()))
             }
             (ligature_ast::BinaryOperator::Or, ValueKind::Boolean(a), ValueKind::Boolean(b)) => {
-                Ok(Value::boolean(**a || **b, self.span))
+                Ok(Value::boolean(**a || **b, self.span.clone()))
             }
 
             // String concatenation
             (ligature_ast::BinaryOperator::Concat, ValueKind::String(a), ValueKind::String(b)) => {
-                Ok(Value::string(format!("{a}{b}"), self.span))
+                Ok(Value::string(format!("{a}{b}"), self.span.clone()))
             }
 
             // Unsupported combinations
@@ -572,13 +572,13 @@ impl Value {
     pub fn apply_unary_op(&self, operator: &ligature_ast::UnaryOperator) -> Result<Value, String> {
         match (operator, &self.kind) {
             (ligature_ast::UnaryOperator::Not, ValueKind::Boolean(value)) => {
-                Ok(Value::boolean(!**value, self.span))
+                Ok(Value::boolean(!**value, self.span.clone()))
             }
             (ligature_ast::UnaryOperator::Negate, ValueKind::Integer(value)) => {
-                Ok(Value::integer(-**value, self.span))
+                Ok(Value::integer(-**value, self.span.clone()))
             }
             (ligature_ast::UnaryOperator::Negate, ValueKind::Float(value)) => {
-                Ok(Value::float(-**value, self.span))
+                Ok(Value::float(-**value, self.span.clone()))
             }
             _ => Err(format!(
                 "Cannot apply unary operator {:?} to value {:?}",

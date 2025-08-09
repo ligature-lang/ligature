@@ -35,7 +35,8 @@ pub use environment::EvaluationEnvironment;
 pub use error::EvaluationError;
 pub use evaluator::Evaluator;
 // Re-export common types from dependencies
-pub use ligature_ast::{AstResult, Expr, Module, Program, Type};
+pub use ligature_ast::{Expr, Program, Type};
+pub use ligature_error::{ErrorContextBuilder, StandardError, StandardResult};
 pub use parallel::{
     ParallelEvaluator, ParallelEvaluatorConfig, Task, TaskId, TaskStatus, WorkQueue, Worker,
 };
@@ -45,13 +46,13 @@ pub use performance::{
 pub use value::Value;
 
 /// Evaluate a complete program using the default evaluator.
-pub fn evaluate_program(program: &Program) -> AstResult<Value> {
+pub fn evaluate_program(program: &Program) -> StandardResult<Value> {
     let mut evaluator = Evaluator::new();
-    evaluator.evaluate_program(program)
+    Ok(evaluator.evaluate_program(program)?)
 }
 
 /// Evaluate a single expression using the default evaluator.
-pub fn evaluate_expression(expr: &Expr) -> AstResult<Value> {
+pub fn evaluate_expression(expr: &Expr) -> StandardResult<Value> {
     let mut evaluator = Evaluator::new();
-    evaluator.evaluate_expression(expr)
+    Ok(evaluator.evaluate_expression(expr)?)
 }

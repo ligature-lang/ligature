@@ -1,59 +1,56 @@
 [package]
 name = "cacophony"
 version = "0.1.0"
-edition = "2021"
 authors = ["Ligature Team"]
+edition = "2021"
 description = "A CLI tool for orchestrating collections of Ligature programs"
-license = "Apache-2.0"
 repository = "https://github.com/fugue-ai/ligature"
-
-[dependencies]
-clap = { version = "4.4", features = ["derive"] }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-serde_yaml = "0.9"
-itertools = "0.12"
-anyhow = "1.0"
-thiserror = "1.0"
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-tokio = { version = "1.0", features = ["full"] }
-futures = "0.3"
-async-trait = "0.1"
-pathdiff = "0.2"
-glob = "0.3"
-toml = "0.8"
-# yaml-rust = "0.4"  # Removed: unmaintained crate, using serde_yaml instead
-tempfile = "3.8"
-walkdir = "2.4"
-embouchure-xdg = { path = "../../crates/embouchure-xdg" }
-
-
-
-# Terraform dependencies
-reqwest = { version = "0.11", features = ["json"] }
-tokio-util = "0.7"
-bytes = "1.4"
-
-# Ligature integration
-ligature-parser = { path = "../../crates/ligature-parser" }
-ligature-eval = { path = "../../crates/ligature-eval" }
-ligature-types = { path = "../../crates/ligature-types" }
-
-# Cacophony core
-cacophony-core = { path = "../../crates/cacophony-core" }
-cacophony-config = { path = "../../crates/cacophony-config" }
-cacophony-plugin = { path = "../../crates/cacophony-plugin" }
-
-[dev-dependencies]
-tempfile = "3.8"
-assert_fs = "1.1"
-predicates = "3.0"
+license = "Apache-2.0"
 
 [[bin]]
 name = "cacophony"
 path = "src/main.rs"
 
+[dependencies]
+anyhow = "1.0"
+async-trait = "0.1"
+bytes = "1.4"
+cacophony-config = { path = "../../crates/cacophony-config" }
+# Cacophony core
+cacophony-core = { path = "../../crates/cacophony-core" }
+cacophony-plugin = { path = "../../crates/cacophony-plugin" }
+clap = { version = "4.4", features = ["derive"] }
+embouchure-xdg = { path = "../../crates/embouchure-xdg" }
+futures = "0.3"
+glob = "0.3"
+itertools = "0.12"
+ligature-error = { workspace = true }
+ligature-eval = { path = "../../crates/ligature-eval" }
+# Ligature integration
+ligature-ast = { path = "../../crates/ligature-ast" }
+ligature-parser = { path = "../../crates/ligature-parser" }
+ligature-types = { path = "../../crates/ligature-types" }
+pathdiff = "0.2"
+# Terraform dependencies
+reqwest = { version = "0.11", features = ["json"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = "0.9"
+# yaml-rust = "0.4"  # Removed: unmaintained crate, using serde_yaml instead
+tempfile = "3.8"
+thiserror = "1.0"
+tokio = { version = "1.0", features = ["full"] }
+tokio-util = "0.7"
+toml = "0.8"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+walkdir = "2.4"
+
+[dev-dependencies]
+assert_fs = "1.1"
+predicates = "3.0"
+tempfile = "3.8"
+
 [features]
 default = []
-test-utils = [] 
+test-utils = []

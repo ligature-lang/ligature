@@ -1,0 +1,23 @@
+[package]
+name = "embouchure-checker"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+description = "Type checker implementation for the Ligature language"
+repository.workspace = true
+license.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+indexmap = { workspace = true }
+ligature-ast = { path = "../ligature-ast" }
+ligature-error = { path = "../ligature-error" }
+ligature-parser = { path = "../ligature-parser" }
+miette = { workspace = true, features = ["fancy"] }
+serde = { workspace = true, features = ["derive"] }
+thiserror = { workspace = true }
+toml = { workspace = true }
+
+[dev-dependencies]
+tempfile = "3.8"

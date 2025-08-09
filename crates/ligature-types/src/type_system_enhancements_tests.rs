@@ -107,7 +107,7 @@ validation = "validation/mod.lig"
 
 #[test]
 fn test_warning_mechanism() {
-    use crate::environment::{ConflictResolutionStrategy, TypeEnvironment};
+    use embouchure_checker::environment::{ConflictResolutionStrategy, TypeEnvironment};
 
     let mut env = TypeEnvironment::new();
 
@@ -141,10 +141,8 @@ fn test_warning_mechanism() {
 fn test_exported_item_type_resolution() {
     let mut inference = TypeInference::new();
 
-    // Create a simple module with exports
-    let module = ligature_ast::Module {
-        name: "test_module".to_string(),
-        imports: vec![],
+    // Create a simple program with exports
+    let program = ligature_ast::Program {
         declarations: vec![
             ligature_ast::Declaration {
                 kind: ligature_ast::DeclarationKind::Value(ligature_ast::ValueDeclaration {
@@ -171,17 +169,16 @@ fn test_exported_item_type_resolution() {
                 span: Span::default(),
             },
         ],
-        span: Span::default(),
     };
 
     // Test getting the type of an exported item
     let item_type = inference
-        .get_exported_item_type(&module, "my_value")
+        .get_exported_item_type(&program, "my_value")
         .unwrap();
     assert!(matches!(item_type.kind, TypeKind::Integer));
 
     // Test getting the type of a non-existent item
-    let result = inference.get_exported_item_type(&module, "nonexistent");
+    let result = inference.get_exported_item_type(&program, "nonexistent");
     assert!(result.is_err());
 }
 

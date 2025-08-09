@@ -8,7 +8,8 @@ use std::time::Duration;
 
 use dashmap::DashMap;
 use futures::future::join_all;
-use ligature_ast::{AstError, AstResult, Expr, Module, Program, Span, Type, TypeKind};
+use ligature_ast::{Expr, Program, Span, Type, TypeKind};
+use ligature_error::{StandardError, StandardResult};
 use uuid::Uuid;
 
 use crate::concurrent::ConcurrentTypeEnvironment;
@@ -118,17 +119,21 @@ impl TypeSubstitution {
             TypeKind::Function {
                 parameter,
                 return_type,
-            } => Type::function(self.apply(parameter), self.apply(return_type), type_.span),
+            } => Type::function(
+                self.apply(parameter),
+                self.apply(return_type),
+                type_.span.clone(),
+            ),
             TypeKind::Record { fields } => {
                 let new_fields = fields
                     .iter()
                     .map(|field| ligature_ast::TypeField {
                         name: field.name.clone(),
                         type_: self.apply(&field.type_),
-                        span: field.span,
+                        span: field.span.clone(),
                     })
                     .collect();
-                Type::record(new_fields, type_.span)
+                Type::record(new_fields, type_.span.clone())
             }
             TypeKind::Union { variants } => {
                 let new_variants = variants
@@ -136,12 +141,14 @@ impl TypeSubstitution {
                     .map(|variant| ligature_ast::TypeVariant {
                         name: variant.name.clone(),
                         type_: variant.type_.as_ref().map(|t| self.apply(t)),
-                        span: variant.span,
+                        span: variant.span.clone(),
                     })
                     .collect();
-                Type::union(new_variants, type_.span)
+                Type::union(new_variants, type_.span.clone())
             }
-            TypeKind::List(element_type) => Type::list(self.apply(element_type), type_.span),
+            TypeKind::List(element_type) => {
+                Type::list(self.apply(element_type), type_.span.clone())
+            }
             _ => type_.clone(),
         }
     }
@@ -328,7 +335,7 @@ impl ConcurrentConstraintSolver {
     }
 
     /// Solve all constraints in parallel
-    pub async fn solve_parallel(&self) -> AstResult<Vec<Solution>> {
+    pub async fn solve_parallel(&self) -> StandardResult<Vec<Solution>> {
         let mut handles = Vec::new();
 
         // Start all workers
@@ -348,10 +355,9 @@ impl ConcurrentConstraintSolver {
                     self.solutions.iter().map(|entry| entry.clone()).collect();
                 Ok(solutions)
             }
-            Err(_) => Err(AstError::InternalError {
-                message: "Constraint solving timed out".to_string(),
-                span: Span::default(),
-            }),
+            Err(_) => {
+                Err(StandardError::Internal("Constraint solving timed out".to_string()).into())
+            }
         }
     }
 
@@ -388,7 +394,7 @@ impl ConcurrentTypeChecker {
     }
 
     /// Type check a program in parallel
-    pub async fn check_program_parallel(&self, program: &Program) -> AstResult<()> {
+    pub async fn check_program_parallel(&self, program: &Program) -> StandardResult<()> {
         // Split program into modules for parallel processing
         let modules = self.split_into_modules(program);
 
@@ -410,10 +416,9 @@ impl ConcurrentTypeChecker {
                 Ok(Ok(())) => {}
                 Ok(Err(error)) => return Err(error),
                 Err(join_error) => {
-                    return Err(AstError::InternalError {
-                        message: format!("Task join error: {join_error}"),
-                        span: Span::default(),
-                    });
+                    return Err(
+                        StandardError::Internal(format!("Task join error: {join_error}")).into(),
+                    );
                 }
             }
         }
@@ -422,11 +427,8 @@ impl ConcurrentTypeChecker {
     }
 
     /// Type check a module
-    pub async fn check_module(&self, module: Module) -> AstResult<()> {
-        // Check imports first
-        for _import in &module.imports {
-            // Handle imports (simplified)
-        }
+    pub async fn check_module(&self, module: Program) -> StandardResult<()> {
+        // Check declarations in parallel
 
         // Check declarations in parallel
         let mut handles = Vec::new();
@@ -447,10 +449,9 @@ impl ConcurrentTypeChecker {
                 Ok(Ok(())) => {}
                 Ok(Err(error)) => return Err(error),
                 Err(join_error) => {
-                    return Err(AstError::InternalError {
-                        message: format!("Task join error: {join_error}"),
-                        span: Span::default(),
-                    });
+                    return Err(
+                        StandardError::Internal(format!("Task join error: {join_error}")).into(),
+                    );
                 }
             }
         }
@@ -462,7 +463,7 @@ impl ConcurrentTypeChecker {
     pub async fn check_declaration(
         &self,
         declaration: &ligature_ast::Declaration,
-    ) -> AstResult<()> {
+    ) -> StandardResult<()> {
         match &declaration.kind {
             ligature_ast::DeclarationKind::Value(value_decl) => {
                 // Infer type of the value
@@ -496,20 +497,20 @@ impl ConcurrentTypeChecker {
     }
 
     /// Infer the type of an expression
-    pub async fn infer_expression_type(&self, expr: &Expr) -> AstResult<Type> {
+    pub async fn infer_expression_type(&self, expr: &Expr) -> StandardResult<Type> {
         match &expr.kind {
             ligature_ast::ExprKind::Literal(literal) => {
                 match literal {
-                    ligature_ast::Literal::Integer(_) => Ok(Type::integer(expr.span)),
-                    ligature_ast::Literal::Float(_) => Ok(Type::float(expr.span)),
-                    ligature_ast::Literal::String(_) => Ok(Type::string(expr.span)),
-                    ligature_ast::Literal::Boolean(_) => Ok(Type::bool(expr.span)),
-                    ligature_ast::Literal::Unit => Ok(Type::unit(expr.span)),
+                    ligature_ast::Literal::Integer(_) => Ok(Type::integer(expr.span.clone())),
+                    ligature_ast::Literal::Float(_) => Ok(Type::float(expr.span.clone())),
+                    ligature_ast::Literal::String(_) => Ok(Type::string(expr.span.clone())),
+                    ligature_ast::Literal::Boolean(_) => Ok(Type::bool(expr.span.clone())),
+                    ligature_ast::Literal::Unit => Ok(Type::unit(expr.span.clone())),
                     ligature_ast::Literal::List(_) => {
                         // Simplified list type inference
                         Ok(Type::list(
-                            Type::variable("a".to_string(), expr.span),
-                            expr.span,
+                            Type::variable("a".to_string(), expr.span.clone()),
+                            expr.span.clone(),
                         ))
                     }
                 }
@@ -517,16 +518,15 @@ impl ConcurrentTypeChecker {
             ligature_ast::ExprKind::Variable(name) => self
                 .type_environment
                 .lookup(name)
-                .ok_or_else(|| AstError::UndefinedIdentifier {
-                    name: name.clone(),
-                    span: expr.span,
-                }),
+                .ok_or_else(|| StandardError::Internal(format!("Variable '{}' not found", name))),
             ligature_ast::ExprKind::Application { function, argument } => {
                 let function_type = Box::pin(self.infer_expression_type(function)).await?;
 
                 // Check if function type is actually a function
                 if !function_type.is_function() {
-                    return Err(AstError::InvalidExpression { span: expr.span });
+                    return Err(
+                        StandardError::Internal("Expected function type".to_string()).into(),
+                    );
                 }
 
                 // Extract parameter and return types
@@ -538,7 +538,10 @@ impl ConcurrentTypeChecker {
 
                     Ok(return_type.clone())
                 } else {
-                    Err(AstError::InvalidExpression { span: expr.span })
+                    Err(
+                        StandardError::Internal("Function type inference failed".to_string())
+                            .into(),
+                    )
                 }
             }
             ligature_ast::ExprKind::Abstraction {
@@ -549,18 +552,18 @@ impl ConcurrentTypeChecker {
                 let param_type = parameter_type
                     .as_ref()
                     .map(|t| t.as_ref().clone())
-                    .unwrap_or_else(|| Type::variable("a".to_string(), expr.span));
+                    .unwrap_or_else(|| Type::variable("a".to_string(), expr.span.clone()));
 
                 let body_type = Box::pin(self.infer_expression_type(body)).await?;
 
-                Ok(Type::function(param_type, body_type, expr.span))
+                Ok(Type::function(param_type, body_type, expr.span.clone()))
             }
             ligature_ast::ExprKind::FieldAccess { record, field } => {
                 let record_type = Box::pin(self.infer_expression_type(record)).await?;
 
                 // Check if it's a record type
                 if !record_type.is_record() {
-                    return Err(AstError::InvalidExpression { span: expr.span });
+                    return Err(StandardError::Internal("Expected record type".to_string()).into());
                 }
 
                 // Find the field type
@@ -570,14 +573,17 @@ impl ConcurrentTypeChecker {
                             return Ok(field_info.type_.clone());
                         }
                     }
-                    Err(AstError::InvalidExpression { span: expr.span })
+                    Err(StandardError::Internal("Record field not found".to_string()).into())
                 } else {
-                    Err(AstError::InvalidExpression { span: expr.span })
+                    Err(StandardError::Internal("Record type inference failed".to_string()).into())
                 }
             }
             ligature_ast::ExprKind::Match { scrutinee, cases } => {
                 if cases.is_empty() {
-                    return Err(AstError::InvalidExpression { span: expr.span });
+                    return Err(StandardError::Internal(
+                        "Match expression has no cases".to_string(),
+                    )
+                    .into());
                 }
 
                 // Infer type of scrutinee
@@ -594,27 +600,27 @@ impl ConcurrentTypeChecker {
                 if let Some(first_type) = case_types.first() {
                     Ok(first_type.clone())
                 } else {
-                    Err(AstError::InvalidExpression { span: expr.span })
+                    Err(StandardError::Internal(
+                        "Match expression type inference failed".to_string(),
+                    )
+                    .into())
                 }
             }
             _ => {
                 // Handle other expression types (simplified)
-                Ok(Type::variable("a".to_string(), expr.span))
+                Ok(Type::variable("a".to_string(), expr.span.clone()))
             }
         }
     }
 
     /// Split a program into modules for parallel processing
-    fn split_into_modules(&self, program: &Program) -> Vec<Module> {
+    fn split_into_modules(&self, program: &Program) -> Vec<Program> {
         // Simplified: treat each declaration as a separate module
         program
             .declarations
             .iter()
-            .map(|decl| Module {
-                name: format!("module_{}", decl.span.start),
-                imports: Vec::new(),
+            .map(|decl| Program {
                 declarations: vec![decl.clone()],
-                span: decl.span,
             })
             .collect()
     }

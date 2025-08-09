@@ -99,6 +99,8 @@ path = "../tests/integration/test_parser.rs"
 name = "test_type_inference"
 path = "../tests/integration/test_type_inference.rs"
 
+
+
 [[example]]
 name = "runtime_validation_example"
 path = "runtime_validation_example.rs"
@@ -164,6 +166,14 @@ path = "debug_pest.rs"
 name = "memory_tracking_demo"
 path = "memory_tracking_demo.rs"
 
+[[example]]
+name = "test_error_handling"
+path = "test_error_handling.rs"
+
+[[example]]
+name = "error_handling_examples"
+path = "error_handling_examples.rs"
+
 # [[example]]
 # name = "lean_integration_example"
 # path = "lean_integration_example.rs"
@@ -182,16 +192,21 @@ path = "memory_tracking_demo.rs"
 
 [dependencies]
 anyhow = "1.0"
+thiserror = "1.0"
 # Lean integration dependencies (optional)
 baton-client = { optional = true, path = "../crates/baton-client" }
 baton-protocol = { optional = true, path = "../crates/baton-protocol" }
 baton-verification = { optional = true, path = "../crates/baton-verification" }
 krox = { path = "../krox" }
 ligature-ast = { path = "../crates/ligature-ast" }
+ligature-error = { path = "../crates/ligature-error" }
 ligature-eval = { path = "../crates/ligature-eval" }
 ligature-parser = { path = "../crates/ligature-parser" }
+embouchure-checker = { path = "../crates/embouchure-checker" }
 ligature-types = { path = "../crates/ligature-types" }
 pest = "2.7"
+rand = "0.8"
+serde_json = "1.0"
 tokio = { version = "1.0", features = ["full"] }
 
 [features]

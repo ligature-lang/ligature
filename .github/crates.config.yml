@@ -4,37 +4,101 @@
 
 # All crates that should be built and tested in CI
 crates:
-  - cacophony
+  # Core Ligature language crates
   - ligature-ast
-  - ligature-lsp
+  - ligature-error
   - ligature-parser
   - ligature-types
   - ligature-eval
+  - ligature-lsp
+  
+  # Configuration management crates
+  - cacophony-config
+  - cacophony-core
+  - cacophony-plugin
+  
+  # Baton system crates
+  - baton-client
+  - baton-core
+  - baton-engine-plugin
+  - baton-error
+  - baton-protocol
+  - baton-specification
+  - baton-verification
+  
+  # Embouchure shared library crates
+  - embouchure-checker
+  - embouchure-xdg
+  
+  # Application crates
+  - baton
+  - cacophony
   - keywork
-  - krox
   - reed
+  - performance-monitor
+  - krox
 
 # Crates that should be published to crates.io
-# This is the same as the main crates list for now
+# Core language crates that are stable and ready for public use
 publish_crates:
-  - cacophony
+  # Core Ligature language crates
   - ligature-ast
-  - ligature-lsp
+  - ligature-error
   - ligature-parser
   - ligature-types
   - ligature-eval
-  - keywork
-  - krox
-  - reed
+  - ligature-lsp
+  
+  # Configuration management crates
+  - cacophony-config
+  - cacophony-core
+  - cacophony-plugin
+  
+  # Baton system crates
+  - baton-client
+  - baton-core
+  - baton-engine-plugin
+  - baton-error
+  - baton-protocol
+  - baton-specification
+  - baton-verification
+  
+  # Embouchure shared library crates
+  - embouchure-checker
+  - embouchure-xdg
 
 # Crates that should be included in coverage reporting
-# Note: krox is excluded due to cross-language support issues
+# Excludes applications and tools that may have cross-language dependencies
 coverage_crates:
-  - cacophony
+  # Core Ligature language crates
   - ligature-ast
-  - ligature-lsp
+  - ligature-error
   - ligature-parser
   - ligature-types
   - ligature-eval
+  - ligature-lsp
+  
+  # Configuration management crates
+  - cacophony-config
+  - cacophony-core
+  - cacophony-plugin
+  
+  # Baton system crates
+  - baton-client
+  - baton-core
+  - baton-engine-plugin
+  - baton-error
+  - baton-protocol
+  - baton-specification
+  - baton-verification
+  
+  # Embouchure shared library crates
+  - embouchure-checker
+  - embouchure-xdg
+  
+  # Application crates (excluding krox due to cross-language support issues)
+  - baton
+  - cacophony
   - keywork
-  - reed 
+  - reed
+  - performance-monitor 

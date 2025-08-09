@@ -2,17 +2,14 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::decl::TypeClassConstraint;
-use crate::expr::Expr;
+use crate::Expr;
 use crate::span::{Span, Spanned};
 
-/// Type alias for refinement type components
+// Type aliases for common type components
 pub type RefinementComponents<'a> = (&'a Type, &'a Expr, &'a Option<String>);
-
-/// Type alias for constraint type components  
 pub type ConstraintTypeComponents<'a> = (&'a Type, &'a [Constraint]);
 
-/// A validation constraint for constraint-based types.
+/// Constraints that can be applied to types.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Constraint {
     /// Value constraint: expression must be true
@@ -52,7 +49,7 @@ pub struct Type {
 
 impl Spanned for Type {
     fn span(&self) -> Span {
-        self.span
+        self.span.clone()
     }
 }
 
@@ -123,7 +120,7 @@ pub enum TypeKind {
 
     /// Constrained type (type class constraint).
     Constrained {
-        constraint: Box<TypeClassConstraint>,
+        constraint: Box<crate::decl::TypeClassConstraint>,
         type_: Box<Type>,
     },
 
@@ -154,7 +151,7 @@ pub struct TypeField {
 
 impl Spanned for TypeField {
     fn span(&self) -> Span {
-        self.span
+        self.span.clone()
     }
 }
 
@@ -171,11 +168,11 @@ pub struct TypeVariant {
 
 impl Spanned for TypeVariant {
     fn span(&self) -> Span {
-        self.span
+        self.span.clone()
     }
 }
 
-/// Type constructor for creating new types.
+/// A type constructor.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct TypeConstructor {
     /// Constructor name.
@@ -190,11 +187,11 @@ pub struct TypeConstructor {
 
 impl Spanned for TypeConstructor {
     fn span(&self) -> Span {
-        self.span
+        self.span.clone()
     }
 }
 
-/// Type alias for creating type synonyms.
+/// A type alias.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct TypeAlias {
     /// Alias name.
@@ -209,12 +206,13 @@ pub struct TypeAlias {
 
 impl Spanned for TypeAlias {
     fn span(&self) -> Span {
-        self.span
+        self.span.clone()
     }
 }
 
+// Convenience methods for creating types
 impl Type {
-    /// Create a new type with the given kind and span.
+    /// Create a new type.
     pub fn new(kind: TypeKind, span: Span) -> Self {
         Self { kind, span }
     }
@@ -308,47 +306,47 @@ impl Type {
         )
     }
 
-    /// Check if this type is a function type.
+    /// Check if this is a function type.
     pub fn is_function(&self) -> bool {
         matches!(self.kind, TypeKind::Function { .. })
     }
 
-    /// Check if this type is a record type.
+    /// Check if this is a record type.
     pub fn is_record(&self) -> bool {
         matches!(self.kind, TypeKind::Record { .. })
     }
 
-    /// Check if this type is a union type.
+    /// Check if this is a union type.
     pub fn is_union(&self) -> bool {
         matches!(self.kind, TypeKind::Union { .. })
     }
 
-    /// Check if this type is a list type.
+    /// Check if this is a list type.
     pub fn is_list(&self) -> bool {
         matches!(self.kind, TypeKind::List(_))
     }
 
-    /// Check if this type is a type variable.
+    /// Check if this is a type variable.
     pub fn is_variable(&self) -> bool {
         matches!(self.kind, TypeKind::Variable(_))
     }
 
-    /// Check if this type is a module type.
+    /// Check if this is a module type.
     pub fn is_module(&self) -> bool {
         matches!(self.kind, TypeKind::Module { .. })
     }
 
-    /// Check if this type is a refinement type.
+    /// Check if this is a refinement type.
     pub fn is_refinement(&self) -> bool {
         matches!(self.kind, TypeKind::Refinement { .. })
     }
 
-    /// Check if this type is a constraint type.
+    /// Check if this is a constraint type.
     pub fn is_constraint_type(&self) -> bool {
         matches!(self.kind, TypeKind::ConstraintType { .. })
     }
 
-    /// Get the name if this is a type variable.
+    /// Get the variable name if this is a type variable.
     pub fn as_variable(&self) -> Option<&str> {
         match &self.kind {
             TypeKind::Variable(name) => Some(name),
@@ -356,7 +354,7 @@ impl Type {
         }
     }
 
-    /// Get the parameter and return type if this is a function type.
+    /// Get the parameter and return types if this is a function type.
     pub fn as_function(&self) -> Option<(&Type, &Type)> {
         match &self.kind {
             TypeKind::Function {
@@ -391,7 +389,7 @@ impl Type {
         }
     }
 
-    /// Get the base type and predicate if this is a refinement type.
+    /// Get the refinement components if this is a refinement type.
     pub fn as_refinement(&self) -> Option<RefinementComponents<'_>> {
         match &self.kind {
             TypeKind::Refinement {
@@ -403,7 +401,7 @@ impl Type {
         }
     }
 
-    /// Get the base type and constraints if this is a constraint type.
+    /// Get the constraint type components if this is a constraint type.
     pub fn as_constraint_type(&self) -> Option<ConstraintTypeComponents<'_>> {
         match &self.kind {
             TypeKind::ConstraintType {

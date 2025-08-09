@@ -1,0 +1,19 @@
+[package]
+name = "ligature-error"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+description = "Standardized error handling for Ligature crates"
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+ligature-ast = { path = "../ligature-ast" }
+serde_json = "1.0"
+thiserror.workspace = true
+tokio = { version = "1.0", features = ["time"] }
+toml = "0.8"
+
+[dev-dependencies]
+criterion.workspace = true

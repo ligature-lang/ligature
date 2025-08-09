@@ -8,12 +8,16 @@
 //!
 //! All precedence test cases now pass correctly, including complex nested expressions.
 
-use ligature_ast::{
-    AstError, AstResult, BinaryOperator, Declaration, ExportDeclaration, ExportItem, Expr,
-    ExprKind, Import, ImportItem, Literal, MatchCase, Module, Pattern, Program, RecordField,
-    RecordPatternField, Span, Type, TypeAlias, TypeConstructor, TypeKind, TypeVariant,
-    UnaryOperator,
+use ligature_ast::decl::{
+    ExportDeclaration, ExportItem, InstanceDeclaration, MethodImplementation, MethodSignature,
+    TypeClassConstraint, TypeClassDeclaration,
 };
+use ligature_ast::expr::{MatchCase, Pattern, RecordField, RecordPatternField};
+use ligature_ast::{
+    BinaryOperator, Declaration, Expr, ExprKind, Import, ImportItem, Literal, Program, Span, Type,
+    TypeAlias, TypeConstructor, TypeKind, TypeVariant, UnaryOperator,
+};
+use ligature_error::{StandardError, StandardResult};
 use pest::Parser as PestParser;
 use pest::iterators::Pairs;
 
@@ -41,15 +45,17 @@ impl Default for Parser {
 
 impl Parser {
     /// Parse a complete program.
-    pub fn parse_program(&mut self, source: &str) -> AstResult<Program> {
+    pub fn parse_program(&mut self, source: &str) -> StandardResult<Program> {
         self.source = source.to_string();
 
         let pairs =
             <LigatureParser as PestParser<Rule>>::parse(Rule::program, source).map_err(|e| {
-                AstError::ParseError {
+                StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                    code: ligature_ast::ErrorCode::E1001,
                     message: format!("Parse error: {e}"),
                     span: Span::default(),
-                }
+                    suggestions: vec!["Check for syntax errors".to_string()],
+                })
             })?;
 
         println!("Debug: Successfully parsed program rule");
@@ -61,22 +67,24 @@ impl Parser {
 
         Ok(Program {
             declarations,
-            span: Span::default(),
+            // span: Span::default(),
         })
     }
 
     /// Parse a complete module.
-    pub fn parse_module(&mut self, source: &str) -> AstResult<Module> {
+    pub fn parse_module(&mut self, source: &str) -> StandardResult<Program> {
         self.source = source.to_string();
         let pairs =
             <LigatureParser as PestParser<Rule>>::parse(Rule::module, source).map_err(|e| {
-                AstError::ParseError {
+                StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                    code: ligature_ast::ErrorCode::E1001,
                     message: e.to_string(),
                     span: Span::default(),
-                }
+                    suggestions: vec!["Check for syntax errors".to_string()],
+                })
             })?;
 
-        let mut module_name = "main".to_string(); // Default module name
+        let mut _module_name = "main".to_string(); // Default module name
         let mut imports = Vec::new();
         let mut declarations = Vec::new();
 
@@ -87,7 +95,7 @@ impl Parser {
                     for inner_pair in pair.into_inner() {
                         match inner_pair.as_rule() {
                             Rule::module_declaration => {
-                                module_name =
+                                _module_name =
                                     self.parse_module_declaration(inner_pair.into_inner())?;
                             }
                             Rule::import => {
@@ -134,7 +142,7 @@ impl Parser {
                     }
                 }
                 Rule::module_declaration => {
-                    module_name = self.parse_module_declaration(pair.into_inner())?;
+                    _module_name = self.parse_module_declaration(pair.into_inner())?;
                 }
                 Rule::import => {
                     let import = self.parse_import(pair.into_inner())?;
@@ -164,41 +172,42 @@ impl Parser {
             }
         }
 
-        Ok(Module {
-            name: module_name,
-            imports,
-            declarations,
-            span: Span::default(),
-        })
+        Ok(Program { declarations })
     }
 
     /// Parse a single expression.
-    pub fn parse_expression(&mut self, source: &str) -> AstResult<Expr> {
+    pub fn parse_expression(&mut self, source: &str) -> StandardResult<Expr> {
         self.source = source.to_string();
         let pairs =
             <LigatureParser as PestParser<Rule>>::parse(Rule::expression, source).map_err(|e| {
-                AstError::ParseError {
+                StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                    code: ligature_ast::ErrorCode::E1001,
                     message: e.to_string(),
                     span: Span::default(),
-                }
+                    suggestions: vec!["Check for syntax errors".to_string()],
+                })
             })?;
 
         self.parse_expression_pairs(pairs)
     }
 
     /// Parse a single type.
-    pub fn parse_type(&mut self, source: &str) -> AstResult<Type> {
+    pub fn parse_type(&mut self, source: &str) -> StandardResult<Type> {
         self.source = source.to_string();
         let pairs = <LigatureParser as PestParser<Rule>>::parse(Rule::type_expression, source)
-            .map_err(|e| AstError::ParseError {
-                message: e.to_string(),
-                span: Span::default(),
+            .map_err(|e| {
+                StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                    code: ligature_ast::ErrorCode::E1001,
+                    message: e.to_string(),
+                    span: Span::default(),
+                    suggestions: vec!["Check for syntax errors".to_string()],
+                })
             })?;
 
         self.parse_type_pairs(pairs)
     }
 
-    fn parse_declarations(&mut self, pairs: Pairs<Rule>) -> AstResult<Vec<Declaration>> {
+    fn parse_declarations(&mut self, pairs: Pairs<Rule>) -> StandardResult<Vec<Declaration>> {
         let mut declarations = Vec::new();
 
         for pair in pairs {
@@ -240,7 +249,7 @@ impl Parser {
         Ok(declarations)
     }
 
-    fn parse_import(&mut self, pairs: Pairs<Rule>) -> AstResult<Import> {
+    fn parse_import(&mut self, pairs: Pairs<Rule>) -> StandardResult<Import> {
         let mut path = String::new();
         let mut alias = None;
         let mut items: Option<Vec<ImportItem>> = None;
@@ -335,7 +344,7 @@ impl Parser {
         })
     }
 
-    fn parse_module_declaration(&mut self, pairs: Pairs<Rule>) -> AstResult<String> {
+    fn parse_module_declaration(&mut self, pairs: Pairs<Rule>) -> StandardResult<String> {
         let mut module_name = String::new();
 
         for pair in pairs {
@@ -345,23 +354,28 @@ impl Parser {
         }
 
         if module_name.is_empty() {
-            return Err(AstError::ParseError {
-                message: "Expected module name in module declaration".to_string(),
-                span: Span::default(),
-            });
+            return Err(StandardError::Ligature(
+                ligature_ast::LigatureError::Parse {
+                    code: ligature_ast::ErrorCode::E1005,
+                    message: "Expected module name in module declaration".to_string(),
+                    span: Span::default(),
+                    suggestions: vec!["Add a module name".to_string()],
+                },
+            ));
         }
 
         Ok(module_name)
     }
 
-    fn parse_declaration(&mut self, pairs: Pairs<Rule>) -> AstResult<Declaration> {
-        let pair = pairs
-            .into_iter()
-            .next()
-            .ok_or_else(|| AstError::ParseError {
+    fn parse_declaration(&mut self, pairs: Pairs<Rule>) -> StandardResult<Declaration> {
+        let pair = pairs.into_iter().next().ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1002,
                 message: "Expected declaration".to_string(),
                 span: Span::default(),
-            })?;
+                suggestions: vec!["Add a valid declaration".to_string()],
+            })
+        })?;
 
         // Debug print removed - fix is working
 
@@ -394,14 +408,18 @@ impl Parser {
                 let import = self.parse_import(pair.into_inner())?;
                 Ok(Declaration::import(import))
             }
-            _ => Err(AstError::ParseError {
-                message: format!("Unsupported declaration: {:?}", pair.as_rule()),
-                span: Span::default(),
-            }),
+            _ => Err(StandardError::Ligature(
+                ligature_ast::LigatureError::Parse {
+                    code: ligature_ast::ErrorCode::E1003,
+                    message: format!("Unsupported declaration: {:?}", pair.as_rule()),
+                    span: Span::default(),
+                    suggestions: vec!["Check the declaration syntax".to_string()],
+                },
+            )),
         }
     }
 
-    fn parse_value_declaration(&mut self, pairs: Pairs<Rule>) -> AstResult<Declaration> {
+    fn parse_value_declaration(&mut self, pairs: Pairs<Rule>) -> StandardResult<Declaration> {
         let pairs_iter = pairs.into_iter();
         let is_recursive = false;
         let mut name = String::new();
@@ -438,9 +456,13 @@ impl Parser {
             }
         }
 
-        let value = value.ok_or_else(|| AstError::ParseError {
-            message: "Expected value in value declaration".to_string(),
-            span: Span::default(),
+        let value = value.ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1004,
+                message: "Expected value in value declaration".to_string(),
+                span: Span::default(),
+                suggestions: vec!["Add a value expression".to_string()],
+            })
         })?;
 
         let value_expr = Expr {
@@ -457,7 +479,7 @@ impl Parser {
         ))
     }
 
-    fn parse_type_alias_declaration(&mut self, pairs: Pairs<Rule>) -> AstResult<Declaration> {
+    fn parse_type_alias_declaration(&mut self, pairs: Pairs<Rule>) -> StandardResult<Declaration> {
         let pairs_iter = pairs.into_iter();
         let mut name = String::new();
         let parameters = Vec::new();
@@ -477,9 +499,13 @@ impl Parser {
             }
         }
 
-        let type_body = type_body.ok_or_else(|| AstError::ParseError {
-            message: "Expected type body in type alias declaration".to_string(),
-            span: Span::default(),
+        let type_body = type_body.ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1006,
+                message: "Expected type body in type alias declaration".to_string(),
+                span: Span::default(),
+                suggestions: vec!["Add a type expression".to_string()],
+            })
         })?;
 
         let alias = TypeAlias {
@@ -492,7 +518,10 @@ impl Parser {
         Ok(Declaration::type_alias(alias))
     }
 
-    fn parse_type_constructor_declaration(&mut self, pairs: Pairs<Rule>) -> AstResult<Declaration> {
+    fn parse_type_constructor_declaration(
+        &mut self,
+        pairs: Pairs<Rule>,
+    ) -> StandardResult<Declaration> {
         let pairs_iter = pairs.into_iter();
         let mut name = String::new();
         let parameters = Vec::new();
@@ -512,9 +541,13 @@ impl Parser {
             }
         }
 
-        let type_body = type_body.ok_or_else(|| AstError::ParseError {
-            message: "Expected type body in type constructor declaration".to_string(),
-            span: Span::default(),
+        let type_body = type_body.ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1007,
+                message: "Expected type body in type constructor declaration".to_string(),
+                span: Span::default(),
+                suggestions: vec!["Add a type expression".to_string()],
+            })
         })?;
 
         let constructor = TypeConstructor {
@@ -527,7 +560,7 @@ impl Parser {
         Ok(Declaration::type_constructor(constructor))
     }
 
-    fn parse_export_declaration(&mut self, pairs: Pairs<Rule>) -> AstResult<Declaration> {
+    fn parse_export_declaration(&mut self, pairs: Pairs<Rule>) -> StandardResult<Declaration> {
         let mut items = Vec::new();
 
         for pair in pairs {
@@ -545,7 +578,7 @@ impl Parser {
         Ok(Declaration::export(export))
     }
 
-    fn parse_export_item(&mut self, pairs: Pairs<Rule>) -> AstResult<ExportItem> {
+    fn parse_export_item(&mut self, pairs: Pairs<Rule>) -> StandardResult<ExportItem> {
         let mut name = String::new();
         let mut alias = None;
 
@@ -560,10 +593,14 @@ impl Parser {
         }
 
         if name.is_empty() {
-            return Err(AstError::ParseError {
-                message: "Expected export item name".to_string(),
-                span: Span::default(),
-            });
+            return Err(StandardError::Ligature(
+                ligature_ast::LigatureError::Parse {
+                    code: ligature_ast::ErrorCode::E1008,
+                    message: "Expected export item name".to_string(),
+                    span: Span::default(),
+                    suggestions: vec!["Add an export item name".to_string()],
+                },
+            ));
         }
 
         Ok(ExportItem {
@@ -573,12 +610,16 @@ impl Parser {
         })
     }
 
-    fn parse_value_expression_inner(&mut self, pairs: Pairs<Rule>) -> AstResult<ExprKind> {
+    fn parse_value_expression_inner(&mut self, pairs: Pairs<Rule>) -> StandardResult<ExprKind> {
         let mut pairs_iter = pairs.into_iter();
 
-        let pair = pairs_iter.next().ok_or_else(|| AstError::ParseError {
-            message: "Expected expression".to_string(),
-            span: Span::default(),
+        let pair = pairs_iter.next().ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1001,
+                message: "Expected expression".to_string(),
+                span: Span::default(),
+                suggestions: vec!["Add a valid expression".to_string()],
+            })
         })?;
 
         println!(
@@ -600,19 +641,27 @@ impl Parser {
             Rule::application => self.parse_application(pair.into_inner()),
             Rule::field_access => self.parse_field_access(pair.into_inner()),
             Rule::primary => self.parse_primary(pair.into_inner()),
-            _ => Err(AstError::ParseError {
-                message: format!("Unsupported value expression: {:?}", pair.as_rule()),
-                span: Span::default(),
-            }),
+            _ => Err(StandardError::Ligature(
+                ligature_ast::LigatureError::Parse {
+                    code: ligature_ast::ErrorCode::E1001,
+                    message: format!("Unsupported value expression: {:?}", pair.as_rule()),
+                    span: Span::default(),
+                    suggestions: vec!["Check the expression syntax".to_string()],
+                },
+            )),
         }
     }
 
-    fn parse_expression_pairs(&mut self, pairs: Pairs<Rule>) -> AstResult<Expr> {
+    fn parse_expression_pairs(&mut self, pairs: Pairs<Rule>) -> StandardResult<Expr> {
         let mut pairs_iter = pairs.into_iter();
 
-        let pair = pairs_iter.next().ok_or_else(|| AstError::ParseError {
-            message: "Expected expression".to_string(),
-            span: Span::default(),
+        let pair = pairs_iter.next().ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1001,
+                message: "Expected expression".to_string(),
+                span: Span::default(),
+                suggestions: vec!["Add a valid expression".to_string()],
+            })
         })?;
 
         let kind = match pair.as_rule() {
@@ -645,9 +694,13 @@ impl Parser {
                 // Handle unary operator at expression level
                 let operator = self.parse_unary_operator(pair.as_str());
                 // Get the next expression as the operand
-                let operand_pair = pairs_iter.next().ok_or_else(|| AstError::ParseError {
-                    message: "Expected operand after unary operator".to_string(),
-                    span: Span::default(),
+                let operand_pair = pairs_iter.next().ok_or_else(|| {
+                    StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                        code: ligature_ast::ErrorCode::E1002,
+                        message: "Expected operand after unary operator".to_string(),
+                        span: Span::default(),
+                        suggestions: vec!["Add an operand".to_string()],
+                    })
                 })?;
                 let operand = self.parse_expression_pairs(operand_pair.into_inner())?;
                 ExprKind::UnaryOp {
@@ -659,10 +712,14 @@ impl Parser {
             Rule::field_access => self.parse_field_access(pair.into_inner())?,
             Rule::primary => self.parse_primary(pair.into_inner())?,
             _ => {
-                return Err(AstError::ParseError {
-                    message: format!("Unsupported expression: {:?}", pair.as_rule()),
-                    span: Span::default(),
-                });
+                return Err(StandardError::Ligature(
+                    ligature_ast::LigatureError::Parse {
+                        code: ligature_ast::ErrorCode::E1003,
+                        message: format!("Unsupported expression: {:?}", pair.as_rule()),
+                        span: Span::default(),
+                        suggestions: vec!["Check the expression syntax".to_string()],
+                    },
+                ));
             }
         };
 
@@ -672,14 +729,15 @@ impl Parser {
         })
     }
 
-    fn parse_type_pairs(&mut self, pairs: Pairs<Rule>) -> AstResult<Type> {
-        let pair = pairs
-            .into_iter()
-            .next()
-            .ok_or_else(|| AstError::ParseError {
+    fn parse_type_pairs(&mut self, pairs: Pairs<Rule>) -> StandardResult<Type> {
+        let pair = pairs.into_iter().next().ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1002,
                 message: "Expected type expression".to_string(),
                 span: Span::default(),
-            })?;
+                suggestions: vec!["Add a valid type expression".to_string()],
+            })
+        })?;
 
         let kind = match pair.as_rule() {
             Rule::basic_type => match pair.as_str() {
@@ -690,10 +748,14 @@ impl Parser {
                 "Int" => TypeKind::Integer,
                 "Float" => TypeKind::Float,
                 _ => {
-                    return Err(AstError::ParseError {
-                        message: format!("Unknown basic type: {}", pair.as_str()),
-                        span: Span::default(),
-                    });
+                    return Err(StandardError::Ligature(
+                        ligature_ast::LigatureError::Parse {
+                            code: ligature_ast::ErrorCode::E1004,
+                            message: format!("Unknown basic type: {}", pair.as_str()),
+                            span: Span::default(),
+                            suggestions: vec!["Use a valid basic type".to_string()],
+                        },
+                    ));
                 }
             },
             Rule::type_variable => TypeKind::Variable(pair.as_str().to_string()),
@@ -715,10 +777,14 @@ impl Parser {
             Rule::type_expression => self.parse_type_pairs(pair.into_inner())?.kind,
             Rule::non_union_type_expression => self.parse_type_pairs(pair.into_inner())?.kind,
             _ => {
-                return Err(AstError::ParseError {
-                    message: format!("Unsupported type: {:?}", pair.as_rule()),
-                    span: Span::default(),
-                });
+                return Err(StandardError::Ligature(
+                    ligature_ast::LigatureError::Parse {
+                        code: ligature_ast::ErrorCode::E1005,
+                        message: format!("Unsupported type: {:?}", pair.as_rule()),
+                        span: Span::default(),
+                        suggestions: vec!["Check the type syntax".to_string()],
+                    },
+                ));
             }
         };
 
@@ -729,53 +795,57 @@ impl Parser {
     }
 
     #[allow(clippy::only_used_in_recursion)]
-    fn parse_literal(&mut self, pair: pest::iterators::Pair<Rule>) -> AstResult<Literal> {
+    fn parse_literal(&mut self, pair: pest::iterators::Pair<Rule>) -> StandardResult<Literal> {
         println!("Debug: parse_literal processing pair: {:?}", pair.as_rule());
         if pair.as_rule() == Rule::literal {
             // Handle the literal rule by parsing its inner content
-            let inner_pair = pair
-                .into_inner()
-                .next()
-                .ok_or_else(|| AstError::ParseError {
+            let inner_pair = pair.into_inner().next().ok_or_else(|| {
+                StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                    code: ligature_ast::ErrorCode::E1003,
                     message: "Expected inner literal".to_string(),
                     span: Span::default(),
-                })?;
+                    suggestions: vec!["Add a valid literal value".to_string()],
+                })
+            })?;
             // Recursively parse the inner literal
             return self.parse_literal(inner_pair);
         }
 
         if pair.as_rule() == Rule::literal_expression {
             // Handle the literal_expression rule by parsing its inner content
-            let inner_pair = pair
-                .into_inner()
-                .next()
-                .ok_or_else(|| AstError::ParseError {
+            let inner_pair = pair.into_inner().next().ok_or_else(|| {
+                StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                    code: ligature_ast::ErrorCode::E1003,
                     message: "Expected inner literal".to_string(),
                     span: Span::default(),
-                })?;
+                    suggestions: vec!["Add a valid literal value".to_string()],
+                })
+            })?;
             // Recursively parse the inner literal
             return self.parse_literal(inner_pair);
         }
 
         match pair.as_rule() {
             Rule::integer_literal => {
-                let value = pair
-                    .as_str()
-                    .parse::<i64>()
-                    .map_err(|_| AstError::ParseError {
+                let value = pair.as_str().parse::<i64>().map_err(|_| {
+                    StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                        code: ligature_ast::ErrorCode::E1004,
                         message: format!("Invalid integer literal: {}", pair.as_str()),
                         span: Span::default(),
-                    })?;
+                        suggestions: vec!["Check the integer format".to_string()],
+                    })
+                })?;
                 Ok(Literal::Integer(value))
             }
             Rule::float_literal => {
-                let value = pair
-                    .as_str()
-                    .parse::<f64>()
-                    .map_err(|_| AstError::ParseError {
+                let value = pair.as_str().parse::<f64>().map_err(|_| {
+                    StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                        code: ligature_ast::ErrorCode::E1005,
                         message: format!("Invalid float literal: {}", pair.as_str()),
                         span: Span::default(),
-                    })?;
+                        suggestions: vec!["Check the float format".to_string()],
+                    })
+                })?;
                 Ok(Literal::Float(value))
             }
             Rule::string_literal => {
@@ -787,18 +857,26 @@ impl Parser {
                 Ok(Literal::Boolean(value))
             }
             Rule::unit_literal => Ok(Literal::Unit),
-            _ => Err(AstError::ParseError {
-                message: format!("Unsupported literal: {:?}", pair.as_rule()),
-                span: Span::default(),
-            }),
+            _ => Err(StandardError::Ligature(
+                ligature_ast::LigatureError::Parse {
+                    code: ligature_ast::ErrorCode::E1006,
+                    message: format!("Unsupported literal: {:?}", pair.as_rule()),
+                    span: Span::default(),
+                    suggestions: vec!["Check the literal syntax".to_string()],
+                },
+            )),
         }
     }
 
-    fn parse_logical_or(&mut self, pairs: Pairs<Rule>) -> AstResult<ExprKind> {
+    fn parse_logical_or(&mut self, pairs: Pairs<Rule>) -> StandardResult<ExprKind> {
         let mut pairs_iter = pairs.into_iter();
-        let first_pair = pairs_iter.next().ok_or_else(|| AstError::ParseError {
-            message: "Expected expression".to_string(),
-            span: Span::default(),
+        let first_pair = pairs_iter.next().ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1007,
+                message: "Expected expression".to_string(),
+                span: Span::default(),
+                suggestions: vec!["Add a valid expression".to_string()],
+            })
         })?;
 
         let mut left = self.parse_logical_and(first_pair.into_inner())?;
@@ -807,9 +885,13 @@ impl Parser {
             match pair.as_rule() {
                 Rule::logical_or_operator => {
                     // Get the next pair which should be the right operand
-                    let right_pair = pairs_iter.next().ok_or_else(|| AstError::ParseError {
-                        message: "Expected right operand after logical OR operator".to_string(),
-                        span: Span::default(),
+                    let right_pair = pairs_iter.next().ok_or_else(|| {
+                        StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                            code: ligature_ast::ErrorCode::E1008,
+                            message: "Expected right operand after logical OR operator".to_string(),
+                            span: Span::default(),
+                            suggestions: vec!["Add a right operand".to_string()],
+                        })
                     })?;
 
                     let right = self.parse_logical_and(right_pair.into_inner())?;
@@ -826,21 +908,29 @@ impl Parser {
                     };
                 }
                 _ => {
-                    return Err(AstError::ParseError {
-                        message: format!("Unexpected rule in logical_or: {:?}", pair.as_rule()),
-                        span: Span::default(),
-                    });
+                    return Err(StandardError::Ligature(
+                        ligature_ast::LigatureError::Parse {
+                            code: ligature_ast::ErrorCode::E1007,
+                            message: format!("Unexpected rule in logical_or: {:?}", pair.as_rule()),
+                            span: Span::default(),
+                            suggestions: vec!["Check the logical OR syntax".to_string()],
+                        },
+                    ));
                 }
             }
         }
         Ok(left)
     }
 
-    fn parse_logical_and(&mut self, pairs: Pairs<Rule>) -> AstResult<ExprKind> {
+    fn parse_logical_and(&mut self, pairs: Pairs<Rule>) -> StandardResult<ExprKind> {
         let mut pairs_iter = pairs.into_iter();
-        let first_pair = pairs_iter.next().ok_or_else(|| AstError::ParseError {
-            message: "Expected expression".to_string(),
-            span: Span::default(),
+        let first_pair = pairs_iter.next().ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1007,
+                message: "Expected expression".to_string(),
+                span: Span::default(),
+                suggestions: vec!["Add a valid expression".to_string()],
+            })
         })?;
 
         let mut left = self.parse_equality(first_pair.into_inner())?;
@@ -849,9 +939,14 @@ impl Parser {
             match pair.as_rule() {
                 Rule::logical_and_operator => {
                     // Get the next pair which should be the right operand
-                    let right_pair = pairs_iter.next().ok_or_else(|| AstError::ParseError {
-                        message: "Expected right operand after logical AND operator".to_string(),
-                        span: Span::default(),
+                    let right_pair = pairs_iter.next().ok_or_else(|| {
+                        StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                            code: ligature_ast::ErrorCode::E1002,
+                            message: "Expected right operand after logical AND operator"
+                                .to_string(),
+                            span: Span::default(),
+                            suggestions: vec!["Add a right operand".to_string()],
+                        })
                     })?;
 
                     let right = self.parse_equality(right_pair.into_inner())?;
@@ -868,21 +963,32 @@ impl Parser {
                     };
                 }
                 _ => {
-                    return Err(AstError::ParseError {
-                        message: format!("Unexpected rule in logical_and: {:?}", pair.as_rule()),
-                        span: Span::default(),
-                    });
+                    return Err(StandardError::Ligature(
+                        ligature_ast::LigatureError::Parse {
+                            code: ligature_ast::ErrorCode::E1008,
+                            message: format!(
+                                "Unexpected rule in logical_and: {:?}",
+                                pair.as_rule()
+                            ),
+                            span: Span::default(),
+                            suggestions: vec!["Check the logical AND syntax".to_string()],
+                        },
+                    ));
                 }
             }
         }
         Ok(left)
     }
 
-    fn parse_equality(&mut self, pairs: Pairs<Rule>) -> AstResult<ExprKind> {
+    fn parse_equality(&mut self, pairs: Pairs<Rule>) -> StandardResult<ExprKind> {
         let mut pairs_iter = pairs.into_iter();
-        let first_pair = pairs_iter.next().ok_or_else(|| AstError::ParseError {
-            message: "Expected expression".to_string(),
-            span: Span::default(),
+        let first_pair = pairs_iter.next().ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1001,
+                message: "Expected expression".to_string(),
+                span: Span::default(),
+                suggestions: vec!["Add a valid expression".to_string()],
+            })
         })?;
 
         let mut left = self.parse_comparison(first_pair.into_inner())?;
@@ -894,17 +1000,28 @@ impl Parser {
                         "==" => BinaryOperator::Equal,
                         "!=" => BinaryOperator::NotEqual,
                         _ => {
-                            return Err(AstError::ParseError {
-                                message: format!("Unknown equality operator: {}", pair.as_str()),
-                                span: Span::default(),
-                            });
+                            return Err(StandardError::Ligature(
+                                ligature_ast::LigatureError::Parse {
+                                    code: ligature_ast::ErrorCode::E1003,
+                                    message: format!(
+                                        "Unknown equality operator: {}",
+                                        pair.as_str()
+                                    ),
+                                    span: Span::default(),
+                                    suggestions: vec!["Use == or != operator".to_string()],
+                                },
+                            ));
                         }
                     };
 
                     // Get the next pair which should be the right operand
-                    let right_pair = pairs_iter.next().ok_or_else(|| AstError::ParseError {
-                        message: "Expected right operand after equality operator".to_string(),
-                        span: Span::default(),
+                    let right_pair = pairs_iter.next().ok_or_else(|| {
+                        StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                            code: ligature_ast::ErrorCode::E1002,
+                            message: "Expected right operand after equality operator".to_string(),
+                            span: Span::default(),
+                            suggestions: vec!["Add a right operand".to_string()],
+                        })
                     })?;
 
                     let right = self.parse_comparison(right_pair.into_inner())?;
@@ -921,21 +1038,29 @@ impl Parser {
                     };
                 }
                 _ => {
-                    return Err(AstError::ParseError {
-                        message: format!("Unexpected rule in equality: {:?}", pair.as_rule()),
-                        span: Span::default(),
-                    });
+                    return Err(StandardError::Ligature(
+                        ligature_ast::LigatureError::Parse {
+                            code: ligature_ast::ErrorCode::E1003,
+                            message: format!("Unexpected rule in equality: {:?}", pair.as_rule()),
+                            span: Span::default(),
+                            suggestions: vec!["Check the equality expression syntax".to_string()],
+                        },
+                    ));
                 }
             }
         }
         Ok(left)
     }
 
-    fn parse_comparison(&mut self, pairs: Pairs<Rule>) -> AstResult<ExprKind> {
+    fn parse_comparison(&mut self, pairs: Pairs<Rule>) -> StandardResult<ExprKind> {
         let mut pairs_iter = pairs.into_iter();
-        let first_pair = pairs_iter.next().ok_or_else(|| AstError::ParseError {
-            message: "Expected expression".to_string(),
-            span: Span::default(),
+        let first_pair = pairs_iter.next().ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1003,
+                message: "Expected expression".to_string(),
+                span: Span::default(),
+                suggestions: vec!["Add a valid expression".to_string()],
+            })
         })?;
         let mut left = self.parse_additive(first_pair.into_inner())?;
 
@@ -947,17 +1072,25 @@ impl Parser {
                     ">" => BinaryOperator::GreaterThan,
                     ">=" => BinaryOperator::GreaterThanOrEqual,
                     _ => {
-                        return Err(AstError::ParseError {
-                            message: format!("Unknown comparison operator: {}", pair.as_str()),
-                            span: Span::default(),
-                        });
+                        return Err(StandardError::Ligature(
+                            ligature_ast::LigatureError::Parse {
+                                code: ligature_ast::ErrorCode::E1003,
+                                message: format!("Unknown comparison operator: {}", pair.as_str()),
+                                span: Span::default(),
+                                suggestions: vec!["Use <, <=, >, or >= operator".to_string()],
+                            },
+                        ));
                     }
                 };
 
                 // Get the next pair which should be the right operand
-                let right_pair = pairs_iter.next().ok_or_else(|| AstError::ParseError {
-                    message: "Expected right operand after comparison operator".to_string(),
-                    span: Span::default(),
+                let right_pair = pairs_iter.next().ok_or_else(|| {
+                    StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                        code: ligature_ast::ErrorCode::E1004,
+                        message: "Expected right operand after comparison operator".to_string(),
+                        span: Span::default(),
+                        suggestions: vec!["Add a right operand".to_string()],
+                    })
                 })?;
 
                 let right = self.parse_additive(right_pair.into_inner())?;
@@ -977,11 +1110,15 @@ impl Parser {
         Ok(left)
     }
 
-    fn parse_additive(&mut self, pairs: Pairs<Rule>) -> AstResult<ExprKind> {
+    fn parse_additive(&mut self, pairs: Pairs<Rule>) -> StandardResult<ExprKind> {
         let mut pairs_iter = pairs.into_iter();
-        let first_pair = pairs_iter.next().ok_or_else(|| AstError::ParseError {
-            message: "Expected expression".to_string(),
-            span: Span::default(),
+        let first_pair = pairs_iter.next().ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1005,
+                message: "Expected expression".to_string(),
+                span: Span::default(),
+                suggestions: vec!["Add a valid expression".to_string()],
+            })
         })?;
 
         let mut left = self.parse_multiplicative(first_pair.into_inner())?;
@@ -991,9 +1128,13 @@ impl Parser {
                 let operator = pair.as_str();
 
                 // Get the next pair which should be the right operand
-                let next_pair = pairs_iter.next().ok_or_else(|| AstError::ParseError {
-                    message: "Expected right operand after additive operator".to_string(),
-                    span: Span::default(),
+                let next_pair = pairs_iter.next().ok_or_else(|| {
+                    StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                        code: ligature_ast::ErrorCode::E1006,
+                        message: "Expected right operand after additive operator".to_string(),
+                        span: Span::default(),
+                        suggestions: vec!["Add a right operand".to_string()],
+                    })
                 })?;
 
                 let right = self.parse_multiplicative(next_pair.into_inner())?;
@@ -1002,10 +1143,14 @@ impl Parser {
                 } else if operator == "-" {
                     BinaryOperator::Subtract
                 } else {
-                    return Err(AstError::ParseError {
-                        message: format!("Unknown additive operator: {operator}"),
-                        span: Span::default(),
-                    });
+                    return Err(StandardError::Ligature(
+                        ligature_ast::LigatureError::Parse {
+                            code: ligature_ast::ErrorCode::E1007,
+                            message: format!("Unknown additive operator: {operator}"),
+                            span: Span::default(),
+                            suggestions: vec!["Use + or - operator".to_string()],
+                        },
+                    ));
                 };
 
                 left = ExprKind::BinaryOp {
@@ -1024,11 +1169,15 @@ impl Parser {
         Ok(left)
     }
 
-    fn parse_multiplicative(&mut self, pairs: Pairs<Rule>) -> AstResult<ExprKind> {
+    fn parse_multiplicative(&mut self, pairs: Pairs<Rule>) -> StandardResult<ExprKind> {
         let mut pairs_iter = pairs.into_iter();
-        let first_pair = pairs_iter.next().ok_or_else(|| AstError::ParseError {
-            message: "Expected expression".to_string(),
-            span: Span::default(),
+        let first_pair = pairs_iter.next().ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1008,
+                message: "Expected expression".to_string(),
+                span: Span::default(),
+                suggestions: vec!["Add a valid expression".to_string()],
+            })
         })?;
 
         let mut left = self.parse_unary(first_pair.into_inner())?;
@@ -1040,17 +1189,28 @@ impl Parser {
                     "/" => BinaryOperator::Divide,
                     "%" => BinaryOperator::Modulo,
                     _ => {
-                        return Err(AstError::ParseError {
-                            message: format!("Unknown multiplicative operator: {}", pair.as_str()),
-                            span: Span::default(),
-                        });
+                        return Err(StandardError::Ligature(
+                            ligature_ast::LigatureError::Parse {
+                                code: ligature_ast::ErrorCode::E1001,
+                                message: format!(
+                                    "Unknown multiplicative operator: {}",
+                                    pair.as_str()
+                                ),
+                                span: Span::default(),
+                                suggestions: vec!["Use *, /, or % operator".to_string()],
+                            },
+                        ));
                     }
                 };
 
                 // Get the next pair which should be the right operand
-                let right_pair = pairs_iter.next().ok_or_else(|| AstError::ParseError {
-                    message: "Expected right operand after multiplicative operator".to_string(),
-                    span: Span::default(),
+                let right_pair = pairs_iter.next().ok_or_else(|| {
+                    StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                        code: ligature_ast::ErrorCode::E1003,
+                        message: "Expected right operand after multiplicative operator".to_string(),
+                        span: Span::default(),
+                        suggestions: vec!["Add a right operand".to_string()],
+                    })
                 })?;
 
                 let right = self.parse_unary(right_pair.into_inner())?;
@@ -1070,20 +1230,28 @@ impl Parser {
         Ok(left)
     }
 
-    fn parse_unary(&mut self, pairs: Pairs<Rule>) -> AstResult<ExprKind> {
+    fn parse_unary(&mut self, pairs: Pairs<Rule>) -> StandardResult<ExprKind> {
         let mut pairs_iter = pairs.into_iter();
-        let first_pair = pairs_iter.next().ok_or_else(|| AstError::ParseError {
-            message: "Expected unary expression".to_string(),
-            span: Span::default(),
+        let first_pair = pairs_iter.next().ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1001,
+                message: "Expected unary expression".to_string(),
+                span: Span::default(),
+                suggestions: vec!["Add a valid expression".to_string()],
+            })
         })?;
 
         match first_pair.as_rule() {
             Rule::unary_operator => {
                 let operator = self.parse_unary_operator(first_pair.as_str());
                 // Parse the operand as the next level down in precedence
-                let operand_pair = pairs_iter.next().ok_or_else(|| AstError::ParseError {
-                    message: "Expected operand after unary operator".to_string(),
-                    span: Span::default(),
+                let operand_pair = pairs_iter.next().ok_or_else(|| {
+                    StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                        code: ligature_ast::ErrorCode::E1002,
+                        message: "Expected operand after unary operator".to_string(),
+                        span: Span::default(),
+                        suggestions: vec!["Add an operand".to_string()],
+                    })
                 })?;
                 // Use parse_unary recursively for proper precedence
                 let operand = self.parse_unary(operand_pair.into_inner())?;
@@ -1096,14 +1264,18 @@ impl Parser {
                 })
             }
             Rule::application => self.parse_application(first_pair.into_inner()),
-            _ => Err(AstError::ParseError {
-                message: format!("Unexpected rule in unary: {:?}", first_pair.as_rule()),
-                span: Span::default(),
-            }),
+            _ => Err(StandardError::Ligature(
+                ligature_ast::LigatureError::Parse {
+                    code: ligature_ast::ErrorCode::E1003,
+                    message: format!("Unexpected rule in unary: {:?}", first_pair.as_rule()),
+                    span: Span::default(),
+                    suggestions: vec!["Check the expression syntax".to_string()],
+                },
+            )),
         }
     }
 
-    fn parse_application(&mut self, pairs: Pairs<Rule>) -> AstResult<ExprKind> {
+    fn parse_application(&mut self, pairs: Pairs<Rule>) -> StandardResult<ExprKind> {
         let mut function = None;
         let mut arguments = Vec::new();
 
@@ -1138,9 +1310,13 @@ impl Parser {
             }
         }
 
-        let function = function.ok_or_else(|| AstError::ParseError {
-            message: "Expected function in application".to_string(),
-            span: Span::default(),
+        let function = function.ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1004,
+                message: "Expected function in application".to_string(),
+                span: Span::default(),
+                suggestions: vec!["Add a function expression".to_string()],
+            })
         })?;
 
         if arguments.is_empty() {
@@ -1164,14 +1340,15 @@ impl Parser {
         }
     }
 
-    fn parse_single_argument(&mut self, pairs: Pairs<Rule>) -> AstResult<ExprKind> {
-        let pair = pairs
-            .into_iter()
-            .next()
-            .ok_or_else(|| AstError::ParseError {
+    fn parse_single_argument(&mut self, pairs: Pairs<Rule>) -> StandardResult<ExprKind> {
+        let pair = pairs.into_iter().next().ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1005,
                 message: "Expected single argument".to_string(),
                 span: Span::default(),
-            })?;
+                suggestions: vec!["Add a valid argument".to_string()],
+            })
+        })?;
 
         match pair.as_rule() {
             Rule::literal_expression => {
@@ -1196,14 +1373,18 @@ impl Parser {
             Rule::match_expression => self.parse_match_expression(pair.into_inner()),
             Rule::record_expression => self.parse_record_expression(pair.into_inner()),
             Rule::list_expression => self.parse_list_expression(pair.into_inner()),
-            _ => Err(AstError::ParseError {
-                message: format!("Unexpected rule in single argument: {:?}", pair.as_rule()),
-                span: Span::default(),
-            }),
+            _ => Err(StandardError::Ligature(
+                ligature_ast::LigatureError::Parse {
+                    code: ligature_ast::ErrorCode::E1006,
+                    message: format!("Unexpected rule in single argument: {:?}", pair.as_rule()),
+                    span: Span::default(),
+                    suggestions: vec!["Check the argument syntax".to_string()],
+                },
+            )),
         }
     }
 
-    fn parse_tuple_argument(&mut self, pairs: Pairs<Rule>) -> AstResult<Vec<ExprKind>> {
+    fn parse_tuple_argument(&mut self, pairs: Pairs<Rule>) -> StandardResult<Vec<ExprKind>> {
         let mut arguments = Vec::new();
 
         for pair in pairs {
@@ -1216,7 +1397,7 @@ impl Parser {
         Ok(arguments)
     }
 
-    fn parse_field_access(&mut self, pairs: Pairs<Rule>) -> AstResult<ExprKind> {
+    fn parse_field_access(&mut self, pairs: Pairs<Rule>) -> StandardResult<ExprKind> {
         let mut expressions = Vec::new();
         let mut field_names = Vec::new();
 
@@ -1237,10 +1418,14 @@ impl Parser {
         }
 
         if expressions.is_empty() {
-            return Err(AstError::ParseError {
-                message: "Expected at least one expression in field access".to_string(),
-                span: Span::default(),
-            });
+            return Err(StandardError::Ligature(
+                ligature_ast::LigatureError::Parse {
+                    code: ligature_ast::ErrorCode::E1008,
+                    message: "Expected at least one expression in field access".to_string(),
+                    span: Span::default(),
+                    suggestions: vec!["Add an expression".to_string()],
+                },
+            ));
         }
 
         if field_names.is_empty() {
@@ -1261,14 +1446,15 @@ impl Parser {
         }
     }
 
-    fn parse_primary(&mut self, pairs: Pairs<Rule>) -> AstResult<ExprKind> {
-        let pair = pairs
-            .into_iter()
-            .next()
-            .ok_or_else(|| AstError::ParseError {
+    fn parse_primary(&mut self, pairs: Pairs<Rule>) -> StandardResult<ExprKind> {
+        let pair = pairs.into_iter().next().ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1001,
                 message: "Expected primary expression".to_string(),
                 span: Span::default(),
-            })?;
+                suggestions: vec!["Add a valid expression".to_string()],
+            })
+        })?;
 
         println!("Debug: parse_primary processing pair: {:?}", pair.as_rule());
         match pair.as_rule() {
@@ -1294,10 +1480,14 @@ impl Parser {
             Rule::parenthesized_expression => {
                 Ok(self.parse_expression_pairs(pair.into_inner())?.kind)
             }
-            _ => Err(AstError::ParseError {
-                message: format!("Unsupported primary expression: {:?}", pair.as_rule()),
-                span: Span::default(),
-            }),
+            _ => Err(StandardError::Ligature(
+                ligature_ast::LigatureError::Parse {
+                    code: ligature_ast::ErrorCode::E1004,
+                    message: format!("Unsupported primary expression: {:?}", pair.as_rule()),
+                    span: Span::default(),
+                    suggestions: vec!["Check the expression syntax".to_string()],
+                },
+            )),
         }
     }
 
@@ -1307,13 +1497,17 @@ impl Parser {
         &mut self,
         pairs: Pairs<Rule>,
         operators: &[&str],
-    ) -> AstResult<ExprKind> {
+    ) -> StandardResult<ExprKind> {
         let mut pairs_iter = pairs.into_iter();
 
         // Get the first expression (left operand)
-        let first_pair = pairs_iter.next().ok_or_else(|| AstError::ParseError {
-            message: "Expected expression".to_string(),
-            span: Span::default(),
+        let first_pair = pairs_iter.next().ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1001,
+                message: "Expected expression".to_string(),
+                span: Span::default(),
+                suggestions: vec!["Add a valid expression".to_string()],
+            })
         })?;
 
         let mut left = self.parse_expression_pairs(first_pair.into_inner())?.kind;
@@ -1370,7 +1564,7 @@ impl Parser {
         Ok(left)
     }
 
-    fn parse_lambda_expression(&mut self, pairs: Pairs<Rule>) -> AstResult<ExprKind> {
+    fn parse_lambda_expression(&mut self, pairs: Pairs<Rule>) -> StandardResult<ExprKind> {
         let pairs_iter = pairs.into_iter();
         let mut parameters = Vec::new();
         let mut parameter_type = None;
@@ -1391,9 +1585,13 @@ impl Parser {
             }
         }
 
-        let body = body.ok_or_else(|| AstError::ParseError {
-            message: "Expected lambda body".to_string(),
-            span: Span::default(),
+        let body = body.ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1006,
+                message: "Expected lambda body".to_string(),
+                span: Span::default(),
+                suggestions: vec!["Add a lambda body".to_string()],
+            })
         })?;
 
         // Convert multi-parameter lambda to nested single-parameter lambdas (currying)
@@ -1418,7 +1616,7 @@ impl Parser {
         Ok(result)
     }
 
-    fn parse_let_expression(&mut self, pairs: Pairs<Rule>) -> AstResult<ExprKind> {
+    fn parse_let_expression(&mut self, pairs: Pairs<Rule>) -> StandardResult<ExprKind> {
         let pairs_iter = pairs.into_iter();
         let mut name = String::new();
         let mut value = None;
@@ -1442,14 +1640,22 @@ impl Parser {
             }
         }
 
-        let value = value.ok_or_else(|| AstError::ParseError {
-            message: "Expected value in let expression".to_string(),
-            span: Span::default(),
+        let value = value.ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1007,
+                message: "Expected value in let expression".to_string(),
+                span: Span::default(),
+                suggestions: vec!["Add a value expression".to_string()],
+            })
         })?;
 
-        let body = body.ok_or_else(|| AstError::ParseError {
-            message: "Expected body in let expression".to_string(),
-            span: Span::default(),
+        let body = body.ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1008,
+                message: "Expected body in let expression".to_string(),
+                span: Span::default(),
+                suggestions: vec!["Add a body expression".to_string()],
+            })
         })?;
 
         Ok(ExprKind::Let {
@@ -1459,7 +1665,7 @@ impl Parser {
         })
     }
 
-    fn parse_if_expression(&mut self, pairs: Pairs<Rule>) -> AstResult<ExprKind> {
+    fn parse_if_expression(&mut self, pairs: Pairs<Rule>) -> StandardResult<ExprKind> {
         let pairs_iter = pairs.into_iter();
         let mut condition = None;
         let mut then_branch = None;
@@ -1477,19 +1683,31 @@ impl Parser {
             }
         }
 
-        let condition = condition.ok_or_else(|| AstError::ParseError {
-            message: "Expected condition in if expression".to_string(),
-            span: Span::default(),
+        let condition = condition.ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1001,
+                message: "Expected condition in if expression".to_string(),
+                span: Span::default(),
+                suggestions: vec!["Add a condition expression".to_string()],
+            })
         })?;
 
-        let then_branch = then_branch.ok_or_else(|| AstError::ParseError {
-            message: "Expected then branch in if expression".to_string(),
-            span: Span::default(),
+        let then_branch = then_branch.ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1005,
+                message: "Expected then branch in if expression".to_string(),
+                span: Span::default(),
+                suggestions: vec!["Add a then branch".to_string()],
+            })
         })?;
 
-        let else_branch = else_branch.ok_or_else(|| AstError::ParseError {
-            message: "Expected else branch in if expression".to_string(),
-            span: Span::default(),
+        let else_branch = else_branch.ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1001,
+                message: "Expected else branch in if expression".to_string(),
+                span: Span::default(),
+                suggestions: vec!["Add an else branch".to_string()],
+            })
         })?;
 
         Ok(ExprKind::If {
@@ -1499,7 +1717,7 @@ impl Parser {
         })
     }
 
-    fn parse_match_expression(&mut self, pairs: Pairs<Rule>) -> AstResult<ExprKind> {
+    fn parse_match_expression(&mut self, pairs: Pairs<Rule>) -> StandardResult<ExprKind> {
         let mut scrutinee = None;
         let mut cases = Vec::new();
 
@@ -1518,9 +1736,13 @@ impl Parser {
             }
         }
 
-        let scrutinee = scrutinee.ok_or_else(|| AstError::ParseError {
-            message: "Expected scrutinee in match expression".to_string(),
-            span: Span::default(),
+        let scrutinee = scrutinee.ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1002,
+                message: "Expected scrutinee in match expression".to_string(),
+                span: Span::default(),
+                suggestions: vec!["Add a scrutinee expression".to_string()],
+            })
         })?;
 
         Ok(ExprKind::Match {
@@ -1529,7 +1751,7 @@ impl Parser {
         })
     }
 
-    fn parse_match_case(&mut self, pairs: Pairs<Rule>) -> AstResult<MatchCase> {
+    fn parse_match_case(&mut self, pairs: Pairs<Rule>) -> StandardResult<MatchCase> {
         let mut pattern = None;
         let mut guard = None;
         let mut expression = None;
@@ -1571,14 +1793,22 @@ impl Parser {
             }
         }
 
-        let pattern = pattern.ok_or_else(|| AstError::ParseError {
-            message: "Expected pattern in match case".to_string(),
-            span: Span::default(),
+        let pattern = pattern.ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1003,
+                message: "Expected pattern in match case".to_string(),
+                span: Span::default(),
+                suggestions: vec!["Add a pattern".to_string()],
+            })
         })?;
 
-        let expression = expression.ok_or_else(|| AstError::ParseError {
-            message: "Expected expression in match case".to_string(),
-            span: Span::default(),
+        let expression = expression.ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1004,
+                message: "Expected expression in match case".to_string(),
+                span: Span::default(),
+                suggestions: vec!["Add an expression".to_string()],
+            })
         })?;
 
         Ok(MatchCase {
@@ -1589,7 +1819,7 @@ impl Parser {
         })
     }
 
-    fn parse_record_expression(&mut self, pairs: Pairs<Rule>) -> AstResult<ExprKind> {
+    fn parse_record_expression(&mut self, pairs: Pairs<Rule>) -> StandardResult<ExprKind> {
         let mut fields = Vec::new();
 
         for pair in pairs {
@@ -1602,7 +1832,7 @@ impl Parser {
         Ok(ExprKind::Record { fields })
     }
 
-    fn parse_record_field(&mut self, pairs: Pairs<Rule>) -> AstResult<RecordField> {
+    fn parse_record_field(&mut self, pairs: Pairs<Rule>) -> StandardResult<RecordField> {
         let pairs_iter = pairs.into_iter();
         let mut name = String::new();
         let mut value = None;
@@ -1619,9 +1849,13 @@ impl Parser {
             }
         }
 
-        let value = value.ok_or_else(|| AstError::ParseError {
-            message: "Expected value in record field".to_string(),
-            span: Span::default(),
+        let value = value.ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1005,
+                message: "Expected value in record field".to_string(),
+                span: Span::default(),
+                suggestions: vec!["Add a value expression".to_string()],
+            })
         })?;
 
         Ok(RecordField {
@@ -1631,7 +1865,7 @@ impl Parser {
         })
     }
 
-    fn parse_list_expression(&mut self, pairs: Pairs<Rule>) -> AstResult<ExprKind> {
+    fn parse_list_expression(&mut self, pairs: Pairs<Rule>) -> StandardResult<ExprKind> {
         let mut elements = Vec::new();
 
         for pair in pairs {
@@ -1644,7 +1878,7 @@ impl Parser {
         Ok(ExprKind::Literal(Literal::List(elements)))
     }
 
-    fn parse_union_expression(&mut self, pairs: Pairs<Rule>) -> AstResult<ExprKind> {
+    fn parse_union_expression(&mut self, pairs: Pairs<Rule>) -> StandardResult<ExprKind> {
         let mut variant = String::new();
         let mut value = None;
 
@@ -1666,7 +1900,7 @@ impl Parser {
         })
     }
 
-    fn parse_function_type(&mut self, pairs: Pairs<Rule>) -> AstResult<TypeKind> {
+    fn parse_function_type(&mut self, pairs: Pairs<Rule>) -> StandardResult<TypeKind> {
         let mut left = None;
         let mut right = None;
 
@@ -1690,10 +1924,17 @@ impl Parser {
                                 "Integer" => TypeKind::Integer,
                                 "Float" => TypeKind::Float,
                                 _ => {
-                                    return Err(AstError::ParseError {
-                                        message: format!("Unknown basic type: {}", pair.as_str()),
-                                        span: Span::default(),
-                                    });
+                                    return Err(StandardError::Ligature(
+                                        ligature_ast::LigatureError::Parse {
+                                            code: ligature_ast::ErrorCode::E1007,
+                                            message: format!(
+                                                "Unknown basic type: {}",
+                                                pair.as_str()
+                                            ),
+                                            span: Span::default(),
+                                            suggestions: vec!["Use a valid basic type".to_string()],
+                                        },
+                                    ));
                                 }
                             },
                             span: Span::default(),
@@ -1718,14 +1959,22 @@ impl Parser {
             }
         }
 
-        let left = left.ok_or_else(|| AstError::ParseError {
-            message: "Expected left type in function type".to_string(),
-            span: Span::default(),
+        let left = left.ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1008,
+                message: "Expected left type in function type".to_string(),
+                span: Span::default(),
+                suggestions: vec!["Add a left type".to_string()],
+            })
         })?;
 
-        let right = right.ok_or_else(|| AstError::ParseError {
-            message: "Expected right type in function type".to_string(),
-            span: Span::default(),
+        let right = right.ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1001,
+                message: "Expected right type in function type".to_string(),
+                span: Span::default(),
+                suggestions: vec!["Add a right type".to_string()],
+            })
         })?;
 
         Ok(TypeKind::Function {
@@ -1734,7 +1983,7 @@ impl Parser {
         })
     }
 
-    fn parse_union_type(&mut self, pairs: Pairs<Rule>) -> AstResult<TypeKind> {
+    fn parse_union_type(&mut self, pairs: Pairs<Rule>) -> StandardResult<TypeKind> {
         let mut variants = Vec::new();
 
         for pair in pairs {
@@ -1747,7 +1996,7 @@ impl Parser {
         Ok(TypeKind::Union { variants })
     }
 
-    fn parse_type_variant(&mut self, pairs: Pairs<Rule>) -> AstResult<TypeVariant> {
+    fn parse_type_variant(&mut self, pairs: Pairs<Rule>) -> StandardResult<TypeVariant> {
         let mut name = String::new();
         let mut type_ = None;
 
@@ -1773,7 +2022,7 @@ impl Parser {
         })
     }
 
-    fn parse_record_type(&mut self, pairs: Pairs<Rule>) -> AstResult<TypeKind> {
+    fn parse_record_type(&mut self, pairs: Pairs<Rule>) -> StandardResult<TypeKind> {
         let mut fields = Vec::new();
 
         for pair in pairs {
@@ -1789,7 +2038,7 @@ impl Parser {
     fn parse_record_field_type(
         &mut self,
         pairs: Pairs<Rule>,
-    ) -> AstResult<ligature_ast::TypeField> {
+    ) -> StandardResult<ligature_ast::TypeField> {
         let pairs_iter = pairs.into_iter();
         let mut name = String::new();
         let mut type_ = None;
@@ -1806,9 +2055,13 @@ impl Parser {
             }
         }
 
-        let type_ = type_.ok_or_else(|| AstError::ParseError {
-            message: "Expected type in record field type".to_string(),
-            span: Span::default(),
+        let type_ = type_.ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1006,
+                message: "Expected type in record field type".to_string(),
+                span: Span::default(),
+                suggestions: vec!["Add a type".to_string()],
+            })
         })?;
 
         Ok(ligature_ast::TypeField {
@@ -1818,38 +2071,51 @@ impl Parser {
         })
     }
 
-    fn parse_list_type(&mut self, pairs: Pairs<Rule>) -> AstResult<TypeKind> {
-        let pair = pairs
-            .into_iter()
-            .next()
-            .ok_or_else(|| AstError::ParseError {
+    fn parse_list_type(&mut self, pairs: Pairs<Rule>) -> StandardResult<TypeKind> {
+        let pair = pairs.into_iter().next().ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1001,
                 message: "Expected type in list type".to_string(),
                 span: Span::default(),
-            })?;
+                suggestions: vec!["Add a type".to_string()],
+            })
+        })?;
 
         match pair.as_rule() {
             Rule::type_expression => {
                 let element_type = self.parse_type_pairs(pair.into_inner())?;
                 Ok(TypeKind::List(Box::new(element_type)))
             }
-            _ => Err(AstError::ParseError {
-                message: format!("Unexpected rule in list type: {:?}", pair.as_rule()),
-                span: Span::default(),
-            }),
+            _ => Err(StandardError::Ligature(
+                ligature_ast::LigatureError::Parse {
+                    code: ligature_ast::ErrorCode::E1002,
+                    message: format!("Unexpected rule in list type: {:?}", pair.as_rule()),
+                    span: Span::default(),
+                    suggestions: vec!["Check the list type syntax".to_string()],
+                },
+            )),
         }
     }
 
-    fn parse_constrained_type(&mut self, pairs: Pairs<Rule>) -> AstResult<TypeKind> {
+    fn parse_constrained_type(&mut self, pairs: Pairs<Rule>) -> StandardResult<TypeKind> {
         let mut pairs_iter = pairs.into_iter();
 
-        let constraint_pair = pairs_iter.next().ok_or_else(|| AstError::ParseError {
-            message: "Expected type class constraint".to_string(),
-            span: Span::default(),
+        let constraint_pair = pairs_iter.next().ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1003,
+                message: "Expected type class constraint".to_string(),
+                span: Span::default(),
+                suggestions: vec!["Add a type class constraint".to_string()],
+            })
         })?;
 
-        let type_pair = pairs_iter.next().ok_or_else(|| AstError::ParseError {
-            message: "Expected constrained type".to_string(),
-            span: Span::default(),
+        let type_pair = pairs_iter.next().ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1004,
+                message: "Expected constrained type".to_string(),
+                span: Span::default(),
+                suggestions: vec!["Add a constrained type".to_string()],
+            })
         })?;
 
         let constraint = self.parse_type_class_constraint(constraint_pair.into_inner())?;
@@ -1861,7 +2127,7 @@ impl Parser {
         })
     }
 
-    fn parse_refinement_type(&mut self, pairs: Pairs<Rule>) -> AstResult<TypeKind> {
+    fn parse_refinement_type(&mut self, pairs: Pairs<Rule>) -> StandardResult<TypeKind> {
         let pairs_iter = pairs.into_iter();
         let mut base_type = None;
         let mut predicate = None;
@@ -1877,10 +2143,14 @@ impl Parser {
                         "Int" => TypeKind::Integer,
                         "Float" => TypeKind::Float,
                         _ => {
-                            return Err(AstError::ParseError {
-                                message: format!("Unknown basic type: {}", pair.as_str()),
-                                span: Span::default(),
-                            });
+                            return Err(StandardError::Ligature(
+                                ligature_ast::LigatureError::Parse {
+                                    code: ligature_ast::ErrorCode::E1006,
+                                    message: format!("Unknown basic type: {}", pair.as_str()),
+                                    span: Span::default(),
+                                    suggestions: vec!["Use a valid basic type".to_string()],
+                                },
+                            ));
                         }
                     };
                     base_type = Some(Type::new(base_type_kind, Span::default()));
@@ -1895,14 +2165,22 @@ impl Parser {
             }
         }
 
-        let base_type = base_type.ok_or_else(|| AstError::ParseError {
-            message: "Expected base type in refinement type".to_string(),
-            span: Span::default(),
+        let base_type = base_type.ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1007,
+                message: "Expected base type in refinement type".to_string(),
+                span: Span::default(),
+                suggestions: vec!["Add a base type".to_string()],
+            })
         })?;
 
-        let predicate = predicate.ok_or_else(|| AstError::ParseError {
-            message: "Expected predicate in refinement type".to_string(),
-            span: Span::default(),
+        let predicate = predicate.ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1008,
+                message: "Expected predicate in refinement type".to_string(),
+                span: Span::default(),
+                suggestions: vec!["Add a predicate".to_string()],
+            })
         })?;
 
         Ok(TypeKind::Refinement {
@@ -1912,7 +2190,7 @@ impl Parser {
         })
     }
 
-    fn parse_constraint_type(&mut self, pairs: Pairs<Rule>) -> AstResult<TypeKind> {
+    fn parse_constraint_type(&mut self, pairs: Pairs<Rule>) -> StandardResult<TypeKind> {
         let pairs_iter = pairs.into_iter();
         let mut base_type = None;
         let mut constraints = Vec::new();
@@ -1928,10 +2206,14 @@ impl Parser {
                         "Int" => TypeKind::Integer,
                         "Float" => TypeKind::Float,
                         _ => {
-                            return Err(AstError::ParseError {
-                                message: format!("Unknown basic type: {}", pair.as_str()),
-                                span: Span::default(),
-                            });
+                            return Err(StandardError::Ligature(
+                                ligature_ast::LigatureError::Parse {
+                                    code: ligature_ast::ErrorCode::E1001,
+                                    message: format!("Unknown basic type: {}", pair.as_str()),
+                                    span: Span::default(),
+                                    suggestions: vec!["Use a valid basic type".to_string()],
+                                },
+                            ));
                         }
                     };
                     base_type = Some(Type::new(base_type_kind, Span::default()));
@@ -1947,9 +2229,13 @@ impl Parser {
             }
         }
 
-        let base_type = base_type.ok_or_else(|| AstError::ParseError {
-            message: "Expected base type in constraint type".to_string(),
-            span: Span::default(),
+        let base_type = base_type.ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1007,
+                message: "Expected base type in constraint type".to_string(),
+                span: Span::default(),
+                suggestions: vec!["Add a base type".to_string()],
+            })
         })?;
 
         Ok(TypeKind::ConstraintType {
@@ -1961,14 +2247,15 @@ impl Parser {
     fn parse_constraint_expression(
         &mut self,
         pairs: Pairs<Rule>,
-    ) -> AstResult<ligature_ast::ty::Constraint> {
-        let pair = pairs
-            .into_iter()
-            .next()
-            .ok_or_else(|| AstError::ParseError {
+    ) -> StandardResult<ligature_ast::ty::Constraint> {
+        let pair = pairs.into_iter().next().ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1001,
                 message: "Expected constraint expression".to_string(),
                 span: Span::default(),
-            })?;
+                suggestions: vec!["Add a constraint expression".to_string()],
+            })
+        })?;
 
         println!(
             "Debug: Constraint expression rule: {:?}, content: '{}'",
@@ -1987,10 +2274,14 @@ impl Parser {
             }
             Rule::custom_constraint => self.parse_custom_constraint(pair.into_inner()),
             Rule::value_constraint => self.parse_value_constraint(pair.into_inner()),
-            _ => Err(AstError::ParseError {
-                message: format!("Unexpected constraint expression: {:?}", pair.as_rule()),
-                span: Span::default(),
-            }),
+            _ => Err(StandardError::Ligature(
+                ligature_ast::LigatureError::Parse {
+                    code: ligature_ast::ErrorCode::E1002,
+                    message: format!("Unexpected constraint expression: {:?}", pair.as_rule()),
+                    span: Span::default(),
+                    suggestions: vec!["Check the constraint syntax".to_string()],
+                },
+            )),
         }
     }
 
@@ -1998,7 +2289,7 @@ impl Parser {
         &mut self,
         pairs: Pairs<Rule>,
         constraint_content: &str,
-    ) -> AstResult<ligature_ast::ty::Constraint> {
+    ) -> StandardResult<ligature_ast::ty::Constraint> {
         let mut min = None;
         let mut max = None;
         let mut is_greater_than = false;
@@ -2042,7 +2333,7 @@ impl Parser {
         &mut self,
         pairs: Pairs<Rule>,
         constraint_content: &str,
-    ) -> AstResult<ligature_ast::ty::Constraint> {
+    ) -> StandardResult<ligature_ast::ty::Constraint> {
         let mut pattern = None;
         let mut regex = false;
 
@@ -2068,9 +2359,13 @@ impl Parser {
 
         println!("Debug: Final pattern: {pattern:?}, regex: {regex}");
 
-        let pattern = pattern.ok_or_else(|| AstError::ParseError {
-            message: "Expected pattern string in pattern constraint".to_string(),
-            span: Span::default(),
+        let pattern = pattern.ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1004,
+                message: "Expected pattern string in pattern constraint".to_string(),
+                span: Span::default(),
+                suggestions: vec!["Add a pattern string".to_string()],
+            })
         })?;
 
         Ok(ligature_ast::ty::Constraint::PatternConstraint { pattern, regex })
@@ -2079,7 +2374,7 @@ impl Parser {
     fn parse_custom_constraint(
         &mut self,
         pairs: Pairs<Rule>,
-    ) -> AstResult<ligature_ast::ty::Constraint> {
+    ) -> StandardResult<ligature_ast::ty::Constraint> {
         let pairs_iter = pairs.into_iter();
         let mut function = None;
         let mut arguments = Vec::new();
@@ -2097,9 +2392,13 @@ impl Parser {
             }
         }
 
-        let function = function.ok_or_else(|| AstError::ParseError {
-            message: "Expected function name in custom constraint".to_string(),
-            span: Span::default(),
+        let function = function.ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1005,
+                message: "Expected function name in custom constraint".to_string(),
+                span: Span::default(),
+                suggestions: vec!["Add a function name".to_string()],
+            })
         })?;
 
         Ok(ligature_ast::ty::Constraint::CustomConstraint {
@@ -2111,14 +2410,15 @@ impl Parser {
     fn parse_value_constraint(
         &mut self,
         pairs: Pairs<Rule>,
-    ) -> AstResult<ligature_ast::ty::Constraint> {
-        let pair = pairs
-            .into_iter()
-            .next()
-            .ok_or_else(|| AstError::ParseError {
+    ) -> StandardResult<ligature_ast::ty::Constraint> {
+        let pair = pairs.into_iter().next().ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1006,
                 message: "Expected value expression in value constraint".to_string(),
                 span: Span::default(),
-            })?;
+                suggestions: vec!["Add a value expression".to_string()],
+            })
+        })?;
 
         let expr = self.parse_expression_pairs(pair.into_inner())?;
         Ok(ligature_ast::ty::Constraint::ValueConstraint(Box::new(
@@ -2156,14 +2456,15 @@ impl Parser {
     }
 
     // Pattern parsing methods
-    fn parse_pattern(&mut self, pairs: Pairs<Rule>) -> AstResult<Pattern> {
-        let pair = pairs
-            .into_iter()
-            .next()
-            .ok_or_else(|| AstError::ParseError {
+    fn parse_pattern(&mut self, pairs: Pairs<Rule>) -> StandardResult<Pattern> {
+        let pair = pairs.into_iter().next().ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1007,
                 message: "Expected pattern".to_string(),
                 span: Span::default(),
-            })?;
+                suggestions: vec!["Add a pattern".to_string()],
+            })
+        })?;
 
         match pair.as_rule() {
             Rule::wildcard_pattern => self.parse_wildcard_pattern(pair.into_inner()),
@@ -2173,57 +2474,71 @@ impl Parser {
             Rule::union_pattern => self.parse_union_pattern(pair.into_inner()),
             Rule::list_pattern => self.parse_list_pattern(pair.into_inner()),
             Rule::parenthesized_pattern => self.parse_parenthesized_pattern(pair.into_inner()),
-            _ => Err(AstError::ParseError {
-                message: format!("Unexpected rule in pattern: {:?}", pair.as_rule()),
-                span: Span::default(),
-            }),
+            _ => Err(StandardError::Ligature(
+                ligature_ast::LigatureError::Parse {
+                    code: ligature_ast::ErrorCode::E1008,
+                    message: format!("Unexpected rule in pattern: {:?}", pair.as_rule()),
+                    span: Span::default(),
+                    suggestions: vec!["Check the pattern syntax".to_string()],
+                },
+            )),
         }
     }
 
-    fn parse_wildcard_pattern(&mut self, _pairs: Pairs<Rule>) -> AstResult<Pattern> {
+    fn parse_wildcard_pattern(&mut self, _pairs: Pairs<Rule>) -> StandardResult<Pattern> {
         Ok(Pattern::Wildcard)
     }
 
-    fn parse_variable_pattern(&mut self, pairs: Pairs<Rule>) -> AstResult<Pattern> {
-        let pair = pairs
-            .into_iter()
-            .next()
-            .ok_or_else(|| AstError::ParseError {
+    fn parse_variable_pattern(&mut self, pairs: Pairs<Rule>) -> StandardResult<Pattern> {
+        let pair = pairs.into_iter().next().ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1001,
                 message: "Expected identifier in variable pattern".to_string(),
                 span: Span::default(),
-            })?;
+                suggestions: vec!["Add an identifier".to_string()],
+            })
+        })?;
 
         match pair.as_rule() {
             Rule::identifier => Ok(Pattern::Variable(pair.as_str().to_string())),
-            _ => Err(AstError::ParseError {
-                message: format!("Unexpected rule in variable pattern: {:?}", pair.as_rule()),
-                span: Span::default(),
-            }),
+            _ => Err(StandardError::Ligature(
+                ligature_ast::LigatureError::Parse {
+                    code: ligature_ast::ErrorCode::E1008,
+                    message: format!("Unexpected rule in variable pattern: {:?}", pair.as_rule()),
+                    span: Span::default(),
+                    suggestions: vec!["Check the variable pattern syntax".to_string()],
+                },
+            )),
         }
     }
 
-    fn parse_literal_pattern(&mut self, pairs: Pairs<Rule>) -> AstResult<Pattern> {
-        let pair = pairs
-            .into_iter()
-            .next()
-            .ok_or_else(|| AstError::ParseError {
+    fn parse_literal_pattern(&mut self, pairs: Pairs<Rule>) -> StandardResult<Pattern> {
+        let pair = pairs.into_iter().next().ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1001,
                 message: "Expected literal in literal pattern".to_string(),
                 span: Span::default(),
-            })?;
+                suggestions: vec!["Add a literal".to_string()],
+            })
+        })?;
 
         match pair.as_rule() {
             Rule::literal => {
                 let literal = self.parse_literal(pair)?;
                 Ok(Pattern::Literal(literal))
             }
-            _ => Err(AstError::ParseError {
-                message: format!("Unexpected rule in literal pattern: {:?}", pair.as_rule()),
-                span: Span::default(),
-            }),
+            _ => Err(StandardError::Ligature(
+                ligature_ast::LigatureError::Parse {
+                    code: ligature_ast::ErrorCode::E1002,
+                    message: format!("Unexpected rule in literal pattern: {:?}", pair.as_rule()),
+                    span: Span::default(),
+                    suggestions: vec!["Check the literal pattern syntax".to_string()],
+                },
+            )),
         }
     }
 
-    fn parse_record_pattern(&mut self, pairs: Pairs<Rule>) -> AstResult<Pattern> {
+    fn parse_record_pattern(&mut self, pairs: Pairs<Rule>) -> StandardResult<Pattern> {
         let mut fields = Vec::new();
 
         for pair in pairs {
@@ -2236,7 +2551,10 @@ impl Parser {
         Ok(Pattern::Record { fields })
     }
 
-    fn parse_record_pattern_field(&mut self, pairs: Pairs<Rule>) -> AstResult<RecordPatternField> {
+    fn parse_record_pattern_field(
+        &mut self,
+        pairs: Pairs<Rule>,
+    ) -> StandardResult<RecordPatternField> {
         let pairs_iter = pairs.into_iter();
         let mut name = String::new();
         let mut pattern = None;
@@ -2253,9 +2571,13 @@ impl Parser {
             }
         }
 
-        let pattern = pattern.ok_or_else(|| AstError::ParseError {
-            message: "Expected pattern in record pattern field".to_string(),
-            span: Span::default(),
+        let pattern = pattern.ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1003,
+                message: "Expected pattern in record pattern field".to_string(),
+                span: Span::default(),
+                suggestions: vec!["Add a pattern".to_string()],
+            })
         })?;
 
         Ok(RecordPatternField {
@@ -2265,7 +2587,7 @@ impl Parser {
         })
     }
 
-    fn parse_union_pattern(&mut self, pairs: Pairs<Rule>) -> AstResult<Pattern> {
+    fn parse_union_pattern(&mut self, pairs: Pairs<Rule>) -> StandardResult<Pattern> {
         let pairs_iter = pairs.into_iter();
         let mut variant = String::new();
         let mut value = None;
@@ -2286,7 +2608,7 @@ impl Parser {
         Ok(Pattern::Union { variant, value })
     }
 
-    fn parse_list_pattern(&mut self, pairs: Pairs<Rule>) -> AstResult<Pattern> {
+    fn parse_list_pattern(&mut self, pairs: Pairs<Rule>) -> StandardResult<Pattern> {
         let mut elements = Vec::new();
 
         for pair in pairs {
@@ -2299,14 +2621,15 @@ impl Parser {
         Ok(Pattern::List { elements })
     }
 
-    fn parse_parenthesized_pattern(&mut self, pairs: Pairs<Rule>) -> AstResult<Pattern> {
-        let pair = pairs
-            .into_iter()
-            .next()
-            .ok_or_else(|| AstError::ParseError {
+    fn parse_parenthesized_pattern(&mut self, pairs: Pairs<Rule>) -> StandardResult<Pattern> {
+        let pair = pairs.into_iter().next().ok_or_else(|| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1004,
                 message: "Expected pattern in parenthesized pattern".to_string(),
                 span: Span::default(),
-            })?;
+                suggestions: vec!["Add a pattern".to_string()],
+            })
+        })?;
 
         match pair.as_rule() {
             Rule::pattern => self.parse_pattern(pair.into_inner()),
@@ -2316,17 +2639,21 @@ impl Parser {
             Rule::union_pattern => self.parse_union_pattern(pair.into_inner()),
             Rule::record_pattern => self.parse_record_pattern(pair.into_inner()),
             Rule::list_pattern => self.parse_list_pattern(pair.into_inner()),
-            _ => Err(AstError::ParseError {
-                message: format!(
-                    "Unexpected rule in parenthesized pattern: {:?}",
-                    pair.as_rule()
-                ),
-                span: Span::default(),
-            }),
+            _ => Err(StandardError::Ligature(
+                ligature_ast::LigatureError::Parse {
+                    code: ligature_ast::ErrorCode::E1005,
+                    message: format!(
+                        "Unexpected rule in parenthesized pattern: {:?}",
+                        pair.as_rule()
+                    ),
+                    span: Span::default(),
+                    suggestions: vec!["Check the parenthesized pattern syntax".to_string()],
+                },
+            )),
         }
     }
 
-    fn parse_type_class_declaration(&mut self, pairs: Pairs<Rule>) -> AstResult<Declaration> {
+    fn parse_type_class_declaration(&mut self, pairs: Pairs<Rule>) -> StandardResult<Declaration> {
         let mut name = String::new();
         let mut parameters = Vec::new();
         let mut superclasses = Vec::new();
@@ -2362,7 +2689,7 @@ impl Parser {
             }
         }
 
-        let type_class = ligature_ast::TypeClassDeclaration {
+        let type_class = TypeClassDeclaration {
             name,
             parameters,
             superclasses,
@@ -2373,7 +2700,7 @@ impl Parser {
         Ok(Declaration::type_class(type_class))
     }
 
-    fn parse_instance_declaration(&mut self, pairs: Pairs<Rule>) -> AstResult<Declaration> {
+    fn parse_instance_declaration(&mut self, pairs: Pairs<Rule>) -> StandardResult<Declaration> {
         let mut class_name = String::new();
         let mut type_arguments = Vec::new();
         let mut methods = Vec::new();
@@ -2410,7 +2737,7 @@ impl Parser {
             }
         }
 
-        let instance = ligature_ast::InstanceDeclaration {
+        let instance = InstanceDeclaration {
             class_name,
             type_arguments,
             constraints: None, // Regular instances don't have constraints
@@ -2424,7 +2751,7 @@ impl Parser {
     fn parse_constrained_instance_declaration(
         &mut self,
         pairs: Pairs<Rule>,
-    ) -> AstResult<Declaration> {
+    ) -> StandardResult<Declaration> {
         let mut class_name = String::new();
         let mut constraints = Vec::new();
         let mut type_arguments = Vec::new();
@@ -2466,7 +2793,7 @@ impl Parser {
             }
         }
 
-        let instance = ligature_ast::InstanceDeclaration {
+        let instance = InstanceDeclaration {
             class_name,
             type_arguments,
             constraints: if constraints.is_empty() {
@@ -2484,7 +2811,7 @@ impl Parser {
     fn parse_type_class_constraint(
         &mut self,
         pairs: Pairs<Rule>,
-    ) -> AstResult<ligature_ast::TypeClassConstraint> {
+    ) -> StandardResult<TypeClassConstraint> {
         let mut class_name = String::new();
         let mut type_arguments = Vec::new();
         let span = Span::default();
@@ -2502,17 +2829,14 @@ impl Parser {
             }
         }
 
-        Ok(ligature_ast::TypeClassConstraint {
+        Ok(TypeClassConstraint {
             class_name,
             type_arguments,
             span,
         })
     }
 
-    fn parse_method_signature(
-        &mut self,
-        pairs: Pairs<Rule>,
-    ) -> AstResult<ligature_ast::MethodSignature> {
+    fn parse_method_signature(&mut self, pairs: Pairs<Rule>) -> StandardResult<MethodSignature> {
         let mut name = String::new();
         let mut type_ = Type::unit(Span::default());
         let span = Span::default();
@@ -2529,13 +2853,13 @@ impl Parser {
             }
         }
 
-        Ok(ligature_ast::MethodSignature { name, type_, span })
+        Ok(MethodSignature { name, type_, span })
     }
 
     fn parse_method_implementation(
         &mut self,
         pairs: Pairs<Rule>,
-    ) -> AstResult<ligature_ast::MethodImplementation> {
+    ) -> StandardResult<MethodImplementation> {
         let mut name = String::new();
         let mut implementation = Expr {
             kind: ExprKind::Literal(Literal::Unit),
@@ -2557,7 +2881,7 @@ impl Parser {
             }
         }
 
-        Ok(ligature_ast::MethodImplementation {
+        Ok(MethodImplementation {
             name,
             implementation,
             span,
@@ -2567,7 +2891,7 @@ impl Parser {
     fn parse_instance_declaration_with_args(
         &mut self,
         pairs: Pairs<Rule>,
-    ) -> AstResult<Declaration> {
+    ) -> StandardResult<Declaration> {
         let mut class_name = String::new();
         let mut type_arguments = Vec::new();
         let mut methods = Vec::new();
@@ -2594,7 +2918,7 @@ impl Parser {
             }
         }
 
-        let instance = ligature_ast::InstanceDeclaration {
+        let instance = InstanceDeclaration {
             class_name,
             type_arguments,
             constraints: None, // This variant doesn't have constraints
@@ -2605,7 +2929,10 @@ impl Parser {
         Ok(Declaration::instance(instance))
     }
 
-    fn parse_instance_declaration_no_args(&mut self, pairs: Pairs<Rule>) -> AstResult<Declaration> {
+    fn parse_instance_declaration_no_args(
+        &mut self,
+        pairs: Pairs<Rule>,
+    ) -> StandardResult<Declaration> {
         let mut class_name = String::new();
         let mut methods = Vec::new();
         let span = Span::default();
@@ -2627,7 +2954,7 @@ impl Parser {
             }
         }
 
-        let instance = ligature_ast::InstanceDeclaration {
+        let instance = InstanceDeclaration {
             class_name,
             type_arguments: Vec::new(),
             constraints: None, // This variant doesn't have constraints

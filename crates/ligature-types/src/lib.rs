@@ -1,64 +1,24 @@
 //! Type system for the Ligature language.
 //!
-//! This crate provides type checking, type inference, and type system
-//! functionality for the Ligature language.
+//! This crate provides type system functionality for the Ligature language.
+//! Type checking functionality has been moved to the embouchure-checker crate.
 
 pub mod benchmarks;
-pub mod checker;
-pub mod constraints;
-pub mod environment;
-pub mod error;
 pub mod inference;
-pub mod resolver;
-
-use std::path::PathBuf;
-
-use ligature_ast::{AstResult, Module, Program};
 
 // Test modules
-#[cfg(test)]
-mod module_tests;
-#[cfg(test)]
-mod refinement_type_tests;
-#[cfg(test)]
-mod resolver_tests;
-#[cfg(test)]
-mod type_class_tests;
 mod type_system_enhancements_tests;
 #[cfg(test)]
 mod union_type_inference_tests;
 
-/// Type check a complete program.
-pub fn type_check_program(program: &Program) -> AstResult<()> {
-    let mut checker = checker::TypeChecker::new();
-    checker.check_program(program)
-}
-
-/// Type check a program with custom search and register paths.
-pub fn type_check_program_with_paths(
-    program: &Program,
-    search_paths: &[PathBuf],
-    register_paths: &[PathBuf],
-) -> AstResult<()> {
-    let mut checker =
-        checker::TypeChecker::with_paths(search_paths.to_vec(), register_paths.to_vec());
-    checker.check_program(program)
-}
-
-/// Type check a complete module.
-pub fn type_check_module(module: &Module) -> AstResult<()> {
-    let mut checker = checker::TypeChecker::new();
-    checker.check_module(module)
-}
-
-/// Infer the type of an expression.
-pub fn infer_expression(expr: &ligature_ast::Expr) -> AstResult<ligature_ast::Type> {
-    let mut checker = checker::TypeChecker::new();
-    checker.infer_expression(expr)
-}
+// Re-export type checking functions from embouchure-checker
+pub use embouchure_checker::{
+    infer_expression, type_check_module, type_check_program, type_check_program_with_paths,
+};
 
 #[cfg(test)]
 mod tests {
+    use embouchure_checker::TypeChecker;
     use ligature_ast::{
         Declaration, DeclarationKind, Expr, ExprKind, Literal, Program, Span, Type, TypeKind,
         ValueDeclaration,
@@ -105,7 +65,7 @@ mod tests {
 
     #[test]
     fn test_literal_type_inference() {
-        let mut checker = checker::TypeChecker::new();
+        let mut checker = TypeChecker::new();
 
         // Test integer literal
         let int_expr = Expr {
@@ -142,7 +102,7 @@ mod tests {
 
     #[test]
     fn test_variable_type_inference() {
-        let mut checker = checker::TypeChecker::new();
+        let mut checker = TypeChecker::new();
 
         // Bind a variable
         checker.bind("x".to_string(), Type::integer(Span::default()));
@@ -166,7 +126,7 @@ mod tests {
 
     #[test]
     fn test_function_type_inference() {
-        let mut checker = checker::TypeChecker::new();
+        let mut checker = TypeChecker::new();
 
         // Test lambda abstraction
         let body = Expr {
@@ -197,7 +157,7 @@ mod tests {
 
     #[test]
     fn test_binary_operation_type_inference() {
-        let mut checker = checker::TypeChecker::new();
+        let mut checker = TypeChecker::new();
 
         // Test integer addition
         let left = Expr {
@@ -244,7 +204,7 @@ mod tests {
 
     #[test]
     fn test_record_type_inference() {
-        let mut checker = checker::TypeChecker::new();
+        let mut checker = TypeChecker::new();
 
         // Test record construction
         let fields = vec![
@@ -286,7 +246,7 @@ mod tests {
 
     #[test]
     fn test_type_equality() {
-        let checker = checker::TypeChecker::new();
+        let checker = TypeChecker::new();
 
         // Test basic type equality
         let int1 = Type::integer(Span::default());
@@ -325,7 +285,6 @@ mod tests {
 
         let program = Program {
             declarations: vec![declaration],
-            span: Span::default(),
         };
 
         // Type check the program
@@ -333,7 +292,7 @@ mod tests {
         assert!(result.is_ok(), "Type checking failed: {result:?}");
 
         // Create a new inference engine and manually add the binding
-        let mut checker = checker::TypeChecker::new();
+        let mut checker = TypeChecker::new();
         checker.bind("answer".to_string(), Type::integer(Span::default()));
 
         // Verify the binding was added
@@ -347,12 +306,14 @@ mod tests {
 
     #[test]
     fn test_constraint_solving() {
-        let mut solver = constraints::ConstraintSolver::new();
+        let mut solver = embouchure_checker::constraints::ConstraintSolver::new();
 
         // Add a simple equality constraint
         let var_a = Type::variable("a".to_string(), Span::default());
         let int_type = Type::integer(Span::default());
-        solver.add_constraint(constraints::Constraint::Equality(var_a, int_type));
+        solver.add_constraint(embouchure_checker::constraints::Constraint::Equality(
+            var_a, int_type,
+        ));
 
         // Solve constraints
         let substitution = solver.solve().unwrap();
@@ -362,7 +323,7 @@ mod tests {
 
     #[test]
     fn test_function_application() {
-        let mut checker = checker::TypeChecker::new();
+        let mut checker = TypeChecker::new();
 
         // Create a function: \x -> x + 1
         let param = Expr {
@@ -410,7 +371,7 @@ mod tests {
 
     #[test]
     fn test_type_annotation() {
-        let mut checker = checker::TypeChecker::new();
+        let mut checker = TypeChecker::new();
 
         // Create an expression with type annotation
         let expr = Expr {
@@ -432,7 +393,7 @@ mod tests {
 
     #[test]
     fn test_if_expression() {
-        let mut checker = checker::TypeChecker::new();
+        let mut checker = TypeChecker::new();
 
         // Create an if expression
         let condition = Expr {
@@ -463,7 +424,7 @@ mod tests {
 
     #[test]
     fn test_let_expression() {
-        let mut checker = checker::TypeChecker::new();
+        let mut checker = TypeChecker::new();
 
         // Create a let expression
         let value = Expr {

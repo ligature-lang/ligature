@@ -7,7 +7,8 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use dashmap::DashMap;
-use ligature_ast::{AstError, AstResult, Expr, Program, Span};
+use ligature_ast::{Expr, Program, Span};
+use ligature_error::{ErrorContextBuilder, StandardError, StandardResult};
 use tokio::sync::RwLock;
 
 use crate::concurrent::{
@@ -136,7 +137,7 @@ pub struct EnhancedAsyncEvaluator {
 
 impl EnhancedAsyncEvaluator {
     /// Create a new enhanced async evaluator
-    pub fn new(config: EnhancedAsyncEvaluatorConfig) -> AstResult<Self> {
+    pub fn new(config: EnhancedAsyncEvaluatorConfig) -> StandardResult<Self> {
         let expression_cache = if config.enable_expression_caching {
             Some(Arc::new(ConcurrentExpressionCache::new(
                 config.expression_cache_size,
@@ -169,7 +170,7 @@ impl EnhancedAsyncEvaluator {
     }
 
     /// Evaluate a program asynchronously
-    pub async fn evaluate_program(&self, program: &Program) -> AstResult<Vec<Value>> {
+    pub async fn evaluate_program(&self, program: &Program) -> StandardResult<Vec<Value>> {
         let start_time = Instant::now();
 
         // Type check the program if enabled
@@ -213,10 +214,9 @@ impl EnhancedAsyncEvaluator {
                 Ok(Ok(value)) => values.push(value),
                 Ok(Err(error)) => return Err(error),
                 Err(join_error) => {
-                    return Err(AstError::InternalError {
-                        message: format!("Task join error: {join_error}"),
-                        span: Span::default(),
-                    });
+                    return Err(
+                        StandardError::Internal(format!("Task join error: {join_error}")).into(),
+                    );
                 }
             }
         }
@@ -237,7 +237,7 @@ impl EnhancedAsyncEvaluator {
         &self,
         expr: &Expr,
         env: &EvaluationEnvironment,
-    ) -> AstResult<Value> {
+    ) -> StandardResult<Value> {
         // Check expression cache first
         if let Some(ref cache) = self.expression_cache {
             let cache_key = crate::concurrent::CacheKey::new(expr, env, 0);
@@ -272,36 +272,32 @@ impl EnhancedAsyncEvaluator {
         &self,
         expr: &Expr,
         env: &EvaluationEnvironment,
-    ) -> AstResult<Value> {
+    ) -> StandardResult<Value> {
         match &expr.kind {
             ligature_ast::ExprKind::Literal(literal) => match literal {
-                ligature_ast::Literal::Integer(i) => Ok(Value::integer(*i, expr.span)),
-                ligature_ast::Literal::Float(f) => Ok(Value::float(*f, expr.span)),
-                ligature_ast::Literal::String(s) => Ok(Value::string(s.clone(), expr.span)),
-                ligature_ast::Literal::Boolean(b) => Ok(Value::boolean(*b, expr.span)),
-                ligature_ast::Literal::Unit => Ok(Value::unit(expr.span)),
+                ligature_ast::Literal::Integer(i) => Ok(Value::integer(*i, expr.span.clone())),
+                ligature_ast::Literal::Float(f) => Ok(Value::float(*f, expr.span.clone())),
+                ligature_ast::Literal::String(s) => Ok(Value::string(s.clone(), expr.span.clone())),
+                ligature_ast::Literal::Boolean(b) => Ok(Value::boolean(*b, expr.span.clone())),
+                ligature_ast::Literal::Unit => Ok(Value::unit(expr.span.clone())),
                 ligature_ast::Literal::List(elements) => {
                     let mut evaluated_elements = Vec::new();
                     for element in elements {
                         let evaluated = Box::pin(self.evaluate_expression(element, env)).await?;
                         evaluated_elements.push(evaluated);
                     }
-                    Ok(Value::list(evaluated_elements, expr.span))
+                    Ok(Value::list(evaluated_elements, expr.span.clone()))
                 }
             },
-            ligature_ast::ExprKind::Variable(name) => {
-                env.lookup(name)
-                    .ok_or_else(|| AstError::UndefinedIdentifier {
-                        name: name.clone(),
-                        span: expr.span,
-                    })
-            }
+            ligature_ast::ExprKind::Variable(name) => env.lookup(name).ok_or_else(|| {
+                StandardError::Internal(format!("Variable '{}' not found", name)).into()
+            }),
             ligature_ast::ExprKind::Application { function, argument } => {
                 let function_value = Box::pin(self.evaluate_expression(function, env)).await?;
                 let argument_value = Box::pin(self.evaluate_expression(argument, env)).await?;
 
                 // Apply the function (simplified)
-                self.apply_function(&function_value, &argument_value, expr.span)
+                self.apply_function(&function_value, &argument_value, expr.span.clone())
                     .await
             }
             ligature_ast::ExprKind::Abstraction {
@@ -311,7 +307,7 @@ impl EnhancedAsyncEvaluator {
                 Ok(Value::function(
                     parameter.clone(),
                     body.as_ref().clone(),
-                    expr.span,
+                    expr.span.clone(),
                 ))
             }
             ligature_ast::ExprKind::Let { name, value, body } => {
@@ -326,7 +322,7 @@ impl EnhancedAsyncEvaluator {
                     let field_value = Box::pin(self.evaluate_expression(&field.value, env)).await?;
                     record_fields.insert(field.name.clone(), field_value);
                 }
-                Ok(Value::record(record_fields, expr.span))
+                Ok(Value::record(record_fields, expr.span.clone()))
             }
             ligature_ast::ExprKind::FieldAccess { record, field } => {
                 let record_value = Box::pin(self.evaluate_expression(record, env)).await?;
@@ -335,9 +331,9 @@ impl EnhancedAsyncEvaluator {
                     record_fields
                         .get(field)
                         .cloned()
-                        .ok_or(AstError::InvalidExpression { span: expr.span })
+                        .ok_or(StandardError::Internal("Record field not found".to_string()).into())
                 } else {
-                    Err(AstError::InvalidExpression { span: expr.span })
+                    Err(StandardError::Internal("Record field access failed".to_string()).into())
                 }
             }
             ligature_ast::ExprKind::Union { variant, value } => {
@@ -346,7 +342,11 @@ impl EnhancedAsyncEvaluator {
                 } else {
                     None
                 };
-                Ok(Value::union(variant.clone(), union_value, expr.span))
+                Ok(Value::union(
+                    variant.clone(),
+                    union_value,
+                    expr.span.clone(),
+                ))
             }
             ligature_ast::ExprKind::Match { scrutinee, cases } => {
                 let scrutinee_value = Box::pin(self.evaluate_expression(scrutinee, env)).await?;
@@ -357,7 +357,7 @@ impl EnhancedAsyncEvaluator {
                     }
                 }
 
-                Err(AstError::InvalidExpression { span: expr.span })
+                Err(StandardError::Internal("Pattern matching failed".to_string()).into())
             }
             ligature_ast::ExprKind::If {
                 condition,
@@ -373,7 +373,7 @@ impl EnhancedAsyncEvaluator {
                         Box::pin(self.evaluate_expression(else_branch, env)).await
                     }
                 } else {
-                    Err(AstError::InvalidExpression { span: expr.span })
+                    Err(StandardError::Internal("Condition evaluation failed".to_string()).into())
                 }
             }
             ligature_ast::ExprKind::BinaryOp {
@@ -384,13 +384,13 @@ impl EnhancedAsyncEvaluator {
                 let left_value = Box::pin(self.evaluate_expression(left, env)).await?;
                 let right_value = Box::pin(self.evaluate_expression(right, env)).await?;
 
-                self.apply_binary_operator(operator, &left_value, &right_value, expr.span)
+                self.apply_binary_operator(operator, &left_value, &right_value, expr.span.clone())
                     .await
             }
             ligature_ast::ExprKind::UnaryOp { operator, operand } => {
                 let operand_value = Box::pin(self.evaluate_expression(operand, env)).await?;
 
-                self.apply_unary_operator(operator, &operand_value, expr.span)
+                self.apply_unary_operator(operator, &operand_value, expr.span.clone())
                     .await
             }
             ligature_ast::ExprKind::Annotated { expression, .. } => {
@@ -404,8 +404,8 @@ impl EnhancedAsyncEvaluator {
         &self,
         function: &Value,
         argument: &Value,
-        span: Span,
-    ) -> AstResult<Value> {
+        _span: Span,
+    ) -> StandardResult<Value> {
         // Simplified function application
         match function {
             Value {
@@ -430,7 +430,7 @@ impl EnhancedAsyncEvaluator {
                 env_copy.bind(parameter.as_ref().clone(), argument.clone());
                 Box::pin(self.evaluate_expression(body, &env_copy)).await
             }
-            _ => Err(AstError::InvalidExpression { span }),
+            _ => Err(StandardError::Internal("Unsupported expression type".to_string()).into()),
         }
     }
 
@@ -440,10 +440,11 @@ impl EnhancedAsyncEvaluator {
         operator: &ligature_ast::BinaryOperator,
         left: &Value,
         right: &Value,
-        span: Span,
-    ) -> AstResult<Value> {
-        left.apply_binary_op(operator, right)
-            .map_err(|e| AstError::InternalError { message: e, span })
+        _span: Span,
+    ) -> StandardResult<Value> {
+        left.apply_binary_op(operator, right).map_err(|e| {
+            ligature_error::StandardError::Internal(format!("Binary operation failed: {}", e))
+        })
     }
 
     /// Apply a unary operator
@@ -451,11 +452,11 @@ impl EnhancedAsyncEvaluator {
         &self,
         operator: &ligature_ast::UnaryOperator,
         operand: &Value,
-        span: Span,
-    ) -> AstResult<Value> {
-        operand
-            .apply_unary_op(operator)
-            .map_err(|e| AstError::InternalError { message: e, span })
+        _span: Span,
+    ) -> StandardResult<Value> {
+        operand.apply_unary_op(operator).map_err(|e| {
+            ligature_error::StandardError::Internal(format!("Unary operation failed: {}", e))
+        })
     }
 
     /// Match a value against a pattern
@@ -614,7 +615,6 @@ mod tests {
                 false,
                 Span::default(),
             )],
-            span: Span::default(),
         };
 
         let results = evaluator.evaluate_program(&program).await;

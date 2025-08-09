@@ -2,7 +2,8 @@
 
 use std::time::{Duration, Instant};
 
-use ligature_ast::{AstError, Span};
+use ligature_ast::Span;
+use ligature_error::{StandardError, StandardResult};
 use ligature_parser::parse_program;
 
 use crate::Evaluator;
@@ -76,7 +77,7 @@ impl BenchmarkSuite {
         name: &str,
         program: &str,
         iterations: usize,
-    ) -> Result<BenchmarkResult, AstError> {
+    ) -> StandardResult<BenchmarkResult> {
         let mut times = Vec::with_capacity(iterations);
 
         // Parse the program once
@@ -84,12 +85,9 @@ impl BenchmarkSuite {
 
         // Set memory baseline if tracking is enabled
         if self.enable_memory_tracking {
-            self.memory_tracker
-                .set_baseline()
-                .map_err(|e| AstError::ParseError {
-                    message: format!("Failed to set memory baseline: {e}"),
-                    span: Span::default(),
-                })?;
+            self.memory_tracker.set_baseline().map_err(|e| {
+                StandardError::Internal(format!("Failed to set memory baseline: {}", e))
+            })?;
         }
 
         // Warm up the evaluator
@@ -119,10 +117,7 @@ impl BenchmarkSuite {
         let memory_usage = if self.enable_memory_tracking {
             self.memory_tracker
                 .get_peak_usage()
-                .map_err(|e| AstError::ParseError {
-                    message: format!("Failed to get memory usage: {e}"),
-                    span: Span::default(),
-                })
+                .map_err(|e| StandardError::Internal(format!("Failed to get memory usage: {}", e)))
                 .ok()
         } else {
             None
@@ -148,7 +143,7 @@ impl BenchmarkSuite {
     }
 
     /// Run all built-in benchmarks.
-    pub fn run_all_benchmarks(&mut self) -> Result<Vec<BenchmarkResult>, AstError> {
+    pub fn run_all_benchmarks(&mut self) -> StandardResult<Vec<BenchmarkResult>> {
         let benchmarks = vec![
             ("simple_arithmetic", SIMPLE_ARITHMETIC, 10000),
             ("function_calls", FUNCTION_CALLS, 5000),
@@ -566,7 +561,7 @@ let final_result = fold (\acc x -> acc + x) 0 processed_results;
 "#;
 
 /// Run a quick performance test.
-pub fn quick_performance_test() -> Result<(), AstError> {
+pub fn quick_performance_test() -> StandardResult<()> {
     let mut suite = BenchmarkSuite::new();
     let results = suite.run_all_benchmarks()?;
 
@@ -582,7 +577,7 @@ pub fn quick_performance_test() -> Result<(), AstError> {
 }
 
 /// Run a quick performance test with memory tracking.
-pub fn quick_performance_test_with_memory() -> Result<(), AstError> {
+pub fn quick_performance_test_with_memory() -> StandardResult<()> {
     let mut suite = BenchmarkSuite::with_memory_tracking();
     let results = suite.run_all_benchmarks()?;
 
@@ -601,7 +596,7 @@ pub fn quick_performance_test_with_memory() -> Result<(), AstError> {
 }
 
 /// Run a lightweight performance test for testing purposes.
-pub fn lightweight_performance_test_with_memory() -> Result<(), AstError> {
+pub fn lightweight_performance_test_with_memory() -> StandardResult<()> {
     let mut suite = BenchmarkSuite::with_memory_tracking();
 
     // Run only a few benchmarks with fewer iterations for testing
@@ -632,33 +627,39 @@ pub fn lightweight_performance_test_with_memory() -> Result<(), AstError> {
 }
 
 /// Run a comprehensive performance analysis.
-pub fn comprehensive_performance_analysis() -> Result<(), AstError> {
+pub fn comprehensive_performance_analysis() -> StandardResult<()> {
     let mut suite = BenchmarkSuite::new();
     let _results = suite.run_all_benchmarks()?;
 
     suite.print_summary();
-    suite
-        .export_csv("benchmark_results.csv")
-        .map_err(|_| AstError::ParseError {
+    suite.export_csv("benchmark_results.csv").map_err(|_| {
+        StandardError::Ligature(ligature_ast::LigatureError::Parse {
+            code: ligature_ast::ErrorCode::E1001,
             message: "Failed to export CSV".to_string(),
             span: ligature_ast::Span::default(),
-        })?;
+            suggestions: vec![],
+        })
+    })?;
 
     println!("Results exported to benchmark_results.csv");
     Ok(())
 }
 
 /// Run a comprehensive performance analysis with memory tracking.
-pub fn comprehensive_performance_analysis_with_memory() -> Result<(), AstError> {
+pub fn comprehensive_performance_analysis_with_memory() -> StandardResult<()> {
     let mut suite = BenchmarkSuite::with_memory_tracking();
     let _results = suite.run_all_benchmarks()?;
 
     suite.print_summary();
     suite
         .export_csv("benchmark_results_with_memory.csv")
-        .map_err(|_| AstError::ParseError {
-            message: "Failed to export CSV".to_string(),
-            span: ligature_ast::Span::default(),
+        .map_err(|_| {
+            StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1001,
+                message: "Failed to export CSV".to_string(),
+                span: ligature_ast::Span::default(),
+                suggestions: vec![],
+            })
         })?;
 
     println!("Results exported to benchmark_results_with_memory.csv");

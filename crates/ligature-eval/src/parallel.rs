@@ -9,7 +9,8 @@ use std::time::Duration;
 
 use dashmap::DashMap;
 #[allow(unused_imports)]
-use ligature_ast::{AstError, AstResult, Expr, Program, Span, Type};
+use ligature_ast::{Expr, Program, Span, Type};
+use ligature_error::{StandardError, StandardResult};
 use uuid::Uuid;
 
 use crate::environment::EvaluationEnvironment;
@@ -42,7 +43,7 @@ pub enum TaskStatus {
     /// Task completed successfully
     Completed(Value),
     /// Task failed with an error
-    Failed(AstError),
+    Failed(String),
 }
 
 /// A task to be executed
@@ -167,10 +168,10 @@ impl WorkQueue {
     }
 
     /// Mark a task as completed
-    pub async fn complete_task(&self, task_id: TaskId, result: AstResult<Value>) {
+    pub async fn complete_task(&self, task_id: TaskId, result: StandardResult<Value>) {
         let status = match result {
             Ok(value) => TaskStatus::Completed(value),
-            Err(error) => TaskStatus::Failed(error),
+            Err(error) => TaskStatus::Failed(error.to_string()),
         };
 
         self.completed.insert(task_id, status);
@@ -243,7 +244,7 @@ impl Worker {
     }
 
     /// Process a single task
-    async fn process_task(&self, task: Task) -> AstResult<Value> {
+    async fn process_task(&self, task: Task) -> StandardResult<Value> {
         // Simple evaluation (in a real implementation, this would use the full evaluator)
         match task.status {
             TaskStatus::Pending => {
@@ -251,12 +252,11 @@ impl Worker {
                 self.evaluate_expression(&task.expression, &task.environment)
                     .await
             }
-            TaskStatus::Running => Err(AstError::InternalError {
-                message: "Task is already running".to_string(),
-                span: task.expression.span,
-            }),
+            TaskStatus::Running => {
+                Err(StandardError::Internal("Task is already running".to_string()).into())
+            }
             TaskStatus::Completed(value) => Ok(value),
-            TaskStatus::Failed(error) => Err(error),
+            TaskStatus::Failed(error) => Err(StandardError::Internal(error.to_string())),
         }
     }
 
@@ -265,34 +265,32 @@ impl Worker {
         &self,
         expr: &Expr,
         env: &EvaluationEnvironment,
-    ) -> AstResult<Value> {
+    ) -> StandardResult<Value> {
         match &expr.kind {
             ligature_ast::ExprKind::Literal(literal) => {
                 match literal {
-                    ligature_ast::Literal::Integer(i) => Ok(Value::integer(*i, expr.span)),
-                    ligature_ast::Literal::Float(f) => Ok(Value::float(*f, expr.span)),
-                    ligature_ast::Literal::String(s) => Ok(Value::string(s.clone(), expr.span)),
-                    ligature_ast::Literal::Boolean(b) => Ok(Value::boolean(*b, expr.span)),
-                    ligature_ast::Literal::Unit => Ok(Value::unit(expr.span)),
+                    ligature_ast::Literal::Integer(i) => Ok(Value::integer(*i, expr.span.clone())),
+                    ligature_ast::Literal::Float(f) => Ok(Value::float(*f, expr.span.clone())),
+                    ligature_ast::Literal::String(s) => {
+                        Ok(Value::string(s.clone(), expr.span.clone()))
+                    }
+                    ligature_ast::Literal::Boolean(b) => Ok(Value::boolean(*b, expr.span.clone())),
+                    ligature_ast::Literal::Unit => Ok(Value::unit(expr.span.clone())),
                     ligature_ast::Literal::List(_) => {
                         // Simplified list evaluation
-                        Ok(Value::list(Vec::new(), expr.span))
+                        Ok(Value::list(Vec::new(), expr.span.clone()))
                     }
                 }
             }
-            ligature_ast::ExprKind::Variable(name) => {
-                env.lookup(name)
-                    .ok_or_else(|| AstError::UndefinedIdentifier {
-                        name: name.clone(),
-                        span: expr.span,
-                    })
-            }
+            ligature_ast::ExprKind::Variable(name) => env.lookup(name).ok_or_else(|| {
+                StandardError::Internal(format!("Variable '{}' not found", name)).into()
+            }),
             _ => {
                 // Simplified evaluation for other expression types
-                Err(AstError::InternalError {
-                    message: "Expression type not yet implemented".to_string(),
-                    span: expr.span,
-                })
+                Err(
+                    StandardError::Internal("Expression type not yet implemented".to_string())
+                        .into(),
+                )
             }
         }
     }
@@ -355,7 +353,7 @@ impl ParallelEvaluator {
     }
 
     /// Evaluate a program in parallel
-    pub async fn evaluate_program(&self, program: &Program) -> AstResult<Vec<Value>> {
+    pub async fn evaluate_program(&self, program: &Program) -> StandardResult<Vec<Value>> {
         // Create tasks for each declaration
         let mut task_handles = Vec::new();
 
@@ -407,12 +405,14 @@ impl ParallelEvaluator {
                     if let Some(status) = self.work_queue.completed.get(&task_id) {
                         match &*status {
                             TaskStatus::Completed(value) => results.push(value.clone()),
-                            TaskStatus::Failed(error) => return Err(error.clone()),
+                            TaskStatus::Failed(error) => {
+                                return Err(StandardError::Internal(error.to_string()));
+                            }
                             _ => {
-                                return Err(AstError::InternalError {
-                                    message: "Task not completed".to_string(),
-                                    span: Span::default(),
-                                });
+                                return Err(StandardError::Internal(
+                                    "Task not completed".to_string(),
+                                )
+                                .into());
                             }
                         }
                     }
@@ -429,10 +429,7 @@ impl ParallelEvaluator {
                     let _ = handle.await;
                 }
 
-                Err(AstError::InternalError {
-                    message: "Parallel evaluation timed out".to_string(),
-                    span: Span::default(),
-                })
+                Err(StandardError::Internal("Parallel evaluation timed out".to_string()).into())
             }
         }
     }
@@ -508,7 +505,6 @@ mod tests {
                 false,
                 Span::default(),
             )],
-            span: Span::default(),
         };
 
         let results = evaluator.evaluate_program(&program).await;

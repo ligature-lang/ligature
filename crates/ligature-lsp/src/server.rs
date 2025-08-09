@@ -618,22 +618,7 @@ impl LigatureLspServer {
 
                 if has_imports {
                     // Convert program to module for import resolution
-                    let _module = ligature_ast::Module {
-                        name: "main".to_string(),
-                        imports: program
-                            .declarations
-                            .iter()
-                            .filter_map(|decl| {
-                                if let ligature_ast::DeclarationKind::Import(import) = &decl.kind {
-                                    Some(import.clone())
-                                } else {
-                                    None
-                                }
-                            })
-                            .collect(),
-                        declarations: program.declarations.clone(),
-                        span: program.span,
-                    };
+                    let _module = program.clone();
 
                     // Load the module into the import resolution service
                     if let Err(e) = self.import_resolution.load_module_from_uri(uri).await {
@@ -738,7 +723,7 @@ impl LigatureLspServer {
     /// Find a symbol definition within a module.
     fn find_symbol_in_module(
         &self,
-        module: &ligature_ast::Module,
+        module: &ligature_ast::Program,
         symbol_name: &str,
         module_uri: &str,
     ) -> Option<Location> {
@@ -810,7 +795,7 @@ impl LigatureLspServer {
     /// Find symbol references within a module.
     fn find_symbol_references_in_module(
         &self,
-        module: &ligature_ast::Module,
+        module: &ligature_ast::Program,
         symbol_name: &str,
         module_uri: &str,
     ) -> Vec<Location> {
@@ -887,7 +872,7 @@ impl LigatureLspServer {
     #[allow(dead_code)]
     fn get_module_completions(
         &self,
-        module: &ligature_ast::Module,
+        module: &ligature_ast::Program,
         _module_uri: &str,
     ) -> Vec<CompletionItem> {
         let mut completions = Vec::new();
@@ -1036,7 +1021,7 @@ impl LigatureLspServer {
     #[allow(dead_code)]
     fn extract_symbols_from_module(
         &self,
-        module: &ligature_ast::Module,
+        module: &ligature_ast::Program,
         module_uri: &str,
         query: &str,
     ) -> Vec<SymbolInformation> {
@@ -1661,17 +1646,21 @@ impl LigatureLspServer {
         // Create scratch directory if it doesn't exist
         let scratch_dir = PathBuf::from(SCRATCH_DIRECTORY);
         if !scratch_dir.exists() {
-            std::fs::create_dir_all(&scratch_dir).map_err(|e| AstError::ParseError {
+            std::fs::create_dir_all(&scratch_dir).map_err(|e| AstError::Parse {
+                code: ligature_ast::ErrorCode::I6001,
                 message: format!("Failed to create scratch directory: {e}"),
                 span: Span::default(),
+                suggestions: vec![],
             })?;
         }
 
         // Create temporary file
         let temp_file = scratch_dir.join(format!("{name}.lig"));
-        std::fs::write(&temp_file, content).map_err(|e| AstError::ParseError {
+        std::fs::write(&temp_file, content).map_err(|e| AstError::Parse {
+            code: ligature_ast::ErrorCode::I6001,
             message: format!("Failed to write temporary file: {e}"),
             span: Span::default(),
+            suggestions: vec![],
         })?;
 
         // Convert to URI
@@ -1680,9 +1669,11 @@ impl LigatureLspServer {
 
     /// Convert a file path to a URI.
     fn path_to_uri(&self, path: &Path) -> std::result::Result<String, AstError> {
-        let url = Url::from_file_path(path).map_err(|_| AstError::ParseError {
+        let url = Url::from_file_path(path).map_err(|_| AstError::Parse {
+            code: ligature_ast::ErrorCode::I6001,
             message: format!("Cannot convert path to URI: {path:?}"),
             span: Span::default(),
+            suggestions: vec![],
         })?;
 
         Ok(url.to_string())

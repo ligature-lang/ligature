@@ -77,7 +77,6 @@ async fn main() -> Result<()> {
             }),
             Span::default(),
         )],
-        span: Span::default(),
     };
 
     let result = evaluator.evaluate_program(&program).await?;

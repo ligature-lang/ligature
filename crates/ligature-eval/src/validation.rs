@@ -10,7 +10,8 @@
 use std::collections::HashMap;
 
 use ligature_ast::ty::Constraint;
-use ligature_ast::{AstResult, Expr, Type, TypeKind};
+use ligature_ast::{Expr, Type, TypeKind};
+use ligature_error::{ErrorContextBuilder, StandardError, StandardResult};
 use regex::Regex;
 
 use crate::environment::EvaluationEnvironment;
@@ -69,7 +70,11 @@ impl ValidationEngine {
     }
 
     /// Validate a value against a type
-    pub fn validate_value(&mut self, value: &Value, type_: &Type) -> AstResult<ValidationResult> {
+    pub fn validate_value(
+        &mut self,
+        value: &Value,
+        type_: &Type,
+    ) -> StandardResult<ValidationResult> {
         match &type_.kind {
             TypeKind::Refinement {
                 base_type,
@@ -93,7 +98,7 @@ impl ValidationEngine {
         value: &Value,
         base_type: &Type,
         predicate: &Expr,
-    ) -> AstResult<ValidationResult> {
+    ) -> StandardResult<ValidationResult> {
         // First validate that the value matches the base type
         let base_validation = self.validate_basic_type(value, base_type)?;
         if base_validation != ValidationResult::Valid {
@@ -121,7 +126,7 @@ impl ValidationEngine {
         value: &Value,
         base_type: &Type,
         constraints: &[Constraint],
-    ) -> AstResult<ValidationResult> {
+    ) -> StandardResult<ValidationResult> {
         // First validate that the value matches the base type
         let base_validation = self.validate_basic_type(value, base_type)?;
         if base_validation != ValidationResult::Valid {
@@ -150,7 +155,7 @@ impl ValidationEngine {
     }
 
     /// Validate a value against a basic type (non-refinement, non-constraint)
-    fn validate_basic_type(&self, value: &Value, type_: &Type) -> AstResult<ValidationResult> {
+    fn validate_basic_type(&self, value: &Value, type_: &Type) -> StandardResult<ValidationResult> {
         match (&value.kind, &type_.kind) {
             (crate::value::ValueKind::Integer(_), TypeKind::Integer) => Ok(ValidationResult::Valid),
             (crate::value::ValueKind::Float(_), TypeKind::Float) => Ok(ValidationResult::Valid),
@@ -179,7 +184,7 @@ impl ValidationEngine {
         &mut self,
         value: &Value,
         constraint: &Constraint,
-    ) -> AstResult<ValidationResult> {
+    ) -> StandardResult<ValidationResult> {
         match constraint {
             Constraint::ValueConstraint(expr) => self.evaluate_predicate(expr, value, "x"),
             Constraint::RangeConstraint { min: _, max: _, .. } => {
@@ -217,7 +222,7 @@ impl ValidationEngine {
         predicate: &Expr,
         value: &Value,
         var_name: &str,
-    ) -> AstResult<ValidationResult> {
+    ) -> StandardResult<ValidationResult> {
         // Create a temporary environment with the value bound
         let mut temp_env = self.environment.clone();
         temp_env.bind(var_name.to_string(), value.clone());
@@ -263,7 +268,7 @@ impl ValidationEngine {
         value: &Value,
         pattern: &str,
         is_regex: bool,
-    ) -> AstResult<ValidationResult> {
+    ) -> StandardResult<ValidationResult> {
         let string_value = match value {
             Value {
                 kind: crate::value::ValueKind::String(s),
@@ -300,12 +305,10 @@ impl ValidationEngine {
     }
 
     /// Get or compile a regex pattern
-    fn get_or_compile_regex(&mut self, pattern: &str) -> AstResult<&Regex> {
+    fn get_or_compile_regex(&mut self, pattern: &str) -> StandardResult<&Regex> {
         if !self.regex_cache.contains_key(pattern) {
-            let regex = Regex::new(pattern).map_err(|e| ligature_ast::AstError::ParseError {
-                message: format!("Invalid regex pattern '{pattern}': {e}"),
-                span: ligature_ast::Span::default(),
-            })?;
+            let regex = Regex::new(pattern)
+                .map_err(|e| StandardError::Internal(format!("Invalid regex pattern: {}", e)))?;
             self.regex_cache.insert(pattern.to_string(), regex);
         }
         Ok(self.regex_cache.get(pattern).unwrap())

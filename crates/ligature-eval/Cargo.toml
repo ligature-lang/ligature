@@ -10,11 +10,16 @@ keywords.workspace = true
 categories.workspace = true
 
 [dependencies]
+anyhow.workspace = true
+# Concurrent data structures
+dashmap = { workspace = true }
 embouchure-xdg = { path = "../embouchure-xdg" }
+futures = { workspace = true }
 indexmap = { workspace = true }
 ligature-ast = { path = "../ligature-ast" }
+ligature-error = { path = "../ligature-error" }
 ligature-parser = { path = "../ligature-parser" }
-ligature-types = { path = "../ligature-types" }
+# ligature-types = { path = "../ligature-types" }
 miette = { workspace = true, features = ["fancy"] }
 num_cpus = "1.0"
 rand = "0.8"
@@ -28,9 +33,6 @@ sysinfo = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true, features = ["fs"] }
 toml = "0.8"
-# Concurrent data structures
-dashmap = { workspace = true }
-futures = { workspace = true }
 uuid = { workspace = true, features = ["v4"] }
 
 [dev-dependencies]

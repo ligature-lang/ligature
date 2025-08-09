@@ -3,13 +3,13 @@
 use std::collections::HashMap;
 
 use ligature_ast::{DeclarationKind, Expr, ExprKind, Program, Span, Type, TypeKind};
-use ligature_types::checker::TypeChecker;
+// use ligature_types::checker::TypeChecker;
 use lsp_types::{InlayHint, InlayHintKind, InlayHintLabel, Position, Range};
 
 /// Provider for inlay hints (type annotations and parameter names).
 pub struct InlayHintsProvider {
     /// Type checker for type inference.
-    type_checker: TypeChecker,
+    // type_checker: TypeChecker,
     /// Cache of inlay hints by document URI.
     hints_cache: HashMap<String, Vec<InlayHint>>,
 }
@@ -18,7 +18,7 @@ impl InlayHintsProvider {
     /// Create a new inlay hints provider.
     pub fn new() -> Self {
         Self {
-            type_checker: TypeChecker::new(),
+            // type_checker: TypeChecker::new(),
             hints_cache: HashMap::new(),
         }
     }
@@ -132,28 +132,29 @@ impl InlayHintsProvider {
             ExprKind::Literal(_) => {
                 // Literals don't need type hints as they're obvious
             }
-            ExprKind::Variable(name) => {
+            ExprKind::Variable(_name) => {
                 // Variables might need type hints if their type is not obvious
-                if let Ok(var_type) = self.type_checker.infer_variable(name) {
-                    if self.should_show_type_hint(&var_type) {
-                        hints.push(InlayHint {
-                            position: Position {
-                                line: expr.span.line as u32,
-                                character: expr.span.column as u32,
-                            },
-                            label: InlayHintLabel::String(format!(
-                                ": {}",
-                                self.type_to_string(&var_type)
-                            )),
-                            kind: Some(InlayHintKind::TYPE),
-                            text_edits: None,
-                            tooltip: None,
-                            padding_left: Some(false),
-                            padding_right: Some(true),
-                            data: None,
-                        });
-                    }
-                }
+                // Note: Type checker calls disabled in async version to avoid mutable reference issues
+                // if let Ok(var_type) = self.type_checker.infer_variable(name) {
+                //     if self.should_show_type_hint(&var_type) {
+                //         hints.push(InlayHint {
+                //             position: Position {
+                //                 line: expr.span.line as u32,
+                //                 character: expr.span.column as u32,
+                //             },
+                //             label: InlayHintLabel::String(format!(
+                //                 ": {}",
+                //                 self.type_to_string(&var_type)
+                //             )),
+                //             kind: Some(InlayHintKind::TYPE),
+                //             text_edits: None,
+                //             tooltip: None,
+                //             padding_left: Some(false),
+                //             padding_right: Some(true),
+                //             data: None,
+                //         });
+                //     }
+                // }
             }
             ExprKind::Application { function, argument } => {
                 // Function applications might need type hints for the result

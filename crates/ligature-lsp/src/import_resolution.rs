@@ -8,9 +8,10 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use ligature_ast::{AstError, AstResult, Module, Span};
+use ligature_ast::{AstError, AstResult, Program, Span};
+use ligature_error::StandardResult;
 use ligature_parser::parse_module;
-use ligature_types::resolver::ModuleResolver;
+// use ligature_types::resolver::ModuleResolver;
 use tokio::sync::RwLock;
 use tower_lsp::lsp_types::{Location, Position, Range, SymbolInformation, SymbolKind, Url};
 use tracing::{debug, info, warn};
@@ -19,7 +20,7 @@ use tracing::{debug, info, warn};
 #[derive(Debug, Clone)]
 pub struct ModuleCacheEntry {
     /// The loaded module.
-    pub module: Module,
+    pub module: Program,
     /// The file path where this module was loaded from.
     pub file_path: PathBuf,
     /// The URI of the module file.
@@ -36,7 +37,7 @@ pub struct ImportResolutionService {
     #[allow(clippy::type_complexity)]
     modules: Arc<RwLock<HashMap<String, ModuleCacheEntry>>>,
     /// Module resolver for finding and loading modules.
-    resolver: Arc<RwLock<ModuleResolver>>,
+    // resolver: Arc<RwLock<ModuleResolver>>,
     /// Workspace root paths for module resolution.
     workspace_roots: Arc<RwLock<Vec<PathBuf>>>,
     /// Import dependency graph for tracking module relationships.
@@ -50,21 +51,21 @@ pub struct ImportResolutionService {
 impl ImportResolutionService {
     /// Create a new import resolution service.
     pub fn new() -> Self {
-        let mut resolver = ModuleResolver::new();
+        // let mut resolver = ModuleResolver::new();
 
         // Add default search paths
-        resolver.add_search_path(PathBuf::from("."));
-        resolver.add_search_path(PathBuf::from("./src"));
-        resolver.add_search_path(PathBuf::from("./lib"));
-        resolver.add_search_path(PathBuf::from("./modules"));
+        // resolver.add_search_path(PathBuf::from("."));
+        // resolver.add_search_path(PathBuf::from("./src"));
+        // resolver.add_search_path(PathBuf::from("./lib"));
+        // resolver.add_search_path(PathBuf::from("./modules"));
 
         // Add default register paths
-        resolver.add_register_path(PathBuf::from("./registers"));
-        resolver.add_register_path(PathBuf::from("./vendor"));
+        // resolver.add_register_path(PathBuf::from("./registers"));
+        // resolver.add_register_path(PathBuf::from("./vendor"));
 
         Self {
             modules: Arc::new(RwLock::new(HashMap::new())),
-            resolver: Arc::new(RwLock::new(resolver)),
+            // resolver: Arc::new(RwLock::new(resolver)),
             workspace_roots: Arc::new(RwLock::new(Vec::new())),
             dependencies: Arc::new(RwLock::new(HashMap::new())),
             reverse_dependencies: Arc::new(RwLock::new(HashMap::new())),
@@ -79,24 +80,28 @@ impl ImportResolutionService {
         }
 
         // Also add to resolver search paths
-        let mut resolver = self.resolver.write().await;
-        resolver.add_search_path(root);
+        // let mut resolver = self.resolver.write().await;
+        // resolver.add_search_path(root);
     }
 
     /// Add a register path for module resolution.
     pub async fn add_register_path(&self, path: PathBuf) {
-        let mut resolver = self.resolver.write().await;
-        resolver.add_register_path(path);
+        // let mut resolver = self.resolver.write().await;
+        // resolver.add_register_path(path);
     }
 
     /// Load a module from a file URI.
-    pub async fn load_module_from_uri(&self, uri: &str) -> AstResult<Module> {
+    pub async fn load_module_from_uri(&self, uri: &str) -> StandardResult<Program> {
         let file_path = self.uri_to_path(uri)?;
         self.load_module_from_path(&file_path, uri).await
     }
 
     /// Load a module from a file path.
-    pub async fn load_module_from_path(&self, file_path: &Path, uri: &str) -> AstResult<Module> {
+    pub async fn load_module_from_path(
+        &self,
+        file_path: &Path,
+        uri: &str,
+    ) -> StandardResult<Program> {
         // Check cache first
         {
             let modules = self.modules.read().await;
@@ -114,9 +119,13 @@ impl ImportResolutionService {
         }
 
         // Load and parse the module
-        let content = std::fs::read_to_string(file_path).map_err(|e| AstError::ParseError {
-            message: format!("Failed to read module file: {e}"),
-            span: Span::default(),
+        let content = std::fs::read_to_string(file_path).map_err(|e| {
+            ligature_error::StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1001,
+                message: format!("Failed to read module file: {}", e),
+                span: Span::default(),
+                suggestions: vec!["Check that the file exists and is readable".to_string()],
+            })
         })?;
 
         let module = parse_module(&content)?;
@@ -140,7 +149,7 @@ impl ImportResolutionService {
     }
 
     /// Resolve all imports in a module.
-    pub async fn resolve_module_imports(&self, uri: &str) -> AstResult<()> {
+    pub async fn resolve_module_imports(&self, uri: &str) -> StandardResult<()> {
         let module = {
             let modules = self.modules.read().await;
             modules.get(uri).cloned()
@@ -160,23 +169,29 @@ impl ImportResolutionService {
     }
 
     /// Resolve imports in a specific module.
-    async fn resolve_imports_in_module(&self, module: &Module, source_uri: &str) -> AstResult<()> {
+    async fn resolve_imports_in_module(
+        &self,
+        module: &Program,
+        source_uri: &str,
+    ) -> StandardResult<()> {
         let mut dependencies = Vec::new();
 
-        for import in &module.imports {
-            let resolved_uri = self.resolve_import_path(&import.path, source_uri).await?;
+        for import in &module.declarations {
+            if let ligature_ast::DeclarationKind::Import(import) = &import.kind {
+                let resolved_uri = self.resolve_import_path(&import.path, source_uri).await?;
 
-            if let Some(resolved_uri) = resolved_uri {
-                // Load the imported module if not already loaded
-                if !self.is_module_loaded(&resolved_uri).await {
-                    self.load_module_from_uri(&resolved_uri).await?;
+                if let Some(resolved_uri) = resolved_uri {
+                    // Load the imported module if not already loaded
+                    if !self.is_module_loaded(&resolved_uri).await {
+                        self.load_module_from_uri(&resolved_uri).await?;
+                    }
+
+                    dependencies.push(resolved_uri.clone());
+
+                    // Update dependency graph
+                    self.update_dependency_graph(source_uri, &resolved_uri)
+                        .await;
                 }
-
-                dependencies.push(resolved_uri.clone());
-
-                // Update dependency graph
-                self.update_dependency_graph(source_uri, &resolved_uri)
-                    .await;
             }
         }
 
@@ -221,9 +236,11 @@ impl ImportResolutionService {
         source_uri: &str,
     ) -> AstResult<Option<String>> {
         let source_path = self.uri_to_path(source_uri)?;
-        let source_dir = source_path.parent().ok_or_else(|| AstError::ParseError {
+        let source_dir = source_path.parent().ok_or_else(|| AstError::Parse {
+            code: ligature_ast::ErrorCode::M4001,
             message: "Source file has no parent directory".to_string(),
             span: Span::default(),
+            suggestions: vec![],
         })?;
 
         // Parse the relative path
@@ -235,9 +252,11 @@ impl ImportResolutionService {
             let mut path = import_path;
 
             while path.starts_with("../") {
-                current_dir = current_dir.parent().ok_or_else(|| AstError::ParseError {
+                current_dir = current_dir.parent().ok_or_else(|| AstError::Parse {
+                    code: ligature_ast::ErrorCode::M4001,
                     message: "Cannot traverse beyond root directory".to_string(),
                     span: Span::default(),
+                    suggestions: vec![],
                 })?;
                 path = &path[3..];
             }
@@ -265,44 +284,44 @@ impl ImportResolutionService {
 
     /// Resolve a register-based import.
     async fn resolve_register_import(&self, import_path: &str) -> AstResult<Option<String>> {
-        let mut resolver = self.resolver.write().await;
+        // let mut resolver = self.resolver.write().await;
 
         // Try to resolve using the module resolver
-        match resolver.resolve_module(import_path) {
-            Ok(_module) => {
-                // Find the actual file path
-                let parts: Vec<&str> = import_path.split('.').collect();
-                if parts.len() >= 2 {
-                    let register_name = parts[0];
-                    let module_name = parts[1..].join(".");
+        // match resolver.resolve_module(import_path) {
+        //     Ok(_module) => {
+        //         // Find the actual file path
+        //         let parts: Vec<&str> = import_path.split('.').collect();
+        //         if parts.len() >= 2 {
+        //             let register_name = parts[0];
+        //             let module_name = parts[1..].join(".");
 
-                    // Search in register paths
-                    let register_paths = &resolver.register_paths;
-                    for register_path in register_paths {
-                        let potential_path = register_path
-                            .join(register_name)
-                            .join(format!("{module_name}.lig"));
-                        if potential_path.exists() {
-                            return Ok(Some(self.path_to_uri(&potential_path).await?));
-                        }
+        //             // Search in register paths
+        //             let register_paths = &resolver.register_paths;
+        //             for register_path in register_paths {
+        //                 let potential_path = register_path
+        //                     .join(register_name)
+        //                     .join(format!("{module_name}.lig"));
+        //                 if potential_path.exists() {
+        //                     return Ok(Some(self.path_to_uri(&potential_path).await?));
+        //                 }
 
-                        // Try mod.lig in a directory
-                        let mod_path = register_path
-                            .join(register_name)
-                            .join(&module_name)
-                            .join("mod.lig");
-                        if mod_path.exists() {
-                            return Ok(Some(self.path_to_uri(&mod_path).await?));
-                        }
-                    }
-                }
-            }
-            Err(_) => {
-                // Module not found, continue to other resolution strategies
-            }
-        }
+        //                 // Try mod.lig in a directory
+        //                 let mod_path = register_path
+        //                     .join(register_name)
+        //                     .join(&module_name)
+        //                     .join("mod.lig");
+        //                 if mod_path.exists() {
+        //                     return Ok(Some(self.path_to_uri(&mod_path).await?));
+        //                 }
+        //             }
+        //         }
+        //     }
+        //     Err(_) => {
+        //         // Module not found, continue to other resolution strategies
+        //     }
+        // }
 
-        Ok(None)
+        Ok(None) // Temporary placeholder
     }
 
     /// Resolve a workspace import.
@@ -444,7 +463,7 @@ impl ImportResolutionService {
     /// Find symbol definition within a module.
     fn find_symbol_definition_in_module(
         &self,
-        module: &Module,
+        module: &Program,
         symbol_name: &str,
         module_uri: &str,
     ) -> Option<Location> {
@@ -482,7 +501,7 @@ impl ImportResolutionService {
     /// Extract symbols from a module that match a query.
     fn extract_symbols_from_module(
         &self,
-        module: &Module,
+        module: &Program,
         module_uri: &str,
         query: &str,
     ) -> Vec<SymbolInformation> {
@@ -539,7 +558,7 @@ impl ImportResolutionService {
     /// Find all references to a symbol within a module.
     fn find_symbol_in_module(
         &self,
-        module: &Module,
+        module: &Program,
         symbol_name: &str,
         module_uri: &str,
     ) -> Vec<Location> {
@@ -612,7 +631,7 @@ impl ImportResolutionService {
     }
 
     /// Get a cached module.
-    pub async fn get_cached_module(&self, uri: &str) -> Option<Module> {
+    pub async fn get_cached_module(&self, uri: &str) -> Option<Program> {
         let modules = self.modules.read().await;
         modules.get(uri).map(|entry| entry.module.clone())
     }
@@ -648,22 +667,28 @@ impl ImportResolutionService {
 
     /// Convert a URI to a file path.
     fn uri_to_path(&self, uri: &str) -> AstResult<PathBuf> {
-        let url = Url::parse(uri).map_err(|e| AstError::ParseError {
+        let url = Url::parse(uri).map_err(|e| AstError::Parse {
+            code: ligature_ast::ErrorCode::M4001,
             message: format!("Invalid URI: {e}"),
             span: Span::default(),
+            suggestions: vec![],
         })?;
 
-        url.to_file_path().map_err(|_| AstError::ParseError {
+        Ok(url.to_file_path().map_err(|_| AstError::Parse {
+            code: ligature_ast::ErrorCode::M4001,
             message: format!("Cannot convert URI to file path: {uri}"),
             span: Span::default(),
-        })
+            suggestions: vec![],
+        })?)
     }
 
     /// Convert a file path to a URI.
     pub async fn path_to_uri(&self, path: &Path) -> AstResult<String> {
-        let url = Url::from_file_path(path).map_err(|_| AstError::ParseError {
+        let url = Url::from_file_path(path).map_err(|_| AstError::Parse {
+            code: ligature_ast::ErrorCode::M4001,
             message: format!("Cannot convert path to URI: {path:?}"),
             span: Span::default(),
+            suggestions: vec![],
         })?;
 
         Ok(url.to_string())

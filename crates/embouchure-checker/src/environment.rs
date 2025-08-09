@@ -1,10 +1,12 @@
 //! Type environment for managing type bindings and scopes.
 
 use indexmap::IndexMap;
-use ligature_ast::{InstanceDeclaration, Type, TypeAlias, TypeClassDeclaration, TypeConstructor};
+use ligature_ast::{
+    InstanceDeclaration, Span, Type, TypeAlias, TypeClassDeclaration, TypeConstructor,
+};
+use ligature_error::StandardResult;
 
-/// Type alias for conflict error
-type ConflictError = (String, Type, Type);
+use crate::error::TypeError;
 
 /// Strategy for resolving binding conflicts.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -70,13 +72,15 @@ impl TypeEnvironment {
     }
 
     /// Bind a name to a type in the current scope, checking for conflicts.
-    pub fn bind_with_conflict_check(
-        &mut self,
-        name: String,
-        type_: Type,
-    ) -> Result<(), ConflictError> {
+    pub fn bind_with_conflict_check(&mut self, name: String, type_: Type) -> StandardResult<()> {
         if let Some(existing_type) = self.bindings.get(&name) {
-            Err((name, existing_type.clone(), type_))
+            Err(TypeError::BindingConflict {
+                name,
+                existing_type: format!("{existing_type:?}"),
+                new_type: format!("{type_:?}"),
+                span: type_.span,
+            }
+            .into())
         } else {
             self.bindings.insert(name, type_);
             Ok(())
@@ -89,7 +93,7 @@ impl TypeEnvironment {
         name: String,
         type_: Type,
         strategy: ConflictResolutionStrategy,
-    ) -> Result<(), ConflictError> {
+    ) -> StandardResult<()> {
         match strategy {
             ConflictResolutionStrategy::Error => self.bind_with_conflict_check(name, type_),
             ConflictResolutionStrategy::Warn => {

@@ -59,7 +59,7 @@ async fn main() -> anyhow::Result<()> {
 /// Run Rust evaluation for a given source
 fn run_rust_evaluation(source: &str) -> AstResult<Value> {
     let expr = parse_expression(source)?;
-    evaluate_expression(&expr)
+    Ok(evaluate_expression(&expr)?)
 }
 
 /// Simulate Lean result (in practice, this would come from the Lean specification)

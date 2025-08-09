@@ -12,72 +12,115 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Abstract Syntax Tree definitions for the Ligature language.
+//! Abstract Syntax Tree (AST) for the Ligature language.
 //!
-//! This crate defines the core data structures that represent Ligature programs
-//! after parsing, including expressions, types, declarations, and metadata.
+//! This crate defines the AST structures used throughout the Ligature compiler,
+//! including expressions, declarations, types, and error handling.
+
+use serde::{Deserialize, Serialize};
 
 pub mod decl;
 pub mod error;
+pub mod error_utils;
 pub mod expr;
 pub mod span;
 pub mod ty;
 
-pub use decl::*;
-pub use error::*;
-pub use expr::*;
-pub use span::*;
+// Re-export main types
+pub use decl::{
+    Declaration, DeclarationKind, ExportDeclaration, ExportItem, ImportDeclaration,
+    InstanceDeclaration, MethodImplementation, MethodSignature, TypeClassConstraint,
+    TypeClassDeclaration, ValueDeclaration,
+};
+// Re-export for backward compatibility
+pub use error::LigatureResult as Result;
+pub use error::{AstError, AstResult, ErrorCode, ErrorCollection, LigatureError, LigatureResult};
+pub use error_utils::{
+    EnhancedErrorReporter, ErrorCategory, ErrorContext, ErrorRecovery, ErrorReportConfig,
+    RecoveryStrategy, error_with_context, error_with_context_and_suggestions,
+    error_with_suggestions, get_error_category, get_error_code,
+};
+pub use expr::{
+    BinaryOperator, Expr, ExprKind, Literal, MatchCase, Pattern, RecordField, RecordPatternField,
+    UnaryOperator,
+};
+pub use span::{Span, Spanned};
 pub use ty::{Type, TypeAlias, TypeConstructor, TypeField, TypeKind, TypeVariant};
 
 /// A complete Ligature program or module.
-#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Program {
-    /// The declarations in this program/module.
+    /// The declarations in this program.
     pub declarations: Vec<Declaration>,
-    /// Source location information.
-    pub span: Span,
 }
 
-/// A Ligature module with imports and exports.
-#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
-pub struct Module {
-    /// Module name/path.
-    pub name: String,
-    /// Import statements.
-    pub imports: Vec<Import>,
-    /// The declarations in this module.
-    pub declarations: Vec<Declaration>,
-    /// Source location information.
-    pub span: Span,
+impl Program {
+    /// Create a new empty program.
+    pub fn new() -> Self {
+        Self {
+            declarations: Vec::new(),
+        }
+    }
+
+    /// Create a program with the given declarations.
+    pub fn with_declarations(declarations: Vec<Declaration>) -> Self {
+        Self { declarations }
+    }
+
+    /// Add a declaration to this program.
+    pub fn add_declaration(&mut self, declaration: Declaration) {
+        self.declarations.push(declaration);
+    }
+
+    /// Get the number of declarations in this program.
+    pub fn len(&self) -> usize {
+        self.declarations.len()
+    }
+
+    /// Check if this program is empty.
+    pub fn is_empty(&self) -> bool {
+        self.declarations.is_empty()
+    }
 }
 
-/// An import statement.
-#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+impl Default for Program {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// Import information.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Import {
-    /// The module path being imported.
+    /// The module path to import.
     pub path: String,
     /// Optional alias for the imported module.
     pub alias: Option<String>,
-    /// Optional list of specific items to import.
-    /// If None, imports all exported items.
+    /// Specific items to import (if None, imports everything).
     pub items: Option<Vec<ImportItem>>,
-    /// Source location information.
-    pub span: Span,
-}
-
-/// An item being imported from a module.
-#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
-pub struct ImportItem {
-    /// The name of the item to import.
-    pub name: String,
-    /// Optional alias for the imported item.
-    pub alias: Option<String>,
-    /// Source location information.
+    /// Source location.
     pub span: Span,
 }
 
 impl Spanned for Import {
     fn span(&self) -> Span {
-        self.span
+        self.span.clone()
+    }
+}
+
+/// An item being imported.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ImportItem {
+    /// The name of the item.
+    pub name: String,
+    /// Optional alias for the imported item.
+    pub alias: Option<String>,
+    /// Source location.
+    pub span: Span,
+}
+
+impl Spanned for ImportItem {
+    fn span(&self) -> Span {
+        self.span.clone()
     }
 }

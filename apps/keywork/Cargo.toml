@@ -14,6 +14,7 @@ name = "keywork"
 path = "src/main.rs"
 
 [dependencies]
+embouchure-checker = { path = "../../crates/embouchure-checker" }
 ligature-ast = { path = "../../crates/ligature-ast" }
 ligature-parser = { path = "../../crates/ligature-parser" }
 ligature-types = { path = "../../crates/ligature-types" }

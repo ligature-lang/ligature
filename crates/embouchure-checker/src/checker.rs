@@ -2,15 +2,16 @@
 
 use ligature_ast::ty::Constraint;
 use ligature_ast::{
-    AstError, AstResult, BinaryOperator, Declaration, Expr, ExprKind, Import, Literal, MatchCase,
-    Module, Pattern, Program, RecordField, Span, Type, TypeAlias, TypeConstructor, TypeKind,
-    TypeVariant, UnaryOperator, ValueDeclaration,
+    AstError, BinaryOperator, Declaration, Expr, ExprKind, Import, Literal, MatchCase, Pattern,
+    Program, RecordField, Span, Type, TypeAlias, TypeConstructor, TypeKind, TypeVariant,
+    UnaryOperator, ValueDeclaration,
 };
+use ligature_error::StandardResult;
 
 use crate::constraints::ConstraintSolver;
 use crate::environment::TypeEnvironment;
 use crate::error::TypeError;
-use crate::resolver::ModuleResolver;
+use crate::resolver::{Module, ModuleResolver};
 
 /// Type checker for Ligature programs.
 pub struct TypeChecker {
@@ -139,7 +140,7 @@ impl TypeChecker {
     }
 
     /// Type check a complete program.
-    pub fn check_program(&mut self, program: &Program) -> AstResult<()> {
+    pub fn check_program(&mut self, program: &Program) -> StandardResult<()> {
         for declaration in &program.declarations {
             self.check_declaration(declaration)?;
         }
@@ -147,7 +148,7 @@ impl TypeChecker {
     }
 
     /// Type check a complete module.
-    pub fn check_module(&mut self, module: &Module) -> AstResult<()> {
+    pub fn check_module(&mut self, module: &Module) -> StandardResult<()> {
         // Check imports first
         for import in &module.imports {
             self.check_import(import)?;
@@ -162,7 +163,7 @@ impl TypeChecker {
     }
 
     /// Type check a single declaration.
-    pub fn check_declaration(&mut self, declaration: &Declaration) -> AstResult<()> {
+    pub fn check_declaration(&mut self, declaration: &Declaration) -> StandardResult<()> {
         match &declaration.kind {
             ligature_ast::DeclarationKind::Value(value_decl) => {
                 self.check_value_declaration(value_decl)
@@ -186,16 +187,25 @@ impl TypeChecker {
     }
 
     /// Type check a value declaration.
-    pub fn check_value_declaration(&mut self, value_decl: &ValueDeclaration) -> AstResult<()> {
+    pub fn check_value_declaration(&mut self, value_decl: &ValueDeclaration) -> StandardResult<()> {
         // Infer the type of the value expression
         let inferred_type = self.infer_expression(&value_decl.value)?;
 
         // If there's a type annotation, check that it matches the inferred type
         if let Some(annotation) = &value_decl.type_annotation {
             if !self.types_equal(&inferred_type, annotation)? {
-                return Err(AstError::InvalidTypeAnnotation {
-                    span: value_decl.span,
-                });
+                return Err(ligature_error::StandardError::Ligature(
+                    ligature_ast::LigatureError::Type {
+                        code: ligature_ast::ErrorCode::T2001,
+                        message: "Invalid type annotation".to_string(),
+                        span: value_decl.span.clone(),
+                        expected: Some(format!("{annotation:?}")),
+                        found: Some(format!("{inferred_type:?}")),
+                        suggestions: vec![
+                            "Check that the type annotation matches the inferred type".to_string(),
+                        ],
+                    },
+                ));
             }
         }
 
@@ -206,27 +216,14 @@ impl TypeChecker {
             .unwrap_or(&inferred_type);
 
         // Check for binding conflicts
-        match self
-            .environment
-            .bind_with_conflict_check(value_decl.name.clone(), final_type.clone())
-        {
-            Ok(()) => {}
-            Err((name, existing_type, new_type)) => {
-                return Err(TypeError::binding_conflict(
-                    name,
-                    format!("{existing_type:?}"),
-                    format!("{new_type:?}"),
-                    value_decl.span,
-                )
-                .into());
-            }
-        }
+        self.environment
+            .bind_with_conflict_check(value_decl.name.clone(), final_type.clone())?;
 
         Ok(())
     }
 
     /// Type check a type alias declaration.
-    pub fn check_type_alias(&mut self, type_alias: &TypeAlias) -> AstResult<()> {
+    pub fn check_type_alias(&mut self, type_alias: &TypeAlias) -> StandardResult<()> {
         // Check that the type alias is well-formed
         self.check_type(&type_alias.type_)?;
 
@@ -242,7 +239,7 @@ impl TypeChecker {
                     name: variant.name.clone(),
                     parameters: vec![], // No type parameters for now
                     body: type_alias.type_.clone(),
-                    span: variant.span,
+                    span: variant.span.clone().clone().clone().clone().clone(),
                 };
 
                 // Bind the constructor to the environment
@@ -255,7 +252,10 @@ impl TypeChecker {
     }
 
     /// Type check a type constructor declaration.
-    pub fn check_type_constructor(&mut self, type_constructor: &TypeConstructor) -> AstResult<()> {
+    pub fn check_type_constructor(
+        &mut self,
+        type_constructor: &TypeConstructor,
+    ) -> StandardResult<()> {
         // Check that the type constructor body is well-formed
         self.check_type(&type_constructor.body)?;
 
@@ -267,21 +267,29 @@ impl TypeChecker {
     }
 
     /// Type check an import declaration.
-    pub fn check_import(&mut self, import: &Import) -> AstResult<()> {
+    pub fn check_import(&mut self, import: &Import) -> StandardResult<()> {
         // Validate the import path
         if import.path.is_empty() {
-            return Err(AstError::InvalidImportPath {
-                path: import.path.clone(),
-                span: import.span,
-            });
+            return Err(ligature_error::StandardError::Ligature(
+                ligature_ast::LigatureError::Module {
+                    code: ligature_ast::ErrorCode::M4003,
+                    message: format!("Invalid import path: {}", import.path),
+                    path: Some(import.path.clone()),
+                    cause: Some("Empty import path".to_string()),
+                },
+            ));
         }
 
         // Check for import cycles
         if self.detect_import_cycle(import) {
-            return Err(AstError::ImportCycle {
-                path: import.path.clone(),
-                span: import.span,
-            });
+            return Err(ligature_error::StandardError::Ligature(
+                ligature_ast::LigatureError::Module {
+                    code: ligature_ast::ErrorCode::M4002,
+                    message: format!("Import cycle detected: {}", import.path),
+                    path: Some(import.path.clone()),
+                    cause: Some("Circular dependency detected".to_string()),
+                },
+            ));
         }
 
         // Add the current import to the stack
@@ -309,7 +317,7 @@ impl TypeChecker {
     }
 
     /// Resolve a module path to a file path.
-    pub fn resolve_module_path(&self, path: &str) -> AstResult<String> {
+    pub fn resolve_module_path(&self, path: &str) -> StandardResult<String> {
         // This is now handled by the resolver
         if path.ends_with(".lig") {
             Ok(path.to_string())
@@ -320,9 +328,9 @@ impl TypeChecker {
 
     /// Load a module from a file path.
     #[allow(dead_code)]
-    fn load_module(&self, path: &str) -> AstResult<ligature_ast::Module> {
+    fn load_module(&self, path: &str) -> StandardResult<Module> {
         // This is now handled by the resolver
-        Ok(ligature_ast::Module {
+        Ok(Module {
             name: path.to_string(),
             imports: Vec::new(),
             declarations: Vec::new(),
@@ -341,7 +349,7 @@ impl TypeChecker {
     }
 
     /// Get access to the module cache.
-    pub fn module_cache(&self) -> &std::collections::HashMap<String, ligature_ast::Module> {
+    pub fn module_cache(&self) -> &std::collections::HashMap<String, Module> {
         &self.resolver.cache
     }
 
@@ -356,7 +364,7 @@ impl TypeChecker {
     }
 
     /// Resolve and check an import statement.
-    pub fn resolve_and_check_import(&mut self, import: &Import) -> AstResult<()> {
+    pub fn resolve_and_check_import(&mut self, import: &Import) -> StandardResult<()> {
         // First check the import
         self.check_import(import)?;
 
@@ -370,18 +378,14 @@ impl TypeChecker {
     }
 
     /// Add imported bindings to the environment.
-    fn add_imported_bindings(
-        &mut self,
-        import: &Import,
-        module: &ligature_ast::Module,
-    ) -> AstResult<()> {
+    fn add_imported_bindings(&mut self, import: &Import, module: &Module) -> StandardResult<()> {
         // Get exported bindings from the module
         let exported_bindings = self.resolver.get_exported_bindings(module);
 
         match import.alias.as_ref() {
             Some(alias) => {
                 // Import with alias - create a module type
-                let module_type = Type::module(alias.clone(), import.span);
+                let module_type = Type::module(alias.clone(), import.span.clone());
                 self.environment.bind(alias.clone(), module_type);
 
                 // Handle selective imports
@@ -411,42 +415,18 @@ impl TypeChecker {
                             let import_name = item.alias.as_ref().unwrap_or(&item.name);
 
                             // Check for conflicts with existing bindings
-                            match self
-                                .environment
+                            self.environment
                                 .bind_with_conflict_check(import_name.clone(), binding_type.clone())
-                            {
-                                Ok(()) => {}
-                                Err((name, existing_type, new_type)) => {
-                                    return Err(TypeError::import_binding_conflict(
-                                        name,
-                                        format!("{existing_type:?}"),
-                                        format!("{new_type:?}"),
-                                        import.span,
-                                    )
-                                    .into());
-                                }
-                            }
+                                .map_err(|e| e)?;
                         }
                     }
                 } else {
                     // Import all exported bindings directly
                     for (name, binding_type) in exported_bindings {
                         // Check for conflicts with existing bindings
-                        match self
-                            .environment
+                        self.environment
                             .bind_with_conflict_check(name.clone(), binding_type.clone())
-                        {
-                            Ok(()) => {}
-                            Err((conflict_name, existing_type, new_type)) => {
-                                return Err(TypeError::import_binding_conflict(
-                                    conflict_name,
-                                    format!("{existing_type:?}"),
-                                    format!("{new_type:?}"),
-                                    import.span,
-                                )
-                                .into());
-                            }
-                        }
+                            .map_err(|e| e)?;
                     }
                 }
             }
@@ -459,7 +439,7 @@ impl TypeChecker {
     pub fn check_type_class(
         &mut self,
         type_class: &ligature_ast::TypeClassDeclaration,
-    ) -> AstResult<()> {
+    ) -> StandardResult<()> {
         // Check that all method signatures are well-formed
         for method in &type_class.methods {
             self.check_type(&method.type_)?;
@@ -476,7 +456,7 @@ impl TypeChecker {
     pub fn check_instance(
         &mut self,
         instance: &ligature_ast::InstanceDeclaration,
-    ) -> AstResult<()> {
+    ) -> StandardResult<()> {
         // Check for instance conflicts
         if let Err(conflicting_instances) = self
             .environment
@@ -491,7 +471,7 @@ impl TypeChecker {
                 instance.class_name.clone(),
                 format!("{instance:?}"),
                 conflicting_names,
-                instance.span,
+                instance.span.clone(),
             )
             .into());
         }
@@ -505,7 +485,7 @@ impl TypeChecker {
                 instance.class_name.clone(),
                 type1,
                 type2,
-                instance.span,
+                instance.span.clone(),
             )
             .into());
         }
@@ -518,7 +498,7 @@ impl TypeChecker {
                     format!("{instance:?}"),
                     instance.class_name.clone(),
                     "No instances available".to_string(),
-                    instance.span,
+                    instance.span.clone(),
                 )
                 .into());
             }
@@ -536,7 +516,7 @@ impl TypeChecker {
                         method.name.clone(),
                         format!("{expected_method:?}"),
                         format!("{inferred_type:?}"),
-                        method.span,
+                        method.span.clone(),
                     )
                     .into());
                 }
@@ -545,7 +525,7 @@ impl TypeChecker {
                     method.name.clone(),
                     "method not found in type class".to_string(),
                     format!("{inferred_type:?}"),
-                    method.span,
+                    method.span.clone(),
                 )
                 .into());
             }
@@ -559,18 +539,23 @@ impl TypeChecker {
     }
 
     /// Type check an expression.
-    pub fn check_expression(&mut self, expr: &Expr, expected_type: &Type) -> AstResult<()> {
+    pub fn check_expression(&mut self, expr: &Expr, expected_type: &Type) -> StandardResult<()> {
         let inferred_type = self.infer_expression(expr)?;
 
         if !self.types_equal(&inferred_type, expected_type)? {
-            return Err(AstError::InvalidTypeAnnotation { span: expr.span });
+            return Err(ligature_error::StandardError::Ligature(
+                AstError::InvalidTypeAnnotation {
+                    code: ligature_ast::ErrorCode::T2001,
+                    span: expr.span.clone().clone().clone().clone().clone(),
+                },
+            ));
         }
 
         Ok(())
     }
 
     /// Infer the type of an expression.
-    pub fn infer_expression(&mut self, expr: &Expr) -> AstResult<Type> {
+    pub fn infer_expression(&mut self, expr: &Expr) -> StandardResult<Type> {
         match &expr.kind {
             ExprKind::Literal(literal) => self.infer_literal(literal),
             ExprKind::Variable(name) => self.infer_variable(name),
@@ -608,7 +593,7 @@ impl TypeChecker {
     }
 
     /// Infer the type of a literal.
-    pub fn infer_literal(&mut self, literal: &Literal) -> AstResult<Type> {
+    pub fn infer_literal(&mut self, literal: &Literal) -> StandardResult<Type> {
         let kind = match literal {
             Literal::String(_) => TypeKind::String,
             Literal::Integer(_) => TypeKind::Integer,
@@ -625,7 +610,12 @@ impl TypeChecker {
                     for element in &elements[1..] {
                         let element_type = self.infer_expression(element)?;
                         if !self.types_equal(&first_type, &element_type)? {
-                            return Err(AstError::InvalidTypeAnnotation { span: element.span });
+                            return Err(ligature_error::StandardError::Ligature(
+                                AstError::InvalidTypeAnnotation {
+                                    code: ligature_ast::ErrorCode::T2001,
+                                    span: element.span.clone().clone().clone().clone().clone(),
+                                },
+                            ));
                         }
                     }
                     TypeKind::List(Box::new(first_type))
@@ -644,7 +634,7 @@ impl TypeChecker {
     }
 
     /// Infer the type of a variable.
-    pub fn infer_variable(&self, name: &str) -> AstResult<Type> {
+    pub fn infer_variable(&self, name: &str) -> StandardResult<Type> {
         // First check if it's a regular variable
         if let Some(type_) = self.environment.lookup(name) {
             return Ok(self.instantiate(&type_));
@@ -677,14 +667,20 @@ impl TypeChecker {
         }
 
         // If not found as a type constructor, return an error
-        Err(AstError::UndefinedIdentifier {
-            name: name.to_string(),
-            span: Span::default(),
-        })
+        Err(ligature_error::StandardError::Ligature(
+            ligature_ast::LigatureError::Type {
+                code: ligature_ast::ErrorCode::R3004,
+                message: format!("Undefined identifier: {}", name),
+                span: Span::default(),
+                expected: None,
+                found: None,
+                suggestions: vec!["Check that the variable is defined before use".to_string()],
+            },
+        ))
     }
 
     /// Infer the type of a function application.
-    pub fn infer_application(&mut self, function: &Expr, argument: &Expr) -> AstResult<Type> {
+    pub fn infer_application(&mut self, function: &Expr, argument: &Expr) -> StandardResult<Type> {
         let function_type = self.infer_expression(function)?;
         let argument_type = self.infer_expression(argument)?;
 
@@ -704,20 +700,36 @@ impl TypeChecker {
                             // you'd want proper type unification
                             Ok(*return_type.clone())
                         }
-                        _ => Err(AstError::InvalidTypeAnnotation {
-                            span: function.span,
-                        }),
+                        _ => Err(ligature_error::StandardError::Ligature(
+                            ligature_ast::LigatureError::Type {
+                                code: ligature_ast::ErrorCode::T2001,
+                                message: "Function type expected".to_string(),
+                                span: function.span.clone().clone().clone().clone().clone(),
+                                expected: Some("function".to_string()),
+                                found: Some(format!("{function_type:?}")),
+                                suggestions: vec![
+                                    "Check that the expression is a function".to_string(),
+                                ],
+                            },
+                        )),
                     }
                 }
             }
             TypeKind::Variable(_) => {
                 // If function type is a variable, be more lenient
                 // This handles cases where the function type hasn't been fully inferred yet
-                Ok(Type::variable("result".to_string(), function.span))
+                Ok(Type::variable("result".to_string(), function.span.clone()))
             }
-            _ => Err(AstError::InvalidTypeAnnotation {
-                span: function.span,
-            }),
+            _ => Err(ligature_error::StandardError::Ligature(
+                ligature_ast::LigatureError::Type {
+                    code: ligature_ast::ErrorCode::T2001,
+                    message: "Function type expected".to_string(),
+                    span: function.span.clone().clone().clone().clone().clone(),
+                    expected: Some("function".to_string()),
+                    found: Some(format!("{function_type:?}")),
+                    suggestions: vec!["Check that the expression is a function".to_string()],
+                },
+            )),
         }
     }
 
@@ -727,7 +739,7 @@ impl TypeChecker {
         parameter: &str,
         parameter_type: Option<&Type>,
         body: &Expr,
-    ) -> AstResult<Type> {
+    ) -> StandardResult<Type> {
         let param_type = if let Some(ty) = parameter_type {
             ty.clone()
         } else {
@@ -752,7 +764,7 @@ impl TypeChecker {
     }
 
     /// Infer the type of a let expression.
-    pub fn infer_let(&mut self, name: &str, value: &Expr, body: &Expr) -> AstResult<Type> {
+    pub fn infer_let(&mut self, name: &str, value: &Expr, body: &Expr) -> StandardResult<Type> {
         let value_type = self.infer_expression(value)?;
 
         // Create a new environment with the binding
@@ -771,7 +783,7 @@ impl TypeChecker {
     }
 
     /// Infer the type of a record expression.
-    pub fn infer_record(&mut self, fields: &[RecordField]) -> AstResult<Type> {
+    pub fn infer_record(&mut self, fields: &[RecordField]) -> StandardResult<Type> {
         let mut type_fields = Vec::new();
 
         for field in fields {
@@ -779,7 +791,7 @@ impl TypeChecker {
             type_fields.push(ligature_ast::TypeField {
                 name: field.name.clone(),
                 type_: field_type,
-                span: field.span,
+                span: field.span.clone().clone().clone().clone().clone(),
             });
         }
 
@@ -787,7 +799,7 @@ impl TypeChecker {
     }
 
     /// Infer the type of a field access expression.
-    pub fn infer_field_access(&mut self, record: &Expr, field: &str) -> AstResult<Type> {
+    pub fn infer_field_access(&mut self, record: &Expr, field: &str) -> StandardResult<Type> {
         let record_type = self.infer_expression(record)?;
 
         match &record_type.kind {
@@ -797,14 +809,32 @@ impl TypeChecker {
                         return Ok(field_type.type_.clone());
                     }
                 }
-                Err(AstError::InvalidTypeAnnotation { span: record.span })
+                Err(ligature_error::StandardError::Ligature(
+                    ligature_ast::LigatureError::Type {
+                        code: ligature_ast::ErrorCode::T2001,
+                        message: "Field not found in record".to_string(),
+                        span: record.span.clone().clone().clone().clone().clone(),
+                        expected: None,
+                        found: None,
+                        suggestions: vec!["Check that the field name is correct".to_string()],
+                    },
+                ))
             }
-            _ => Err(AstError::InvalidTypeAnnotation { span: record.span }),
+            _ => Err(ligature_error::StandardError::Ligature(
+                ligature_ast::LigatureError::Type {
+                    code: ligature_ast::ErrorCode::T2001,
+                    message: "Record type expected".to_string(),
+                    span: record.span.clone().clone().clone().clone().clone(),
+                    expected: Some("record".to_string()),
+                    found: None,
+                    suggestions: vec!["Check that the expression is a record".to_string()],
+                },
+            )),
         }
     }
 
     /// Infer the type of a union expression.
-    pub fn infer_union(&mut self, variant: &str, value: Option<&Expr>) -> AstResult<Type> {
+    pub fn infer_union(&mut self, variant: &str, value: Option<&Expr>) -> StandardResult<Type> {
         // Create a union type with the given variant
         let variant_type = if let Some(value_expr) = value {
             // If there's a value, infer its type
@@ -834,7 +864,7 @@ impl TypeChecker {
         &self,
         pattern: &ligature_ast::Pattern,
         scrutinee_type: &Type,
-    ) -> AstResult<Option<(String, Type)>> {
+    ) -> StandardResult<Option<(String, Type)>> {
         match pattern {
             ligature_ast::Pattern::Variable(name) => {
                 // For variable patterns, bind the scrutinee type
@@ -921,13 +951,16 @@ impl TypeChecker {
     }
 
     /// Infer the type of a match expression.
-    pub fn infer_match(&mut self, scrutinee: &Expr, cases: &[MatchCase]) -> AstResult<Type> {
+    pub fn infer_match(&mut self, scrutinee: &Expr, cases: &[MatchCase]) -> StandardResult<Type> {
         let scrutinee_type = self.infer_expression(scrutinee)?;
 
         if cases.is_empty() {
-            return Err(AstError::InvalidTypeAnnotation {
-                span: scrutinee.span,
-            });
+            return Err(ligature_error::StandardError::Ligature(
+                AstError::InvalidTypeAnnotation {
+                    code: ligature_ast::ErrorCode::T2001,
+                    span: scrutinee.span.clone().clone().clone().clone().clone(),
+                },
+            ));
         }
 
         // Process each case with pattern variable binding
@@ -956,7 +989,12 @@ impl TypeChecker {
                 let guard_type = case_checker.infer_expression(guard)?;
                 println!("Debug: Guard type: {guard_type:?}");
                 if !self.types_equal(&guard_type, &Type::bool(Span::default()))? {
-                    return Err(AstError::InvalidTypeAnnotation { span: guard.span });
+                    return Err(ligature_error::StandardError::Ligature(
+                        AstError::InvalidTypeAnnotation {
+                            code: ligature_ast::ErrorCode::T2001,
+                            span: guard.span.clone().clone().clone().clone().clone(),
+                        },
+                    ));
                 }
             }
 
@@ -971,9 +1009,12 @@ impl TypeChecker {
         let first_case_type = &case_types[0];
         for case_type in &case_types[1..] {
             if !self.types_equal(first_case_type, case_type)? {
-                return Err(AstError::InvalidTypeAnnotation {
-                    span: cases[0].span,
-                });
+                return Err(ligature_error::StandardError::Ligature(
+                    AstError::InvalidTypeAnnotation {
+                        code: ligature_ast::ErrorCode::T2001,
+                        span: cases[0].span.clone().clone().clone().clone().clone(),
+                    },
+                ));
             }
         }
 
@@ -986,14 +1027,17 @@ impl TypeChecker {
         condition: &Expr,
         then_branch: &Expr,
         else_branch: &Expr,
-    ) -> AstResult<Type> {
+    ) -> StandardResult<Type> {
         let condition_type = self.infer_expression(condition)?;
 
         // Check that condition is boolean
         if !self.types_equal(&condition_type, &Type::bool(Span::default()))? {
-            return Err(AstError::InvalidTypeAnnotation {
-                span: condition.span,
-            });
+            return Err(ligature_error::StandardError::Ligature(
+                AstError::InvalidTypeAnnotation {
+                    code: ligature_ast::ErrorCode::T2001,
+                    span: condition.span.clone().clone().clone().clone().clone(),
+                },
+            ));
         }
 
         let then_type = self.infer_expression(then_branch)?;
@@ -1001,9 +1045,12 @@ impl TypeChecker {
 
         // Check that both branches have the same type
         if !self.types_equal(&then_type, &else_type)? {
-            return Err(AstError::InvalidTypeAnnotation {
-                span: then_branch.span,
-            });
+            return Err(ligature_error::StandardError::Ligature(
+                AstError::InvalidTypeAnnotation {
+                    code: ligature_ast::ErrorCode::T2001,
+                    span: then_branch.span.clone().clone().clone().clone().clone(),
+                },
+            ));
         }
 
         Ok(then_type)
@@ -1015,7 +1062,7 @@ impl TypeChecker {
         operator: &BinaryOperator,
         left: &Expr,
         right: &Expr,
-    ) -> AstResult<Type> {
+    ) -> StandardResult<Type> {
         let left_type = self.infer_expression(left)?;
         let right_type = self.infer_expression(right)?;
 
@@ -1032,10 +1079,20 @@ impl TypeChecker {
                     {
                         Ok(left_type)
                     } else {
-                        Err(AstError::InvalidTypeAnnotation { span: left.span })
+                        Err(ligature_error::StandardError::Ligature(
+                            AstError::InvalidTypeAnnotation {
+                                code: ligature_ast::ErrorCode::T2001,
+                                span: left.span.clone().clone().clone().clone().clone(),
+                            },
+                        ))
                     }
                 } else {
-                    Err(AstError::InvalidTypeAnnotation { span: left.span })
+                    Err(ligature_error::StandardError::Ligature(
+                        AstError::InvalidTypeAnnotation {
+                            code: ligature_ast::ErrorCode::T2001,
+                            span: left.span.clone(),
+                        },
+                    ))
                 }
             }
             BinaryOperator::Equal
@@ -1048,7 +1105,12 @@ impl TypeChecker {
                 if self.types_equal(&left_type, &right_type)? {
                     Ok(Type::bool(Span::default()))
                 } else {
-                    Err(AstError::InvalidTypeAnnotation { span: left.span })
+                    Err(ligature_error::StandardError::Ligature(
+                        AstError::InvalidTypeAnnotation {
+                            code: ligature_ast::ErrorCode::T2001,
+                            span: left.span.clone(),
+                        },
+                    ))
                 }
             }
             BinaryOperator::And | BinaryOperator::Or => {
@@ -1058,7 +1120,12 @@ impl TypeChecker {
                 {
                     Ok(Type::bool(Span::default()))
                 } else {
-                    Err(AstError::InvalidTypeAnnotation { span: left.span })
+                    Err(ligature_error::StandardError::Ligature(
+                        AstError::InvalidTypeAnnotation {
+                            code: ligature_ast::ErrorCode::T2001,
+                            span: left.span.clone(),
+                        },
+                    ))
                 }
             }
             BinaryOperator::Concat => {
@@ -1068,14 +1135,23 @@ impl TypeChecker {
                 {
                     Ok(Type::string(Span::default()))
                 } else {
-                    Err(AstError::InvalidTypeAnnotation { span: left.span })
+                    Err(ligature_error::StandardError::Ligature(
+                        AstError::InvalidTypeAnnotation {
+                            code: ligature_ast::ErrorCode::T2001,
+                            span: left.span.clone(),
+                        },
+                    ))
                 }
             }
         }
     }
 
     /// Infer the type of a unary operation.
-    pub fn infer_unary_op(&mut self, operator: &UnaryOperator, operand: &Expr) -> AstResult<Type> {
+    pub fn infer_unary_op(
+        &mut self,
+        operator: &UnaryOperator,
+        operand: &Expr,
+    ) -> StandardResult<Type> {
         let operand_type = self.infer_expression(operand)?;
 
         match operator {
@@ -1083,7 +1159,12 @@ impl TypeChecker {
                 if self.types_equal(&operand_type, &Type::bool(Span::default()))? {
                     Ok(Type::bool(Span::default()))
                 } else {
-                    Err(AstError::InvalidTypeAnnotation { span: operand.span })
+                    Err(ligature_error::StandardError::Ligature(
+                        AstError::InvalidTypeAnnotation {
+                            code: ligature_ast::ErrorCode::T2001,
+                            span: operand.span.clone(),
+                        },
+                    ))
                 }
             }
             UnaryOperator::Negate => {
@@ -1092,7 +1173,12 @@ impl TypeChecker {
                 {
                     Ok(operand_type)
                 } else {
-                    Err(AstError::InvalidTypeAnnotation { span: operand.span })
+                    Err(ligature_error::StandardError::Ligature(
+                        AstError::InvalidTypeAnnotation {
+                            code: ligature_ast::ErrorCode::T2001,
+                            span: operand.span.clone(),
+                        },
+                    ))
                 }
             }
         }
@@ -1103,20 +1189,23 @@ impl TypeChecker {
         &mut self,
         expression: &Expr,
         type_annotation: &Type,
-    ) -> AstResult<Type> {
+    ) -> StandardResult<Type> {
         let inferred_type = self.infer_expression(expression)?;
 
         if self.types_equal(&inferred_type, type_annotation)? {
             Ok(type_annotation.clone())
         } else {
-            Err(AstError::InvalidTypeAnnotation {
-                span: expression.span,
-            })
+            Err(ligature_error::StandardError::Ligature(
+                AstError::InvalidTypeAnnotation {
+                    code: ligature_ast::ErrorCode::T2001,
+                    span: expression.span.clone(),
+                },
+            ))
         }
     }
 
     /// Check that a type is well-formed.
-    pub fn check_type(&mut self, type_: &Type) -> AstResult<()> {
+    pub fn check_type(&mut self, type_: &Type) -> StandardResult<()> {
         match &type_.kind {
             TypeKind::Unit
             | TypeKind::Bool
@@ -1179,7 +1268,12 @@ impl TypeChecker {
                 {
                     // Check that the number of type arguments matches the number of type parameters
                     if constraint.type_arguments.len() != type_class.parameters.len() {
-                        return Err(AstError::InvalidTypeAnnotation { span: type_.span });
+                        return Err(ligature_error::StandardError::Ligature(
+                            AstError::InvalidTypeAnnotation {
+                                code: ligature_ast::ErrorCode::T2001,
+                                span: type_.span.clone(),
+                            },
+                        ));
                     }
 
                     // For now, just check that the constrained type is well-formed
@@ -1187,7 +1281,12 @@ impl TypeChecker {
                     // satisfy the type class constraints
                     self.check_type(type_)
                 } else {
-                    Err(AstError::InvalidTypeAnnotation { span: type_.span })
+                    Err(ligature_error::StandardError::Ligature(
+                        AstError::InvalidTypeAnnotation {
+                            code: ligature_ast::ErrorCode::T2001,
+                            span: type_.span.clone(),
+                        },
+                    ))
                 }
             }
             TypeKind::Refinement {
@@ -1246,7 +1345,7 @@ impl TypeChecker {
     }
 
     /// Check if two types are equal.
-    pub fn types_equal(&self, type1: &Type, type2: &Type) -> AstResult<bool> {
+    pub fn types_equal(&self, type1: &Type, type2: &Type) -> StandardResult<bool> {
         self.types_equal_internal(type1, type2, &mut std::collections::HashMap::new(), 0)
     }
 
@@ -1258,7 +1357,7 @@ impl TypeChecker {
         type2: &Type,
         substitution: &mut std::collections::HashMap<String, Type>,
         depth: usize,
-    ) -> AstResult<bool> {
+    ) -> StandardResult<bool> {
         const MAX_DEPTH: usize = 50; // Prevent infinite recursion
 
         if depth > MAX_DEPTH {

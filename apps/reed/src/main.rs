@@ -15,9 +15,9 @@
 //! Command-line interface for the Ligature language.
 
 use clap::{Parser, Subcommand};
+use embouchure_checker::type_check_program;
 use ligature_eval::Evaluator;
 use ligature_parser::Parser as LigatureParser;
-use ligature_types::type_check_program;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 

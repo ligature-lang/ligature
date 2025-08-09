@@ -12,6 +12,7 @@
 
 use ligature_ast::ty::Constraint;
 use ligature_ast::{Expr, ExprKind, Literal, Span, Type};
+use ligature_eval::validation::ValidationResult;
 use ligature_eval::{Evaluator, Value};
 
 type MainResult = Result<(), Box<dyn std::error::Error>>;

@@ -10,7 +10,7 @@
 use std::collections::{HashMap, HashSet};
 use std::time::Duration;
 
-use ligature_ast::AstResult;
+use ligature_error::StandardResult;
 use rand::Rng;
 
 use crate::Parser;
@@ -752,7 +752,7 @@ impl RecoveryStrategy for InsertMissingParenthesis {
 }
 
 /// Test that the parser handles all inputs without crashing
-pub fn test_parser_robustness(input: &str) -> AstResult<()> {
+pub fn test_parser_robustness(input: &str) -> StandardResult<()> {
     let mut parser = Parser::new();
 
     // Test expression parsing
@@ -767,7 +767,7 @@ pub fn test_parser_robustness(input: &str) -> AstResult<()> {
 }
 
 /// Test that parser performance is reasonable
-pub fn test_parser_performance(input: &str) -> AstResult<()> {
+pub fn test_parser_performance(input: &str) -> StandardResult<()> {
     let start = std::time::Instant::now();
     let mut parser = Parser::new();
 
@@ -776,17 +776,21 @@ pub fn test_parser_performance(input: &str) -> AstResult<()> {
 
     // Parser should complete within reasonable time
     if duration > Duration::from_secs(1) {
-        return Err(ligature_ast::AstError::ParseError {
-            message: format!("Parser took too long: {duration:?}"),
-            span: ligature_ast::Span::default(),
-        });
+        return Err(ligature_error::StandardError::Ligature(
+            ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1001,
+                message: format!("Parser took too long: {duration:?}"),
+                span: ligature_ast::Span::default(),
+                suggestions: vec!["Consider simplifying the input".to_string()],
+            },
+        ));
     }
 
     Ok(())
 }
 
 /// Test that parser memory usage is reasonable
-pub fn test_parser_memory(input: &str) -> AstResult<()> {
+pub fn test_parser_memory(input: &str) -> StandardResult<()> {
     let mut parser = Parser::new();
 
     // Limit input size to prevent stack overflow

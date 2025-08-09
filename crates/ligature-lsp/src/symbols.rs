@@ -143,7 +143,7 @@ impl SymbolsProvider {
     /// Extract symbols from a module that match a query.
     fn extract_symbols_from_module(
         &self,
-        module: &ligature_ast::Module,
+        module: &ligature_ast::Program,
         module_uri: &str,
         query: &str,
     ) -> Vec<SymbolInformation> {
@@ -230,8 +230,8 @@ impl SymbolsProvider {
                 tags: None,
                 #[allow(deprecated)]
                 deprecated: None,
-                range: self.span_to_range(value_decl.span),
-                selection_range: self.span_to_range(value_decl.span),
+                range: self.span_to_range(value_decl.span.clone()),
+                selection_range: self.span_to_range(value_decl.span.clone()),
                 children: None,
             }),
             DeclarationKind::TypeAlias(type_alias) => Some(DocumentSymbol {
@@ -241,8 +241,8 @@ impl SymbolsProvider {
                 tags: None,
                 #[allow(deprecated)]
                 deprecated: None,
-                range: self.span_to_range(type_alias.span),
-                selection_range: self.span_to_range(type_alias.span),
+                range: self.span_to_range(type_alias.span.clone()),
+                selection_range: self.span_to_range(type_alias.span.clone()),
                 children: None,
             }),
             DeclarationKind::TypeConstructor(type_ctor) => Some(DocumentSymbol {
@@ -252,8 +252,8 @@ impl SymbolsProvider {
                 tags: None,
                 #[allow(deprecated)]
                 deprecated: None,
-                range: self.span_to_range(type_ctor.span),
-                selection_range: self.span_to_range(type_ctor.span),
+                range: self.span_to_range(type_ctor.span.clone()),
+                selection_range: self.span_to_range(type_ctor.span.clone()),
                 children: None,
             }),
             DeclarationKind::TypeClass(type_class) => {
@@ -266,8 +266,8 @@ impl SymbolsProvider {
                         tags: None,
                         #[allow(deprecated)]
                         deprecated: None,
-                        range: self.span_to_range(method.span),
-                        selection_range: self.span_to_range(method.span),
+                        range: self.span_to_range(method.span.clone()),
+                        selection_range: self.span_to_range(method.span.clone()),
                         children: None,
                     });
                 }
@@ -279,8 +279,8 @@ impl SymbolsProvider {
                     tags: None,
                     #[allow(deprecated)]
                     deprecated: None,
-                    range: self.span_to_range(type_class.span),
-                    selection_range: self.span_to_range(type_class.span),
+                    range: self.span_to_range(type_class.span.clone()),
+                    selection_range: self.span_to_range(type_class.span.clone()),
                     children: Some(children),
                 })
             }
@@ -301,8 +301,8 @@ impl SymbolsProvider {
                     tags: Some(vec![SymbolTag::DEPRECATED]), /* Instances are typically not shown in outline */
                     #[allow(deprecated)]
                     deprecated: None,
-                    range: self.span_to_range(instance.span),
-                    selection_range: self.span_to_range(instance.span),
+                    range: self.span_to_range(instance.span.clone()),
+                    selection_range: self.span_to_range(instance.span.clone()),
                     children: None,
                 })
             }
@@ -313,8 +313,8 @@ impl SymbolsProvider {
                 tags: None,
                 #[allow(deprecated)]
                 deprecated: None,
-                range: self.span_to_range(import.span),
-                selection_range: self.span_to_range(import.span),
+                range: self.span_to_range(import.span.clone()),
+                selection_range: self.span_to_range(import.span.clone()),
                 children: None,
             }),
             DeclarationKind::Export(export) => Some(DocumentSymbol {
@@ -324,8 +324,8 @@ impl SymbolsProvider {
                 tags: None,
                 #[allow(deprecated)]
                 deprecated: None,
-                range: self.span_to_range(export.span),
-                selection_range: self.span_to_range(export.span),
+                range: self.span_to_range(export.span.clone()),
+                selection_range: self.span_to_range(export.span.clone()),
                 children: None,
             }),
         }
@@ -370,7 +370,7 @@ impl SymbolsProvider {
                         deprecated: None,
                         location: Location {
                             uri: url,
-                            range: self.span_to_range(value_decl.span),
+                            range: self.span_to_range(value_decl.span.clone()),
                         },
                         container_name: None,
                     })
@@ -388,7 +388,7 @@ impl SymbolsProvider {
                         deprecated: None,
                         location: Location {
                             uri: url,
-                            range: self.span_to_range(type_alias.span),
+                            range: self.span_to_range(type_alias.span.clone()),
                         },
                         container_name: None,
                     })
@@ -406,7 +406,7 @@ impl SymbolsProvider {
                         deprecated: None,
                         location: Location {
                             uri: url,
-                            range: self.span_to_range(type_ctor.span),
+                            range: self.span_to_range(type_ctor.span.clone()),
                         },
                         container_name: None,
                     })
@@ -424,7 +424,7 @@ impl SymbolsProvider {
                         deprecated: None,
                         location: Location {
                             uri: url,
-                            range: self.span_to_range(type_class.span),
+                            range: self.span_to_range(type_class.span.clone()),
                         },
                         container_name: None,
                     })
@@ -451,7 +451,7 @@ impl SymbolsProvider {
                         deprecated: None,
                         location: Location {
                             uri: url,
-                            range: self.span_to_range(instance.span),
+                            range: self.span_to_range(instance.span.clone()),
                         },
                         container_name: None,
                     })
@@ -469,7 +469,7 @@ impl SymbolsProvider {
                         deprecated: None,
                         location: Location {
                             uri: url,
-                            range: self.span_to_range(import.span),
+                            range: self.span_to_range(import.span.clone()),
                         },
                         container_name: None,
                     })
@@ -487,7 +487,7 @@ impl SymbolsProvider {
                         deprecated: None,
                         location: Location {
                             uri: url,
-                            range: self.span_to_range(export.span),
+                            range: self.span_to_range(export.span.clone()),
                         },
                         container_name: None,
                     })

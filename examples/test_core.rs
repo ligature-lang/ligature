@@ -1,6 +1,6 @@
+use embouchure_checker::type_check_program;
 use ligature_ast::*;
 use ligature_eval::evaluate_program;
-use ligature_types::type_check_program;
 
 fn main() {
     // Create a simple program: let x = 5; let y = x * 2;
@@ -37,7 +37,6 @@ fn main() {
                 Span::default(),
             ),
         ],
-        span: Span::default(),
     };
 
     // Test type checking

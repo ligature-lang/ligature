@@ -14,6 +14,7 @@ categories = ["development-tools", "configuration"]
 ligature-ast.workspace = true
 ligature-eval.workspace = true
 ligature-parser.workspace = true
+ligature-error.workspace = true
 
 # Serialization
 serde = { workspace = true, features = ["derive"] }

@@ -15,14 +15,16 @@ name = "test_type_class"
 path = "src/test_type_class.rs"
 
 [dependencies]
+anyhow.workspace = true
 ligature-ast = { path = "../ligature-ast" }
-miette = { workspace = true, features = ["fancy"] }
+ligature-error = { path = "../ligature-error" }
 pest = { workspace = true }
 pest_derive = { workspace = true }
-thiserror = { workspace = true }
 # Fuzzing dependencies
 proptest = { workspace = true, optional = true }
 rand = { version = "0.8", optional = true }
+serde = { workspace = true, features = ["derive"] }
+thiserror.workspace = true
 
 [dev-dependencies]
 criterion = { workspace = true }

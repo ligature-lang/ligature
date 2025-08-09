@@ -2,7 +2,10 @@
 
 use std::collections::HashMap;
 
-use ligature_ast::{Type, TypeKind};
+use ligature_ast::{Span, Type, TypeKind};
+use ligature_error::StandardResult;
+
+use crate::error::TypeError;
 
 /// A type constraint.
 #[derive(Debug, Clone, PartialEq)]
@@ -48,7 +51,7 @@ impl ConstraintSolver {
 
     /// Solve all constraints and return the final substitution.
     #[allow(clippy::type_complexity)]
-    pub fn solve(&mut self) -> Result<HashMap<String, Type>, String> {
+    pub fn solve(&mut self) -> StandardResult<HashMap<String, Type>> {
         let mut iterations = 0;
         const MAX_ITERATIONS: usize = 1000; // Prevent infinite loops
 
@@ -81,16 +84,20 @@ impl ConstraintSolver {
         }
 
         if !self.constraints.is_empty() {
-            return Err(format!(
-                "Failed to solve all constraints after {MAX_ITERATIONS} iterations"
-            ));
+            return Err(TypeError::ConstraintSolvingFailed {
+                message: format!(
+                    "Failed to solve all constraints after {MAX_ITERATIONS} iterations"
+                ),
+                span: Span::default(),
+            }
+            .into());
         }
 
         Ok(self.substitution.clone())
     }
 
     /// Solve a single constraint.
-    fn solve_constraint(&mut self, constraint: Constraint) -> Result<(), String> {
+    fn solve_constraint(&mut self, constraint: Constraint) -> StandardResult<()> {
         match constraint {
             Constraint::Equality(left, right) => self.solve_equality(left, right),
             Constraint::Subtype(left, right) => self.solve_subtype(left, right),
@@ -102,7 +109,7 @@ impl ConstraintSolver {
     }
 
     /// Solve an equality constraint.
-    fn solve_equality(&mut self, left: Type, right: Type) -> Result<(), String> {
+    fn solve_equality(&mut self, left: Type, right: Type) -> StandardResult<()> {
         let left = self.apply_substitution(left);
         let right = self.apply_substitution(right);
 
@@ -137,12 +144,22 @@ impl ConstraintSolver {
             // Record types
             (TypeKind::Record { fields: f1 }, TypeKind::Record { fields: f2 }) => {
                 if f1.len() != f2.len() {
-                    return Err("Record types have different numbers of fields".to_string());
+                    return Err(TypeError::UnificationFailed {
+                        left: format!("{:?}", left.kind),
+                        right: format!("{:?}", right.kind),
+                        span: left.span,
+                    }
+                    .into());
                 }
 
                 for (field1, field2) in f1.iter().zip(f2.iter()) {
                     if field1.name != field2.name {
-                        return Err("Record types have different field names".to_string());
+                        return Err(TypeError::UnificationFailed {
+                            left: format!("{:?}", left.kind),
+                            right: format!("{:?}", right.kind),
+                            span: left.span,
+                        }
+                        .into());
                     }
                     self.add_constraint(Constraint::Equality(
                         field1.type_.clone(),
@@ -155,12 +172,22 @@ impl ConstraintSolver {
             // Union types
             (TypeKind::Union { variants: v1 }, TypeKind::Union { variants: v2 }) => {
                 if v1.len() != v2.len() {
-                    return Err("Union types have different numbers of variants".to_string());
+                    return Err(TypeError::UnificationFailed {
+                        left: format!("{:?}", left.kind),
+                        right: format!("{:?}", right.kind),
+                        span: left.span,
+                    }
+                    .into());
                 }
 
                 for (variant1, variant2) in v1.iter().zip(v2.iter()) {
                     if variant1.name != variant2.name {
-                        return Err("Union types have different variant names".to_string());
+                        return Err(TypeError::UnificationFailed {
+                            left: format!("{:?}", left.kind),
+                            right: format!("{:?}", right.kind),
+                            span: left.span,
+                        }
+                        .into());
                     }
                     match (&variant1.type_, &variant2.type_) {
                         (Some(t1), Some(t2)) => {
@@ -168,9 +195,12 @@ impl ConstraintSolver {
                         }
                         (None, None) => {}
                         _ => {
-                            return Err(
-                                "Union variants have different associated types".to_string()
-                            );
+                            return Err(TypeError::UnificationFailed {
+                                left: format!("{:?}", left.kind),
+                                right: format!("{:?}", right.kind),
+                                span: left.span,
+                            }
+                            .into());
                         }
                     }
                 }
@@ -184,15 +214,17 @@ impl ConstraintSolver {
             }
 
             // Incompatible types
-            _ => Err(format!(
-                "Cannot unify types: {:?} and {:?}",
-                left.kind, right.kind
-            )),
+            _ => Err(TypeError::UnificationFailed {
+                left: format!("{:?}", left.kind),
+                right: format!("{:?}", right.kind),
+                span: left.span,
+            }
+            .into()),
         }
     }
 
     /// Solve a subtype constraint.
-    fn solve_subtype(&mut self, left: Type, right: Type) -> Result<(), String> {
+    fn solve_subtype(&mut self, left: Type, right: Type) -> StandardResult<()> {
         let left = self.apply_substitution(left);
         let right = self.apply_substitution(right);
 
@@ -246,15 +278,21 @@ impl ConstraintSolver {
                         }
                     }
                     if !found {
-                        return Err(format!(
-                            "Record subtyping failed: supertype missing required field '{}'. \
-                             Available fields: [{}]",
-                            field2.name,
-                            f1.iter()
-                                .map(|f| f.name.as_str())
-                                .collect::<Vec<_>>()
-                                .join(", ")
-                        ));
+                        return Err(TypeError::SubtypingFailed {
+                            left: format!("{:?}", left.kind),
+                            right: format!("{:?}", right.kind),
+                            suggestion: format!(
+                                "Record subtyping failed: supertype missing required field '{}'. \
+                                 Available fields: [{}]",
+                                field2.name,
+                                f1.iter()
+                                    .map(|f| f.name.as_str())
+                                    .collect::<Vec<_>>()
+                                    .join(", ")
+                            ),
+                            span: left.span,
+                        }
+                        .into());
                     }
                 }
                 Ok(())
@@ -277,11 +315,17 @@ impl ConstraintSolver {
                                 }
                                 (None, None) => {}
                                 _ => {
-                                    return Err(format!(
-                                        "Union subtyping failed: variants '{}' have different \
-                                         associated types",
-                                        variant1.name
-                                    ));
+                                    return Err(TypeError::SubtypingFailed {
+                                        left: format!("{:?}", left.kind),
+                                        right: format!("{:?}", right.kind),
+                                        suggestion: format!(
+                                            "Union subtyping failed: variants '{}' have different \
+                                             associated types",
+                                            variant1.name
+                                        ),
+                                        span: left.span,
+                                    }
+                                    .into());
                                 }
                             }
                             found = true;
@@ -289,15 +333,21 @@ impl ConstraintSolver {
                         }
                     }
                     if !found {
-                        return Err(format!(
-                            "Union subtyping failed: supertype missing required variant '{}'. \
-                             Available variants: [{}]",
-                            variant1.name,
-                            v2.iter()
-                                .map(|v| v.name.as_str())
-                                .collect::<Vec<_>>()
-                                .join(", ")
-                        ));
+                        return Err(TypeError::SubtypingFailed {
+                            left: format!("{:?}", left.kind),
+                            right: format!("{:?}", right.kind),
+                            suggestion: format!(
+                                "Union subtyping failed: supertype missing required variant '{}'. \
+                                 Available variants: [{}]",
+                                variant1.name,
+                                v2.iter()
+                                    .map(|v| v.name.as_str())
+                                    .collect::<Vec<_>>()
+                                    .join(", ")
+                            ),
+                            span: left.span,
+                        }
+                        .into());
                     }
                 }
                 Ok(())
@@ -310,17 +360,20 @@ impl ConstraintSolver {
             }
 
             // Incompatible types
-            _ => Err(format!(
-                "Subtyping failed: cannot establish subtype relationship between {:?} and {:?}. \
-                 Consider if these types should be related or if there's a type error in your \
-                 code.",
-                left.kind, right.kind
-            )),
+            _ => Err(TypeError::SubtypingFailed {
+                left: format!("{:?}", left.kind),
+                right: format!("{:?}", right.kind),
+                suggestion: "Consider if these types should be related or if there's a type error \
+                             in your code."
+                    .to_string(),
+                span: left.span,
+            }
+            .into()),
         }
     }
 
     /// Solve an instance constraint.
-    pub fn solve_instance(&mut self, type_: Type, class: String) -> Result<(), String> {
+    pub fn solve_instance(&mut self, type_: Type, class: String) -> StandardResult<()> {
         // Apply current substitution to the type
         let type_ = self.apply_substitution(type_);
 
@@ -342,17 +395,20 @@ impl ConstraintSolver {
         // If no instance found, provide more detailed error information
         let available_instances = self.get_available_instances(&class);
         if available_instances.is_empty() {
-            Err(format!(
-                "Type {:?} does not implement class {}. No instances available for this class.",
-                type_.kind, class
-            ))
-        } else {
-            Err(format!(
-                "Type {:?} does not implement class {}. Available instances: {}",
-                type_.kind,
+            Err(TypeError::TypeClassConstraintUnsatisfied {
+                type_: format!("{:?}", type_.kind),
                 class,
-                available_instances.join(", ")
-            ))
+                span: type_.span,
+            }
+            .into())
+        } else {
+            Err(TypeError::TypeClassConstraintUnsatisfiedWithInstances {
+                type_: format!("{:?}", type_.kind),
+                class,
+                available_instances: available_instances.join(", "),
+                span: type_.span,
+            }
+            .into())
         }
     }
 
@@ -363,7 +419,7 @@ impl ConstraintSolver {
         type_: Type,
         class: String,
         context: Vec<Constraint>,
-    ) -> Result<(), String> {
+    ) -> StandardResult<()> {
         // First, try to find a matching instance
         // This is a simplified implementation - in practice, you'd need to integrate with the type environment
         if self.check_builtin_instance(&type_, &class) {
@@ -374,9 +430,12 @@ impl ConstraintSolver {
             Ok(())
         } else {
             // No instance found
-            Err(format!(
-                "No instance found for type {type_:?} in class {class}"
-            ))
+            Err(TypeError::TypeClassConstraintUnsatisfied {
+                type_: format!("{:?}", type_.kind),
+                class,
+                span: type_.span,
+            }
+            .into())
         }
     }
 
@@ -386,7 +445,7 @@ impl ConstraintSolver {
         type_: Type,
         class: String,
         context: Vec<Constraint>,
-    ) -> Result<(), String> {
+    ) -> StandardResult<()> {
         // Find all matching instances
         let mut matching_instances = Vec::new();
 
@@ -407,16 +466,20 @@ impl ConstraintSolver {
                 // No instance found
                 let available_instances = self.get_available_instances(&class);
                 if available_instances.is_empty() {
-                    Err(format!(
-                        "No instance found for type {type_:?} in class {class}. No instances \
-                         available for this class."
-                    ))
+                    Err(TypeError::TypeClassConstraintUnsatisfied {
+                        type_: format!("{:?}", type_.kind),
+                        class,
+                        span: type_.span,
+                    }
+                    .into())
                 } else {
-                    Err(format!(
-                        "No instance found for type {type_:?} in class {class}. Available \
-                         instances: {}",
-                        available_instances.join(", ")
-                    ))
+                    Err(TypeError::TypeClassConstraintUnsatisfiedWithInstances {
+                        type_: format!("{:?}", type_.kind),
+                        class,
+                        available_instances: available_instances.join(", "),
+                        span: type_.span,
+                    }
+                    .into())
                 }
             }
             1 => {
@@ -428,11 +491,13 @@ impl ConstraintSolver {
             }
             _ => {
                 // Multiple instances found - ambiguous
-                Err(format!(
-                    "Ambiguous type class resolution: type {type_:?} could match multiple \
-                     instances of {class}: {}",
-                    matching_instances.join(", ")
-                ))
+                Err(TypeError::AmbiguousTypeClassResolution {
+                    type_: format!("{:?}", type_.kind),
+                    class,
+                    candidate_instances: matching_instances,
+                    span: type_.span,
+                }
+                .into())
             }
         }
     }
@@ -659,13 +724,15 @@ impl ConstraintSolver {
     }
 
     /// Unify a type variable with a type.
-    fn unify_variable(&mut self, var: String, type_: Type) -> Result<(), String> {
+    fn unify_variable(&mut self, var: String, type_: Type) -> StandardResult<()> {
         // Check for occurs check (prevent infinite types)
         if self.occurs_in(&var, &type_) {
-            return Err(format!(
-                "Occurs check failed: {} occurs in {:?}",
-                var, type_.kind
-            ));
+            return Err(TypeError::OccursCheckFailed {
+                variable: var,
+                type_: format!("{:?}", type_.kind),
+                span: type_.span,
+            }
+            .into());
         }
 
         // Apply current substitution to the type
@@ -746,7 +813,7 @@ impl ConstraintSolver {
                     .map(|field| ligature_ast::TypeField {
                         name: field.name.clone(),
                         type_: self.apply_substitution(field.type_.clone()),
-                        span: field.span,
+                        span: field.span.clone(),
                     })
                     .collect();
                 Type::record(new_fields, type_.span)
@@ -760,7 +827,7 @@ impl ConstraintSolver {
                             .type_
                             .as_ref()
                             .map(|t| self.apply_substitution(t.clone())),
-                        span: variant.span,
+                        span: variant.span.clone(),
                     })
                     .collect();
                 Type::union(new_variants, type_.span)

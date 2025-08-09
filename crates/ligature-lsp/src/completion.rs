@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 
 use ligature_ast::{DeclarationKind, Program, Type, TypeKind};
-use ligature_types::checker::TypeChecker;
+// use ligature_types::checker::TypeChecker;
 use lsp_types::{
     CompletionItem, CompletionItemKind, CompletionResponse, InsertTextFormat, MarkupContent,
     MarkupKind, Position,
@@ -17,7 +17,30 @@ pub struct CompletionProvider {
     builtins: HashMap<&'static str, BuiltinFunction>,
     /// Type checker for type-aware completions.
     #[allow(dead_code)]
-    type_checker: TypeChecker,
+    // type_checker: TypeChecker,
+    /// Configuration for completions.
+    config: CompletionConfig,
+}
+
+/// Configuration for completion provider.
+#[derive(Debug, Clone)]
+pub struct CompletionConfig {
+    /// Whether to enable type-aware completions.
+    pub enable_type_aware_completions: bool,
+    /// Whether to enable snippet completions.
+    pub enable_snippet_completions: bool,
+    /// Whether to enable import completions.
+    pub enable_import_completions: bool,
+}
+
+impl Default for CompletionConfig {
+    fn default() -> Self {
+        Self {
+            enable_type_aware_completions: true,
+            enable_snippet_completions: true,
+            enable_import_completions: true,
+        }
+    }
 }
 
 /// Information about a built-in function.
@@ -174,7 +197,8 @@ impl CompletionProvider {
         Self {
             keywords,
             builtins,
-            type_checker: TypeChecker::new(),
+            // type_checker: TypeChecker::new(),
+            config: CompletionConfig::default(),
         }
     }
 
@@ -256,7 +280,7 @@ impl CompletionProvider {
     /// Extract completion items from a module.
     fn extract_completions_from_module(
         &self,
-        module: &ligature_ast::Module,
+        module: &ligature_ast::Program,
         module_uri: &str,
     ) -> Vec<CompletionItem> {
         let mut completions = Vec::new();

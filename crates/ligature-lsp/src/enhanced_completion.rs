@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 
 use ligature_ast::{Program, Type};
-use ligature_types::checker::TypeChecker;
+// use ligature_types::checker::TypeChecker;
 use lsp_types::{
     CompletionContext, CompletionItem, CompletionItemKind, CompletionResponse, InsertTextFormat,
     MarkupContent, MarkupKind, Position,
@@ -17,7 +17,7 @@ pub struct EnhancedCompletionProvider {
     builtins: HashMap<&'static str, EnhancedBuiltinFunction>,
     /// Type checker for type-aware completions.
     #[allow(dead_code)]
-    type_checker: TypeChecker,
+    // type_checker: TypeChecker,
     /// Configuration for enhanced completions.
     config: EnhancedCompletionConfig,
     /// Context-aware snippets.
@@ -116,7 +116,7 @@ impl EnhancedCompletionProvider {
         Self {
             keywords,
             builtins,
-            type_checker: TypeChecker::new(),
+            // type_checker: TypeChecker::new(),
             config: EnhancedCompletionConfig::default(),
             context_snippets,
         }

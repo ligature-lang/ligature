@@ -158,7 +158,7 @@ impl ReferencesProvider {
                     if let Ok(url) = Url::parse(uri) {
                         references.push(Location {
                             uri: url,
-                            range: self.span_to_range(value_decl.span),
+                            range: self.span_to_range(value_decl.span.clone()),
                         });
                     }
                 }
@@ -176,7 +176,7 @@ impl ReferencesProvider {
                     if let Ok(url) = Url::parse(uri) {
                         references.push(Location {
                             uri: url,
-                            range: self.span_to_range(type_alias.span),
+                            range: self.span_to_range(type_alias.span.clone()),
                         });
                     }
                 }
@@ -194,7 +194,7 @@ impl ReferencesProvider {
                     if let Ok(url) = Url::parse(uri) {
                         references.push(Location {
                             uri: url,
-                            range: self.span_to_range(type_ctor.span),
+                            range: self.span_to_range(type_ctor.span.clone()),
                         });
                     }
                 }
@@ -208,7 +208,7 @@ impl ReferencesProvider {
                     if let Ok(url) = Url::parse(uri) {
                         references.push(Location {
                             uri: url,
-                            range: self.span_to_range(type_class.span),
+                            range: self.span_to_range(type_class.span.clone()),
                         });
                     }
                 }
@@ -267,7 +267,7 @@ impl ReferencesProvider {
                     if let Ok(url) = Url::parse(uri) {
                         references.push(Location {
                             uri: url,
-                            range: self.span_to_range(expr.span),
+                            range: self.span_to_range(expr.span.clone()),
                         });
                     }
                 }
@@ -439,7 +439,7 @@ impl ReferencesProvider {
                     if let Ok(url) = Url::parse(uri) {
                         references.push(Location {
                             uri: url,
-                            range: self.span_to_range(ty.span),
+                            range: self.span_to_range(ty.span.clone()),
                         });
                     }
                 }
@@ -515,7 +515,7 @@ impl ReferencesProvider {
             if let Ok(url) = Url::parse(uri) {
                 references.push(Location {
                     uri: url,
-                    range: self.span_to_range(constraint.span),
+                    range: self.span_to_range(constraint.span.clone()),
                 });
             }
         }
@@ -541,7 +541,7 @@ impl ReferencesProvider {
                         if let Ok(url) = Url::parse(uri) {
                             return Some(Location {
                                 uri: url,
-                                range: self.span_to_range(value_decl.span),
+                                range: self.span_to_range(value_decl.span.clone()),
                             });
                         }
                     }
@@ -551,7 +551,7 @@ impl ReferencesProvider {
                         if let Ok(url) = Url::parse(uri) {
                             return Some(Location {
                                 uri: url,
-                                range: self.span_to_range(type_alias.span),
+                                range: self.span_to_range(type_alias.span.clone()),
                             });
                         }
                     }
@@ -561,7 +561,7 @@ impl ReferencesProvider {
                         if let Ok(url) = Url::parse(uri) {
                             return Some(Location {
                                 uri: url,
-                                range: self.span_to_range(type_ctor.span),
+                                range: self.span_to_range(type_ctor.span.clone()),
                             });
                         }
                     }
@@ -571,7 +571,7 @@ impl ReferencesProvider {
                         if let Ok(url) = Url::parse(uri) {
                             return Some(Location {
                                 uri: url,
-                                range: self.span_to_range(type_class.span),
+                                range: self.span_to_range(type_class.span.clone()),
                             });
                         }
                     }

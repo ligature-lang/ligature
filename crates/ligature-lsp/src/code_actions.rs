@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 
 use ligature_ast::{Program, Span};
-use ligature_types::checker::TypeChecker;
+// use ligature_types::checker::TypeChecker;
 use lsp_types::{
     CodeAction, CodeActionContext, CodeActionKind, CodeActionOrCommand, Command, Diagnostic,
     Position, Range, TextEdit, Url, WorkspaceEdit,
@@ -15,7 +15,7 @@ pub struct CodeActionsProvider {
     actions_cache: HashMap<String, Vec<CodeAction>>,
     /// Type checker for type-aware code actions.
     #[allow(dead_code)]
-    type_checker: TypeChecker,
+    // type_checker: TypeChecker,
     /// Configuration for code actions.
     config: CodeActionsConfig,
 }
@@ -52,7 +52,7 @@ impl CodeActionsProvider {
     pub fn new() -> Self {
         Self {
             actions_cache: HashMap::new(),
-            type_checker: TypeChecker::new(),
+            // type_checker: TypeChecker::new(),
             config: CodeActionsConfig::default(),
         }
     }
@@ -61,7 +61,7 @@ impl CodeActionsProvider {
     pub fn with_config(config: CodeActionsConfig) -> Self {
         Self {
             actions_cache: HashMap::new(),
-            type_checker: TypeChecker::new(),
+            // type_checker: TypeChecker::new(),
             config,
         }
     }
@@ -396,9 +396,9 @@ impl CodeActionsProvider {
         let mut actions = Vec::new();
 
         // Type check the program to find type errors
-        if let Err(type_error) = ligature_types::type_check_program(program) {
-            actions.extend(self.create_type_error_fixes(uri, &type_error, content));
-        }
+        // if let Err(type_error) = ligature_types::type_check_program(program) {
+        //     actions.extend(self.create_type_error_fixes(uri, &type_error, content));
+        // }
 
         // Suggest type annotations
         actions.extend(self.suggest_type_annotations(uri, range, content, program));
@@ -424,19 +424,22 @@ impl CodeActionsProvider {
                 expected,
                 found,
                 span,
+                ..
             } => {
                 if let Some(fix) = self.fix_type_mismatch(
                     _uri,
                     &format!("{expected:?}"),
                     &format!("{found:?}"),
-                    *span,
+                    span.clone(),
                     _content,
                 ) {
                     actions.push(CodeActionOrCommand::CodeAction(fix));
                 }
             }
-            ligature_ast::AstError::UndefinedIdentifier { name, span } => {
-                if let Some(fix) = self.suggest_import_or_definition(_uri, name, *span, _content) {
+            ligature_ast::AstError::UndefinedIdentifier { name, span, .. } => {
+                if let Some(fix) =
+                    self.suggest_import_or_definition(_uri, name, span.clone(), _content)
+                {
                     actions.push(CodeActionOrCommand::CodeAction(fix));
                 }
             }
@@ -605,7 +608,7 @@ impl CodeActionsProvider {
                                     Url::parse(uri)
                                         .unwrap_or_else(|_| Url::parse("file:///").unwrap()),
                                     vec![TextEdit {
-                                        range: self.span_to_range(value_decl.value.span),
+                                        range: self.span_to_range(value_decl.value.span.clone()),
                                         new_text: format!(
                                             "let {name}: {inferred_type} = ",
                                             name = value_decl.name,
@@ -662,7 +665,8 @@ impl CodeActionsProvider {
                                                 Url::parse("file:///").unwrap()
                                             }),
                                             vec![TextEdit {
-                                                range: self.span_to_range(value_decl.value.span),
+                                                range: self
+                                                    .span_to_range(value_decl.value.span.clone()),
                                                 new_text: format!("{conv}({content})"),
                                             }],
                                         )])),
@@ -1089,6 +1093,7 @@ impl CodeActionsProvider {
                         {
                             // Create a default span from the diagnostic range
                             let span = ligature_ast::Span {
+                                file: None,
                                 line: diagnostic.range.start.line as usize,
                                 column: diagnostic.range.start.character as usize,
                                 start: diagnostic.range.start.line as usize,
@@ -1427,7 +1432,7 @@ impl CodeActionsProvider {
                                     Url::parse(uri)
                                         .unwrap_or_else(|_| Url::parse("file:///").unwrap()),
                                     vec![TextEdit {
-                                        range: self.span_to_range(value_decl.value.span),
+                                        range: self.span_to_range(value_decl.value.span.clone()),
                                         new_text: format!(
                                             "let {name}: {inferred_type} = ",
                                             name = value_decl.name,
@@ -2168,7 +2173,8 @@ impl CodeActionsProvider {
                                                 Url::parse("file:///").unwrap()
                                             }),
                                             vec![TextEdit {
-                                                range: self.span_to_range(value_decl.value.span),
+                                                range: self
+                                                    .span_to_range(value_decl.value.span.clone()),
                                                 new_text: format!("{conv}({content})"),
                                             }],
                                         )])),

@@ -1,5 +1,5 @@
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
-use ligature_ast::AstResult;
+use ligature_error::StandardResult;
 use ligature_eval::{Value, evaluate_expression};
 use ligature_parser::parse_expression;
 
@@ -183,7 +183,7 @@ fn bench_evaluator(c: &mut Criterion) {
             &case.input,
             |b, input| {
                 b.iter(|| {
-                    let _result: AstResult<Value> =
+                    let _result: StandardResult<Value> =
                         parse_expression(input).and_then(|expr| evaluate_expression(&expr));
                 });
             },
@@ -213,7 +213,7 @@ fn bench_evaluator_with_errors(c: &mut Criterion) {
             &input,
             |b, input| {
                 b.iter(|| {
-                    let _result: AstResult<Value> =
+                    let _result: StandardResult<Value> =
                         parse_expression(input).and_then(|expr| evaluate_expression(&expr));
                 });
             },
@@ -258,7 +258,7 @@ fn bench_large_eval_expressions(c: &mut Criterion) {
 
         group.bench_with_input(BenchmarkId::new("large", name), &input, |b, input| {
             b.iter(|| {
-                let _result: AstResult<Value> =
+                let _result: StandardResult<Value> =
                     parse_expression(input).and_then(|expr| evaluate_expression(&expr));
             });
         });
@@ -280,7 +280,7 @@ fn bench_eval_memory_usage(c: &mut Criterion) {
         &complex_expr,
         |b, input| {
             b.iter(|| {
-                let _result: AstResult<Value> =
+                let _result: StandardResult<Value> =
                     parse_expression(input).and_then(|expr| evaluate_expression(&expr));
             });
         },
@@ -315,7 +315,7 @@ fn bench_end_to_end(c: &mut Criterion) {
 
         group.bench_with_input(BenchmarkId::new("end_to_end", name), &input, |b, input| {
             b.iter(|| {
-                let _result: AstResult<Value> =
+                let _result: StandardResult<Value> =
                     parse_expression(input).and_then(|expr| evaluate_expression(&expr));
             });
         });

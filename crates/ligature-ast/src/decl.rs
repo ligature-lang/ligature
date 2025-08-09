@@ -16,7 +16,7 @@ pub struct Declaration {
 
 impl Spanned for Declaration {
     fn span(&self) -> Span {
-        self.span
+        self.span.clone()
     }
 }
 
@@ -66,7 +66,7 @@ pub struct ValueDeclaration {
 
 impl Spanned for ValueDeclaration {
     fn span(&self) -> Span {
-        self.span
+        self.span.clone()
     }
 }
 
@@ -88,7 +88,7 @@ pub struct ImportDeclaration {
 
 impl Spanned for ImportDeclaration {
     fn span(&self) -> Span {
-        self.span
+        self.span.clone()
     }
 }
 
@@ -107,7 +107,7 @@ pub struct ImportItem {
 
 impl Spanned for ImportItem {
     fn span(&self) -> Span {
-        self.span
+        self.span.clone()
     }
 }
 
@@ -123,7 +123,7 @@ pub struct ExportDeclaration {
 
 impl Spanned for ExportDeclaration {
     fn span(&self) -> Span {
-        self.span
+        self.span.clone()
     }
 }
 
@@ -142,7 +142,7 @@ pub struct ExportItem {
 
 impl Spanned for ExportItem {
     fn span(&self) -> Span {
-        self.span
+        self.span.clone()
     }
 }
 
@@ -167,7 +167,7 @@ pub struct TypeClassDeclaration {
 
 impl Spanned for TypeClassDeclaration {
     fn span(&self) -> Span {
-        self.span
+        self.span.clone()
     }
 }
 
@@ -184,7 +184,7 @@ pub struct TypeClassConstraint {
 
 impl Spanned for TypeClassConstraint {
     fn span(&self) -> Span {
-        self.span
+        self.span.clone()
     }
 }
 
@@ -203,11 +203,11 @@ pub struct MethodSignature {
 
 impl Spanned for MethodSignature {
     fn span(&self) -> Span {
-        self.span
+        self.span.clone()
     }
 }
 
-/// An instance declaration.
+/// A type class instance declaration.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct InstanceDeclaration {
     /// The type class name.
@@ -228,11 +228,11 @@ pub struct InstanceDeclaration {
 
 impl Spanned for InstanceDeclaration {
     fn span(&self) -> Span {
-        self.span
+        self.span.clone()
     }
 }
 
-/// A method implementation in an instance.
+/// A method implementation in a type class instance.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct MethodImplementation {
     /// The method name.
@@ -247,12 +247,13 @@ pub struct MethodImplementation {
 
 impl Spanned for MethodImplementation {
     fn span(&self) -> Span {
-        self.span
+        self.span.clone()
     }
 }
 
+// Convenience methods for creating declarations
 impl Declaration {
-    /// Create a new declaration with the given kind and span.
+    /// Create a new declaration.
     pub fn new(kind: DeclarationKind, span: Span) -> Self {
         Self { kind, span }
     }
@@ -265,52 +266,64 @@ impl Declaration {
         is_recursive: bool,
         span: Span,
     ) -> Self {
-        Self::new(
-            DeclarationKind::Value(ValueDeclaration {
+        Self {
+            kind: DeclarationKind::Value(ValueDeclaration {
                 name,
                 type_annotation,
                 value,
                 is_recursive,
-                span,
+                span: span.clone(),
             }),
             span,
-        )
+        }
     }
 
     /// Create a type alias declaration.
     pub fn type_alias(alias: TypeAlias) -> Self {
-        let span = alias.span();
-        Self::new(DeclarationKind::TypeAlias(alias), span)
+        Self {
+            kind: DeclarationKind::TypeAlias(alias),
+            span: Span::default(),
+        }
     }
 
     /// Create a type constructor declaration.
     pub fn type_constructor(constructor: TypeConstructor) -> Self {
-        let span = constructor.span();
-        Self::new(DeclarationKind::TypeConstructor(constructor), span)
+        Self {
+            kind: DeclarationKind::TypeConstructor(constructor),
+            span: Span::default(),
+        }
     }
 
     /// Create an import declaration.
     pub fn import(import: Import) -> Self {
-        let span = import.span();
-        Self::new(DeclarationKind::Import(import), span)
+        Self {
+            kind: DeclarationKind::Import(import),
+            span: Span::default(),
+        }
     }
 
     /// Create an export declaration.
     pub fn export(export: ExportDeclaration) -> Self {
-        let span = export.span();
-        Self::new(DeclarationKind::Export(export), span)
+        Self {
+            kind: DeclarationKind::Export(export),
+            span: Span::default(),
+        }
     }
 
     /// Create a type class declaration.
     pub fn type_class(class: TypeClassDeclaration) -> Self {
-        let span = class.span();
-        Self::new(DeclarationKind::TypeClass(class), span)
+        Self {
+            kind: DeclarationKind::TypeClass(class),
+            span: Span::default(),
+        }
     }
 
     /// Create an instance declaration.
     pub fn instance(instance: InstanceDeclaration) -> Self {
-        let span = instance.span();
-        Self::new(DeclarationKind::Instance(instance), span)
+        Self {
+            kind: DeclarationKind::Instance(instance),
+            span: Span::default(),
+        }
     }
 
     /// Check if this is a value declaration.
@@ -348,7 +361,7 @@ impl Declaration {
         matches!(self.kind, DeclarationKind::Instance(_))
     }
 
-    /// Get the value declaration if this is one.
+    /// Get the value declaration if this is a value declaration.
     pub fn as_value(&self) -> Option<&ValueDeclaration> {
         match &self.kind {
             DeclarationKind::Value(value) => Some(value),
@@ -356,7 +369,7 @@ impl Declaration {
         }
     }
 
-    /// Get the type alias if this is one.
+    /// Get the type alias if this is a type alias declaration.
     pub fn as_type_alias(&self) -> Option<&TypeAlias> {
         match &self.kind {
             DeclarationKind::TypeAlias(alias) => Some(alias),
@@ -364,7 +377,7 @@ impl Declaration {
         }
     }
 
-    /// Get the type constructor if this is one.
+    /// Get the type constructor if this is a type constructor declaration.
     pub fn as_type_constructor(&self) -> Option<&TypeConstructor> {
         match &self.kind {
             DeclarationKind::TypeConstructor(constructor) => Some(constructor),
@@ -372,7 +385,7 @@ impl Declaration {
         }
     }
 
-    /// Get the import declaration if this is one.
+    /// Get the import if this is an import declaration.
     pub fn as_import(&self) -> Option<&Import> {
         match &self.kind {
             DeclarationKind::Import(import) => Some(import),
@@ -380,7 +393,7 @@ impl Declaration {
         }
     }
 
-    /// Get the export declaration if this is one.
+    /// Get the export if this is an export declaration.
     pub fn as_export(&self) -> Option<&ExportDeclaration> {
         match &self.kind {
             DeclarationKind::Export(export) => Some(export),
@@ -388,7 +401,7 @@ impl Declaration {
         }
     }
 
-    /// Get the type class declaration if this is one.
+    /// Get the type class if this is a type class declaration.
     pub fn as_type_class(&self) -> Option<&TypeClassDeclaration> {
         match &self.kind {
             DeclarationKind::TypeClass(class) => Some(class),
@@ -396,7 +409,7 @@ impl Declaration {
         }
     }
 
-    /// Get the instance declaration if this is one.
+    /// Get the instance if this is an instance declaration.
     pub fn as_instance(&self) -> Option<&InstanceDeclaration> {
         match &self.kind {
             DeclarationKind::Instance(instance) => Some(instance),

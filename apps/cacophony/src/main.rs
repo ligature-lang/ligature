@@ -1,66 +1,167 @@
+use std::path::PathBuf;
+
+use anyhow::{Context, Result};
 use clap::Parser;
-use tracing::{error, info, Level};
-use tracing_subscriber::FmtSubscriber;
-
-mod cli;
-mod config;
-mod error;
-
-use cli::Commands;
-use error::CacophonyError;
+use ligature_ast::DeclarationKind;
+use ligature_error::{ErrorReportConfig, StandardError, StandardErrorReporter};
+use ligature_parser::Declaration;
 
 #[derive(Parser)]
 #[command(name = "cacophony")]
-#[command(about = "A CLI tool for orchestrating collections of Ligature programs")]
-#[command(version = env!("CARGO_PKG_VERSION"))]
+#[command(about = "Configuration management tool for Ligature")]
 struct Cli {
-    #[command(subcommand)]
-    command: Commands,
+    #[arg(short, long)]
+    file: Option<PathBuf>,
 
-    /// Enable verbose logging
-    #[arg(short, long, global = true)]
+    #[arg(short, long)]
     verbose: bool,
 
-    /// Log level (trace, debug, info, warn, error)
-    #[arg(long, global = true, default_value = "info")]
-    log_level: Option<Level>,
+    #[arg(short, long)]
+    validate: bool,
 }
 
-#[tokio::main]
-async fn main() -> Result<(), CacophonyError> {
-    println!("DEBUG: main.rs started");
+fn main() -> Result<()> {
     let cli = Cli::parse();
 
-    // Initialize logging
-    let log_level = cli.log_level.unwrap_or(if cli.verbose {
-        Level::DEBUG
+    if let Some(file) = cli.file {
+        process_file(&file, cli.verbose, cli.validate)
     } else {
-        Level::INFO
-    });
+        process_stdin(cli.verbose, cli.validate)
+    }
+}
 
-    tracing::info!("Setting log level to: {:?}", log_level);
+fn process_file(file: &PathBuf, verbose: bool, validate: bool) -> Result<()> {
+    // Read file with context
+    let source = std::fs::read_to_string(file)
+        .with_context(|| format!("Failed to read file: {}", file.display()))?;
 
-    FmtSubscriber::builder()
-        .with_max_level(log_level)
-        .with_target(false)
-        .with_thread_ids(true)
-        .with_thread_names(true)
-        .init();
+    // Process the configuration
+    let result = process_configuration(&source, file, validate);
 
-    info!("Starting cacophony CLI v{}", env!("CARGO_PKG_VERSION"));
-    println!("DEBUG: About to execute command: {:?}", cli.command);
-
-    // Execute the command
-    match cli.command.execute().await {
-        Ok(_) => {
-            println!("DEBUG: Command executed successfully");
-            info!("Command completed successfully");
+    match result {
+        Ok(config) => {
+            if verbose {
+                println!("Configuration processed successfully:");
+                println!("  File: {}", file.display());
+                println!("  Size: {} bytes", source.len());
+                println!("  Validated: {}", validate);
+            } else {
+                println!("✓ Configuration processed successfully");
+            }
             Ok(())
         }
         Err(e) => {
-            println!("DEBUG: Command failed: {e}");
-            error!("Command failed: {}", e);
+            // Use the new standardized error reporter
+            let mut reporter = StandardErrorReporter::with_source_and_config(
+                source,
+                ErrorReportConfig {
+                    show_source: true,
+                    show_suggestions: true,
+                    show_error_codes: true,
+                    show_categories: true,
+                    color_output: true,
+                    max_errors: 10,
+                    show_metadata: false,
+                    group_by_category: true,
+                },
+            );
+
+            // Convert anyhow error to standard error
+            let standard_error = StandardError::internal_error(e.to_string());
+            reporter.add_error(standard_error);
+
+            eprintln!("{}", reporter.report());
             Err(e)
         }
     }
+}
+
+fn process_stdin(verbose: bool, validate: bool) -> Result<()> {
+    use std::io::{self, BufRead};
+
+    let stdin = io::stdin();
+    let mut handle = stdin.lock();
+    let mut buffer = String::new();
+
+    while handle.read_line(&mut buffer)? > 0 {
+        let result = process_configuration(&buffer, PathBuf::from("<stdin>").as_path(), validate);
+
+        match result {
+            Ok(_) => {
+                if verbose {
+                    println!("✓ Line processed successfully");
+                }
+            }
+            Err(e) => {
+                if verbose {
+                    eprintln!("Error: {:?}", e);
+                } else {
+                    eprintln!("Error: {}", e);
+                }
+            }
+        }
+
+        buffer.clear();
+    }
+
+    Ok(())
+}
+
+fn process_configuration(source: &str, file: &std::path::Path, validate: bool) -> Result<()> {
+    // Parse configuration with error context
+    let mut parser = ligature_parser::Parser::new();
+    let program = parser
+        .parse_program(source)
+        .with_context(|| format!("Failed to parse configuration from {}", file.display()))?;
+
+    if validate {
+        // Validate configuration with error context
+        validate_configuration(&program).with_context(|| "Configuration validation failed")?;
+    }
+
+    // Apply configuration with error context
+    apply_configuration(&program).with_context(|| "Failed to apply configuration")?;
+
+    Ok(())
+}
+
+fn validate_configuration(program: &ligature_parser::Program) -> Result<()> {
+    // Simulate validation logic
+    for decl in &program.declarations {
+        validate_declaration(decl).with_context(|| format!("Failed to validate declaration"))?;
+    }
+    Ok(())
+}
+
+fn validate_declaration(decl: &Declaration) -> Result<()> {
+    // Simulate declaration validation
+    match &decl.kind {
+        DeclarationKind::Value(value_decl) => {
+            if value_decl.name.is_empty() {
+                return Err(anyhow::anyhow!("Variable name cannot be empty"));
+            }
+        }
+        _ => {}
+    }
+    Ok(())
+}
+
+fn apply_configuration(program: &ligature_parser::Program) -> Result<()> {
+    // Simulate configuration application
+    for decl in &program.declarations {
+        apply_declaration(decl).with_context(|| "Failed to apply declaration")?;
+    }
+    Ok(())
+}
+
+fn apply_declaration(decl: &Declaration) -> Result<()> {
+    // Simulate declaration application
+    match &decl.kind {
+        DeclarationKind::Value(value_decl) => {
+            // In a real implementation, this would set the value in the environment
+            println!("Setting {} = {:?}", value_decl.name, value_decl.value);
+        }
+        _ => {}
+    }
+    Ok(())
 }

@@ -46,6 +46,7 @@ use crate::{
     performance::PerformanceMonitor, value::Value,
 };
 use ligature_ast::{Expr, Module, Program, Span};
+use ligature_error::{ErrorContextBuilder, StandardError, StandardResult};
 use std::{sync::Arc, time::Instant};
 use tokio::{
     sync::{RwLock, mpsc},
@@ -54,7 +55,7 @@ use tokio::{
 };
 
 /// Async result type for evaluation operations
-pub type AsyncEvalResult<T> = Result<T, EvaluationError>;
+pub type AsyncEvalResult<T> = StandardResult<T>;
 
 /// Configuration for async evaluation
 #[derive(Debug, Clone)]
@@ -429,11 +430,14 @@ impl AsyncEvaluator {
         }
     }
 
-    /// Convert AstResult to AsyncEvalResult
-    fn convert_result(result: ligature_ast::AstResult<Value>) -> AsyncEvalResult<Value> {
-        result.map_err(|ast_error| EvaluationError::RuntimeError {
-            message: format!("AST error: {ast_error:?}"),
-            span: Span::default(),
+    /// Convert StandardResult to AsyncEvalResult
+    fn convert_result(result: StandardResult<Value>) -> AsyncEvalResult<Value> {
+        result.map_err(|e| {
+            ErrorContextBuilder::new()
+                .context("Async evaluation error")
+                .suggestion("Check the expression for errors")
+                .suggestion("Verify all dependencies are available")
+                .build_evaluation_error(format!("Async evaluation failed: {}", e))
         })
     }
 }

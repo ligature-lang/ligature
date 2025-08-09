@@ -16,7 +16,7 @@ pub struct Expr {
 
 impl Spanned for Expr {
     fn span(&self) -> Span {
-        self.span
+        self.span.clone()
     }
 }
 
@@ -116,8 +116,8 @@ pub enum Literal {
     List(Vec<Expr>),
 }
 
-/// Binary operators.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+/// Binary operators in Ligature.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum BinaryOperator {
     // Arithmetic
     Add,
@@ -142,14 +142,14 @@ pub enum BinaryOperator {
     Concat,
 }
 
-/// Unary operators.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+/// Unary operators in Ligature.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum UnaryOperator {
     Not,
     Negate,
 }
 
-/// A record field.
+/// A field in a record expression.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RecordField {
     /// Field name.
@@ -162,11 +162,11 @@ pub struct RecordField {
 
 impl Spanned for RecordField {
     fn span(&self) -> Span {
-        self.span
+        self.span.clone()
     }
 }
 
-/// A match case in a pattern matching expression.
+/// A case in a match expression.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct MatchCase {
     /// Pattern to match against.
@@ -181,7 +181,7 @@ pub struct MatchCase {
 
 impl Spanned for MatchCase {
     fn span(&self) -> Span {
-        self.span
+        self.span.clone()
     }
 }
 
@@ -223,6 +223,6 @@ pub struct RecordPatternField {
 
 impl Spanned for RecordPatternField {
     fn span(&self) -> Span {
-        self.span
+        self.span.clone()
     }
 }

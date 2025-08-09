@@ -4,9 +4,30 @@ use std::collections::HashMap;
 
 use ligature_ast::{Program, Span};
 use ligature_parser::parse_program;
-use ligature_types::checker::TypeChecker;
-use ligature_types::type_check_program;
+// use ligature_types::checker::TypeChecker;
+// use ligature_types::type_check_program;
 use lsp_types::{Diagnostic, DiagnosticSeverity, Position, Range};
+
+/// Configuration for diagnostics provider.
+#[derive(Debug, Clone)]
+pub struct DiagnosticsConfig {
+    /// Whether to enable type-aware diagnostics.
+    pub enable_type_aware_diagnostics: bool,
+    /// Whether to enable semantic diagnostics.
+    pub enable_semantic_diagnostics: bool,
+    /// Whether to enable style diagnostics.
+    pub enable_style_diagnostics: bool,
+}
+
+impl Default for DiagnosticsConfig {
+    fn default() -> Self {
+        Self {
+            enable_type_aware_diagnostics: true,
+            enable_semantic_diagnostics: true,
+            enable_style_diagnostics: true,
+        }
+    }
+}
 
 /// Provider for diagnostics (errors and warnings).
 pub struct DiagnosticsProvider {
@@ -14,7 +35,9 @@ pub struct DiagnosticsProvider {
     diagnostics_cache: HashMap<String, Vec<Diagnostic>>,
     /// Type checker for type-aware diagnostics.
     #[allow(dead_code)]
-    type_checker: TypeChecker,
+    // type_checker: TypeChecker,
+    /// Configuration for diagnostics.
+    config: DiagnosticsConfig,
 }
 
 impl DiagnosticsProvider {
@@ -22,7 +45,8 @@ impl DiagnosticsProvider {
     pub fn new() -> Self {
         Self {
             diagnostics_cache: HashMap::new(),
-            type_checker: TypeChecker::new(),
+            // type_checker: TypeChecker::new(),
+            config: DiagnosticsConfig::default(),
         }
     }
 
@@ -37,7 +61,25 @@ impl DiagnosticsProvider {
 
         // Parse diagnostics
         if let Err(parse_error) = parse_program(content) {
-            diagnostics.extend(self.convert_parse_errors(&parse_error));
+            match parse_error {
+                ligature_error::StandardError::Ligature(ligature_error) => {
+                    diagnostics.extend(self.convert_parse_errors(&ligature_error));
+                }
+                _ => {
+                    // Handle other standard errors as generic parse errors
+                    diagnostics.push(Diagnostic {
+                        range: Range::new(Position::new(0, 0), Position::new(0, 0)),
+                        severity: Some(DiagnosticSeverity::ERROR),
+                        code: Some(lsp_types::NumberOrString::String("P000".to_string())),
+                        code_description: None,
+                        source: Some("ligature-parser".to_string()),
+                        message: format!("Parse error: {}", parse_error),
+                        related_information: None,
+                        tags: None,
+                        data: None,
+                    });
+                }
+            }
         }
 
         // Type checking diagnostics
@@ -60,9 +102,9 @@ impl DiagnosticsProvider {
         let mut diagnostics = Vec::new();
 
         // Type check the program
-        if let Err(type_error) = type_check_program(program) {
-            diagnostics.extend(self.convert_type_errors(&type_error));
-        }
+        // if let Err(type_error) = type_check_program(program) {
+        //     diagnostics.extend(self.convert_type_errors(&type_error));
+        // }
 
         // Additional type-aware checks
         diagnostics.extend(self.check_type_specific_issues(program));
@@ -80,9 +122,10 @@ impl DiagnosticsProvider {
                 expected,
                 found,
                 span,
+                ..
             } => {
                 diagnostics.push(Diagnostic {
-                    range: self.span_to_range(*span),
+                    range: self.span_to_range(span.clone()),
                     severity: Some(DiagnosticSeverity::ERROR),
                     code: Some(lsp_types::NumberOrString::String("T001".to_string())),
                     code_description: None,
@@ -95,9 +138,9 @@ impl DiagnosticsProvider {
                     data: None,
                 });
             }
-            ligature_ast::AstError::UndefinedIdentifier { name, span } => {
+            ligature_ast::AstError::UndefinedIdentifier { name, span, .. } => {
                 diagnostics.push(Diagnostic {
-                    range: self.span_to_range(*span),
+                    range: self.span_to_range(span.clone()),
                     severity: Some(DiagnosticSeverity::ERROR),
                     code: Some(lsp_types::NumberOrString::String("T002".to_string())),
                     code_description: None,
@@ -108,9 +151,9 @@ impl DiagnosticsProvider {
                     data: None,
                 });
             }
-            ligature_ast::AstError::DuplicateIdentifier { name, span } => {
+            ligature_ast::AstError::DuplicateIdentifier { name, span, .. } => {
                 diagnostics.push(Diagnostic {
-                    range: self.span_to_range(*span),
+                    range: self.span_to_range(span.clone()),
                     severity: Some(DiagnosticSeverity::ERROR),
                     code: Some(lsp_types::NumberOrString::String("T003".to_string())),
                     code_description: None,
@@ -121,9 +164,9 @@ impl DiagnosticsProvider {
                     data: None,
                 });
             }
-            ligature_ast::AstError::InvalidTypeAnnotation { span } => {
+            ligature_ast::AstError::InvalidTypeAnnotation { span, .. } => {
                 diagnostics.push(Diagnostic {
-                    range: self.span_to_range(*span),
+                    range: self.span_to_range(span.clone()),
                     severity: Some(DiagnosticSeverity::ERROR),
                     code: Some(lsp_types::NumberOrString::String("T004".to_string())),
                     code_description: None,
@@ -193,9 +236,9 @@ impl DiagnosticsProvider {
         let mut diagnostics = Vec::new();
 
         match error {
-            ligature_ast::AstError::ParseError { message, span } => {
+            ligature_ast::AstError::Parse { message, span, .. } => {
                 diagnostics.push(Diagnostic {
-                    range: self.span_to_range(*span),
+                    range: self.span_to_range(span.clone()),
                     severity: Some(DiagnosticSeverity::ERROR),
                     code: Some(lsp_types::NumberOrString::String("E001".to_string())),
                     code_description: None,
@@ -206,9 +249,9 @@ impl DiagnosticsProvider {
                     data: None,
                 });
             }
-            ligature_ast::AstError::InvalidIdentifier { name, span } => {
+            ligature_ast::AstError::InvalidIdentifier { name, span, .. } => {
                 diagnostics.push(Diagnostic {
-                    range: self.span_to_range(*span),
+                    range: self.span_to_range(span.clone()),
                     severity: Some(DiagnosticSeverity::ERROR),
                     code: Some(lsp_types::NumberOrString::String("E002".to_string())),
                     code_description: None,
@@ -219,9 +262,9 @@ impl DiagnosticsProvider {
                     data: None,
                 });
             }
-            ligature_ast::AstError::DuplicateIdentifier { name, span } => {
+            ligature_ast::AstError::DuplicateIdentifier { name, span, .. } => {
                 diagnostics.push(Diagnostic {
-                    range: self.span_to_range(*span),
+                    range: self.span_to_range(span.clone()),
                     severity: Some(DiagnosticSeverity::ERROR),
                     code: Some(lsp_types::NumberOrString::String("E003".to_string())),
                     code_description: None,
@@ -232,9 +275,9 @@ impl DiagnosticsProvider {
                     data: None,
                 });
             }
-            ligature_ast::AstError::UndefinedIdentifier { name, span } => {
+            ligature_ast::AstError::UndefinedIdentifier { name, span, .. } => {
                 diagnostics.push(Diagnostic {
-                    range: self.span_to_range(*span),
+                    range: self.span_to_range(span.clone()),
                     severity: Some(DiagnosticSeverity::ERROR),
                     code: Some(lsp_types::NumberOrString::String("E004".to_string())),
                     code_description: None,
@@ -245,9 +288,9 @@ impl DiagnosticsProvider {
                     data: None,
                 });
             }
-            ligature_ast::AstError::InvalidImportPath { path, span } => {
+            ligature_ast::AstError::InvalidImportPath { path, span, .. } => {
                 diagnostics.push(Diagnostic {
-                    range: self.span_to_range(*span),
+                    range: self.span_to_range(span.clone()),
                     severity: Some(DiagnosticSeverity::ERROR),
                     code: Some(lsp_types::NumberOrString::String("E005".to_string())),
                     code_description: None,
@@ -258,9 +301,9 @@ impl DiagnosticsProvider {
                     data: None,
                 });
             }
-            ligature_ast::AstError::ModuleNotFound { module, span } => {
+            ligature_ast::AstError::ModuleNotFound { module, span, .. } => {
                 diagnostics.push(Diagnostic {
-                    range: self.span_to_range(*span),
+                    range: self.span_to_range(span.clone()),
                     severity: Some(DiagnosticSeverity::ERROR),
                     code: Some(lsp_types::NumberOrString::String("E006".to_string())),
                     code_description: None,
@@ -271,9 +314,9 @@ impl DiagnosticsProvider {
                     data: None,
                 });
             }
-            ligature_ast::AstError::ImportCycle { path, span } => {
+            ligature_ast::AstError::ImportCycle { path, span, .. } => {
                 diagnostics.push(Diagnostic {
-                    range: self.span_to_range(*span),
+                    range: self.span_to_range(span.clone()),
                     severity: Some(DiagnosticSeverity::ERROR),
                     code: Some(lsp_types::NumberOrString::String("E007".to_string())),
                     code_description: None,
@@ -285,9 +328,9 @@ impl DiagnosticsProvider {
                 });
             }
             // Type class system errors
-            ligature_ast::AstError::DuplicateTypeClass { name, span } => {
+            ligature_ast::AstError::DuplicateTypeClass { name, span, .. } => {
                 diagnostics.push(Diagnostic {
-                    range: self.span_to_range(*span),
+                    range: self.span_to_range(span.clone()),
                     severity: Some(DiagnosticSeverity::ERROR),
                     code: Some(lsp_types::NumberOrString::String("E008".to_string())),
                     code_description: None,
@@ -298,9 +341,9 @@ impl DiagnosticsProvider {
                     data: None,
                 });
             }
-            ligature_ast::AstError::UndefinedTypeClass { name, span } => {
+            ligature_ast::AstError::UndefinedTypeClass { name, span, .. } => {
                 diagnostics.push(Diagnostic {
-                    range: self.span_to_range(*span),
+                    range: self.span_to_range(span.clone()),
                     severity: Some(DiagnosticSeverity::ERROR),
                     code: Some(lsp_types::NumberOrString::String("E009".to_string())),
                     code_description: None,
@@ -311,9 +354,11 @@ impl DiagnosticsProvider {
                     data: None,
                 });
             }
-            ligature_ast::AstError::UnusedTypeParameter { parameter, span } => {
+            ligature_ast::AstError::UnusedTypeParameter {
+                parameter, span, ..
+            } => {
                 diagnostics.push(Diagnostic {
-                    range: self.span_to_range(*span),
+                    range: self.span_to_range(span.clone()),
                     severity: Some(DiagnosticSeverity::WARNING),
                     code: Some(lsp_types::NumberOrString::String("E010".to_string())),
                     code_description: None,
@@ -328,9 +373,10 @@ impl DiagnosticsProvider {
                 expected,
                 found,
                 span,
+                ..
             } => {
                 diagnostics.push(Diagnostic {
-                    range: self.span_to_range(*span),
+                    range: self.span_to_range(span.clone()),
                     severity: Some(DiagnosticSeverity::ERROR),
                     code: Some(lsp_types::NumberOrString::String("E011".to_string())),
                     code_description: None,
@@ -345,9 +391,10 @@ impl DiagnosticsProvider {
                 method,
                 class,
                 span,
+                ..
             } => {
                 diagnostics.push(Diagnostic {
-                    range: self.span_to_range(*span),
+                    range: self.span_to_range(span.clone()),
                     severity: Some(DiagnosticSeverity::ERROR),
                     code: Some(lsp_types::NumberOrString::String("E012".to_string())),
                     code_description: None,
@@ -362,9 +409,10 @@ impl DiagnosticsProvider {
                 method,
                 class,
                 span,
+                ..
             } => {
                 diagnostics.push(Diagnostic {
-                    range: self.span_to_range(*span),
+                    range: self.span_to_range(span.clone()),
                     severity: Some(DiagnosticSeverity::ERROR),
                     code: Some(lsp_types::NumberOrString::String("E013".to_string())),
                     code_description: None,
@@ -380,9 +428,10 @@ impl DiagnosticsProvider {
                 expected,
                 found,
                 span,
+                ..
             } => {
                 diagnostics.push(Diagnostic {
-                    range: self.span_to_range(*span),
+                    range: self.span_to_range(span.clone()),
                     severity: Some(DiagnosticSeverity::ERROR),
                     code: Some(lsp_types::NumberOrString::String("E014".to_string())),
                     code_description: None,
@@ -395,9 +444,11 @@ impl DiagnosticsProvider {
                     data: None,
                 });
             }
-            ligature_ast::AstError::NoInstanceFound { class, type_, span } => {
+            ligature_ast::AstError::NoInstanceFound {
+                class, type_, span, ..
+            } => {
                 diagnostics.push(Diagnostic {
-                    range: self.span_to_range(*span),
+                    range: self.span_to_range(span.clone()),
                     severity: Some(DiagnosticSeverity::ERROR),
                     code: Some(lsp_types::NumberOrString::String("E015".to_string())),
                     code_description: None,
@@ -408,9 +459,9 @@ impl DiagnosticsProvider {
                     data: None,
                 });
             }
-            ligature_ast::AstError::InvalidTypeAnnotation { span } => {
+            ligature_ast::AstError::InvalidTypeAnnotation { span, .. } => {
                 diagnostics.push(Diagnostic {
-                    range: self.span_to_range(*span),
+                    range: self.span_to_range(span.clone()),
                     severity: Some(DiagnosticSeverity::ERROR),
                     code: Some(lsp_types::NumberOrString::String("E005".to_string())),
                     code_description: None,
@@ -421,9 +472,9 @@ impl DiagnosticsProvider {
                     data: None,
                 });
             }
-            ligature_ast::AstError::InvalidExpression { span } => {
+            ligature_ast::AstError::InvalidExpression { span, .. } => {
                 diagnostics.push(Diagnostic {
-                    range: self.span_to_range(*span),
+                    range: self.span_to_range(span.clone()),
                     severity: Some(DiagnosticSeverity::ERROR),
                     code: Some(lsp_types::NumberOrString::String("E006".to_string())),
                     code_description: None,
@@ -434,9 +485,9 @@ impl DiagnosticsProvider {
                     data: None,
                 });
             }
-            ligature_ast::AstError::InvalidDeclaration { span } => {
+            ligature_ast::AstError::InvalidDeclaration { span, .. } => {
                 diagnostics.push(Diagnostic {
-                    range: self.span_to_range(*span),
+                    range: self.span_to_range(span.clone()),
                     severity: Some(DiagnosticSeverity::ERROR),
                     code: Some(lsp_types::NumberOrString::String("E007".to_string())),
                     code_description: None,
@@ -447,9 +498,9 @@ impl DiagnosticsProvider {
                     data: None,
                 });
             }
-            ligature_ast::AstError::CircularDependency { span } => {
+            ligature_ast::AstError::CircularDependency { span, .. } => {
                 diagnostics.push(Diagnostic {
-                    range: self.span_to_range(*span),
+                    range: self.span_to_range(span.clone()),
                     severity: Some(DiagnosticSeverity::ERROR),
                     code: Some(lsp_types::NumberOrString::String("E008".to_string())),
                     code_description: None,
@@ -461,14 +512,67 @@ impl DiagnosticsProvider {
                 });
             }
 
-            ligature_ast::AstError::InternalError { message, span } => {
+            ligature_ast::AstError::InternalError { message, span, .. } => {
                 diagnostics.push(Diagnostic {
-                    range: self.span_to_range(*span),
+                    range: self.span_to_range(span.clone()),
                     severity: Some(DiagnosticSeverity::ERROR),
                     code: Some(lsp_types::NumberOrString::String("E011".to_string())),
                     code_description: None,
                     source: Some("ligature-parser".to_string()),
                     message: format!("Internal error: {message}"),
+                    related_information: None,
+                    tags: None,
+                    data: None,
+                });
+            }
+            // Handle new error types
+            ligature_ast::AstError::Type { message, span, .. } => {
+                diagnostics.push(Diagnostic {
+                    range: self.span_to_range(span.clone()),
+                    severity: Some(DiagnosticSeverity::ERROR),
+                    code: Some(lsp_types::NumberOrString::String("T001".to_string())),
+                    code_description: None,
+                    source: Some("ligature-types".to_string()),
+                    message: format!("Type error: {message}"),
+                    related_information: None,
+                    tags: None,
+                    data: None,
+                });
+            }
+            ligature_ast::AstError::Evaluation { message, span, .. } => {
+                diagnostics.push(Diagnostic {
+                    range: self.span_to_range(span.clone()),
+                    severity: Some(DiagnosticSeverity::ERROR),
+                    code: Some(lsp_types::NumberOrString::String("R001".to_string())),
+                    code_description: None,
+                    source: Some("ligature-eval".to_string()),
+                    message: format!("Evaluation error: {message}"),
+                    related_information: None,
+                    tags: None,
+                    data: None,
+                });
+            }
+            ligature_ast::AstError::Module { message, .. } => {
+                diagnostics.push(Diagnostic {
+                    range: Range::new(Position::new(0, 0), Position::new(0, 0)),
+                    severity: Some(DiagnosticSeverity::ERROR),
+                    code: Some(lsp_types::NumberOrString::String("M001".to_string())),
+                    code_description: None,
+                    source: Some("ligature-module".to_string()),
+                    message: format!("Module error: {message}"),
+                    related_information: None,
+                    tags: None,
+                    data: None,
+                });
+            }
+            ligature_ast::AstError::Configuration { message, .. } => {
+                diagnostics.push(Diagnostic {
+                    range: Range::new(Position::new(0, 0), Position::new(0, 0)),
+                    severity: Some(DiagnosticSeverity::ERROR),
+                    code: Some(lsp_types::NumberOrString::String("C001".to_string())),
+                    code_description: None,
+                    source: Some("ligature-config".to_string()),
+                    message: format!("Configuration error: {message}"),
                     related_information: None,
                     tags: None,
                     data: None,

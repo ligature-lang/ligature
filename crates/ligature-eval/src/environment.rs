@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-use ligature_ast::AstResult;
+use ligature_error::StandardResult;
 
 use crate::value::Value;
 
@@ -195,7 +195,7 @@ impl EvaluationEnvironment {
         &mut self,
         module_name: &str,
         binding_names: &[String],
-    ) -> AstResult<()> {
+    ) -> StandardResult<()> {
         if let Some(module_value) = self.modules.get(module_name) {
             if let Some((_, module_env)) = module_value.as_module() {
                 for binding_name in binding_names {
@@ -210,7 +210,7 @@ impl EvaluationEnvironment {
     }
 
     /// Import all bindings from a module.
-    pub fn import_all_bindings(&mut self, module_name: &str) -> AstResult<()> {
+    pub fn import_all_bindings(&mut self, module_name: &str) -> StandardResult<()> {
         if let Some(module_value) = self.modules.get(module_name) {
             if let Some((_, module_env)) = module_value.as_module() {
                 let bindings = module_env.current_bindings();
@@ -224,7 +224,11 @@ impl EvaluationEnvironment {
     }
 
     /// Import a module with a prefix.
-    pub fn import_module_with_prefix(&mut self, module_name: &str, prefix: &str) -> AstResult<()> {
+    pub fn import_module_with_prefix(
+        &mut self,
+        module_name: &str,
+        prefix: &str,
+    ) -> StandardResult<()> {
         if let Some(module_value) = self.modules.get(module_name) {
             if let Some((_, module_env)) = module_value.as_module() {
                 let bindings = module_env.current_bindings();

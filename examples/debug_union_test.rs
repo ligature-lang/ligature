@@ -1,5 +1,6 @@
 use ligature_parser::parse_program;
-use ligature_types::{type_check_program, TypeInference};
+use embouchure_checker::type_check_program;
+use ligature_types::TypeInference;
 use ligature_ast::{Type, TypeKind, TypeVariant, Span};
 
 fn main() {

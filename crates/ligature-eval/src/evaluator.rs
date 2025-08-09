@@ -5,10 +5,8 @@ use std::collections::{HashMap, VecDeque};
 use std::hash::{Hash, Hasher};
 use std::path::PathBuf;
 
-use ligature_ast::{
-    AstError, AstResult, BinaryOperator, Expr, ExprKind, Literal, Program, Span, Type,
-    UnaryOperator,
-};
+use ligature_ast::{BinaryOperator, Expr, ExprKind, Literal, Program, Span, Type, UnaryOperator};
+use ligature_error::{StandardError, StandardResult};
 
 use crate::advanced_optimizations::{
     AdvancedTailCallDetector, ClosureCaptureOptimizer, FunctionInliner, GenerationalGC,
@@ -161,13 +159,13 @@ impl CacheKey {
                 right,
             } => {
                 hasher.write_u8(10);
-                hasher.write_u8(*operator as u8);
+                hasher.write_u8(operator.clone() as u8);
                 Self::hash_expr(left, hasher);
                 Self::hash_expr(right, hasher);
             }
             ExprKind::UnaryOp { operator, operand } => {
                 hasher.write_u8(11);
-                hasher.write_u8(*operator as u8);
+                hasher.write_u8(operator.clone() as u8);
                 Self::hash_expr(operand, hasher);
             }
             ExprKind::Annotated { expression, .. } => {
@@ -668,7 +666,7 @@ impl Evaluator {
     /// Create a new evaluator with configuration loaded from files.
     pub async fn with_config_from_files(
         project_config_path: Option<PathBuf>,
-    ) -> Result<Self, ConfigError> {
+    ) -> StandardResult<Self> {
         let config_manager = EvaluatorConfigManager::new()?;
         let config_manager = if let Some(path) = project_config_path {
             config_manager.with_project_config(path)
@@ -684,7 +682,7 @@ impl Evaluator {
     pub async fn load_config(
         &mut self,
         project_config_path: Option<PathBuf>,
-    ) -> Result<(), ConfigError> {
+    ) -> StandardResult<()> {
         let config_manager = EvaluatorConfigManager::new()?;
         let config_manager = if let Some(path) = project_config_path {
             config_manager.with_project_config(path)
@@ -728,7 +726,7 @@ impl Evaluator {
     }
 
     /// Save the current configuration to a file.
-    pub async fn save_config(&self, format: ConfigFormat) -> Result<PathBuf, ConfigError> {
+    pub async fn save_config(&self, format: ConfigFormat) -> StandardResult<PathBuf> {
         let config_manager = EvaluatorConfigManager::new()?;
         config_manager.save_default_config(format).await
     }
@@ -903,34 +901,37 @@ impl Evaluator {
     }
 
     /// Evaluate a complete program.
-    pub fn evaluate_program(&mut self, program: &Program) -> AstResult<Value> {
+    pub fn evaluate_program(&mut self, program: &Program) -> StandardResult<Value> {
         for declaration in &program.declarations {
             self.evaluate_declaration(declaration)?;
         }
-        Ok(Value::unit(program.span))
+        Ok(Value::unit(Span::default()))
     }
 
     /// Evaluate a complete module.
-    pub fn evaluate_module(&mut self, module: &ligature_ast::Module) -> AstResult<Value> {
-        for import in &module.imports {
-            self.evaluate_import(import)?;
-        }
-
+    pub fn evaluate_module(&mut self, module: &ligature_ast::Program) -> StandardResult<Value> {
         for declaration in &module.declarations {
             self.evaluate_declaration(declaration)?;
         }
 
         let module_env = self.environment.clone();
-        Ok(Value::module(module.name.clone(), module_env, module.span))
+        Ok(Value::module(
+            "module".to_string(),
+            module_env,
+            Span::default(),
+        ))
     }
 
     /// Evaluate a single expression.
-    pub fn evaluate_expression(&mut self, expr: &Expr) -> AstResult<Value> {
+    pub fn evaluate_expression(&mut self, expr: &Expr) -> StandardResult<Value> {
         self.evaluate_expression_internal(expr)
     }
 
     /// Evaluate a declaration.
-    fn evaluate_declaration(&mut self, declaration: &ligature_ast::Declaration) -> AstResult<()> {
+    fn evaluate_declaration(
+        &mut self,
+        declaration: &ligature_ast::Declaration,
+    ) -> StandardResult<()> {
         match &declaration.kind {
             ligature_ast::DeclarationKind::Value(value_decl) => {
                 let value = self.evaluate_expression(&value_decl.value)?;
@@ -948,7 +949,7 @@ impl Evaluator {
     }
 
     /// Evaluate an import statement.
-    fn evaluate_import(&mut self, import: &ligature_ast::Import) -> AstResult<()> {
+    fn evaluate_import(&mut self, import: &ligature_ast::Import) -> StandardResult<()> {
         let module_value = self.module_resolver.resolve_module(&import.path)?;
         let module_name = import.alias.as_ref().unwrap_or(&import.path);
 
@@ -977,7 +978,7 @@ impl Evaluator {
         module_value: &Value,
         items: &[ligature_ast::ImportItem],
         alias: Option<&String>,
-    ) -> AstResult<()> {
+    ) -> StandardResult<()> {
         if let Some((_, module_env)) = module_value.as_module() {
             for item in items {
                 if let Some(value) = module_env.lookup(&item.name) {
@@ -1001,7 +1002,11 @@ impl Evaluator {
     }
 
     /// Import all exported bindings from a module into the current environment.
-    fn import_module_bindings(&mut self, module_path: &str, module_value: &Value) -> AstResult<()> {
+    fn import_module_bindings(
+        &mut self,
+        module_path: &str,
+        module_value: &Value,
+    ) -> StandardResult<()> {
         if let Some((_, module_env)) = module_value.as_module() {
             let bindings = module_env.current_bindings();
             for (name, value) in bindings {
@@ -1018,17 +1023,14 @@ impl Evaluator {
         value: &Value,
         module_path: &str,
         original_name: &str,
-    ) -> AstResult<()> {
+    ) -> StandardResult<()> {
         if self.environment.is_bound(name) {
             match self.conflict_strategy {
                 ImportConflictStrategy::Error => {
-                    return Err(AstError::ParseError {
-                        message: format!(
-                            "Import conflict: '{original_name}' from module '{module_path}' \
-                             conflicts with existing binding",
-                        ),
-                        span: Span::default(),
-                    });
+                    return Err(StandardError::Internal(format!(
+                        "Import conflict: '{original_name}' from module '{module_path}' conflicts \
+                         with existing binding"
+                    )));
                 }
                 ImportConflictStrategy::Warn => {
                     return Ok(());
@@ -1047,7 +1049,7 @@ impl Evaluator {
     }
 
     /// Internal expression evaluation implementation with caching and optimizations.
-    fn evaluate_expression_internal(&mut self, expr: &Expr) -> AstResult<Value> {
+    fn evaluate_expression_internal(&mut self, expr: &Expr) -> StandardResult<Value> {
         // Check cache first if enabled
         if self.enable_caching {
             let key = CacheKey::new(expr, &self.environment, self.current_depth);
@@ -1103,7 +1105,7 @@ impl Evaluator {
         &mut self,
         function: &Expr,
         argument: &Expr,
-    ) -> AstResult<Value> {
+    ) -> StandardResult<Value> {
         // Fast path for simple function applications
         if self.enable_stack_eval {
             // Check if this is a simple function application that can be optimized
@@ -1127,7 +1129,7 @@ impl Evaluator {
                         function: Box::new(function.clone()),
                         argument: Box::new(argument.clone()),
                     },
-                    span: function.span,
+                    span: function.span.clone(),
                 },
                 &self.environment,
                 self.current_depth,
@@ -1157,9 +1159,9 @@ impl Evaluator {
                 self.apply_closure_optimized(parameter, body, environment, argument_value, false)?
             }
             _ => {
-                return Err(AstError::InvalidExpression {
-                    span: function.span,
-                });
+                return Err(StandardError::Internal(
+                    "Invalid expression type for function application".to_string(),
+                ));
             }
         };
 
@@ -1171,7 +1173,7 @@ impl Evaluator {
                         function: Box::new(function.clone()),
                         argument: Box::new(argument.clone()),
                     },
-                    span: function.span,
+                    span: function.span.clone(),
                 },
                 &self.environment,
                 self.current_depth,
@@ -1189,7 +1191,7 @@ impl Evaluator {
         body: &Expr,
         argument_value: Value,
         is_tail_call: bool,
-    ) -> AstResult<Value> {
+    ) -> StandardResult<Value> {
         // Check for tail call optimization
         if is_tail_call && self.enable_tco && self.is_tail_call_candidate(body) {
             self.expression_cache.stats_mut().tail_calls += 1;
@@ -1217,7 +1219,7 @@ impl Evaluator {
         captured_env: &EvaluationEnvironment,
         argument_value: Value,
         is_tail_call: bool,
-    ) -> AstResult<Value> {
+    ) -> StandardResult<Value> {
         // Check for tail call optimization
         if is_tail_call && self.enable_tco && self.is_tail_call_candidate(body) {
             self.expression_cache.stats_mut().tail_calls += 1;
@@ -1294,7 +1296,7 @@ impl Evaluator {
         parameter: &str,
         body: &Expr,
         argument_value: Value,
-    ) -> AstResult<Value> {
+    ) -> StandardResult<Value> {
         // Instead of creating a new environment, update the current one
         self.environment.bind(parameter.to_string(), argument_value);
 
@@ -1309,7 +1311,7 @@ impl Evaluator {
         body: &Expr,
         captured_env: &EvaluationEnvironment,
         argument_value: Value,
-    ) -> AstResult<Value> {
+    ) -> StandardResult<Value> {
         // Create a new environment based on the captured one
         let mut new_env = self.env_pool.acquire(Some(captured_env.clone()));
         new_env.bind(parameter.to_string(), argument_value);
@@ -1331,7 +1333,7 @@ impl Evaluator {
         parameter: &str,
         body: &Expr,
         argument_value: Value,
-    ) -> AstResult<Value> {
+    ) -> StandardResult<Value> {
         // For simple functions, directly substitute the parameter value
         // This avoids environment manipulation overhead entirely
         match &body.kind {
@@ -1352,7 +1354,9 @@ impl Evaluator {
                         // Look up in current environment
                         self.environment
                             .lookup(name)
-                            .ok_or(AstError::InvalidExpression { span: left.span })?
+                            .ok_or(StandardError::Internal(
+                                "Left operand evaluation failed".to_string(),
+                            ))?
                     }
                 } else {
                     self.evaluate_expression_internal(left)?
@@ -1365,15 +1369,19 @@ impl Evaluator {
                         // Look up in current environment
                         self.environment
                             .lookup(name)
-                            .ok_or(AstError::InvalidExpression { span: right.span })?
+                            .ok_or(StandardError::Internal(
+                                "Right operand evaluation failed".to_string(),
+                            ))?
                     }
                 } else {
                     self.evaluate_expression_internal(right)?
                 };
 
-                left_val
+                Ok(left_val
                     .apply_binary_op(operator, &right_val)
-                    .map_err(|_e| AstError::InvalidExpression { span: body.span })
+                    .map_err(|_e| {
+                        StandardError::Internal("Function body evaluation failed".to_string())
+                    })?)
             }
             _ => {
                 // For complex expressions, use minimal environment setup
@@ -1391,7 +1399,7 @@ impl Evaluator {
         body: &Expr,
         captured_env: &EvaluationEnvironment,
         argument_value: Value,
-    ) -> AstResult<Value> {
+    ) -> StandardResult<Value> {
         // For simple functions with captured environment, use direct evaluation
         // This avoids creating new evaluator instances
         match &body.kind {
@@ -1410,9 +1418,9 @@ impl Evaluator {
                         argument_value.clone()
                     } else {
                         // Look up in captured environment
-                        captured_env
-                            .lookup(name)
-                            .ok_or(AstError::InvalidExpression { span: left.span })?
+                        captured_env.lookup(name).ok_or(StandardError::Internal(
+                            "Variable not found in captured environment".to_string(),
+                        ))?
                     }
                 } else {
                     // Create temporary evaluator for complex expressions
@@ -1426,9 +1434,9 @@ impl Evaluator {
                         argument_value
                     } else {
                         // Look up in captured environment
-                        captured_env
-                            .lookup(name)
-                            .ok_or(AstError::InvalidExpression { span: right.span })?
+                        captured_env.lookup(name).ok_or(StandardError::Internal(
+                            "Variable not found in captured environment".to_string(),
+                        ))?
                     }
                 } else {
                     // Create temporary evaluator for complex expressions
@@ -1439,7 +1447,10 @@ impl Evaluator {
 
                 left_val
                     .apply_binary_op(operator, &right_val)
-                    .map_err(|_e| AstError::InvalidExpression { span: body.span })
+                    .map_err(|_e| {
+                        StandardError::Internal("Function body evaluation failed".to_string())
+                            .into()
+                    })
             }
             _ => {
                 // Fallback to regular evaluation with minimal environment setup
@@ -1488,7 +1499,7 @@ impl Evaluator {
     }
 
     /// Evaluate a literal with value interning optimization.
-    fn evaluate_literal(&mut self, literal: &Literal) -> AstResult<Value> {
+    fn evaluate_literal(&mut self, literal: &Literal) -> StandardResult<Value> {
         if !self.enable_value_optimization {
             return Ok(Value::from(literal.clone()));
         }
@@ -1531,21 +1542,18 @@ impl Evaluator {
     }
 
     /// Evaluate a variable with optimized lookup.
-    fn evaluate_variable(&self, name: &str) -> AstResult<Value> {
+    fn evaluate_variable(&self, name: &str) -> StandardResult<Value> {
         if let Some(value) = self.environment.lookup_ref(name) {
             return Ok(value.clone());
         }
 
         self.environment
             .lookup(name)
-            .ok_or_else(|| AstError::UndefinedIdentifier {
-                name: name.to_string(),
-                span: Span::default(),
-            })
+            .ok_or_else(|| StandardError::Internal(format!("Variable '{}' not found", name)).into())
     }
 
     /// Evaluate a lambda abstraction.
-    fn evaluate_abstraction(&mut self, parameter: &str, body: &Expr) -> AstResult<Value> {
+    fn evaluate_abstraction(&mut self, parameter: &str, body: &Expr) -> StandardResult<Value> {
         Ok(Value::closure(
             parameter.to_string(),
             body.clone(),
@@ -1555,7 +1563,7 @@ impl Evaluator {
     }
 
     /// Evaluate a let expression with optimized environment handling.
-    fn evaluate_let(&mut self, name: &str, value: &Expr, body: &Expr) -> AstResult<Value> {
+    fn evaluate_let(&mut self, name: &str, value: &Expr, body: &Expr) -> StandardResult<Value> {
         let value_result = self.evaluate_expression_internal(value)?;
 
         self.environment
@@ -1589,7 +1597,7 @@ impl Evaluator {
     }
 
     /// Evaluate a record expression with optimized field evaluation.
-    fn evaluate_record(&mut self, fields: &[ligature_ast::RecordField]) -> AstResult<Value> {
+    fn evaluate_record(&mut self, fields: &[ligature_ast::RecordField]) -> StandardResult<Value> {
         let mut field_values = HashMap::with_capacity(fields.len());
 
         for field in fields {
@@ -1609,20 +1617,20 @@ impl Evaluator {
     }
 
     /// Evaluate a field access expression with optimized record access.
-    fn evaluate_field_access(&mut self, record: &Expr, field: &str) -> AstResult<Value> {
+    fn evaluate_field_access(&mut self, record: &Expr, field: &str) -> StandardResult<Value> {
         let record_value = self.evaluate_expression_internal(record)?;
 
         match &record_value.kind {
             ValueKind::Record(fields) => fields
                 .get(field)
                 .cloned()
-                .ok_or(AstError::InvalidExpression { span: record.span }),
-            _ => Err(AstError::InvalidExpression { span: record.span }),
+                .ok_or(StandardError::Internal("Record evaluation failed".to_string()).into()),
+            _ => Err(StandardError::Internal("Record field access failed".to_string()).into()),
         }
     }
 
     /// Evaluate a union expression.
-    fn evaluate_union(&mut self, variant: &str, value: Option<&Expr>) -> AstResult<Value> {
+    fn evaluate_union(&mut self, variant: &str, value: Option<&Expr>) -> StandardResult<Value> {
         let evaluated_value = if let Some(value_expr) = value {
             Some(self.evaluate_expression_internal(value_expr)?)
         } else {
@@ -1641,7 +1649,7 @@ impl Evaluator {
         &mut self,
         scrutinee: &Expr,
         cases: &[ligature_ast::MatchCase],
-    ) -> AstResult<Value> {
+    ) -> StandardResult<Value> {
         let scrutinee_value = self.evaluate_expression_internal(scrutinee)?;
 
         for case in cases {
@@ -1687,7 +1695,10 @@ impl Evaluator {
                             continue;
                         }
                         None => {
-                            return Err(AstError::InvalidExpression { span: guard.span });
+                            return Err(StandardError::Internal(
+                                "Guard evaluation failed".to_string(),
+                            )
+                            .into());
                         }
                     }
                 } else {
@@ -1696,9 +1707,7 @@ impl Evaluator {
             }
         }
 
-        Err(AstError::InvalidExpression {
-            span: scrutinee.span,
-        })
+        Err(StandardError::Internal("Pattern matching failed".to_string()).into())
     }
 
     /// Evaluate an if expression with optimized condition evaluation.
@@ -1707,15 +1716,13 @@ impl Evaluator {
         condition: &Expr,
         then_branch: &Expr,
         else_branch: &Expr,
-    ) -> AstResult<Value> {
+    ) -> StandardResult<Value> {
         let condition_value = self.evaluate_expression_internal(condition)?;
 
         match condition_value.as_boolean() {
             Some(true) => self.evaluate_expression_internal(then_branch),
             Some(false) => self.evaluate_expression_internal(else_branch),
-            None => Err(AstError::InvalidExpression {
-                span: condition.span,
-            }),
+            None => Err(StandardError::Internal("Condition evaluation failed".to_string()).into()),
         }
     }
 
@@ -1725,22 +1732,28 @@ impl Evaluator {
         operator: &BinaryOperator,
         left: &Expr,
         right: &Expr,
-    ) -> AstResult<Value> {
+    ) -> StandardResult<Value> {
         let left_value = self.evaluate_expression_internal(left)?;
         let right_value = self.evaluate_expression_internal(right)?;
 
         left_value
             .apply_binary_op(operator, &right_value)
-            .map_err(|_e| AstError::InvalidExpression { span: left.span })
+            .map_err(|_e| {
+                StandardError::Internal("Binary operation evaluation failed".to_string()).into()
+            })
     }
 
     /// Evaluate a unary operation.
-    fn evaluate_unary_op(&mut self, operator: &UnaryOperator, operand: &Expr) -> AstResult<Value> {
+    fn evaluate_unary_op(
+        &mut self,
+        operator: &UnaryOperator,
+        operand: &Expr,
+    ) -> StandardResult<Value> {
         let operand_value = self.evaluate_expression_internal(operand)?;
 
-        operand_value
-            .apply_unary_op(operator)
-            .map_err(|_e| AstError::InvalidExpression { span: operand.span })
+        operand_value.apply_unary_op(operator).map_err(|_e| {
+            StandardError::Internal("Unary operation evaluation failed".to_string()).into()
+        })
     }
 
     /// Check if a pattern matches a value.
@@ -1748,7 +1761,7 @@ impl Evaluator {
         &self,
         pattern: &ligature_ast::Pattern,
         value: &Value,
-    ) -> AstResult<bool> {
+    ) -> StandardResult<bool> {
         self.pattern_matches_with_bindings(pattern, value, &mut HashMap::new())
     }
 
@@ -1771,7 +1784,7 @@ impl Evaluator {
         pattern: &ligature_ast::Pattern,
         value: &Value,
         bindings: &mut HashMap<String, Value>,
-    ) -> AstResult<bool> {
+    ) -> StandardResult<bool> {
         match pattern {
             ligature_ast::Pattern::Wildcard => Ok(true),
             ligature_ast::Pattern::Variable(name) => {
@@ -1884,7 +1897,11 @@ impl Evaluator {
     }
 
     /// Validate a value against a type using the runtime validation engine
-    pub fn validate_value(&mut self, value: &Value, type_: &Type) -> AstResult<ValidationResult> {
+    pub fn validate_value(
+        &mut self,
+        value: &Value,
+        type_: &Type,
+    ) -> StandardResult<ValidationResult> {
         self.validation_engine.validate_value(value, type_)
     }
 

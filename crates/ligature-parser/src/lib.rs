@@ -13,27 +13,28 @@ pub mod fuzzing;
 pub use error::ParserError;
 // Re-export commonly used types from ligature-ast
 pub use ligature_ast::{
-    AstError, AstResult, Declaration, ExportDeclaration, ExportItem, Expr, ExprKind, Import,
-    InstanceDeclaration, Literal, MatchCase, Pattern, RecordField, RecordPatternField, Span, Type,
-    TypeAlias, TypeClassDeclaration, TypeConstructor, TypeField, TypeKind, TypeVariant,
-    ValueDeclaration,
+    Declaration, Expr, ExprKind, Import, Literal, Program, Span, Type, TypeAlias, TypeConstructor,
+    TypeKind, TypeVariant,
+    decl::{ExportDeclaration, ExportItem},
+    expr::{MatchCase, Pattern, RecordField, RecordPatternField},
 };
+use ligature_error::StandardResult;
 pub use parser::Parser;
 
 /// Parse a complete program from source text.
-pub fn parse_program(source: &str) -> AstResult<ligature_ast::Program> {
+pub fn parse_program(source: &str) -> StandardResult<ligature_ast::Program> {
     let mut parser = Parser::new();
     parser.parse_program(source)
 }
 
 /// Parse a complete module from source text.
-pub fn parse_module(source: &str) -> AstResult<ligature_ast::Module> {
+pub fn parse_module(source: &str) -> StandardResult<ligature_ast::Program> {
     let mut parser = Parser::new();
     parser.parse_module(source)
 }
 
 /// Parse a single expression from source text.
-pub fn parse_expression(source: &str) -> AstResult<ligature_ast::Expr> {
+pub fn parse_expression(source: &str) -> StandardResult<ligature_ast::Expr> {
     let mut parser = Parser::new();
     parser.parse_expression(source)
 }
@@ -44,7 +45,7 @@ mod tests {
 
     /// Test basic literal parsing
     #[test]
-    fn test_literal_parsing() -> AstResult<()> {
+    fn test_literal_parsing() -> StandardResult<()> {
         let mut parser = Parser::new();
 
         // Test integer literals
@@ -71,7 +72,7 @@ mod tests {
 
     /// Test variable binding parsing
     #[test]
-    fn test_variable_binding() -> AstResult<()> {
+    fn test_variable_binding() -> StandardResult<()> {
         let mut parser = Parser::new();
 
         let program = parser.parse_program("let x = 42;")?;
@@ -88,7 +89,7 @@ mod tests {
 
     /// Test arithmetic expression parsing
     #[test]
-    fn test_arithmetic_expressions() -> AstResult<()> {
+    fn test_arithmetic_expressions() -> StandardResult<()> {
         let mut parser = Parser::new();
 
         // Test basic arithmetic
@@ -112,7 +113,7 @@ mod tests {
 
     /// Test comparison expression parsing
     #[test]
-    fn test_comparison_expressions() -> AstResult<()> {
+    fn test_comparison_expressions() -> StandardResult<()> {
         let mut parser = Parser::new();
 
         let program = parser.parse_program("let x = 5 > 3;")?;
@@ -129,7 +130,7 @@ mod tests {
 
     /// Test logical expression parsing
     #[test]
-    fn test_logical_expressions() -> AstResult<()> {
+    fn test_logical_expressions() -> StandardResult<()> {
         let mut parser = Parser::new();
 
         let program = parser.parse_program("let x = true && false;")?;
@@ -143,7 +144,7 @@ mod tests {
 
     /// Test unary expression parsing
     #[test]
-    fn test_unary_expressions() -> AstResult<()> {
+    fn test_unary_expressions() -> StandardResult<()> {
         let mut parser = Parser::new();
 
         // ✅ FIXED: Unary operator parsing precedence issue resolved
@@ -181,7 +182,7 @@ mod tests {
 
     /// Test function definition parsing
     #[test]
-    fn test_function_definitions() -> AstResult<()> {
+    fn test_function_definitions() -> StandardResult<()> {
         let mut parser = Parser::new();
 
         let program = parser.parse_program("let add = \\x -> x + 1;")?;
@@ -199,7 +200,7 @@ mod tests {
 
     /// Test function application parsing
     #[test]
-    fn test_function_application() -> AstResult<()> {
+    fn test_function_application() -> StandardResult<()> {
         let mut parser = Parser::new();
 
         let program = parser.parse_program("let x = f(5);")?;
@@ -213,7 +214,7 @@ mod tests {
 
     /// Test pattern matching parsing
     #[test]
-    fn test_pattern_matching() -> AstResult<()> {
+    fn test_pattern_matching() -> StandardResult<()> {
         let mut parser = Parser::new();
 
         let program =
@@ -230,7 +231,7 @@ mod tests {
 
     /// Test complex expression parsing
     #[test]
-    fn test_complex_expressions() -> AstResult<()> {
+    fn test_complex_expressions() -> StandardResult<()> {
         let mut parser = Parser::new();
 
         let program = parser.parse_program("let x = (5 + 3) * 2;")?;
@@ -244,16 +245,15 @@ mod tests {
 
     /// Test module parsing
     #[test]
-    fn test_module_parsing() -> AstResult<()> {
+    fn test_module_parsing() -> StandardResult<()> {
         let mut parser = Parser::new();
 
-        let module = parser.parse_module("let x = 42;")?;
-        assert_eq!(module.name, "main");
-        assert_eq!(module.declarations.len(), 1);
+        let program = parser.parse_module("let x = 42;")?;
+        // For now, just verify it parses successfully
+        assert_eq!(program.declarations.len(), 1);
 
-        let module = parser.parse_module("let x = 1; let y = 2;")?;
-        assert_eq!(module.name, "main");
-        assert_eq!(module.declarations.len(), 2);
+        let program = parser.parse_module("let x = 1; let y = 2;")?;
+        assert_eq!(program.declarations.len(), 2);
 
         Ok(())
     }
@@ -272,7 +272,7 @@ mod tests {
 
     /// Test whitespace handling
     #[test]
-    fn test_whitespace_handling() -> AstResult<()> {
+    fn test_whitespace_handling() -> StandardResult<()> {
         let mut parser = Parser::new();
 
         // Test with various whitespace patterns
@@ -290,7 +290,7 @@ mod tests {
 
     /// Test comment handling
     #[test]
-    fn test_comment_handling() -> AstResult<()> {
+    fn test_comment_handling() -> StandardResult<()> {
         let mut parser = Parser::new();
 
         let program = parser.parse_program("// This is a comment\nlet x = 42;")?;
@@ -304,7 +304,7 @@ mod tests {
 
     /// Test nested expression parsing
     #[test]
-    fn test_nested_expressions() -> AstResult<()> {
+    fn test_nested_expressions() -> StandardResult<()> {
         let mut parser = Parser::new();
 
         let program = parser.parse_program("let x = ((((5 + 3) * 2) - 1) / 3);")?;
@@ -318,7 +318,7 @@ mod tests {
 
     /// Test string literal parsing
     #[test]
-    fn test_string_literals() -> AstResult<()> {
+    fn test_string_literals() -> StandardResult<()> {
         let mut parser = Parser::new();
 
         let program = parser.parse_program("let greeting = \"Hello, World!\";")?;
@@ -335,7 +335,7 @@ mod tests {
 
     /// Test precedence parsing
     #[test]
-    fn test_precedence() -> AstResult<()> {
+    fn test_precedence() -> StandardResult<()> {
         let mut parser = Parser::new();
 
         // Test operator precedence
@@ -353,7 +353,7 @@ mod tests {
 
     /// Test large program parsing
     #[test]
-    fn test_large_program() -> AstResult<()> {
+    fn test_large_program() -> StandardResult<()> {
         let mut parser = Parser::new();
 
         // Create a larger program
@@ -370,7 +370,7 @@ mod tests {
 
     /// Test performance
     #[test]
-    fn test_performance() -> AstResult<()> {
+    fn test_performance() -> StandardResult<()> {
         let mut parser = Parser::new();
 
         // Create a large program
@@ -394,7 +394,7 @@ mod tests {
 
     /// Test refinement type parsing
     #[test]
-    fn test_refinement_type_parsing() -> AstResult<()> {
+    fn test_refinement_type_parsing() -> StandardResult<()> {
         let mut parser = Parser::new();
 
         // Test basic refinement type: Int where x > 0
@@ -422,7 +422,7 @@ mod tests {
 
     /// Test constraint type parsing
     #[test]
-    fn test_constraint_type_parsing() -> AstResult<()> {
+    fn test_constraint_type_parsing() -> StandardResult<()> {
         let mut parser = Parser::new();
 
         // Test constraint type: String with regexp("^[^@]+@[^@]+\\.[^@]+$")
@@ -462,7 +462,7 @@ mod tests {
 
     /// Test range constraint parsing
     #[test]
-    fn test_range_constraint_parsing() -> AstResult<()> {
+    fn test_range_constraint_parsing() -> StandardResult<()> {
         let mut parser = Parser::new();
 
         // Test range constraint: Int with >= 0
@@ -499,7 +499,7 @@ mod tests {
 
     /// Test custom constraint parsing
     #[test]
-    fn test_custom_constraint_parsing() -> AstResult<()> {
+    fn test_custom_constraint_parsing() -> StandardResult<()> {
         let mut parser = Parser::new();
 
         // Test custom constraint: String with isValidEmail(x)
@@ -537,7 +537,7 @@ mod tests {
 
     /// Test complex refinement type parsing
     #[test]
-    fn test_complex_refinement_type_parsing() -> AstResult<()> {
+    fn test_complex_refinement_type_parsing() -> StandardResult<()> {
         let mut parser = Parser::new();
 
         // Test complex refinement type with record: { name: String, age: Int } where isValidUser x
@@ -565,7 +565,7 @@ mod tests {
 
     /// Test multiple constraints parsing
     #[test]
-    fn test_multiple_constraints_parsing() -> AstResult<()> {
+    fn test_multiple_constraints_parsing() -> StandardResult<()> {
         let mut parser = Parser::new();
 
         // Test multiple constraints: String with regexp("^[A-Za-z]+$") with isValidEmail(x)

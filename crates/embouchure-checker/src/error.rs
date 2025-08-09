@@ -159,30 +159,30 @@ impl TypeError {
     /// Get the span associated with this error.
     pub fn span(&self) -> Span {
         match self {
-            TypeError::TypeMismatch { span, .. } => *span,
-            TypeError::TypeMismatchWithSuggestion { span, .. } => *span,
-            TypeError::UnificationFailed { span, .. } => *span,
-            TypeError::SubtypingFailed { span, .. } => *span,
-            TypeError::OccursCheckFailed { span, .. } => *span,
-            TypeError::UndefinedTypeVariable { span, .. } => *span,
-            TypeError::TypeClassConstraintUnsatisfied { span, .. } => *span,
-            TypeError::AmbiguousType { span, .. } => *span,
-            TypeError::CircularTypeDefinition { span, .. } => *span,
-            TypeError::InvalidTypeApplication { span, .. } => *span,
-            TypeError::InferenceFailed { span, .. } => *span,
-            TypeError::ConstraintSolvingFailed { span, .. } => *span,
-            TypeError::RecordFieldError { span, .. } => *span,
-            TypeError::UnionVariantError { span, .. } => *span,
-            TypeError::FunctionApplicationError { span, .. } => *span,
-            TypeError::PatternMatchingError { span, .. } => *span,
-            TypeError::BindingConflict { span, .. } => *span,
-            TypeError::ImportBindingConflict { span, .. } => *span,
-            TypeError::TypeClassInstanceConflict { span, .. } => *span,
-            TypeError::TypeClassConstraintUnsatisfiedWithInstances { span, .. } => *span,
-            TypeError::AmbiguousTypeClassResolution { span, .. } => *span,
-            TypeError::TypeClassMethodMismatch { span, .. } => *span,
-            TypeError::TypeClassContextUnsatisfied { span, .. } => *span,
-            TypeError::TypeClassOverlap { span, .. } => *span,
+            TypeError::TypeMismatch { span, .. } => span.clone(),
+            TypeError::TypeMismatchWithSuggestion { span, .. } => span.clone(),
+            TypeError::UnificationFailed { span, .. } => span.clone(),
+            TypeError::SubtypingFailed { span, .. } => span.clone(),
+            TypeError::OccursCheckFailed { span, .. } => span.clone(),
+            TypeError::UndefinedTypeVariable { span, .. } => span.clone(),
+            TypeError::TypeClassConstraintUnsatisfied { span, .. } => span.clone(),
+            TypeError::AmbiguousType { span, .. } => span.clone(),
+            TypeError::CircularTypeDefinition { span, .. } => span.clone(),
+            TypeError::InvalidTypeApplication { span, .. } => span.clone(),
+            TypeError::InferenceFailed { span, .. } => span.clone(),
+            TypeError::ConstraintSolvingFailed { span, .. } => span.clone(),
+            TypeError::RecordFieldError { span, .. } => span.clone(),
+            TypeError::UnionVariantError { span, .. } => span.clone(),
+            TypeError::FunctionApplicationError { span, .. } => span.clone(),
+            TypeError::PatternMatchingError { span, .. } => span.clone(),
+            TypeError::BindingConflict { span, .. } => span.clone(),
+            TypeError::ImportBindingConflict { span, .. } => span.clone(),
+            TypeError::TypeClassInstanceConflict { span, .. } => span.clone(),
+            TypeError::TypeClassConstraintUnsatisfiedWithInstances { span, .. } => span.clone(),
+            TypeError::AmbiguousTypeClassResolution { span, .. } => span.clone(),
+            TypeError::TypeClassMethodMismatch { span, .. } => span.clone(),
+            TypeError::TypeClassContextUnsatisfied { span, .. } => span.clone(),
+            TypeError::TypeClassOverlap { span, .. } => span.clone(),
         }
     }
 
@@ -353,77 +353,164 @@ impl TypeError {
     pub fn into_ast_error(self) -> AstError {
         match self {
             TypeError::TypeMismatch {
-                expected: _,
-                found: _,
+                expected,
+                found,
                 span,
-            } => AstError::InvalidTypeAnnotation { span },
+            } => AstError::Type {
+                code: ligature_ast::ErrorCode::T2001,
+                message: format!("Type mismatch: expected {}, found {}", expected, found),
+                span,
+                expected: Some(expected),
+                found: Some(found),
+                suggestions: vec![],
+            },
             TypeError::TypeMismatchWithSuggestion {
-                expected: _,
-                found: _,
-                suggestion: _,
+                expected,
+                found,
+                suggestion,
                 span,
-            } => AstError::InvalidTypeAnnotation { span },
-            TypeError::UnificationFailed {
-                left: _,
-                right: _,
+            } => AstError::Type {
+                code: ligature_ast::ErrorCode::T2001,
+                message: format!(
+                    "Type mismatch: expected {}, found {}. {}",
+                    expected, found, suggestion
+                ),
                 span,
-            } => AstError::InvalidTypeAnnotation { span },
+                expected: Some(expected),
+                found: Some(found),
+                suggestions: vec![suggestion],
+            },
+            TypeError::UnificationFailed { left, right, span } => AstError::Type {
+                code: ligature_ast::ErrorCode::T2002,
+                message: format!("Unification failed: cannot unify {} and {}", left, right),
+                span,
+                expected: None,
+                found: None,
+                suggestions: vec![],
+            },
             TypeError::SubtypingFailed {
-                left: _,
-                right: _,
-                suggestion: _,
+                left,
+                right,
+                suggestion,
                 span,
-            } => AstError::InvalidTypeAnnotation { span },
+            } => AstError::Type {
+                code: ligature_ast::ErrorCode::T2003,
+                message: format!(
+                    "Subtyping failed: {} is not a subtype of {}. {}",
+                    left, right, suggestion
+                ),
+                span,
+                expected: Some(right),
+                found: Some(left),
+                suggestions: vec![suggestion],
+            },
             TypeError::OccursCheckFailed {
-                variable: _,
-                type_: _,
+                variable,
+                type_,
                 span,
-            } => AstError::InvalidTypeAnnotation { span },
-            TypeError::UndefinedTypeVariable { variable: _, span } => {
-                AstError::InvalidTypeAnnotation { span }
-            }
-            TypeError::TypeClassConstraintUnsatisfied {
-                type_: _,
-                class: _,
+            } => AstError::Type {
+                code: ligature_ast::ErrorCode::T2002,
+                message: format!("Occurs check failed: {} occurs in {}", variable, type_),
                 span,
-            } => AstError::InvalidTypeAnnotation { span },
-            TypeError::AmbiguousType { type_: _, span } => AstError::InvalidTypeAnnotation { span },
-            TypeError::CircularTypeDefinition { type_: _, span } => {
-                AstError::InvalidTypeAnnotation { span }
-            }
+                expected: None,
+                found: None,
+                suggestions: vec![],
+            },
+            TypeError::UndefinedTypeVariable { variable, span } => AstError::Type {
+                code: ligature_ast::ErrorCode::T2002,
+                message: format!("Undefined type variable: {}", variable),
+                span,
+                expected: None,
+                found: None,
+                suggestions: vec![],
+            },
+            TypeError::TypeClassConstraintUnsatisfied { type_, class, span } => AstError::Type {
+                code: ligature_ast::ErrorCode::T2008,
+                message: format!(
+                    "Type class constraint unsatisfied: {} does not implement {}",
+                    type_, class
+                ),
+                span,
+                expected: None,
+                found: None,
+                suggestions: vec![],
+            },
+            TypeError::AmbiguousType { type_, span } => AstError::Type {
+                code: ligature_ast::ErrorCode::T2002,
+                message: format!("Ambiguous type: {}", type_),
+                span,
+                expected: None,
+                found: None,
+                suggestions: vec![],
+            },
+            TypeError::CircularTypeDefinition { type_, span } => AstError::Type {
+                code: ligature_ast::ErrorCode::T2002,
+                message: format!("Circular type definition: {}", type_),
+                span,
+                expected: None,
+                found: None,
+                suggestions: vec![],
+            },
             TypeError::InvalidTypeApplication {
-                function: _,
-                argument: _,
+                function,
+                argument,
                 span,
-            } => AstError::InvalidTypeAnnotation { span },
-            TypeError::InferenceFailed { message, span } => {
-                AstError::InternalError { message, span }
-            }
-            TypeError::ConstraintSolvingFailed { message, span } => {
-                AstError::InternalError { message, span }
-            }
+            } => AstError::Type {
+                code: ligature_ast::ErrorCode::T2004,
+                message: format!(
+                    "Invalid type application: {} cannot be applied to {}",
+                    function, argument
+                ),
+                span,
+                expected: None,
+                found: None,
+                suggestions: vec![],
+            },
+            TypeError::InferenceFailed { message, span } => AstError::InternalError {
+                code: ligature_ast::ErrorCode::I6001,
+                message,
+                span,
+            },
+            TypeError::ConstraintSolvingFailed { message, span } => AstError::InternalError {
+                code: ligature_ast::ErrorCode::I6001,
+                message,
+                span,
+            },
             TypeError::RecordFieldError {
                 message,
                 field: _,
                 span,
-            } => AstError::InternalError { message, span },
+            } => AstError::InternalError {
+                code: ligature_ast::ErrorCode::I6001,
+                message,
+                span,
+            },
             TypeError::UnionVariantError {
                 message,
                 variant: _,
                 span,
-            } => AstError::InternalError { message, span },
-            TypeError::FunctionApplicationError { message, span } => {
-                AstError::InternalError { message, span }
-            }
-            TypeError::PatternMatchingError { message, span } => {
-                AstError::InternalError { message, span }
-            }
+            } => AstError::InternalError {
+                code: ligature_ast::ErrorCode::I6001,
+                message,
+                span,
+            },
+            TypeError::FunctionApplicationError { message, span } => AstError::InternalError {
+                code: ligature_ast::ErrorCode::I6001,
+                message,
+                span,
+            },
+            TypeError::PatternMatchingError { message, span } => AstError::InternalError {
+                code: ligature_ast::ErrorCode::I6001,
+                message,
+                span,
+            },
             TypeError::BindingConflict {
                 name,
                 existing_type: _,
                 new_type: _,
                 span,
             } => AstError::InternalError {
+                code: ligature_ast::ErrorCode::I6001,
                 message: format!("Binding conflict: {name} is already bound in this scope"),
                 span,
             },
@@ -433,6 +520,7 @@ impl TypeError {
                 imported_type: _,
                 span,
             } => AstError::InternalError {
+                code: ligature_ast::ErrorCode::I6001,
                 message: format!("Import binding conflict: {name} conflicts with existing binding"),
                 span,
             },
@@ -442,6 +530,7 @@ impl TypeError {
                 conflicting_instances: _,
                 span,
             } => AstError::InternalError {
+                code: ligature_ast::ErrorCode::I6001,
                 message: format!(
                     "Type class instance conflict: multiple instances found for {class} on {type_}"
                 ),
@@ -453,6 +542,7 @@ impl TypeError {
                 available_instances,
                 span,
             } => AstError::InternalError {
+                code: ligature_ast::ErrorCode::I6001,
                 message: format!(
                     "Type class constraint unsatisfied: {type_} does not implement {class}. \
                      Available instances: {available_instances}"
@@ -465,6 +555,7 @@ impl TypeError {
                 candidate_instances: _,
                 span,
             } => AstError::InternalError {
+                code: ligature_ast::ErrorCode::I6001,
                 message: format!(
                     "Ambiguous type class resolution: {type_} could match multiple instances of \
                      {class}"
@@ -477,12 +568,14 @@ impl TypeError {
                 found,
                 span,
             } => AstError::InternalError {
+                code: ligature_ast::ErrorCode::I6001,
                 message: format!(
                     "Type class method implementation mismatch: expected {expected}, found {found}"
                 ),
                 span,
             },
             TypeError::TypeClassContextUnsatisfied { context, span } => AstError::InternalError {
+                code: ligature_ast::ErrorCode::I6001,
                 message: format!("Type class context unsatisfied: {context}"),
                 span,
             },
@@ -492,6 +585,7 @@ impl TypeError {
                 type2,
                 span,
             } => AstError::InternalError {
+                code: ligature_ast::ErrorCode::I6001,
                 message: format!(
                     "Type class overlap: instances for {class} on {type1} and {type2} overlap"
                 ),
@@ -504,5 +598,11 @@ impl TypeError {
 impl From<TypeError> for AstError {
     fn from(error: TypeError) -> Self {
         error.into_ast_error()
+    }
+}
+
+impl From<TypeError> for ligature_error::StandardError {
+    fn from(error: TypeError) -> Self {
+        ligature_error::StandardError::Ligature(error.into_ast_error())
     }
 }

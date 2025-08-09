@@ -3,7 +3,8 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
-use ligature_ast::{AstError, AstResult};
+use ligature_ast::LigatureError;
+use ligature_error::{ErrorContextBuilder, StandardError, StandardResult};
 use ligature_parser::parse_module;
 use serde::{Deserialize, Serialize};
 use toml;
@@ -73,7 +74,7 @@ impl ModuleResolver {
     }
 
     /// Resolve and load a module by path.
-    pub fn resolve_module(&mut self, path: &str) -> AstResult<Value> {
+    pub fn resolve_module(&mut self, path: &str) -> StandardResult<Value> {
         // Check cache first
         if let Some(module) = self.cache.get(path) {
             return Ok(module.clone());
@@ -86,11 +87,14 @@ impl ModuleResolver {
         let module_path = self.find_nested_module_in_register(&register_name, &module_path)?;
 
         // Load and parse the module
-        let module_content =
-            std::fs::read_to_string(&module_path).map_err(|e| AstError::ParseError {
-                message: format!("Failed to read module file: {e}"),
+        let module_content = std::fs::read_to_string(&module_path).map_err(|e| {
+            ligature_error::StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                code: ligature_ast::ErrorCode::E1001,
+                message: format!("Failed to read module file: {}", e),
                 span: ligature_ast::Span::default(),
-            })?;
+                suggestions: vec!["Check that the file exists and is readable".to_string()],
+            })
+        })?;
 
         let module_ast = parse_module(&module_content)?;
 
@@ -107,7 +111,7 @@ impl ModuleResolver {
     /// Parse an import path to extract register and module names.
     /// Now supports nested module paths like "std.collections.list"
     #[allow(clippy::type_complexity)]
-    fn parse_import_path(&self, path: &str) -> AstResult<(String, Vec<String>)> {
+    fn parse_import_path(&self, path: &str) -> StandardResult<(String, Vec<String>)> {
         let parts: Vec<&str> = path.split('.').collect();
         match parts.as_slice() {
             [register_name, module_name] => {
@@ -118,10 +122,16 @@ impl ModuleResolver {
                 let module_path: Vec<String> = module_parts.iter().map(|s| s.to_string()).collect();
                 Ok((register_name.to_string(), module_path))
             }
-            _ => Err(AstError::ParseError {
-                message: format!("Invalid import path format: {path}"),
-                span: ligature_ast::Span::default(),
-            }),
+            _ => Err(ligature_error::StandardError::Ligature(
+                ligature_ast::LigatureError::Parse {
+                    code: ligature_ast::ErrorCode::E1002,
+                    message: format!("Invalid import path format: {}", path),
+                    span: ligature_ast::Span::default(),
+                    suggestions: vec![
+                        "Check that the import path follows the correct format".to_string(),
+                    ],
+                },
+            )),
         }
     }
 
@@ -131,7 +141,7 @@ impl ModuleResolver {
         &self,
         register_name: &str,
         module_path: &[String],
-    ) -> AstResult<PathBuf> {
+    ) -> StandardResult<PathBuf> {
         // First, find the register directory
         let register_path = self.find_register_directory(register_name)?;
 
@@ -145,12 +155,16 @@ impl ModuleResolver {
         &self,
         register_path: &Path,
         module_path: &[String],
-    ) -> AstResult<PathBuf> {
+    ) -> StandardResult<PathBuf> {
         if module_path.is_empty() {
-            return Err(AstError::ParseError {
-                message: "Empty module path".to_string(),
-                span: ligature_ast::Span::default(),
-            });
+            return Err(ligature_error::StandardError::Ligature(
+                ligature_ast::LigatureError::Parse {
+                    code: ligature_ast::ErrorCode::E1003,
+                    message: "Empty module path".to_string(),
+                    span: ligature_ast::Span::default(),
+                    suggestions: vec!["Provide a valid module path".to_string()],
+                },
+            ));
         }
 
         if module_path.len() == 1 {
@@ -168,12 +182,17 @@ impl ModuleResolver {
             self.find_nested_in_register(&intermediate_path, &module_path[1..])
         } else {
             // The intermediate module is a file, not a directory
-            Err(AstError::ParseError {
-                message: format!(
-                    "Module '{intermediate_module}' is not a directory, cannot contain submodules"
-                ),
-                span: ligature_ast::Span::default(),
-            })
+            Err(ligature_error::StandardError::Ligature(
+                ligature_ast::LigatureError::Parse {
+                    code: ligature_ast::ErrorCode::E1004,
+                    message: format!(
+                        "Module '{}' is not a directory, cannot contain submodules",
+                        intermediate_module
+                    ),
+                    span: ligature_ast::Span::default(),
+                    suggestions: vec!["Check that the module path is correct".to_string()],
+                },
+            ))
         }
     }
 
@@ -183,7 +202,7 @@ impl ModuleResolver {
         &self,
         register_name: &str,
         module_name: &str,
-    ) -> AstResult<PathBuf> {
+    ) -> StandardResult<PathBuf> {
         // First, find the register directory
         let register_path = self.find_register_directory(register_name)?;
 
@@ -192,7 +211,7 @@ impl ModuleResolver {
     }
 
     /// Find a register directory by name.
-    fn find_register_directory(&self, register_name: &str) -> AstResult<PathBuf> {
+    fn find_register_directory(&self, register_name: &str) -> StandardResult<PathBuf> {
         // Search in register paths
         for register_path in &self.register_paths {
             let potential_register = register_path.join(register_name);
@@ -201,15 +220,15 @@ impl ModuleResolver {
             }
         }
 
-        Err(AstError::ModuleNotFound {
-            module: register_name.to_string(),
-            span: ligature_ast::Span::default(),
-        })
+        Err(StandardError::NotFound(format!(
+            "Module not found: {}",
+            register_name
+        )))
     }
 
     /// Find a module file in the search paths.
     #[allow(dead_code)]
-    fn find_module_file(&self, path: &str) -> AstResult<PathBuf> {
+    fn find_module_file(&self, path: &str) -> StandardResult<PathBuf> {
         // Try direct file path first
         let direct_path = PathBuf::from(path);
         if direct_path.exists() && direct_path.is_file() {
@@ -243,10 +262,10 @@ impl ModuleResolver {
             }
         }
 
-        Err(AstError::ModuleNotFound {
-            module: path.to_string(),
-            span: ligature_ast::Span::default(),
-        })
+        Err(StandardError::NotFound(format!(
+            "Module not found: {}",
+            path
+        )))
     }
 
     /// Find a module within a register.
@@ -255,22 +274,28 @@ impl ModuleResolver {
         register_path: &Path,
         module_name: &str,
         for_nested: bool,
-    ) -> AstResult<PathBuf> {
+    ) -> StandardResult<PathBuf> {
         // Look for register.toml to understand the register structure
         let register_manifest = register_path.join("register.toml");
         if register_manifest.exists() {
             // Parse register.toml and check exports
-            let manifest_content =
-                std::fs::read_to_string(&register_manifest).map_err(|e| AstError::ParseError {
+            let manifest_content = std::fs::read_to_string(&register_manifest).map_err(|e| {
+                StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                    code: ligature_ast::ErrorCode::E1001,
                     message: format!("Failed to read register manifest: {e}"),
                     span: ligature_ast::Span::default(),
-                })?;
+                    suggestions: vec![],
+                })
+            })?;
 
-            let manifest: RegisterManifest =
-                toml::from_str(&manifest_content).map_err(|e| AstError::ParseError {
+            let manifest: RegisterManifest = toml::from_str(&manifest_content).map_err(|e| {
+                StandardError::Ligature(ligature_ast::LigatureError::Parse {
+                    code: ligature_ast::ErrorCode::E1001,
                     message: format!("Failed to parse register manifest: {e}"),
                     span: ligature_ast::Span::default(),
-                })?;
+                    suggestions: vec![],
+                })
+            })?;
 
             // Check if the module is exported by this register
             if let Some(module_path) = manifest.exports.get(module_name) {
@@ -335,22 +360,26 @@ impl ModuleResolver {
                                 }
                             }
                             // If no mod.lig, this is not a valid module
-                            return Err(AstError::ParseError {
-                                message: format!(
-                                    "Directory '{module_name}' does not contain a mod.lig file"
-                                ),
-                                span: ligature_ast::Span::default(),
-                            });
+                            return Err(StandardError::Ligature(
+                                ligature_ast::LigatureError::Parse {
+                                    code: ligature_ast::ErrorCode::E1001,
+                                    message: format!(
+                                        "Directory '{module_name}' does not contain a mod.lig file"
+                                    ),
+                                    span: ligature_ast::Span::default(),
+                                    suggestions: vec![],
+                                },
+                            ));
                         }
                     }
                 }
             }
         }
 
-        Err(AstError::ModuleNotFound {
-            module: module_name.to_string(),
-            span: ligature_ast::Span::default(),
-        })
+        Err(StandardError::NotFound(format!(
+            "Module not found: {}",
+            module_name
+        )))
     }
 
     /// Clear the module cache.

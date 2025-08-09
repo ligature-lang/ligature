@@ -104,7 +104,7 @@ impl DefinitionProvider {
                     if value_decl.name == symbol_name {
                         return Some(Location {
                             uri: Url::parse(uri).ok()?,
-                            range: self.span_to_range(value_decl.span),
+                            range: self.span_to_range(value_decl.span.clone()),
                         });
                     }
                 }
@@ -112,7 +112,7 @@ impl DefinitionProvider {
                     if type_alias.name == symbol_name {
                         return Some(Location {
                             uri: Url::parse(uri).ok()?,
-                            range: self.span_to_range(type_alias.span),
+                            range: self.span_to_range(type_alias.span.clone()),
                         });
                     }
                 }
@@ -120,7 +120,7 @@ impl DefinitionProvider {
                     if type_constructor.name == symbol_name {
                         return Some(Location {
                             uri: Url::parse(uri).ok()?,
-                            range: self.span_to_range(type_constructor.span),
+                            range: self.span_to_range(type_constructor.span.clone()),
                         });
                     }
                 }
@@ -128,7 +128,7 @@ impl DefinitionProvider {
                     if type_class.name == symbol_name {
                         return Some(Location {
                             uri: Url::parse(uri).ok()?,
-                            range: self.span_to_range(type_class.span),
+                            range: self.span_to_range(type_class.span.clone()),
                         });
                     }
                 }
@@ -136,7 +136,7 @@ impl DefinitionProvider {
                     if instance_decl.class_name == symbol_name {
                         return Some(Location {
                             uri: Url::parse(uri).ok()?,
-                            range: self.span_to_range(instance_decl.span),
+                            range: self.span_to_range(instance_decl.span.clone()),
                         });
                     }
                 }

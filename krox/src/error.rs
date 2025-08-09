@@ -1,6 +1,6 @@
 //! Error types for the Krox library.
 
-use ligature_ast::AstError;
+use ligature_error::StandardError;
 use ligature_eval::error::EvaluationError as EvalError;
 use thiserror::Error;
 
@@ -9,7 +9,7 @@ use thiserror::Error;
 pub enum Error {
     /// Error parsing a Ligature program.
     #[error("Parse error: {0}")]
-    Parse(#[from] AstError),
+    Parse(#[from] StandardError),
 
     /// Error evaluating a Ligature program.
     #[error("Evaluation error: {0}")]

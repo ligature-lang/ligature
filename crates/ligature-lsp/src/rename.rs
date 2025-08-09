@@ -338,21 +338,21 @@ impl RenameProvider {
             match &decl.kind {
                 DeclarationKind::Value(value_decl) => {
                     if value_decl.name == symbol_name {
-                        references.push(self.span_to_range(value_decl.span));
+                        references.push(self.span_to_range(value_decl.span.clone()));
                     }
                     // Check for references in the value expression
                     references.extend(self.find_references_in_expr(&value_decl.value, symbol_name));
                 }
                 DeclarationKind::TypeAlias(type_alias) => {
                     if type_alias.name == symbol_name {
-                        references.push(self.span_to_range(type_alias.span));
+                        references.push(self.span_to_range(type_alias.span.clone()));
                     }
                     // Check for references in the type
                     references.extend(self.find_references_in_type(&type_alias.type_, symbol_name));
                 }
                 DeclarationKind::TypeConstructor(type_constructor) => {
                     if type_constructor.name == symbol_name {
-                        references.push(self.span_to_range(type_constructor.span));
+                        references.push(self.span_to_range(type_constructor.span.clone()));
                     }
                     // Check for references in the body type
                     references
@@ -360,7 +360,7 @@ impl RenameProvider {
                 }
                 DeclarationKind::TypeClass(type_class) => {
                     if type_class.name == symbol_name {
-                        references.push(self.span_to_range(type_class.span));
+                        references.push(self.span_to_range(type_class.span.clone()));
                     }
                     // Check for references in methods
                     for method in &type_class.methods {
@@ -369,7 +369,7 @@ impl RenameProvider {
                 }
                 DeclarationKind::Instance(instance_decl) => {
                     if instance_decl.class_name == symbol_name {
-                        references.push(self.span_to_range(instance_decl.span));
+                        references.push(self.span_to_range(instance_decl.span.clone()));
                     }
                     // Check for references in method implementations
                     for method in &instance_decl.methods {
@@ -381,12 +381,12 @@ impl RenameProvider {
                 DeclarationKind::Import(import) => {
                     // Check for references in import path or items
                     if import.path == symbol_name {
-                        references.push(self.span_to_range(import.span));
+                        references.push(self.span_to_range(import.span.clone()));
                     }
                     if let Some(items) = &import.items {
                         for item in items {
                             if item.name == symbol_name {
-                                references.push(self.span_to_range(item.span));
+                                references.push(self.span_to_range(item.span.clone()));
                             }
                         }
                     }
@@ -395,7 +395,7 @@ impl RenameProvider {
                     // Check for references in export items
                     for item in &export.items {
                         if item.name == symbol_name {
-                            references.push(self.span_to_range(item.span));
+                            references.push(self.span_to_range(item.span.clone()));
                         }
                     }
                 }
@@ -413,7 +413,7 @@ impl RenameProvider {
         match &expr.kind {
             ExprKind::Variable(name) => {
                 if name == symbol_name {
-                    references.push(self.span_to_range(expr.span));
+                    references.push(self.span_to_range(expr.span.clone()));
                 }
             }
             ExprKind::Application { function, argument } => {
@@ -426,7 +426,7 @@ impl RenameProvider {
                 body,
             } => {
                 if parameter == symbol_name {
-                    references.push(self.span_to_range(expr.span));
+                    references.push(self.span_to_range(expr.span.clone()));
                 }
                 if let Some(param_type) = parameter_type {
                     references.extend(self.find_references_in_type(param_type, symbol_name));
@@ -435,7 +435,7 @@ impl RenameProvider {
             }
             ExprKind::Let { name, value, body } => {
                 if name == symbol_name {
-                    references.push(self.span_to_range(expr.span));
+                    references.push(self.span_to_range(expr.span.clone()));
                 }
                 references.extend(self.find_references_in_expr(value, symbol_name));
                 references.extend(self.find_references_in_expr(body, symbol_name));
@@ -509,7 +509,7 @@ impl RenameProvider {
         match &type_.kind {
             ligature_ast::TypeKind::Variable(name) => {
                 if name == symbol_name {
-                    references.push(self.span_to_range(type_.span));
+                    references.push(self.span_to_range(type_.span.clone()));
                 }
             }
             ligature_ast::TypeKind::Function {
@@ -536,13 +536,13 @@ impl RenameProvider {
             }
             ligature_ast::TypeKind::ForAll { parameter, body } => {
                 if parameter == symbol_name {
-                    references.push(self.span_to_range(type_.span));
+                    references.push(self.span_to_range(type_.span.clone()));
                 }
                 references.extend(self.find_references_in_type(body, symbol_name));
             }
             ligature_ast::TypeKind::Exists { parameter, body } => {
                 if parameter == symbol_name {
-                    references.push(self.span_to_range(type_.span));
+                    references.push(self.span_to_range(type_.span.clone()));
                 }
                 references.extend(self.find_references_in_type(body, symbol_name));
             }
@@ -552,7 +552,7 @@ impl RenameProvider {
                 return_type,
             } => {
                 if parameter == symbol_name {
-                    references.push(self.span_to_range(type_.span));
+                    references.push(self.span_to_range(type_.span.clone()));
                 }
                 references.extend(self.find_references_in_type(parameter_type, symbol_name));
                 references.extend(self.find_references_in_type(return_type, symbol_name));
@@ -563,7 +563,7 @@ impl RenameProvider {
                 return_type,
             } => {
                 if parameter == symbol_name {
-                    references.push(self.span_to_range(type_.span));
+                    references.push(self.span_to_range(type_.span.clone()));
                 }
                 references.extend(self.find_references_in_type(parameter_type, symbol_name));
                 references.extend(self.find_references_in_type(return_type, symbol_name));
@@ -574,7 +574,7 @@ impl RenameProvider {
             }
             ligature_ast::TypeKind::Module { name } => {
                 if name == symbol_name {
-                    references.push(self.span_to_range(type_.span));
+                    references.push(self.span_to_range(type_.span.clone()));
                 }
             }
             ligature_ast::TypeKind::Constrained { constraint, type_ } => {
@@ -600,7 +600,7 @@ impl RenameProvider {
         let mut references = Vec::new();
 
         if constraint.class_name == symbol_name {
-            references.push(self.span_to_range(constraint.span));
+            references.push(self.span_to_range(constraint.span.clone()));
         }
 
         for type_arg in &constraint.type_arguments {

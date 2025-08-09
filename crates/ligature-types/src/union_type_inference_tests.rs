@@ -250,7 +250,7 @@ fn test_exact_failing_case() {
                             name: variant.name.clone(),
                             parameters: vec![], // Variants don't have parameters in this model
                             body: type_alias.type_.clone(),
-                            span: variant.span,
+                            span: variant.span.clone(),
                         };
                         inference.bind_type_constructor(variant.name.clone(), variant_constructor);
 
@@ -378,7 +378,7 @@ fn test_declaration_order_processing() {
                 name: variant.name.clone(),
                 parameters: vec![], // Variants don't have parameters in this model
                 body: type_alias.type_.clone(),
-                span: variant.span,
+                span: variant.span.clone(),
             };
             inference.bind_type_constructor(variant.name.clone(), variant_constructor);
 
@@ -456,7 +456,7 @@ fn test_type_alias_union_binding() {
                 name: variant.name.clone(),
                 parameters: vec![], // Variants don't have parameters in this model
                 body: type_alias.type_.clone(),
-                span: variant.span,
+                span: variant.span.clone(),
             };
             inference.bind_type_constructor(variant.name.clone(), variant_constructor);
 
@@ -716,12 +716,9 @@ fn test_union_type_constraints() {
     let int_type = Type::integer(Span::default());
 
     // Create a constraint that a union variant type equals an integer
-    inference
-        .constraint_solver
-        .add_constraint(crate::constraints::Constraint::Equality(
-            var_a.clone(),
-            int_type.clone(),
-        ));
+    inference.constraint_solver.add_constraint(
+        embouchure_checker::constraints::Constraint::Equality(var_a.clone(), int_type.clone()),
+    );
 
     // Create a union type using the variable
     let union_with_var = Type::union(

@@ -229,8 +229,8 @@ impl Register {
     }
 
     async fn validate_module_syntax(&self, module_path: &Path) -> Result<()> {
+        use embouchure_checker::TypeChecker;
         use ligature_parser::Parser;
-        use ligature_types::checker::TypeChecker;
 
         let content = tokio_fs::read_to_string(module_path)
             .await
@@ -246,7 +246,7 @@ impl Register {
         // Type check the module
         let mut checker = TypeChecker::new();
         checker
-            .check_module(&ast)
+            .check_program(&ast)
             .map_err(|e| miette!("Type error: {}", e))?;
 
         Ok(())
