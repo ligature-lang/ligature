@@ -1,63 +1,92 @@
 # Ligature Documentation
 
-Welcome to the Ligature documentation. This guide provides navigation to all Ligature documentation resources.
+This directory contains the Ligature documentation site built with Next.js and Nextra.
 
-## Quick Navigation
+## Nx Targets
 
-### For New Users
+This project is integrated with Nx and provides the following targets:
 
-- **[Getting Started](user-guide/getting-started.md)** - Learn the basics of Ligature
-- **[Language Reference](user-guide/language-reference.md)** - Complete syntax and semantics reference
-- **[Real-world Examples](user-guide/examples.md)** - Practical examples for common use cases
-- **[Cacophony CLI](user-guide/cacophony-cli.md)** - Orchestration and deployment tool
+### Development
+- `nx run docs:dev` - Start development server
+- `nx run docs:start` - Start production server (requires build first)
+- `nx run docs:preview` - Preview production build
 
-### For Developers
+### Building
+- `nx run docs:build` - Build for production ✅ **WORKING**
+- `nx run docs:build:static` - Build static export
+- `nx run docs:export` - Export static files
+- `nx run docs:analyze` - Analyze bundle size
 
-- **[Developer Guide](developer-guide.md)** - Comprehensive guide for contributors and integrators
-- **[API Reference](api-reference.md)** - Complete API documentation for all components
-- **[Architecture Overview](architecture/README.md)** - Complete system design and components
-- **[Contributing Guidelines](../../CONTRIBUTING.md)** - How to contribute to Ligature
+### Code Quality
+- `nx run docs:lint` - Run ESLint ✅ **WORKING**
+- `nx run docs:lint:fix` - Fix ESLint issues
+- `nx run docs:format` - Format code with Prettier
+- `nx run docs:format:check` - Check code formatting
+- `nx run docs:type-check` - Run TypeScript type checking ✅ **WORKING**
 
-### For Advanced Users
+### Testing
+- `nx run docs:test` - Run tests
+- `nx run docs:test:watch` - Run tests in watch mode
+- `nx run docs:test:coverage` - Run tests with coverage
 
-- **[Type-Level Computation](user-guide/type-level-computation.md)** - Advanced type system features
-- **[Performance Guide](user-guide/performance-guide.md)** - Performance optimization and monitoring
-- **[IDE Integration](user-guide/ide-integration.md)** - Professional-grade development environment
-- **[Error Messages](user-guide/error-messages.md)** - Understanding and debugging errors
+### Validation & Checks
+- `nx run docs:validate` - Run lint, type-check, and format check
+- `nx run docs:check` - Run all checks including tests
 
-## Documentation Structure
+### Maintenance
+- `nx run docs:install` - Install dependencies
+- `nx run docs:clean` - Clean build artifacts
+- `nx run docs:clean:all` - Clean all artifacts including node_modules
 
-```
-docs/
-├── user-guide/           # User-facing documentation
-│   ├── getting-started.md
-│   ├── language-reference.md
-│   ├── examples.md
-│   ├── cacophony-cli.md
-│   ├── performance-guide.md
-│   ├── ide-integration.md
-│   ├── type-level-computation.md
-│   ├── error-messages.md
-│   └── faq.md
-├── architecture/         # System architecture documentation
-│   ├── README.md
-│   ├── decisions/
-│   └── proposals/
-├── analysis/            # Technical analysis and project tracking
-├── comparisons/         # Language comparisons
-├── developer-guide.md   # Developer documentation
-├── api-reference.md     # API documentation
-└── README.md           # This file
-```
+## Quick Start
 
-## Getting Help
+1. Install dependencies:
+   ```bash
+   nx run docs:install
+   ```
 
-- **For Users**: Check the **[User Guide](user-guide/)** for complete documentation
-- **For Developers**: Read the **[Developer Guide](developer-guide.md)** for integration and contribution
-- **For API Reference**: See the **[API Reference](api-reference.md)** for all public interfaces
-- **For Architecture**: Explore the **[Architecture Overview](architecture/README.md)** for system design
-- **For Community**: Join our [Discussions](https://github.com/ligature-lang/ligature/discussions) for support
+2. Start development server:
+   ```bash
+   nx run docs:dev
+   ```
 
-## Main Project Information
+3. Build for production:
+   ```bash
+   nx run docs:build
+   ```
 
-For comprehensive project information, language features, performance metrics, and recent achievements, see the **[main README](../../README.md)**.
+## File Structure
+
+- `content/` - Documentation content (MDX files)
+- `src/` - Source code and components
+- `pages/` - Next.js pages directory (Nextra 3.x)
+- `public/` - Static assets
+
+## Configuration Files
+
+- `next.config.mjs` - Next.js and Nextra configuration ✅ **WORKING**
+- `theme.config.jsx` - Nextra theme configuration
+- `tsconfig.json` - TypeScript configuration
+- `.eslintrc.json` - ESLint configuration
+- `.prettierrc` - Prettier configuration
+- `jest.config.js` - Jest configuration
+- `project.json` - Nx project configuration
+
+## Dependencies
+
+This project uses:
+- Next.js 15.4.6
+- Nextra 3.3.1 (stable version)
+- React 19.1.1
+- TypeScript 5.9.2
+- ESLint 8.57.1
+- Prettier 3.6.2
+- Jest 29.7.0
+
+## Recent Fixes
+
+- ✅ Fixed Nextra configuration issues by downgrading to stable 3.x version
+- ✅ Resolved App Router vs Pages Router compatibility
+- ✅ Fixed MDX components integration
+- ✅ Successfully configured Nx targets for all operations
+- ✅ All core targets (build, lint, type-check) are working 

@@ -1,0 +1,34 @@
+{
+  "name": "ligature-workspace",
+  "version": "1.0.0",
+  "description": "Ligature Language Workspace",
+  "private": true,
+  "packageManager": "pnpm@10.14.0",
+  "scripts": {
+    "docs:dev": "pnpm --filter docs dev",
+    "docs:build": "pnpm --filter docs build",
+    "docs:start": "pnpm --filter docs start",
+    "docs:lint": "pnpm --filter docs lint",
+    "docs:type-check": "pnpm --filter docs type-check",
+    "docs:format": "pnpm --filter docs format",
+    "docs:test": "pnpm --filter docs test",
+    "build": "pnpm --recursive build",
+    "dev": "pnpm --recursive dev",
+    "lint": "pnpm --recursive lint",
+    "test": "pnpm --recursive test",
+    "clean": "pnpm --recursive clean",
+    "install:all": "pnpm install --recursive"
+  },
+  "keywords": [
+    "ligature",
+    "configuration",
+    "language",
+    "workspace"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}

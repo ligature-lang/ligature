@@ -1,0 +1,143 @@
+# Configuration Language Comparisons
+
+This directory contains comprehensive comparisons between Ligature and other configuration languages, helping you understand the differences and choose the right tool for your needs.
+
+## Available Comparisons
+
+### [Ligature vs Dhall](ligature-vs-dhall.md)
+
+**Focus**: Type safety and functional programming approaches
+
+- **Ligature**: Advanced dependent types, formal verification, academic rigor
+- **Dhall**: Practical type safety, Haskell-inspired, production-ready
+
+**Best for**: Understanding the trade-offs between advanced type systems and practical configuration management.
+
+### [Ligature vs Cuelang](ligature-vs-cuelang.md)
+
+**Focus**: Data validation and constraint solving
+
+- **Ligature**: Type-level validation, formal verification, functional programming
+- **Cuelang**: Constraint-based validation, JSON superset, Kubernetes-native
+
+**Best for**: Comparing approaches to data validation and constraint solving in configuration languages.
+
+### [Ligature vs Jsonnet](ligature-vs-jsonnet.md)
+
+**Focus**: Code generation and templating
+
+- **Ligature**: Type-level generation, formal verification, advanced type system
+- **Jsonnet**: JSON templating, code generation, Kubernetes integration
+
+**Best for**: Understanding different approaches to configuration generation and templating.
+
+## Quick Decision Guide
+
+### Choose Ligature if you need:
+
+- ✅ **Formal verification** and mathematical correctness
+- ✅ **Advanced type system** with dependent types and type classes
+- ✅ **Safety-critical systems** where correctness is paramount
+- ✅ **Research and academic** applications
+- ✅ **Complex validation** with type-level constraints
+
+### Choose Dhall if you need:
+
+- ✅ **Practical type safety** with familiar functional concepts
+- ✅ **Production-ready** configuration management
+- ✅ **JSON/YAML replacement** with good error messages
+- ✅ **Team adoption** with gentle learning curve
+- ✅ **Mature ecosystem** with community support
+
+### Choose Cuelang if you need:
+
+- ✅ **Advanced data validation** and constraint solving
+- ✅ **Kubernetes-native** integration and tooling
+- ✅ **JSON/YAML schema validation** with powerful constraints
+- ✅ **Large-scale data processing** and validation
+- ✅ **Google-backed** development and support
+
+### Choose Jsonnet if you need:
+
+- ✅ **Powerful JSON templating** and code generation
+- ✅ **Kubernetes configuration** generation and management
+- ✅ **Multi-environment** configuration templating
+- ✅ **Infrastructure as Code** (IaC) automation
+- ✅ **Configuration that needs to be human-readable**
+
+## Comparison Matrix
+
+| Feature                    | Ligature            | Dhall       | Cuelang     | Jsonnet    |
+| -------------------------- | ------------------- | ----------- | ----------- | ---------- |
+| **Type System**            | Dependent Types     | Basic Types | Constraints | Dynamic    |
+| **Formal Verification**    | ✅ Lean 4           | ❌          | ❌          | ❌         |
+| **JSON/YAML Integration**  | 🔄 Planned          | ✅          | ✅          | ✅         |
+| **Kubernetes Integration** | 🔄 Planned          | 🔄          | ✅          | ✅         |
+| **Learning Curve**         | Steep               | Moderate    | Moderate    | Gentle     |
+| **Maturity**               | Early Development   | Production  | Production  | Production |
+| **Performance**            | Correctness-focused | Good        | Excellent   | Excellent  |
+| **Community**              | Growing             | Active      | Active      | Active     |
+
+## Key Differentiators
+
+### Ligature's Unique Strengths
+
+1. **Dependent Types**: Advanced type system with Pi and Sigma types
+2. **Formal Verification**: Lean 4 integration for mathematical correctness
+3. **Type Classes**: Ad-hoc polymorphism and constraint-based programming
+4. **Academic Rigor**: Designed for research and safety-critical applications
+
+### Dhall's Unique Strengths
+
+1. **Practical Type Safety**: Good balance of safety and usability
+2. **Functional Programming**: Familiar concepts for FP developers
+3. **Production Ready**: Mature ecosystem with extensive usage
+4. **Gentle Learning Curve**: Accessible to teams new to typed configuration
+
+### Cuelang's Unique Strengths
+
+1. **Constraint Solving**: Advanced constraint-based validation
+2. **Kubernetes Native**: Deep integration with K8s ecosystem
+3. **Data Validation**: Powerful schema validation capabilities
+4. **Google Backing**: Enterprise support and development
+
+### Jsonnet's Unique Strengths
+
+1. **JSON Templating**: Native JSON generation and manipulation
+2. **Code Generation**: Powerful templating for configuration automation
+3. **Kubernetes Integration**: Excellent K8s configuration management
+4. **Human Readable**: Familiar JSON-like syntax
+
+## When to Use Each Language
+
+### Safety-Critical Systems
+
+**Choose Ligature** for systems where mathematical correctness is required and you can invest in formal verification.
+
+### General Configuration Management
+
+**Choose Dhall** for practical configuration management with good type safety and team adoption.
+
+### Data Validation and Constraints
+
+**Choose Cuelang** for complex data validation scenarios, especially in Kubernetes environments.
+
+### Configuration Generation
+
+**Choose Jsonnet** for automated configuration generation and templating, particularly for infrastructure.
+
+## Contributing
+
+These comparisons are based on current understanding of each language. If you find inaccuracies or would like to add more languages, please contribute by:
+
+1. Researching the target language thoroughly
+2. Following the established comparison format
+3. Providing concrete code examples
+4. Including practical use cases and decision guidance
+
+## Further Reading
+
+- [Ligature Language Reference](../user-guide/core-language/language-reference.md)
+- [Ligature Architecture](../architecture/)
+- [Ligature Examples](../../examples/)
+- [Ligature Specification](../../engines/lean/spec/)

@@ -1,0 +1,11 @@
+packages:
+  - docs
+  - apps/*
+  - crates/*
+  - engines/*
+  - krox
+  - examples
+
+onlyBuiltDependencies:
+  - sharp
+  - unrs-resolver

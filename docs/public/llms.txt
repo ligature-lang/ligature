@@ -1,0 +1,419 @@
+Ligature Language Reference for LLMs
+====================================
+
+Ligature is a Turing-incomplete configuration language with ML-family syntax, strong typing, and constraint-based validation. All programs terminate and are type-safe.
+
+CORE SYNTAX PATTERNS
+====================
+
+1. BASIC STRUCTURE
+------------------
+// Single-line comment
+/* Multi-line comment */
+
+// Module declaration (optional)
+module MyModule;
+
+// Imports
+import std.collections.list;
+import "./utils" as utils;
+import { add, multiply } from "./math";
+
+// Exports
+export { myFunction, MyType };
+
+2. VALUE DECLARATIONS
+---------------------
+// Basic value
+let x = 42;
+
+// Typed value
+let name: String = "Alice";
+
+// Function
+let add = \x y -> x + y;
+
+// Typed function
+let multiply: Integer -> Integer -> Integer = \x y -> x * y;
+
+// Recursive function
+let rec factorial = \n ->
+  if n == 0 then 1 else n * factorial (n - 1);
+
+3. TYPES
+--------
+// Basic types
+Integer, Float, String, Boolean, Unit
+
+// Function types
+Integer -> String
+Integer -> Integer -> Integer
+(Integer, String) -> Boolean
+
+// Record types
+{
+    name: String,
+    age: Integer,
+    email: String
+}
+
+// Union types
+type Option = Some a | None;
+type Result = Success a | Error String;
+
+// Type aliases
+type UserId = Integer;
+type Point = { x: Float, y: Float };
+
+4. EXPRESSIONS
+--------------
+// Literals
+42, 3.14, "hello", true, false, ()
+
+// Variables
+x, user_name
+
+// Function application
+f x
+f x y
+f (x, y)
+
+// Lambda expressions
+\x -> x + 1
+\x y -> x + y
+\x: Integer -> x * 2
+
+// Let expressions
+let x = 42 in x + 1
+let x = 42; y = 10 in x + y
+
+// If expressions
+if x > 0 then "positive" else "negative"
+
+5. PATTERN MATCHING
+-------------------
+// Basic pattern matching
+match value with
+| 0 -> "zero"
+| 1 -> "one"
+| n -> "other"
+
+// Pattern matching with guards
+match x with
+| n when n > 0 -> "positive"
+| n when n < 0 -> "negative"
+| _ -> "zero"
+
+// Record pattern matching
+match user with
+| { name: "admin", role: role } -> "admin: " ++ role
+| { name: name, role: "user" } -> "user: " ++ name
+| _ -> "unknown"
+
+6. RECORDS
+----------
+// Record creation
+let user = {
+    name: "Alice",
+    age: 30,
+    email: "alice@example.com"
+};
+
+// Record access
+user.name
+user.age
+
+// Record update
+let updated_user = { user | age: 31 };
+
+// Record pattern matching
+let { name: user_name, age: user_age } = user;
+
+7. LISTS
+---------
+// List creation
+let numbers = [1, 2, 3, 4, 5];
+let empty = [];
+
+// List operations
+head numbers
+tail numbers
+length numbers
+append list1 list2
+
+// List comprehension
+[ x * 2 | x in numbers ]
+[ x | x in numbers, x > 2 ]
+
+8. CONSTRAINTS AND VALIDATION
+-----------------------------
+// Type constraints
+let positive_number: Integer where x > 0 = 42;
+
+// Pattern constraints
+let valid_email: String where matches email_pattern = "user@example.com";
+
+// Refinement types
+type PositiveInteger = Integer where x > 0;
+type Email = String where matches email_regex;
+
+// Validation functions
+let validate_age = \age ->
+  if age >= 0 && age <= 150 then Success age else Error "Invalid age";
+
+9. MODULES AND IMPORTS
+----------------------
+// Module definition
+module Math;
+
+export { add, multiply, divide };
+
+let add = \x y -> x + y;
+let multiply = \x y -> x * y;
+let divide = \x y -> if y == 0 then None else Some (x / y);
+
+// Importing modules
+import Math;
+import Math as M;
+import { add, multiply } from Math;
+
+10. ERROR HANDLING
+------------------
+// Result type
+type Result a b = Success a | Error b;
+
+// Error handling patterns
+match divide 10 0 with
+| Success result -> "Result: " ++ show result
+| Error message -> "Error: " ++ message
+
+// Error propagation
+let safe_divide = \x y ->
+  if y == 0 then Error "Division by zero" else Success (x / y);
+
+COMMON PATTERNS
+===============
+
+1. CONFIGURATION PATTERNS
+-------------------------
+// Application configuration
+let config = {
+    server: {
+        host: "localhost",
+        port: 8080,
+        timeout: 30
+    },
+    database: {
+        url: "postgresql://localhost/db",
+        pool_size: 10
+    },
+    logging: {
+        level: "info",
+        file: "/var/log/app.log"
+    }
+};
+
+// Environment-specific configs
+let dev_config = { config | server: { config.server | port: 3000 } };
+let prod_config = { config | logging: { config.logging | level: "warn" } };
+
+2. DATA VALIDATION PATTERNS
+---------------------------
+// User validation
+let validate_user = \user ->
+  let { name: user_name, age: user_age, email: user_email } = user;
+  if length user_name > 0 &&
+     user_age >= 0 && user_age <= 150 &&
+     matches email_pattern user_email
+  then Success user
+  else Error "Invalid user data";
+
+// Configuration validation
+let validate_config = \config ->
+  let { server: server_config, database: db_config } = config;
+  if server_config.port > 0 && server_config.port <= 65535 &&
+     length db_config.url > 0
+  then Success config
+  else Error "Invalid configuration";
+
+3. FUNCTIONAL PATTERNS
+----------------------
+// Map function
+let map = \f list ->
+  match list with
+  | [] -> []
+  | [head, ...tail] -> [f head, ...map f tail];
+
+// Filter function
+let filter = \predicate list ->
+  match list with
+  | [] -> []
+  | [head, ...tail] ->
+      if predicate head
+      then [head, ...filter predicate tail]
+      else filter predicate tail;
+
+// Fold function
+let fold = \f acc list ->
+  match list with
+  | [] -> acc
+  | [head, ...tail] -> fold f (f acc head) tail;
+
+4. TYPE-LEVEL PATTERNS
+----------------------
+// Type-level numbers
+type Zero = Z;
+type Succ n = S n;
+
+// Type-level lists
+type Nil = [];
+type Cons a as = a :: as;
+
+// Type-level functions
+type family Add a b;
+type instance Add Zero b = b;
+type instance Add (Succ a) b = Succ (Add a b);
+
+BEST PRACTICES
+==============
+
+1. NAMING CONVENTIONS
+---------------------
+- Use snake_case for variables and functions
+- Use PascalCase for types and modules
+- Use UPPER_CASE for constants
+- Use descriptive names that explain purpose
+
+2. TYPE SAFETY
+--------------
+- Always specify types for public functions
+- Use refinement types for validation
+- Leverage the type system to catch errors
+- Prefer explicit types over type inference for clarity
+
+3. ERROR HANDLING
+-----------------
+- Use Result types for operations that can fail
+- Provide meaningful error messages
+- Handle errors at appropriate levels
+- Use pattern matching for error handling
+
+4. MODULARITY
+--------------
+- Break code into small, focused modules
+- Export only what's necessary
+- Use clear import statements
+- Keep modules cohesive and loosely coupled
+
+5. PERFORMANCE
+--------------
+- Use tail recursion for iterative operations
+- Avoid unnecessary computations
+- Leverage the compiler's optimizations
+- Profile code when performance matters
+
+COMMON MISTAKES TO AVOID
+========================
+
+1. Infinite recursion (Ligature prevents this by design)
+2. Missing pattern match cases
+3. Incorrect type annotations
+4. Forgetting to handle error cases
+5. Not validating input data
+6. Over-complicating simple operations
+
+EXAMPLES
+========
+
+1. SIMPLE CALCULATOR
+--------------------
+module Calculator;
+
+export { add, subtract, multiply, divide };
+
+let add = \x y -> x + y;
+let subtract = \x y -> x - y;
+let multiply = \x y -> x * y;
+let divide = \x y ->
+  if y == 0 then Error "Division by zero" else Success (x / y);
+
+2. USER MANAGEMENT
+------------------
+module User;
+
+export { User, create_user, validate_user };
+
+type User = {
+    id: Integer,
+    name: String,
+    email: String,
+    age: Integer
+};
+
+let create_user = \name email age ->
+  let user = { id: 0, name: name, email: email, age: age };
+  match validate_user user with
+  | Success valid_user -> Success valid_user
+  | Error message -> Error message;
+
+let validate_user = \user ->
+  let { name: user_name, email: user_email, age: user_age } = user;
+  if length user_name > 0 &&
+     matches email_pattern user_email &&
+     user_age >= 0 && user_age <= 150
+  then Success user
+  else Error "Invalid user data";
+
+3. CONFIGURATION MANAGEMENT
+--------------------------
+module Config;
+
+export { Config, load_config, validate_config };
+
+type Config = {
+    app_name: String,
+    version: String,
+    server: ServerConfig,
+    database: DatabaseConfig
+};
+
+type ServerConfig = {
+    host: String,
+    port: Integer,
+    timeout: Integer
+};
+
+type DatabaseConfig = {
+    url: String,
+    pool_size: Integer
+};
+
+let load_config = \env ->
+  let base_config = {
+      app_name: "MyApp",
+      version: "1.0.0",
+      server: {
+          host: "localhost",
+          port: 8080,
+          timeout: 30
+      },
+      database: {
+          url: "postgresql://localhost/db",
+          pool_size: 10
+      }
+  };
+  
+  match env with
+  | "development" -> { base_config | server: { base_config.server | port: 3000 } }
+  | "production" -> { base_config | server: { base_config.server | port: 443 } }
+  | _ -> base_config;
+
+let validate_config = \config ->
+  let { server: server_config, database: db_config } = config;
+  if server_config.port > 0 && server_config.port <= 65535 &&
+     length db_config.url > 0 &&
+     db_config.pool_size > 0
+  then Success config
+  else Error "Invalid configuration";
+
+This reference covers the essential syntax and patterns for working with Ligature. For more detailed information, see the full documentation at the Ligature website.
