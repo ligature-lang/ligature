@@ -1,0 +1,592 @@
+---
+title: Terraform Plugin
+description: Infrastructure-as-code management with Terraform integration
+---
+
+# Terraform Plugin
+
+The Terraform plugin for Cacophony provides comprehensive infrastructure-as-code capabilities, allowing you to manage cloud infrastructure and resources using Terraform while maintaining Cacophony's declarative and type-safe approach.
+
+## Overview
+
+The Terraform plugin enables you to:
+
+- **Plan Infrastructure Changes**: Generate and review Terraform execution plans
+- **Apply Infrastructure**: Deploy and manage infrastructure resources
+- **Destroy Infrastructure**: Clean up and remove infrastructure
+- **Validate Configuration**: Check Terraform configuration syntax and validity
+- **State Management**: Handle Terraform state with various backends
+- **Multi-Environment Support**: Manage different environments with separate configurations
+
+## Installation
+
+The Terraform plugin is included with Cacophony by default. Ensure you have Terraform installed:
+
+```bash
+# Install Terraform
+curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs)"
+sudo apt-get update && sudo apt-get install terraform
+
+# Verify installation
+terraform --version
+```
+
+## Configuration
+
+### Basic Configuration
+
+```ocaml
+-- environments/dev.lig
+module Dev
+
+let terraform_config = {
+  plugin = "terraform",
+  version = "1.0.0",
+  
+  backend = {
+    type = "local",
+    path = "./terraform.tfstate"
+  },
+  
+  providers = {
+    aws = {
+      region = "us-west-2",
+      profile = "dev"
+    }
+  },
+  
+  variables = {
+    environment = "dev",
+    instance_type = "t3.micro",
+    vpc_cidr = "10.0.0.0/16"
+  }
+}
+
+export { terraform_config }
+```
+
+### Advanced Configuration
+
+```ocaml
+-- environments/prod.lig
+module Prod
+
+let terraform_config = {
+  plugin = "terraform",
+  version = "1.0.0",
+  
+  backend = {
+    type = "s3",
+    bucket = "my-terraform-state",
+    key = "prod/terraform.tfstate",
+    region = "us-west-2",
+    encrypt = true,
+    dynamodb_table = "terraform-locks"
+  },
+  
+  providers = {
+    aws = {
+      region = "us-west-2",
+      profile = "prod",
+      assume_role = {
+        role_arn = "arn:aws:iam::123456789012:role/TerraformRole"
+      }
+    }
+  },
+  
+  variables = {
+    environment = "prod",
+    instance_type = "t3.medium",
+    vpc_cidr = "10.2.0.0/16",
+    enable_monitoring = true
+  },
+  
+  workspace = "production"
+}
+
+export { terraform_config }
+```
+
+## Operations
+
+### Plan
+
+Generate a Terraform execution plan:
+
+```bash
+# Plan infrastructure changes
+cacophony run --collection networking --environment dev --operation plan
+
+# Plan with specific variables
+cacophony run --collection networking --environment dev --operation plan --var instance_type=t3.small
+
+# Plan with detailed output
+cacophony run --collection networking --environment dev --operation plan --detailed-exitcode
+```
+
+### Apply
+
+Apply Terraform configuration:
+
+```bash
+# Apply infrastructure changes
+cacophony run --collection networking --environment dev --operation apply
+
+# Apply with auto-approve
+cacophony run --collection networking --environment dev --operation apply --auto-approve
+
+# Apply with specific targets
+cacophony run --collection networking --environment dev --operation apply --target aws_vpc.main
+```
+
+### Destroy
+
+Destroy Terraform-managed infrastructure:
+
+```bash
+# Destroy infrastructure
+cacophony run --collection networking --environment dev --operation destroy
+
+# Destroy with auto-approve
+cacophony run --collection networking --environment dev --operation destroy --auto-approve
+
+# Destroy specific resources
+cacophony run --collection networking --environment dev --operation destroy --target aws_instance.web
+```
+
+### Validate
+
+Validate Terraform configuration:
+
+```bash
+# Validate configuration
+cacophony run --collection networking --environment dev --operation validate
+
+# Validate with format check
+cacophony run --collection networking --environment dev --operation validate --check-variables
+```
+
+## Collection Configuration
+
+### Basic Collection
+
+```ocaml
+-- collections/networking.lig
+module Networking
+
+let config = {
+  name = "networking",
+  type = "terraform",
+  
+  terraform = {
+    source = "./terraform/networking",
+    
+    plan = {
+      timeout = 600,
+      detailed_exitcode = true
+    },
+    
+    apply = {
+      timeout = 1800,
+      auto_approve = false
+    },
+    
+    destroy = {
+      timeout = 1800,
+      auto_approve = false
+    }
+  }
+}
+
+export { config }
+```
+
+### Advanced Collection
+
+```ocaml
+-- collections/compute.lig
+module Compute
+
+let config = {
+  name = "compute",
+  type = "terraform",
+  
+  terraform = {
+    source = "./terraform/compute",
+    
+    plan = {
+      timeout = 600,
+      detailed_exitcode = true,
+      refresh = true
+    },
+    
+    apply = {
+      timeout = 1800,
+      auto_approve = false,
+      parallelism = 10
+    },
+    
+    destroy = {
+      timeout = 1800,
+      auto_approve = false,
+      parallelism = 5
+    },
+    
+    variables = {
+      instance_count = 3,
+      instance_type = "t3.medium"
+    },
+    
+    outputs = ["instance_ids", "public_ips"]
+  }
+}
+
+export { config }
+```
+
+## Backend Configuration
+
+### Local Backend
+
+```ocaml
+let backend_config = {
+  type = "local",
+  path = "./terraform.tfstate"
+}
+```
+
+### S3 Backend
+
+```ocaml
+let backend_config = {
+  type = "s3",
+  bucket = "my-terraform-state",
+  key = "dev/terraform.tfstate",
+  region = "us-west-2",
+  encrypt = true,
+  dynamodb_table = "terraform-locks"
+}
+```
+
+### Remote Backend
+
+```ocaml
+let backend_config = {
+  type = "remote",
+  hostname = "app.terraform.io",
+  organization = "my-org",
+  workspaces = {
+    name = "my-workspace"
+  }
+}
+```
+
+## Provider Configuration
+
+### AWS Provider
+
+```ocaml
+let aws_provider = {
+  region = "us-west-2",
+  profile = "default",
+  
+  assume_role = {
+    role_arn = "arn:aws:iam::123456789012:role/TerraformRole",
+    session_name = "terraform-session"
+  },
+  
+  default_tags = {
+    Environment = "dev",
+    Project = "my-project"
+  }
+}
+```
+
+### Multiple Providers
+
+```ocaml
+let providers = {
+  aws = {
+    region = "us-west-2",
+    profile = "default"
+  },
+  
+  aws_east = {
+    region = "us-east-1",
+    profile = "default",
+    alias = "east"
+  },
+  
+  kubernetes = {
+    config_path = "~/.kube/config",
+    context = "my-cluster"
+  }
+}
+```
+
+## Variables and Outputs
+
+### Variable Definition
+
+```ocaml
+let variables = {
+  environment = "dev",
+  instance_type = "t3.micro",
+  vpc_cidr = "10.0.0.0/16",
+  enable_monitoring = true,
+  
+  tags = {
+    Environment = "dev",
+    Project = "my-project",
+    ManagedBy = "terraform"
+  }
+}
+```
+
+### Output Configuration
+
+```ocaml
+let outputs = {
+  vpc_id = "aws_vpc.main.id",
+  subnet_ids = "aws_subnet.main[*].id",
+  instance_ips = "aws_instance.web[*].public_ip"
+}
+```
+
+## Workspace Management
+
+### Workspace Configuration
+
+```ocaml
+let workspace_config = {
+  workspace = "development",
+  
+  workspaces = {
+    dev = "development",
+    staging = "staging",
+    prod = "production"
+  }
+}
+```
+
+### Workspace Operations
+
+```bash
+# List workspaces
+cacophony terraform workspace list
+
+# Create workspace
+cacophony terraform workspace new staging
+
+# Select workspace
+cacophony terraform workspace select production
+```
+
+## State Management
+
+### State Operations
+
+```bash
+# Show state
+cacophony terraform state show aws_vpc.main
+
+# List state
+cacophony terraform state list
+
+# Move state
+cacophony terraform state mv aws_instance.old aws_instance.new
+
+# Remove from state
+cacophony terraform state rm aws_instance.deprecated
+```
+
+### State Import
+
+```bash
+# Import existing resource
+cacophony terraform import aws_vpc.main vpc-12345678
+```
+
+## Examples
+
+### VPC Configuration
+
+```ocaml
+-- collections/vpc.lig
+module VPC
+
+let config = {
+  name = "vpc",
+  type = "terraform",
+  
+  terraform = {
+    source = "./terraform/vpc",
+    
+    variables = {
+      vpc_cidr = "10.0.0.0/16",
+      environment = "dev",
+      availability_zones = ["us-west-2a", "us-west-2b"]
+    },
+    
+    outputs = ["vpc_id", "subnet_ids", "route_table_id"]
+  }
+}
+
+export { config }
+```
+
+### EC2 Instances
+
+```ocaml
+-- collections/ec2.lig
+module EC2
+
+let config = {
+  name = "ec2",
+  type = "terraform",
+  
+  terraform = {
+    source = "./terraform/ec2",
+    
+    variables = {
+      instance_type = "t3.micro",
+      instance_count = 2,
+      ami_id = "ami-12345678"
+    },
+    
+    outputs = ["instance_ids", "public_ips", "private_ips"]
+  }
+}
+
+export { config }
+```
+
+### RDS Database
+
+```ocaml
+-- collections/rds.lig
+module RDS
+
+let config = {
+  name = "rds",
+  type = "terraform",
+  
+  terraform = {
+    source = "./terraform/rds",
+    
+    variables = {
+      instance_class = "db.t3.micro",
+      allocated_storage = 20,
+      engine = "postgres",
+      engine_version = "13.7"
+    },
+    
+    outputs = ["db_endpoint", "db_port", "db_name"]
+  }
+}
+
+export { config }
+```
+
+## Best Practices
+
+### Security
+
+```ocaml
+let security_config = {
+  backend = {
+    type = "s3",
+    encrypt = true,
+    dynamodb_table = "terraform-locks"
+  },
+  
+  providers = {
+    aws = {
+      assume_role = {
+        role_arn = "arn:aws:iam::123456789012:role/TerraformRole"
+      }
+    }
+  }
+}
+```
+
+### State Management
+
+```ocaml
+let state_management = {
+  backend = {
+    type = "s3",
+    bucket = "my-terraform-state",
+    key = "${environment}/${collection}/terraform.tfstate"
+  },
+  
+  workspace = "${environment}"
+}
+```
+
+### Variable Organization
+
+```ocaml
+let variable_organization = {
+  common = {
+    project = "my-project",
+    environment = "dev"
+  },
+  
+  networking = {
+    vpc_cidr = "10.0.0.0/16",
+    subnet_cidrs = ["10.0.1.0/24", "10.0.2.0/24"]
+  },
+  
+  compute = {
+    instance_type = "t3.micro",
+    instance_count = 2
+  }
+}
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **State Lock Issues**
+   ```bash
+   # Force unlock state
+   cacophony terraform force-unlock LOCK_ID
+   ```
+
+2. **Provider Version Conflicts**
+   ```ocaml
+   let provider_versions = {
+     terraform = {
+       required_version = ">= 1.0"
+     },
+     
+     aws = {
+       source = "hashicorp/aws",
+       version = "~> 4.0"
+     }
+   }
+   ```
+
+3. **Variable Validation**
+   ```ocaml
+   let variable_validation = {
+     instance_type = {
+       type = "string",
+       validation = {
+         condition = "contains(['t3.micro', 't3.small', 't3.medium'], var.instance_type)",
+         error_message = "Instance type must be t3.micro, t3.small, or t3.medium"
+       }
+     }
+   }
+   ```
+
+## Related Documentation
+
+- [Cacophony Orchestration](../cacophony/)
+- [Cacophony Plugins Overview](./index.mdx)
+- [Kubernetes Plugin](./kubernetes.mdx)
+- [Docker Plugin](./docker.mdx)
+- [Terraform Documentation](https://www.terraform.io/docs)

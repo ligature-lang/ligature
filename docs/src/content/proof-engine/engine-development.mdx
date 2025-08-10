@@ -1,0 +1,704 @@
+---
+title: 'Engine Development'
+description: 'Learn how to develop custom proof engines for the Ligature system'
+---
+
+# Engine Development
+
+This guide explains how to develop custom proof engines for the Ligature proof engine system. You'll learn how to implement the required interfaces, integrate with different theorem provers, and create engines that work seamlessly with the Baton framework.
+
+## Overview
+
+The proof engine system is built on the **Baton verification engine framework**, which provides a standardized interface for different verification engines. To create a custom engine, you need to implement the `EnginePlugin` and `VerificationEngine` traits.
+
+## Architecture
+
+### Core Components
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   EnginePlugin  │    │ Verification    │    │   Custom        │
+│   Interface     │◄──►│   Engine        │◄──►│   Implementation│
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                │                        │
+                                ▼                        ▼
+                       ┌─────────────────┐    ┌─────────────────┐
+                       │   Plugin        │    │   External      │
+                       │   Manager       │    │   Prover        │
+                       └─────────────────┘    └─────────────────┘
+```
+
+### Required Traits
+
+- **`EnginePlugin`**: Manages engine lifecycle and configuration
+- **`VerificationEngine`**: Provides verification operations
+- **`EngineInfo`**: Metadata about the engine
+- **`EngineCapabilities`**: Supported operations and features
+
+## Basic Engine Implementation
+
+### Step 1: Create the Engine Structure
+
+```rust
+use baton_engine_plugin::prelude::*;
+use async_trait::async_trait;
+use serde_json::Value;
+use std::collections::HashMap;
+
+#[derive(Clone)]
+pub struct MyCustomEngine {
+    config: Value,
+    client: MyProverClient,
+    cache: HashMap<String, VerificationResponse>,
+}
+
+impl MyCustomEngine {
+    pub fn new(config: Value) -> BatonResult<Self> {
+        let client = MyProverClient::new(&config)?;
+        Ok(Self {
+            config,
+            client,
+            cache: HashMap::new(),
+        })
+    }
+
+    async fn evaluate_expression(&self, expression: &str) -> BatonResult<String> {
+        // Implement expression evaluation logic
+        let result = self.client.evaluate(expression).await?;
+        Ok(result)
+    }
+
+    async fn type_check_expression(&self, expression: &str) -> BatonResult<String> {
+        // Implement type checking logic
+        let result = self.client.type_check(expression).await?;
+        Ok(result)
+    }
+
+    async fn verify_theorem(&self, theorem: &str, proof: Option<&str>) -> BatonResult<bool> {
+        // Implement theorem verification logic
+        let result = self.client.verify_theorem(theorem, proof).await?;
+        Ok(result)
+    }
+}
+```
+
+### Step 2: Implement the VerificationEngine Trait
+
+```rust
+#[async_trait]
+impl VerificationEngine for MyCustomEngine {
+    async fn verify_evaluation(
+        &self,
+        expression: &str,
+        expected: &str,
+        options: Option<Value>,
+    ) -> BatonResult<VerificationResponse> {
+        // Check cache first
+        let cache_key = format!("eval:{}:{}", expression, expected);
+        if let Some(cached) = self.cache.get(&cache_key) {
+            return Ok(cached.clone());
+        }
+
+        // Perform evaluation
+        let result = self.evaluate_expression(expression).await?;
+        let success = result == expected;
+
+        let response = VerificationResponse {
+            success,
+            result: Some(result),
+            proof: None,
+            metadata: Some(json!({
+                "engine": "my-custom-engine",
+                "expression": expression,
+                "expected": expected
+            })),
+        };
+
+        // Cache the result
+        self.cache.insert(cache_key, response.clone());
+
+        Ok(response)
+    }
+
+    async fn verify_type_check(
+        &self,
+        expression: &str,
+        expected_type: &str,
+        options: Option<Value>,
+    ) -> BatonResult<VerificationResponse> {
+        let actual_type = self.type_check_expression(expression).await?;
+        let success = actual_type == expected_type;
+
+        Ok(VerificationResponse {
+            success,
+            result: Some(actual_type),
+            proof: None,
+            metadata: Some(json!({
+                "engine": "my-custom-engine",
+                "expression": expression,
+                "expected_type": expected_type
+            })),
+        })
+    }
+
+    async fn verify_theorem(
+        &self,
+        theorem: &str,
+        proof: Option<&str>,
+        timeout: Option<u64>,
+        options: Option<Value>,
+    ) -> BatonResult<VerificationResponse> {
+        let success = self.verify_theorem(theorem, proof).await?;
+
+        Ok(VerificationResponse {
+            success,
+            result: None,
+            proof: proof.map(|p| p.to_string()),
+            metadata: Some(json!({
+                "engine": "my-custom-engine",
+                "theorem": theorem,
+                "timeout": timeout
+            })),
+        })
+    }
+
+    async fn run_differential_test(
+        &self,
+        test_name: &str,
+        test_type: DifferentialTestType,
+        options: Option<Value>,
+    ) -> BatonResult<DifferentialTestResponse> {
+        // Implement differential testing logic
+        match test_type {
+            DifferentialTestType::Evaluation => {
+                // Run evaluation differential test
+                let result = self.run_evaluation_differential_test(test_name, options).await?;
+                Ok(result)
+            }
+            DifferentialTestType::TypeCheck => {
+                // Run type checking differential test
+                let result = self.run_type_check_differential_test(test_name, options).await?;
+                Ok(result)
+            }
+            _ => Err(BatonError::UnsupportedOperation(
+                "Differential test type not supported".to_string()
+            )),
+        }
+    }
+
+    async fn get_engine_info(&self) -> BatonResult<EngineInfo> {
+        Ok(EngineInfo {
+            name: "my-custom-engine".to_string(),
+            version: "1.0.0".to_string(),
+            description: "Custom verification engine".to_string(),
+            capabilities: self.get_capabilities(),
+        })
+    }
+
+    async fn get_engine_capabilities(&self) -> BatonResult<EngineCapabilities> {
+        Ok(self.get_capabilities())
+    }
+
+    async fn get_engine_statistics(&self) -> BatonResult<EngineStatistics> {
+        Ok(EngineStatistics {
+            total_verifications: self.cache.len() as u64,
+            successful_verifications: self.cache.values()
+                .filter(|r| r.success)
+                .count() as u64,
+            failed_verifications: self.cache.values()
+                .filter(|r| !r.success)
+                .count() as u64,
+            average_response_time: 0.0, // Implement timing logic
+            cache_hit_rate: 0.0, // Implement cache statistics
+        })
+    }
+}
+
+impl MyCustomEngine {
+    fn get_capabilities(&self) -> EngineCapabilities {
+        EngineCapabilities {
+            supports_evaluation: true,
+            supports_type_checking: true,
+            supports_theorem_verification: true,
+            supports_differential_testing: true,
+            supports_invariant_verification: false,
+            supports_refinement_verification: false,
+            max_expression_length: 10000,
+            max_theorem_length: 5000,
+            max_proof_length: 10000,
+            timeout_support: true,
+            caching_support: true,
+            batch_processing_support: false,
+        }
+    }
+
+    async fn run_evaluation_differential_test(
+        &self,
+        test_name: &str,
+        options: Option<Value>,
+    ) -> BatonResult<DifferentialTestResponse> {
+        // Implement evaluation differential test
+        Ok(DifferentialTestResponse {
+            test_name: test_name.to_string(),
+            test_type: DifferentialTestType::Evaluation,
+            success: true,
+            differences: vec![],
+            metadata: Some(json!({
+                "engine": "my-custom-engine"
+            })),
+        })
+    }
+
+    async fn run_type_check_differential_test(
+        &self,
+        test_name: &str,
+        options: Option<Value>,
+    ) -> BatonResult<DifferentialTestResponse> {
+        // Implement type checking differential test
+        Ok(DifferentialTestResponse {
+            test_name: test_name.to_string(),
+            test_type: DifferentialTestType::TypeCheck,
+            success: true,
+            differences: vec![],
+            metadata: Some(json!({
+                "engine": "my-custom-engine"
+            })),
+        })
+    }
+}
+```
+
+### Step 3: Implement the EnginePlugin Trait
+
+```rust
+pub struct MyCustomEnginePlugin {
+    engine: Option<MyCustomEngine>,
+    config: Value,
+}
+
+impl MyCustomEnginePlugin {
+    pub fn new() -> Self {
+        Self {
+            engine: None,
+            config: Value::Null,
+        }
+    }
+
+    pub fn with_config(config: Value) -> Self {
+        Self {
+            engine: None,
+            config,
+        }
+    }
+}
+
+#[async_trait]
+impl EnginePlugin for MyCustomEnginePlugin {
+    fn name(&self) -> &str {
+        "my-custom-engine"
+    }
+
+    fn version(&self) -> &str {
+        "1.0.0"
+    }
+
+    fn description(&self) -> &str {
+        "Custom verification engine for mathematical expressions and theorems"
+    }
+
+    async fn initialize(&mut self, config: &Value) -> BatonResult<()> {
+        self.config = config.clone();
+        self.engine = Some(MyCustomEngine::new(config.clone())?);
+        Ok(())
+    }
+
+    async fn get_engine(&self) -> BatonResult<Box<dyn VerificationEngine>> {
+        if let Some(engine) = &self.engine {
+            Ok(Box::new(engine.clone()))
+        } else {
+            Err(BatonError::EngineNotInitialized)
+        }
+    }
+
+    async fn get_plugin_info(&self) -> BatonResult<PluginInfo> {
+        Ok(PluginInfo {
+            name: self.name().to_string(),
+            version: self.version().to_string(),
+            description: self.description().to_string(),
+            author: "Your Name".to_string(),
+            license: "MIT".to_string(),
+            repository: "https://github.com/your-org/my-custom-engine".to_string(),
+        })
+    }
+
+    async fn get_plugin_capabilities(&self) -> BatonResult<PluginCapabilities> {
+        if let Some(engine) = &self.engine {
+            Ok(engine.get_capabilities().await?)
+        } else {
+            Err(BatonError::EngineNotInitialized)
+        }
+    }
+
+    async fn validate_configuration(&self, config: &Value) -> BatonResult<Vec<String>> {
+        let mut errors = Vec::new();
+
+        // Validate required fields
+        if !config.get("prover_path").is_some() {
+            errors.push("prover_path is required".to_string());
+        }
+
+        // Validate timeout
+        if let Some(timeout) = config.get("timeout") {
+            if let Some(timeout_val) = timeout.as_u64() {
+                if timeout_val == 0 {
+                    errors.push("timeout must be greater than 0".to_string());
+                }
+            } else {
+                errors.push("timeout must be a number".to_string());
+            }
+        }
+
+        Ok(errors)
+    }
+
+    async fn shutdown(&mut self) -> BatonResult<()> {
+        // Clean up resources
+        self.engine = None;
+        Ok(())
+    }
+}
+```
+
+## External Prover Integration
+
+### Step 4: Implement External Prover Client
+
+```rust
+use std::process::Command;
+use tokio::process::Command as AsyncCommand;
+use serde_json::Value;
+
+pub struct MyProverClient {
+    prover_path: String,
+    timeout: u64,
+    config: Value,
+}
+
+impl MyProverClient {
+    pub fn new(config: &Value) -> BatonResult<Self> {
+        let prover_path = config
+            .get("prover_path")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| BatonError::ConfigurationError(
+                "prover_path is required".to_string()
+            ))?;
+
+        let timeout = config
+            .get("timeout")
+            .and_then(|v| v.as_u64())
+            .unwrap_or(30);
+
+        Ok(Self {
+            prover_path: prover_path.to_string(),
+            timeout,
+            config: config.clone(),
+        })
+    }
+
+    pub async fn evaluate(&self, expression: &str) -> BatonResult<String> {
+        let output = AsyncCommand::new(&self.prover_path)
+            .arg("--evaluate")
+            .arg(expression)
+            .output()
+            .await?;
+
+        if output.status.success() {
+            let result = String::from_utf8(output.stdout)?;
+            Ok(result.trim().to_string())
+        } else {
+            let error = String::from_utf8(output.stderr)?;
+            Err(BatonError::VerificationFailed(error))
+        }
+    }
+
+    pub async fn type_check(&self, expression: &str) -> BatonResult<String> {
+        let output = AsyncCommand::new(&self.prover_path)
+            .arg("--type-check")
+            .arg(expression)
+            .output()
+            .await?;
+
+        if output.status.success() {
+            let result = String::from_utf8(output.stdout)?;
+            Ok(result.trim().to_string())
+        } else {
+            let error = String::from_utf8(output.stderr)?;
+            Err(BatonError::VerificationFailed(error))
+        }
+    }
+
+    pub async fn verify_theorem(&self, theorem: &str, proof: Option<&str>) -> BatonResult<bool> {
+        let mut command = AsyncCommand::new(&self.prover_path);
+        command.arg("--verify-theorem").arg(theorem);
+
+        if let Some(proof_text) = proof {
+            command.arg("--proof").arg(proof_text);
+        }
+
+        let output = command.output().await?;
+
+        Ok(output.status.success())
+    }
+}
+```
+
+## Configuration and Testing
+
+### Step 5: Create Configuration Schema
+
+```rust
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MyCustomEngineConfig {
+    pub prover_path: String,
+    pub timeout: Option<u64>,
+    pub enable_cache: Option<bool>,
+    pub cache_ttl: Option<u64>,
+    pub max_concurrent_tasks: Option<u32>,
+    pub enable_logging: Option<bool>,
+}
+
+impl Default for MyCustomEngineConfig {
+    fn default() -> Self {
+        Self {
+            prover_path: "/usr/bin/my-prover".to_string(),
+            timeout: Some(30),
+            enable_cache: Some(true),
+            cache_ttl: Some(3600),
+            max_concurrent_tasks: Some(10),
+            enable_logging: Some(false),
+        }
+    }
+}
+```
+
+### Step 6: Add Tests
+
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[tokio::test]
+    async fn test_engine_initialization() {
+        let config = json!({
+            "prover_path": "/usr/bin/my-prover",
+            "timeout": 30
+        });
+
+        let engine = MyCustomEngine::new(config).unwrap();
+        assert!(engine.config.get("prover_path").is_some());
+    }
+
+    #[tokio::test]
+    async fn test_evaluation_verification() {
+        let config = json!({
+            "prover_path": "/usr/bin/my-prover"
+        });
+
+        let engine = MyCustomEngine::new(config).unwrap();
+        let response = engine.verify_evaluation("1 + 1", "2", None).await.unwrap();
+        
+        assert!(response.success);
+        assert_eq!(response.result, Some("2".to_string()));
+    }
+
+    #[tokio::test]
+    async fn test_type_checking() {
+        let config = json!({
+            "prover_path": "/usr/bin/my-prover"
+        });
+
+        let engine = MyCustomEngine::new(config).unwrap();
+        let response = engine.verify_type_check("fun x => x + 1", "Nat → Nat", None).await.unwrap();
+        
+        assert!(response.success);
+        assert_eq!(response.result, Some("Nat → Nat".to_string()));
+    }
+
+    #[tokio::test]
+    async fn test_plugin_lifecycle() {
+        let mut plugin = MyCustomEnginePlugin::new();
+        
+        let config = json!({
+            "prover_path": "/usr/bin/my-prover"
+        });
+
+        // Test initialization
+        plugin.initialize(&config).await.unwrap();
+        
+        // Test engine retrieval
+        let engine = plugin.get_engine().await.unwrap();
+        assert!(engine.get_engine_info().await.is_ok());
+        
+        // Test shutdown
+        plugin.shutdown().await.unwrap();
+    }
+}
+```
+
+## Integration with Plugin Manager
+
+### Step 7: Register Your Engine
+
+```rust
+use baton_engine_plugin::prelude::*;
+use serde_json::json;
+
+#[tokio::main]
+async fn main() -> BatonResult<()> {
+    let manager = EnginePluginManager::new();
+
+    // Create and register your custom plugin
+    let custom_plugin = MyCustomEnginePlugin::new();
+    manager.register_plugin(Box::new(custom_plugin)).await?;
+
+    // Initialize with configuration
+    let config = json!({
+        "prover_path": "/usr/bin/my-prover",
+        "timeout": 60,
+        "enable_cache": true
+    });
+    manager.initialize_plugin("my-custom-engine", &config).await?;
+
+    // Use your engine
+    let engine = manager.get_engine("my-custom-engine").await?;
+    
+    let response = engine.verify_evaluation("1 + 1", "2", None).await?;
+    println!("Verification result: {:?}", response);
+
+    Ok(())
+}
+```
+
+## Best Practices
+
+### Error Handling
+
+```rust
+impl MyCustomEngine {
+    async fn handle_prover_error(&self, error: std::io::Error) -> BatonError {
+        match error.kind() {
+            std::io::ErrorKind::NotFound => {
+                BatonError::ConfigurationError(
+                    format!("Prover not found at path: {}", self.prover_path)
+                )
+            }
+            std::io::ErrorKind::PermissionDenied => {
+                BatonError::ConfigurationError(
+                    "Permission denied accessing prover".to_string()
+                )
+            }
+            _ => BatonError::EngineError(error.to_string()),
+        }
+    }
+}
+```
+
+### Resource Management
+
+```rust
+impl MyCustomEngine {
+    async fn cleanup_resources(&mut self) -> BatonResult<()> {
+        // Clean up any temporary files
+        // Close connections
+        // Release memory
+        Ok(())
+    }
+}
+
+impl Drop for MyCustomEngine {
+    fn drop(&mut self) {
+        // Ensure cleanup happens
+        let _ = tokio::runtime::Handle::current()
+            .block_on(self.cleanup_resources());
+    }
+}
+```
+
+### Performance Optimization
+
+```rust
+impl MyCustomEngine {
+    async fn batch_evaluate(&self, expressions: Vec<&str>) -> BatonResult<Vec<String>> {
+        // Implement batch processing for better performance
+        let mut results = Vec::new();
+        
+        for expression in expressions {
+            let result = self.evaluate_expression(expression).await?;
+            results.push(result);
+        }
+        
+        Ok(results)
+    }
+}
+```
+
+## Publishing Your Engine
+
+### Step 8: Create Cargo.toml
+
+```toml
+[package]
+name = "my-custom-engine"
+version = "1.0.0"
+edition = "2021"
+description = "Custom verification engine for Ligature"
+license = "MIT"
+repository = "https://github.com/your-org/my-custom-engine"
+
+[dependencies]
+baton-engine-plugin = { path = "../crates/baton-engine-plugin" }
+baton-error = { path = "../crates/baton-error" }
+async-trait = "0.1"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.0", features = ["full"] }
+
+[dev-dependencies]
+tokio-test = "0.4"
+```
+
+### Step 9: Create Documentation
+
+```rust
+//! # My Custom Engine
+//! 
+//! A custom verification engine for the Ligature proof engine system.
+//! 
+//! ## Features
+//! 
+//! - Expression evaluation
+//! - Type checking
+//! - Theorem verification
+//! - Differential testing
+//! 
+//! ## Usage
+//! 
+//! ```rust
+//! use baton_engine_plugin::prelude::*;
+//! use my_custom_engine::MyCustomEnginePlugin;
+//! 
+//! let plugin = MyCustomEnginePlugin::new();
+//! // ... rest of usage
+//! ```
+```
+
+## Related Documentation
+
+- [Proof Engine System Overview](./index.mdx)
+- [Lean 4 Engine Documentation](./lean-engine.mdx)
+- [Configuration Guide](./configuration.mdx)
+- [Advanced Features](./advanced-features.mdx)

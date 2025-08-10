@@ -1,0 +1,841 @@
+---
+title: Kubernetes Plugin
+description: Container orchestration and deployment with Kubernetes integration
+---
+
+# Kubernetes Plugin
+
+The Kubernetes plugin for Cacophony provides comprehensive container orchestration capabilities, allowing you to deploy, manage, and scale containerized applications using Kubernetes while maintaining Cacophony's declarative and type-safe approach.
+
+## Overview
+
+The Kubernetes plugin enables you to:
+
+- **Deploy Applications**: Deploy containerized applications to Kubernetes clusters
+- **Scale Resources**: Scale deployments, statefulsets, and other resources
+- **Manage Configurations**: Handle ConfigMaps, Secrets, and other Kubernetes resources
+- **Service Management**: Create and manage services, ingress, and load balancers
+- **Rolling Updates**: Perform rolling updates and rollbacks
+- **Health Monitoring**: Monitor application health and status
+- **Multi-Cluster Support**: Manage multiple Kubernetes clusters
+
+## Installation
+
+The Kubernetes plugin is included with Cacophony by default. Ensure you have kubectl installed:
+
+```bash
+# Install kubectl
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+# Verify installation
+kubectl version --client
+```
+
+## Configuration
+
+### Basic Configuration
+
+```ocaml
+-- environments/dev.lig
+module Dev
+
+let kubernetes_config = {
+  plugin = "kubernetes",
+  version = "1.0.0",
+  
+  cluster = {
+    context = "minikube",
+    namespace = "dev",
+    config_path = "~/.kube/config"
+  },
+  
+  registry = {
+    url = "localhost:5000",
+    credentials = {
+      username = "${REGISTRY_USERNAME}",
+      password = "${REGISTRY_PASSWORD}"
+    }
+  },
+  
+  resources = {
+    cpu_limit = "1000m",
+    memory_limit = "1Gi",
+    cpu_request = "500m",
+    memory_request = "512Mi"
+  }
+}
+
+export { kubernetes_config }
+```
+
+### Advanced Configuration
+
+```ocaml
+-- environments/prod.lig
+module Prod
+
+let kubernetes_config = {
+  plugin = "kubernetes",
+  version = "1.0.0",
+  
+  cluster = {
+    context = "prod-cluster",
+    namespace = "my-app",
+    config_path = "~/.kube/config",
+    api_server = "https://prod-cluster.example.com:6443"
+  },
+  
+  registry = {
+    url = "my-registry.com",
+    credentials = {
+      username = "${REGISTRY_USERNAME}",
+      password = "${REGISTRY_PASSWORD}"
+    },
+    image_pull_secret = "registry-secret"
+  },
+  
+  resources = {
+    cpu_limit = "2000m",
+    memory_limit = "2Gi",
+    cpu_request = "1000m",
+    memory_request = "1Gi"
+  },
+  
+  security = {
+    service_account = "my-app-sa",
+    security_context = {
+      run_as_non_root = true,
+      run_as_user = 1000
+    }
+  },
+  
+  monitoring = {
+    enabled = true,
+    prometheus_endpoint = "http://prometheus:9090"
+  }
+}
+
+export { kubernetes_config }
+```
+
+## Operations
+
+### Deploy
+
+Deploy applications to Kubernetes:
+
+```bash
+# Deploy application
+cacophony deploy --collection frontend --environment dev
+
+# Deploy with specific image
+cacophony deploy --collection frontend --environment dev --image my-app:v1.0.0
+
+# Deploy with custom namespace
+cacophony deploy --collection frontend --environment dev --namespace custom-ns
+
+# Deploy with dry-run
+cacophony deploy --collection frontend --environment dev --dry-run
+```
+
+### Scale
+
+Scale Kubernetes resources:
+
+```bash
+# Scale deployment
+cacophony scale --collection frontend --environment dev --replicas 5
+
+# Scale with auto-scaling
+cacophony scale --collection frontend --environment dev --hpa --min 2 --max 10
+
+# Scale statefulset
+cacophony scale --collection database --environment dev --replicas 3
+```
+
+### Rollback
+
+Rollback deployments:
+
+```bash
+# Rollback to previous version
+cacophony rollback --collection frontend --environment dev
+
+# Rollback to specific revision
+cacophony rollback --collection frontend --environment dev --revision 2
+
+# Rollback with dry-run
+cacophony rollback --collection frontend --environment dev --dry-run
+```
+
+### Status
+
+Check application status:
+
+```bash
+# Check deployment status
+cacophony status --collection frontend --environment dev
+
+# Check all resources
+cacophony status --environment dev
+
+# Check with detailed output
+cacophony status --collection frontend --environment dev --verbose
+```
+
+### Logs
+
+View application logs:
+
+```bash
+# View logs
+cacophony logs --collection frontend --environment dev
+
+# Follow logs
+cacophony logs --collection frontend --environment dev --follow
+
+# View logs with time range
+cacophony logs --collection frontend --environment dev --since "1h"
+
+# View logs from specific pod
+cacophony logs --collection frontend --environment dev --pod frontend-abc123
+```
+
+## Collection Configuration
+
+### Basic Deployment
+
+```ocaml
+-- collections/frontend.lig
+module Frontend
+
+let config = {
+  name = "frontend",
+  type = "kubernetes",
+  
+  kubernetes = {
+    deployment = {
+      replicas = 3,
+      image = "my-registry.com/frontend:latest",
+      
+      resources = {
+        cpu = "500m",
+        memory = "512Mi"
+      },
+      
+      ports = [{
+        container = 80,
+        service = 8080,
+        protocol = "http"
+      }],
+      
+      environment = {
+        "NODE_ENV" = "production",
+        "API_URL" = "${API_BASE_URL}"
+      },
+      
+      liveness_probe = {
+        http_get = {
+          path = "/health",
+          port = 80
+        },
+        initial_delay_seconds = 30,
+        period_seconds = 10
+      },
+      
+      readiness_probe = {
+        http_get = {
+          path = "/ready",
+          port = 80
+        },
+        initial_delay_seconds = 5,
+        period_seconds = 5
+      }
+    },
+    
+    service = {
+      type = "LoadBalancer",
+      ports = [{
+        port = 80,
+        target_port = 8080
+      }]
+    }
+  }
+}
+
+export { config }
+```
+
+### Advanced Deployment
+
+```ocaml
+-- collections/backend.lig
+module Backend
+
+let config = {
+  name = "backend",
+  type = "kubernetes",
+  
+  kubernetes = {
+    deployment = {
+      replicas = 5,
+      image = "my-registry.com/backend:latest",
+      
+      resources = {
+        cpu = "1000m",
+        memory = "1Gi"
+      },
+      
+      ports = [{
+        container = 8080,
+        service = 80,
+        protocol = "http"
+      }],
+      
+      environment = {
+        "DATABASE_URL" = "${DATABASE_URL}",
+        "REDIS_URL" = "${REDIS_URL}",
+        "LOG_LEVEL" = "info"
+      },
+      
+      volume_mounts = [{
+        name = "config",
+        mount_path = "/app/config"
+      }],
+      
+      volumes = [{
+        name = "config",
+        config_map = {
+          name = "backend-config"
+        }
+      }],
+      
+      security_context = {
+        run_as_non_root = true,
+        run_as_user = 1000
+      }
+    },
+    
+    service = {
+      type = "ClusterIP",
+      ports = [{
+        port = 80,
+        target_port = 8080
+      }]
+    },
+    
+    ingress = {
+      annotations = {
+        "kubernetes.io/ingress.class" = "nginx",
+        "cert-manager.io/cluster-issuer" = "letsencrypt-prod"
+      },
+      
+      rules = [{
+        host = "api.example.com",
+        http = {
+          paths = [{
+            path = "/",
+            path_type = "Prefix",
+            backend = {
+              service = {
+                name = "backend",
+                port = {
+                  number = 80
+                }
+              }
+            }
+          }]
+        }
+      }],
+      
+      tls = [{
+        hosts = ["api.example.com"],
+        secret_name = "backend-tls"
+      }]
+    }
+  }
+}
+
+export { config }
+```
+
+### StatefulSet Configuration
+
+```ocaml
+-- collections/database.lig
+module Database
+
+let config = {
+  name = "database",
+  type = "kubernetes",
+  
+  kubernetes = {
+    statefulset = {
+      replicas = 3,
+      image = "postgres:13",
+      
+      resources = {
+        cpu = "1000m",
+        memory = "2Gi"
+      },
+      
+      ports = [{
+        container = 5432,
+        service = 5432,
+        protocol = "tcp"
+      }],
+      
+      environment = {
+        "POSTGRES_DB" = "myapp",
+        "POSTGRES_USER" = "postgres",
+        "POSTGRES_PASSWORD" = "${DB_PASSWORD}"
+      },
+      
+      volume_claim_templates = [{
+        metadata = {
+          name = "data"
+        },
+        spec = {
+          access_modes = ["ReadWriteOnce"],
+          resources = {
+            requests = {
+              storage = "10Gi"
+            }
+          }
+        }
+      }]
+    },
+    
+    service = {
+      type = "ClusterIP",
+      ports = [{
+        port = 5432,
+        target_port = 5432
+      }]
+    }
+  }
+}
+
+export { config }
+```
+
+## Resource Types
+
+### Deployments
+
+```ocaml
+let deployment_config = {
+  replicas = 3,
+  strategy = {
+    type = "RollingUpdate",
+    rolling_update = {
+      max_surge = 1,
+      max_unavailable = 0
+    }
+  },
+  
+  selector = {
+    match_labels = {
+      app = "frontend"
+    }
+  },
+  
+  template = {
+    metadata = {
+      labels = {
+        app = "frontend"
+      }
+    }
+  }
+}
+```
+
+### Services
+
+```ocaml
+let service_config = {
+  type = "LoadBalancer",
+  selector = {
+    app = "frontend"
+  },
+  
+  ports = [{
+    name = "http",
+    port = 80,
+    target_port = 8080,
+    protocol = "TCP"
+  }],
+  
+  external_traffic_policy = "Local"
+}
+```
+
+### Ingress
+
+```ocaml
+let ingress_config = {
+  annotations = {
+    "kubernetes.io/ingress.class" = "nginx",
+    "nginx.ingress.kubernetes.io/ssl-redirect" = "true"
+  },
+  
+  rules = [{
+    host = "app.example.com",
+    http = {
+      paths = [{
+        path = "/",
+        path_type = "Prefix",
+        backend = {
+          service = {
+            name = "frontend",
+            port = {
+              number = 80
+            }
+          }
+        }
+      }]
+    }
+  }]
+}
+```
+
+## Configuration Management
+
+### ConfigMaps
+
+```ocaml
+let configmap_config = {
+  api_version = "v1",
+  kind = "ConfigMap",
+  
+  metadata = {
+    name = "app-config"
+  },
+  
+  data = {
+    "config.json" = '{"debug": false, "log_level": "info"}',
+    "database.yml" = "database: postgresql://localhost:5432/myapp"
+  }
+}
+```
+
+### Secrets
+
+```ocaml
+let secret_config = {
+  api_version = "v1",
+  kind = "Secret",
+  
+  metadata = {
+    name = "app-secrets"
+  },
+  
+  type = "Opaque",
+  
+  data = {
+    "database-password" = "${DB_PASSWORD_B64}",
+    "api-key" = "${API_KEY_B64}"
+  }
+}
+```
+
+## Health Checks
+
+### Liveness Probe
+
+```ocaml
+let liveness_probe = {
+  http_get = {
+    path = "/health",
+    port = 8080
+  },
+  initial_delay_seconds = 30,
+  period_seconds = 10,
+  timeout_seconds = 5,
+  failure_threshold = 3
+}
+```
+
+### Readiness Probe
+
+```ocaml
+let readiness_probe = {
+  http_get = {
+    path = "/ready",
+    port = 8080
+  },
+  initial_delay_seconds = 5,
+  period_seconds = 5,
+  timeout_seconds = 3,
+  failure_threshold = 3
+}
+```
+
+## Examples
+
+### Web Application
+
+```ocaml
+-- collections/web-app.lig
+module WebApp
+
+let config = {
+  name = "web-app",
+  type = "kubernetes",
+  
+  kubernetes = {
+    deployment = {
+      replicas = 3,
+      image = "my-registry.com/web-app:latest",
+      
+      resources = {
+        cpu = "500m",
+        memory = "512Mi"
+      },
+      
+      ports = [{
+        container = 3000,
+        service = 80,
+        protocol = "http"
+      }],
+      
+      environment = {
+        "NODE_ENV" = "production",
+        "API_URL" = "${API_BASE_URL}"
+      }
+    },
+    
+    service = {
+      type = "LoadBalancer",
+      ports = [{
+        port = 80,
+        target_port = 3000
+      }]
+    }
+  }
+}
+
+export { config }
+```
+
+### Microservice
+
+```ocaml
+-- collections/user-service.lig
+module UserService
+
+let config = {
+  name = "user-service",
+  type = "kubernetes",
+  
+  kubernetes = {
+    deployment = {
+      replicas = 2,
+      image = "my-registry.com/user-service:latest",
+      
+      resources = {
+        cpu = "200m",
+        memory = "256Mi"
+      },
+      
+      ports = [{
+        container = 8080,
+        service = 80,
+        protocol = "http"
+      }],
+      
+      environment = {
+        "DATABASE_URL" = "${USER_DB_URL}",
+        "REDIS_URL" = "${REDIS_URL}"
+      }
+    },
+    
+    service = {
+      type = "ClusterIP",
+      ports = [{
+        port = 80,
+        target_port = 8080
+      }]
+    }
+  }
+}
+
+export { config }
+```
+
+### Database
+
+```ocaml
+-- collections/postgres.lig
+module Postgres
+
+let config = {
+  name = "postgres",
+  type = "kubernetes",
+  
+  kubernetes = {
+    statefulset = {
+      replicas = 1,
+      image = "postgres:13",
+      
+      resources = {
+        cpu = "1000m",
+        memory = "2Gi"
+      },
+      
+      ports = [{
+        container = 5432,
+        service = 5432,
+        protocol = "tcp"
+      }],
+      
+      environment = {
+        "POSTGRES_DB" = "myapp",
+        "POSTGRES_USER" = "postgres",
+        "POSTGRES_PASSWORD" = "${DB_PASSWORD}"
+      },
+      
+      volume_mounts = [{
+        name = "postgres-storage",
+        mount_path = "/var/lib/postgresql/data"
+      }],
+      
+      volumes = [{
+        name = "postgres-storage",
+        persistent_volume_claim = {
+          claim_name = "postgres-pvc"
+        }
+      }]
+    },
+    
+    service = {
+      type = "ClusterIP",
+      ports = [{
+        port = 5432,
+        target_port = 5432
+      }]
+    }
+  }
+}
+
+export { config }
+```
+
+## Best Practices
+
+### Security
+
+```ocaml
+let security_config = {
+  service_account = {
+    create = true,
+    name = "my-app-sa"
+  },
+  
+  security_context = {
+    run_as_non_root = true,
+    run_as_user = 1000,
+    fs_group = 2000
+  },
+  
+  pod_security_policy = {
+    privileged = false,
+    allow_privilege_escalation = false
+  }
+}
+```
+
+### Resource Management
+
+```ocaml
+let resource_config = {
+  requests = {
+    cpu = "100m",
+    memory = "128Mi"
+  },
+  
+  limits = {
+    cpu = "500m",
+    memory = "512Mi"
+  },
+  
+  horizontal_pod_autoscaler = {
+    min_replicas = 2,
+    max_replicas = 10,
+    target_cpu_utilization_percentage = 70
+  }
+}
+```
+
+### Monitoring
+
+```ocaml
+let monitoring_config = {
+  prometheus = {
+    enabled = true,
+    path = "/metrics",
+    port = 9090
+  },
+  
+  readiness_probe = {
+    http_get = {
+      path = "/ready",
+      port = 8080
+    },
+    initial_delay_seconds = 5,
+    period_seconds = 5
+  },
+  
+  liveness_probe = {
+    http_get = {
+      path = "/health",
+      port = 8080
+    },
+    initial_delay_seconds = 30,
+    period_seconds = 10
+  }
+}
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Image Pull Errors**
+   ```bash
+   # Check image pull secret
+   kubectl get secret registry-secret -o yaml
+   
+   # Create image pull secret
+   kubectl create secret docker-registry registry-secret \
+     --docker-server=my-registry.com \
+     --docker-username=username \
+     --docker-password=password
+   ```
+
+2. **Resource Limits**
+   ```bash
+   # Check resource usage
+   kubectl top pods
+   
+   # Describe pod for resource issues
+   kubectl describe pod <pod-name>
+   ```
+
+3. **Service Connectivity**
+   ```bash
+   # Check service endpoints
+   kubectl get endpoints <service-name>
+   
+   # Test service connectivity
+   kubectl run test-pod --image=busybox --rm -it --restart=Never -- wget -O- <service-name>
+   ```
+
+## Related Documentation
+
+- [Cacophony Orchestration](../cacophony/)
+- [Cacophony Plugins Overview](./index.mdx)
+- [Terraform Plugin](./terraform.mdx)
+- [Docker Plugin](./docker.mdx)
+- [Kubernetes Documentation](https://kubernetes.io/docs/)

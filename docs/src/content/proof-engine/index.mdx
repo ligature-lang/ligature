@@ -1,0 +1,170 @@
+---
+title: Proof Engine System
+description: Learn about Ligature's proof engine and plugin system for formal verification
+---
+
+# Proof Engine System
+
+The Ligature proof engine system provides formal verification capabilities through a plugin-based architecture. This system allows you to integrate various theorem provers and verification tools to ensure the correctness of your Ligature programs and configurations.
+
+## Overview
+
+The proof engine system is built on the **Baton verification engine framework**, which provides:
+
+- **Plugin Architecture**: Standardized interface for different verification engines
+- **Multiple Engine Support**: Use different theorem provers for different verification tasks
+- **Configuration Management**: Flexible configuration for each engine
+- **Performance Monitoring**: Built-in statistics and health monitoring
+- **Differential Testing**: Support for comparing results across different engines
+- **Async Operations**: Non-blocking verification operations
+
+## Available Engines
+
+### Lean 4 Engine
+
+The **Baton Lean Engine Plugin** provides full integration with the Lean 4 theorem prover for formal verification of Ligature programs.
+
+**Key Features:**
+- Full integration with Lean 4 theorem prover
+- Verification operations (evaluation, type checking, theorem verification)
+- Configuration management with JSON-based configuration
+- Performance monitoring and health checks
+- Differential testing support
+- Specification validation and consistency checking
+
+[Learn more about the Lean 4 Engine →](./lean-engine.mdx)
+
+## Quick Start
+
+```rust
+use baton_engine_plugin::prelude::*;
+use baton_lean_engine::prelude::*;
+use serde_json::json;
+
+#[tokio::main]
+async fn main() -> BatonResult<()> {
+    // Create a plugin manager
+    let manager = EnginePluginManager::new();
+
+    // Create and register the Lean plugin
+    let lean_plugin = LeanEnginePlugin::new();
+    manager.register_plugin(Box::new(lean_plugin)).await?;
+
+    // Initialize the plugin with configuration
+    let config = json!({
+        "timeout": 60,
+        "enable_cache": true,
+        "client_config": {
+            "lean_path": "/usr/bin/lean",
+            "connection_timeout": 30,
+            "request_timeout": 60
+        }
+    });
+    manager.initialize_plugin("lean", &config).await?;
+
+    // Get the Lean engine
+    let engine = manager.get_engine("lean").await?;
+
+    // Use the engine for verification
+    let response = engine.verify_evaluation(
+        "1 + 1",
+        "2",
+        None
+    ).await?;
+
+    println!("Verification result: {:?}", response);
+
+    Ok(())
+}
+```
+
+## Supported Operations
+
+The proof engine system supports a wide range of verification operations:
+
+### Core Operations
+- **Expression Evaluation**: Verify expression evaluation results
+- **Type Checking**: Verify type checking results
+- **Theorem Verification**: Verify mathematical theorems
+- **Lemma Verification**: Verify mathematical lemmas
+- **Type Safety**: Verify type safety properties
+- **Termination**: Verify termination properties
+- **Determinism**: Verify determinism properties
+
+### Advanced Operations
+- **Differential Testing**: Compare results across different engines
+- **Result Comparison**: Compare different verification results
+- **Specification Checking**: Validate formal specifications
+- **Consistency Checking**: Check specification consistency
+- **Invariant Verification**: Verify program invariants
+- **Refinement Verification**: Verify refinement relations
+
+## Architecture
+
+The proof engine system follows a modular architecture:
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Ligature      │    │   Baton Core    │    │   Engine        │
+│   Application   │◄──►│   Framework     │◄──►│   Plugins       │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                │                        │
+                                ▼                        ▼
+                       ┌─────────────────┐    ┌─────────────────┐
+                       │   Plugin        │    │   Lean 4        │
+                       │   Manager       │    │   Engine        │
+                       └─────────────────┘    └─────────────────┘
+```
+
+## Configuration
+
+Each engine can be configured independently using JSON-based configuration:
+
+```json
+{
+  "timeout": 60,
+  "enable_cache": true,
+  "cache_ttl": 3600,
+  "run_differential_tests": true,
+  "verify_type_safety": true,
+  "max_concurrent_tasks": 10,
+  "enable_performance_monitoring": true,
+  "client_config": {
+    "lean_path": "/usr/bin/lean",
+    "connection_timeout": 30,
+    "request_timeout": 60
+  }
+}
+```
+
+## Performance Characteristics
+
+The proof engine system is designed for performance and scalability:
+
+- **Average verification time**: 5-10 seconds per operation
+- **Memory usage**: 512 MB - 1 GB per engine
+- **Concurrent operations**: Up to 10 concurrent verification tasks
+- **Cache efficiency**: 90%+ for repeated operations
+- **Scalability**: Linear scaling with additional engines
+
+## Getting Started
+
+1. [Install the proof engine system](./installation.mdx)
+2. [Configure your first engine](./configuration.mdx)
+3. [Run your first verification](./quick-start.mdx)
+4. [Explore advanced features](./advanced-features.mdx)
+
+## Contributing
+
+To add a new verification engine:
+
+1. Implement the `EnginePlugin` trait from `baton-engine-plugin`
+2. Create comprehensive documentation and examples
+3. Add tests and integration with the verification system
+4. Follow the [engine development guide](./engine-development.mdx)
+
+## Related Documentation
+
+- [Baton Engine Plugin Documentation](../../../crates/baton-engine-plugin/README.md)
+- [Lean Engine Documentation](../../../engines/lean/README.md)
+- [Verification System Architecture](../architecture/)

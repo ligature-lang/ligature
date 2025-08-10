@@ -1,0 +1,315 @@
+---
+title: 'Quick Start'
+description: 'Get started with the proof engine system in minutes'
+---
+
+# Quick Start
+
+This guide will help you get up and running with the Ligature proof engine system in just a few minutes. You'll learn how to set up the system, configure the Lean 4 engine, and run your first verification.
+
+## Prerequisites
+
+Before starting, ensure you have:
+
+- [Rust installed](https://rustup.rs/) (1.70 or later)
+- [Lean 4 installed](https://leanprover.github.io/lean4/doc/setup.html)
+- Basic familiarity with Rust and command-line tools
+
+## Step 1: Install the Proof Engine System
+
+### Clone the Repository
+
+```bash
+git clone https://github.com/your-org/ligature.git
+cd ligature
+```
+
+### Build the Project
+
+```bash
+cargo build --release
+```
+
+## Step 2: Create Your First Project
+
+Create a new directory for your verification project:
+
+```bash
+mkdir my-verification-project
+cd my-verification-project
+```
+
+Create a `Cargo.toml` file:
+
+```toml
+[package]
+name = "my-verification-project"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+baton-engine-plugin = { path = "../crates/baton-engine-plugin" }
+baton-lean-engine = { path = "../engines/lean" }
+tokio = { version = "1.0", features = ["full"] }
+serde_json = "1.0"
+```
+
+## Step 3: Write Your First Verification
+
+Create `src/main.rs`:
+
+```rust
+use baton_engine_plugin::prelude::*;
+use baton_lean_engine::prelude::*;
+use serde_json::json;
+
+#[tokio::main]
+async fn main() -> BatonResult<()> {
+    println!("🚀 Starting Ligature Proof Engine...");
+
+    // Create a plugin manager
+    let manager = EnginePluginManager::new();
+
+    // Create and register the Lean plugin
+    let lean_plugin = LeanEnginePlugin::new();
+    manager.register_plugin(Box::new(lean_plugin)).await?;
+
+    // Initialize the plugin with basic configuration
+    let config = json!({
+        "timeout": 30,
+        "enable_cache": true,
+        "client_config": {
+            "lean_path": "/usr/bin/lean",
+            "connection_timeout": 10,
+            "request_timeout": 30
+        }
+    });
+    manager.initialize_plugin("lean", &config).await?;
+
+    println!("✅ Lean engine initialized successfully!");
+
+    // Get the Lean engine
+    let engine = manager.get_engine("lean").await?;
+
+    // Run your first verification
+    println!("🔍 Running first verification...");
+    let response = engine.verify_evaluation(
+        "1 + 1",
+        "2",
+        None
+    ).await?;
+
+    println!("✅ Verification result: {:?}", response);
+
+    // Try a more complex verification
+    println!("🔍 Running type checking verification...");
+    let type_response = engine.verify_type_check(
+        "fun x => x + 1",
+        "Nat → Nat",
+        None
+    ).await?;
+
+    println!("✅ Type check result: {:?}", type_response);
+
+    println!("🎉 All verifications completed successfully!");
+
+    Ok(())
+}
+```
+
+## Step 4: Run Your Verification
+
+```bash
+cargo run
+```
+
+You should see output similar to:
+
+```
+🚀 Starting Ligature Proof Engine...
+✅ Lean engine initialized successfully!
+🔍 Running first verification...
+✅ Verification result: VerificationResponse { success: true, ... }
+🔍 Running type checking verification...
+✅ Type check result: VerificationResponse { success: true, ... }
+🎉 All verifications completed successfully!
+```
+
+## Step 5: Explore More Features
+
+### Verify Mathematical Theorems
+
+```rust
+// Verify a simple mathematical theorem
+let theorem_response = engine.verify_theorem(
+    "∀ n : Nat, n + 0 = n",
+    Some("by induction on n"),
+    Some(30),
+    None
+).await?;
+
+println!("Theorem verification: {:?}", theorem_response);
+```
+
+### Run Differential Tests
+
+```rust
+// Run a differential test comparing Rust and Lean results
+let diff_response = engine.run_differential_test(
+    "test_expression",
+    DifferentialTestType::Evaluation,
+    None
+).await?;
+
+println!("Differential test: {:?}", diff_response);
+```
+
+### Check Engine Capabilities
+
+```rust
+// Get information about the engine
+let info = manager.get_plugin_info("lean").await?;
+println!("Engine info: {:?}", info);
+
+let capabilities = manager.get_plugin_capabilities("lean").await?;
+println!("Engine capabilities: {:?}", capabilities);
+```
+
+## Step 6: Create a Configuration File
+
+Create `proof-engine.json` for persistent configuration:
+
+```json
+{
+  "default_engine": "lean",
+  "global_settings": {
+    "log_level": "info",
+    "enable_metrics": true
+  },
+  "engines": {
+    "lean": {
+      "enabled": true,
+      "timeout": 60,
+      "enable_cache": true,
+      "cache_ttl": 3600,
+      "run_differential_tests": true,
+      "verify_type_safety": true,
+      "max_concurrent_tasks": 5,
+      "enable_performance_monitoring": true,
+      "client_config": {
+        "lean_path": "/usr/bin/lean",
+        "connection_timeout": 30,
+        "request_timeout": 60,
+        "max_retries": 3
+      }
+    }
+  }
+}
+```
+
+Load the configuration in your code:
+
+```rust
+use std::fs;
+
+// Load configuration from file
+let config_content = fs::read_to_string("proof-engine.json")?;
+let config: serde_json::Value = serde_json::from_str(&config_content)?;
+
+let manager = EnginePluginManager::new();
+manager.load_configuration(&config).await?;
+```
+
+## Step 7: Integrate with Ligature Programs
+
+Create a Ligature program to verify:
+
+```rust
+// Example: Verify a Ligature function
+let ligature_function = r#"
+fun add : Nat -> Nat -> Nat
+  | 0, n => n
+  | succ m, n => succ (add m n)
+"#;
+
+let verification_result = engine.verify_type_check(
+    ligature_function,
+    "Nat → Nat → Nat",
+    None
+).await?;
+
+println!("Ligature function verification: {:?}", verification_result);
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Lean not found**: Ensure Lean 4 is installed and in your PATH
+   ```bash
+   which lean
+   lean --version
+   ```
+
+2. **Build errors**: Update Rust and clean build
+   ```bash
+   rustup update
+   cargo clean
+   cargo build
+   ```
+
+3. **Timeout errors**: Increase timeout in configuration
+   ```json
+   {
+     "timeout": 120,
+     "client_config": {
+       "request_timeout": 120
+     }
+   }
+   ```
+
+### Debug Mode
+
+Enable debug logging for troubleshooting:
+
+```rust
+// Set environment variable
+std::env::set_var("RUST_LOG", "debug");
+
+// Or in configuration
+let config = json!({
+    "enable_detailed_logging": true,
+    "client_config": {
+        "lean_path": "/usr/bin/lean"
+    }
+});
+```
+
+## Next Steps
+
+Now that you have the basics working:
+
+1. **Explore Advanced Features**: Learn about [advanced verification operations](./advanced-features.mdx)
+2. **Configure Performance**: Optimize your [configuration](./configuration.mdx) for better performance
+3. **Build Custom Engines**: Learn how to [develop your own engines](./engine-development.mdx)
+4. **Integrate with CI/CD**: Set up automated verification in your build pipeline
+
+## Example Projects
+
+Check out the example projects in the repository:
+
+```bash
+# Run the basic usage example
+cargo run --example basic_usage -p baton-lean-engine
+
+# Run the advanced configuration example
+cargo run --example advanced_config -p baton-lean-engine
+```
+
+## Related Documentation
+
+- [Proof Engine System Overview](./index.mdx)
+- [Lean 4 Engine Documentation](./lean-engine.mdx)
+- [Installation Guide](./installation.mdx)
+- [Configuration Guide](./configuration.mdx)
+- [Advanced Features](./advanced-features.mdx)

@@ -1,0 +1,440 @@
+---
+title: 'Configuration'
+description: 'Configure the proof engine system and individual engines'
+---
+
+# Configuration
+
+The Ligature proof engine system uses JSON-based configuration to manage engine settings, performance parameters, and verification options. This guide covers all configuration options and best practices.
+
+## Configuration Structure
+
+The proof engine system uses a hierarchical configuration structure:
+
+```json
+{
+  "default_engine": "lean",
+  "global_settings": {
+    "log_level": "info",
+    "enable_metrics": true
+  },
+  "engines": {
+    "lean": {
+      "enabled": true,
+      "timeout": 60,
+      "enable_cache": true,
+      "client_config": {
+        "lean_path": "/usr/bin/lean"
+      }
+    }
+  }
+}
+```
+
+## Global Configuration
+
+### Top-level Settings
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `default_engine` | `string` | `"lean"` | Default engine to use |
+| `global_settings` | `object` | `{}` | Global system settings |
+| `engines` | `object` | `{}` | Engine-specific configurations |
+
+### Global Settings
+
+```json
+{
+  "global_settings": {
+    "log_level": "info",
+    "enable_metrics": true,
+    "metrics_port": 9090,
+    "enable_health_checks": true,
+    "health_check_interval": 30,
+    "max_total_memory": 4096,
+    "max_total_cpu": 80
+  }
+}
+```
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `log_level` | `string` | `"info"` | Logging level (debug, info, warn, error) |
+| `enable_metrics` | `bool` | `true` | Enable metrics collection |
+| `metrics_port` | `number` | `9090` | Port for metrics endpoint |
+| `enable_health_checks` | `bool` | `true` | Enable health monitoring |
+| `health_check_interval` | `number` | `30` | Health check interval in seconds |
+| `max_total_memory` | `number` | `4096` | Maximum total memory usage in MB |
+| `max_total_cpu` | `number` | `80` | Maximum total CPU usage percentage |
+
+## Engine Configuration
+
+### Lean Engine Configuration
+
+The Lean engine supports comprehensive configuration options:
+
+```json
+{
+  "engines": {
+    "lean": {
+      "enabled": true,
+      "timeout": 60,
+      "enable_cache": true,
+      "cache_ttl": 3600,
+      "run_differential_tests": true,
+      "verify_type_safety": true,
+      "verify_termination": false,
+      "verify_determinism": false,
+      "max_concurrent_tasks": 10,
+      "enable_performance_monitoring": true,
+      "enable_detailed_logging": false,
+      "client_config": {
+        "lean_path": "/usr/bin/lean",
+        "connection_timeout": 30,
+        "request_timeout": 60,
+        "max_retries": 3
+      },
+      "build_config": {
+        "build_timeout": 300,
+        "parallel_build": true,
+        "clean_build": false
+      }
+    }
+  }
+}
+```
+
+### Lean Engine Settings
+
+#### Core Settings
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `enabled` | `bool` | `true` | Enable/disable the engine |
+| `timeout` | `number` | `30` | Default timeout in seconds |
+| `enable_cache` | `bool` | `true` | Enable result caching |
+| `cache_ttl` | `number` | `3600` | Cache TTL in seconds |
+
+#### Verification Settings
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `run_differential_tests` | `bool` | `true` | Enable differential testing |
+| `verify_type_safety` | `bool` | `true` | Enable type safety verification |
+| `verify_termination` | `bool` | `false` | Enable termination verification |
+| `verify_determinism` | `bool` | `false` | Enable determinism verification |
+
+#### Performance Settings
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `max_concurrent_tasks` | `number` | `10` | Maximum concurrent verification tasks |
+| `enable_performance_monitoring` | `bool` | `true` | Enable performance monitoring |
+| `enable_detailed_logging` | `bool` | `false` | Enable detailed logging |
+
+### Client Configuration
+
+```json
+{
+  "client_config": {
+    "lean_path": "/usr/bin/lean",
+    "connection_timeout": 30,
+    "request_timeout": 60,
+    "max_retries": 3,
+    "retry_delay": 1000,
+    "keep_alive": true,
+    "keep_alive_interval": 30
+  }
+}
+```
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `lean_path` | `string` | - | Path to the Lean executable |
+| `connection_timeout` | `number` | `30` | Connection timeout in seconds |
+| `request_timeout` | `number` | `60` | Request timeout in seconds |
+| `max_retries` | `number` | `3` | Maximum retry attempts |
+| `retry_delay` | `number` | `1000` | Delay between retries in milliseconds |
+| `keep_alive` | `bool` | `true` | Enable keep-alive connections |
+| `keep_alive_interval` | `number` | `30` | Keep-alive interval in seconds |
+
+### Build Configuration
+
+```json
+{
+  "build_config": {
+    "build_timeout": 300,
+    "parallel_build": true,
+    "clean_build": false,
+    "build_cache": true,
+    "build_cache_path": "/tmp/lean-build-cache"
+  }
+}
+```
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `build_timeout` | `number` | `300` | Build timeout in seconds |
+| `parallel_build` | `bool` | `true` | Enable parallel building |
+| `clean_build` | `bool` | `false` | Perform clean build |
+| `build_cache` | `bool` | `true` | Enable build caching |
+| `build_cache_path` | `string` | `/tmp/lean-build-cache` | Build cache directory |
+
+## Configuration Methods
+
+### Method 1: Configuration File
+
+Create a configuration file (e.g., `proof-engine.json`):
+
+```json
+{
+  "default_engine": "lean",
+  "global_settings": {
+    "log_level": "info",
+    "enable_metrics": true
+  },
+  "engines": {
+    "lean": {
+      "enabled": true,
+      "timeout": 60,
+      "enable_cache": true,
+      "client_config": {
+        "lean_path": "/usr/bin/lean"
+      }
+    }
+  }
+}
+```
+
+Load the configuration:
+
+```rust
+use baton_engine_plugin::prelude::*;
+use std::fs;
+
+let config_content = fs::read_to_string("proof-engine.json")?;
+let config: serde_json::Value = serde_json::from_str(&config_content)?;
+
+let manager = EnginePluginManager::new();
+manager.load_configuration(&config).await?;
+```
+
+### Method 2: Environment Variables
+
+Set configuration via environment variables:
+
+```bash
+# Global settings
+export PROOF_ENGINE_DEFAULT_ENGINE=lean
+export PROOF_ENGINE_LOG_LEVEL=info
+
+# Lean engine settings
+export LEAN_ENGINE_TIMEOUT=60
+export LEAN_ENGINE_ENABLE_CACHE=true
+export LEAN_ENGINE_LEAN_PATH=/usr/bin/lean
+```
+
+### Method 3: Programmatic Configuration
+
+Configure engines programmatically:
+
+```rust
+use baton_engine_plugin::prelude::*;
+use baton_lean_engine::prelude::*;
+use serde_json::json;
+
+#[tokio::main]
+async fn main() -> BatonResult<()> {
+    let manager = EnginePluginManager::new();
+
+    // Create Lean plugin with configuration
+    let config = json!({
+        "timeout": 60,
+        "enable_cache": true,
+        "client_config": {
+            "lean_path": "/usr/bin/lean",
+            "connection_timeout": 30,
+            "request_timeout": 60
+        }
+    });
+
+    let lean_plugin = LeanEnginePlugin::with_config(config.clone());
+    manager.register_plugin(Box::new(lean_plugin)).await?;
+    manager.initialize_plugin("lean", &config).await?;
+
+    Ok(())
+}
+```
+
+## Configuration Validation
+
+The proof engine system validates configuration at startup:
+
+```rust
+use baton_engine_plugin::prelude::*;
+
+let config = json!({
+    "engines": {
+        "lean": {
+            "client_config": {
+                "lean_path": "/usr/bin/lean"
+            }
+        }
+    }
+});
+
+// Validate configuration
+match manager.validate_configuration(&config).await {
+    Ok(_) => println!("Configuration is valid"),
+    Err(errors) => {
+        println!("Configuration errors:");
+        for error in errors {
+            println!("  - {}", error);
+        }
+    }
+}
+```
+
+## Configuration Best Practices
+
+### Performance Optimization
+
+```json
+{
+  "engines": {
+    "lean": {
+      "enable_cache": true,
+      "cache_ttl": 7200,
+      "max_concurrent_tasks": 5,
+      "enable_performance_monitoring": true,
+      "client_config": {
+        "keep_alive": true,
+        "keep_alive_interval": 30
+      }
+    }
+  }
+}
+```
+
+### Development Configuration
+
+```json
+{
+  "global_settings": {
+    "log_level": "debug",
+    "enable_metrics": true
+  },
+  "engines": {
+    "lean": {
+      "enable_detailed_logging": true,
+      "timeout": 120,
+      "client_config": {
+        "max_retries": 5,
+        "retry_delay": 2000
+      }
+    }
+  }
+}
+```
+
+### Production Configuration
+
+```json
+{
+  "global_settings": {
+    "log_level": "warn",
+    "enable_health_checks": true,
+    "health_check_interval": 60
+  },
+  "engines": {
+    "lean": {
+      "enable_cache": true,
+      "cache_ttl": 3600,
+      "max_concurrent_tasks": 10,
+      "enable_performance_monitoring": true,
+      "client_config": {
+        "connection_timeout": 60,
+        "request_timeout": 120
+      }
+    }
+  }
+}
+```
+
+## Dynamic Configuration
+
+Update configuration at runtime:
+
+```rust
+use baton_engine_plugin::prelude::*;
+use serde_json::json;
+
+// Update engine configuration
+let new_config = json!({
+    "timeout": 120,
+    "enable_cache": false
+});
+
+manager.update_engine_configuration("lean", &new_config).await?;
+
+// Reload configuration
+manager.reload_configuration().await?;
+```
+
+## Configuration Monitoring
+
+Monitor configuration changes and engine health:
+
+```rust
+use baton_engine_plugin::prelude::*;
+
+// Get engine status
+let status = manager.get_engine_status("lean").await?;
+println!("Engine status: {:?}", status);
+
+// Get configuration
+let config = manager.get_engine_configuration("lean").await?;
+println!("Engine config: {:?}", config);
+
+// Monitor health
+let health = manager.get_engine_health("lean").await?;
+println!("Engine health: {:?}", health);
+```
+
+## Troubleshooting Configuration
+
+### Common Configuration Issues
+
+1. **Invalid JSON**: Use a JSON validator to check syntax
+2. **Missing Required Fields**: Ensure all required fields are present
+3. **Invalid Paths**: Verify file paths exist and are accessible
+4. **Permission Issues**: Check file and directory permissions
+
+### Configuration Validation
+
+```rust
+// Validate specific engine configuration
+let engine_config = json!({
+    "timeout": 60,
+    "client_config": {
+        "lean_path": "/usr/bin/lean"
+    }
+});
+
+match manager.validate_engine_configuration("lean", &engine_config).await {
+    Ok(_) => println!("Engine configuration is valid"),
+    Err(errors) => {
+        println!("Engine configuration errors:");
+        for error in errors {
+            println!("  - {}", error);
+        }
+    }
+}
+```
+
+## Related Documentation
+
+- [Proof Engine System Overview](./index.mdx)
+- [Lean 4 Engine Documentation](./lean-engine.mdx)
+- [Installation Guide](./installation.mdx)
+- [Quick Start Guide](./quick-start.mdx)

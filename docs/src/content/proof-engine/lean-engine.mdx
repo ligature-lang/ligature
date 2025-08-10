@@ -1,0 +1,356 @@
+---
+title: 'Lean 4 Engine'
+description: 'Complete guide to using the Lean 4 theorem prover with Ligature'
+---
+
+# Lean 4 Engine
+
+The **Baton Lean Engine Plugin** provides full integration with the Lean 4 theorem prover for formal verification of Ligature programs. This engine allows you to verify mathematical properties, type safety, and program correctness using Lean's powerful theorem proving capabilities.
+
+## Overview
+
+The Lean 4 engine is a complete implementation of the Baton verification engine interface that wraps Lean 4's theorem proving functionality. It provides:
+
+- **Full Lean 4 Integration**: Direct communication with the Lean 4 theorem prover
+- **Comprehensive Verification**: Support for all major verification operations
+- **Performance Optimization**: Caching, parallel processing, and resource management
+- **Differential Testing**: Compare Rust and Lean results for consistency
+- **Specification Validation**: Validate Lean specifications and check consistency
+
+## Installation
+
+Add the following to your `Cargo.toml`:
+
+```toml
+[dependencies]
+baton-lean-engine = { path = "./engines/lean" }
+baton-engine-plugin = { path = "./crates/baton-engine-plugin" }
+```
+
+## Basic Usage
+
+```rust
+use baton_engine_plugin::prelude::*;
+use baton_lean_engine::prelude::*;
+use serde_json::json;
+
+#[tokio::main]
+async fn main() -> BatonResult<()> {
+    // Create a plugin manager
+    let manager = EnginePluginManager::new();
+
+    // Create and register the Lean plugin
+    let lean_plugin = LeanEnginePlugin::new();
+    manager.register_plugin(Box::new(lean_plugin)).await?;
+
+    // Initialize the plugin with configuration
+    let config = json!({
+        "timeout": 60,
+        "enable_cache": true,
+        "client_config": {
+            "lean_path": "/usr/bin/lean",
+            "connection_timeout": 30,
+            "request_timeout": 60
+        }
+    });
+    manager.initialize_plugin("lean", &config).await?;
+
+    // Get the Lean engine
+    let engine = manager.get_engine("lean").await?;
+
+    // Use the engine for verification
+    let response = engine.verify_evaluation(
+        "1 + 1",
+        "2",
+        None
+    ).await?;
+
+    println!("Verification result: {:?}", response);
+
+    Ok(())
+}
+```
+
+## Advanced Configuration
+
+The Lean engine supports comprehensive configuration through JSON:
+
+```rust
+use baton_engine_plugin::prelude::*;
+use baton_lean_engine::prelude::*;
+use serde_json::json;
+
+async fn configure_lean_engine() -> BatonResult<()> {
+    let manager = EnginePluginManager::new();
+
+    // Create Lean plugin with custom configuration
+    let config = json!({
+        "timeout": 120,
+        "enable_cache": true,
+        "cache_ttl": 7200,
+        "run_differential_tests": true,
+        "verify_type_safety": true,
+        "verify_termination": true,
+        "verify_determinism": false,
+        "max_concurrent_tasks": 5,
+        "enable_performance_monitoring": true,
+        "enable_detailed_logging": true,
+        "client_config": {
+            "lean_path": "/usr/local/bin/lean",
+            "connection_timeout": 60,
+            "request_timeout": 120,
+            "max_retries": 5
+        },
+        "build_config": {
+            "build_timeout": 600,
+            "parallel_build": true,
+            "clean_build": false
+        }
+    });
+
+    let lean_plugin = LeanEnginePlugin::with_config(config.clone());
+    manager.register_plugin(Box::new(lean_plugin)).await?;
+    manager.initialize_plugin("lean", &config).await?;
+
+    // Get plugin information
+    let info = manager.get_plugin_info("lean").await?;
+    println!("Lean engine info: {:?}", info);
+
+    // Get plugin capabilities
+    let capabilities = manager.get_plugin_capabilities("lean").await?;
+    println!("Lean capabilities: {:?}", capabilities);
+
+    Ok(())
+}
+```
+
+## Supported Operations
+
+The Lean engine supports a comprehensive set of verification operations:
+
+### Core Operations
+
+- ✅ **Expression Evaluation**: Verify expression evaluation results
+- ✅ **Type Checking**: Verify type checking results
+- ✅ **Theorem Verification**: Verify mathematical theorems
+- ✅ **Lemma Verification**: Verify mathematical lemmas
+- ✅ **Type Safety**: Verify type safety properties
+- ✅ **Termination**: Verify termination properties
+- ✅ **Determinism**: Verify determinism properties
+
+### Advanced Operations
+
+- ✅ **Differential Testing**: Compare Rust and Lean results
+- ✅ **Result Comparison**: Compare different verification results
+- ✅ **Specification Checking**: Validate Lean specifications
+- ✅ **Consistency Checking**: Check specification consistency
+- ✅ **Invariant Verification**: Verify program invariants
+- ✅ **Refinement Verification**: Verify refinement relations
+
+### Example Operations
+
+```rust
+use baton_engine_plugin::prelude::*;
+use baton_lean_engine::prelude::*;
+
+async fn perform_verifications(engine: &dyn VerificationEngine) -> BatonResult<()> {
+    // Verify expression evaluation
+    let eval_response = engine.verify_evaluation(
+        "2 + 3 * 4",
+        "14",
+        None
+    ).await?;
+    println!("Evaluation result: {:?}", eval_response);
+
+    // Verify type checking
+    let type_response = engine.verify_type_check(
+        "fun x => x + 1",
+        "Nat → Nat",
+        None
+    ).await?;
+    println!("Type check result: {:?}", type_response);
+
+    // Verify theorem
+    let theorem_response = engine.verify_theorem(
+        "∀ n : Nat, n + 0 = n",
+        Some("by induction on n"),
+        Some(30),
+        None
+    ).await?;
+    println!("Theorem verification result: {:?}", theorem_response);
+
+    // Run differential test
+    let diff_response = engine.run_differential_test(
+        "test_expression",
+        DifferentialTestType::Evaluation,
+        None
+    ).await?;
+    println!("Differential test result: {:?}", diff_response);
+
+    Ok(())
+}
+```
+
+## Configuration Options
+
+### Top-level Configuration
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `timeout` | `u64` | `30` | Default timeout in seconds |
+| `enable_cache` | `bool` | `true` | Enable result caching |
+| `cache_ttl` | `u64` | `3600` | Cache TTL in seconds |
+| `run_differential_tests` | `bool` | `true` | Enable differential testing |
+| `verify_type_safety` | `bool` | `true` | Enable type safety verification |
+| `verify_termination` | `bool` | `false` | Enable termination verification |
+| `verify_determinism` | `bool` | `false` | Enable determinism verification |
+| `max_concurrent_tasks` | `u32` | `10` | Maximum concurrent verification tasks |
+| `enable_performance_monitoring` | `bool` | `true` | Enable performance monitoring |
+| `enable_detailed_logging` | `bool` | `false` | Enable detailed logging |
+
+### Client Configuration
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `lean_path` | `String` | - | Path to the Lean executable |
+| `connection_timeout` | `u64` | `30` | Connection timeout in seconds |
+| `request_timeout` | `u64` | `60` | Request timeout in seconds |
+| `max_retries` | `u32` | `3` | Maximum retry attempts |
+
+### Build Configuration
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `build_timeout` | `u64` | `300` | Build timeout in seconds |
+| `parallel_build` | `bool` | `true` | Enable parallel building |
+| `clean_build` | `bool` | `false` | Perform clean build |
+
+## Performance Characteristics
+
+The Lean engine has the following performance characteristics:
+
+- **Average verification time**: 5 seconds
+- **Memory usage**: 512 MB
+- **CPU usage**: 75%
+- **Throughput**: 0.2 verifications per second
+- **Scalability factor**: 0.8
+- **Cache efficiency**: 90%
+
+## Error Handling
+
+The Lean engine uses the standard Baton error types:
+
+```rust
+use baton_error::prelude::*;
+
+match engine.verify_evaluation("expr", "expected", None).await {
+    Ok(response) => {
+        println!("Verification successful: {:?}", response);
+    }
+    Err(BatonError::VerificationFailed(msg)) => {
+        println!("Verification failed: {}", msg);
+    }
+    Err(BatonError::Timeout(msg)) => {
+        println!("Verification timed out: {}", msg);
+    }
+    Err(e) => {
+        println!("Other error: {:?}", e);
+    }
+}
+```
+
+## Integration with Ligature
+
+The Lean engine integrates seamlessly with Ligature programs:
+
+```rust
+// Example: Verifying a Ligature function
+let ligature_function = r#"
+fun add : Nat -> Nat -> Nat
+  | 0, n => n
+  | succ m, n => succ (add m n)
+"#;
+
+let verification_result = engine.verify_type_check(
+    ligature_function,
+    "Nat → Nat → Nat",
+    None
+).await?;
+
+// Example: Verifying a mathematical property
+let theorem = "∀ m n : Nat, add m n = add n m";
+let proof = "by induction on m and n";
+
+let theorem_result = engine.verify_theorem(
+    theorem,
+    Some(proof),
+    Some(60),
+    None
+).await?;
+```
+
+## Testing
+
+Run the Lean engine tests with:
+
+```bash
+cargo test -p baton-lean-engine
+```
+
+## Examples
+
+See the `examples/` directory for complete working examples:
+
+```bash
+cargo run --example basic_usage -p baton-lean-engine
+```
+
+## Dependencies
+
+The Lean engine depends on the following core crates:
+
+- `baton-engine-plugin`: Plugin interface
+- `baton-verification`: Core verification functionality
+- `baton-client`: Lean client communication
+- `baton-protocol`: Communication protocol
+- `baton-error`: Error handling
+- `baton-core`: Core types
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Lean not found**: Ensure Lean 4 is installed and the path is correctly configured
+2. **Timeout errors**: Increase the timeout configuration for complex verifications
+3. **Memory issues**: Reduce `max_concurrent_tasks` or increase system memory
+4. **Build failures**: Check Lean dependencies and ensure clean build environment
+
+### Debug Mode
+
+Enable detailed logging for troubleshooting:
+
+```rust
+let config = json!({
+    "enable_detailed_logging": true,
+    "client_config": {
+        "lean_path": "/usr/bin/lean"
+    }
+});
+```
+
+## Future Enhancements
+
+Planned features for the Lean engine:
+
+- 🔄 **Operational Semantics**: Verify operational semantics
+- 🔄 **Test Extraction**: Extract test cases from specifications
+- 🔄 **Counterexample Generation**: Generate counterexamples for failed verifications
+- 🔄 **Interactive Proofs**: Support for interactive proof development
+- 🔄 **Proof Replay**: Replay and verify proof steps
+
+## Related Documentation
+
+- [Proof Engine System Overview](./index.mdx)
+- [Baton Engine Plugin Documentation](../../../crates/baton-engine-plugin/README.md)
+- [Lean Engine Source Code](../../../engines/lean/)
+- [Lean 4 Documentation](https://leanprover.github.io/lean4/doc/)

@@ -1,0 +1,543 @@
+---
+title: Cacophony Plugins
+description: Extend Cacophony with custom plugins for specialized operations and integrations
+---
+
+# Cacophony Plugins
+
+Cacophony's plugin system allows you to extend its capabilities with custom operations, integrations, and specialized functionality. Plugins provide a way to integrate with external tools, cloud providers, and custom workflows while maintaining Cacophony's declarative and type-safe approach.
+
+## Overview
+
+Cacophony plugins are:
+
+- **Declarative**: Plugin configurations are defined in Ligature, not imperative code
+- **Type-Safe**: Leverage Ligature's type system for configuration validation
+- **Environment-Aware**: Plugins can have different configurations per environment
+- **Extensible**: Easy to create custom plugins for specific needs
+- **Composable**: Multiple plugins can work together in a single environment
+
+## Plugin Architecture
+
+### Plugin Structure
+
+```
+plugins/
+├── terraform/           # Terraform plugin
+│   ├── plugin.lig      # Plugin configuration
+│   └── operations/     # Custom operations
+├── kubernetes/         # Kubernetes plugin
+│   ├── plugin.lig
+│   └── operations/
+└── custom/            # Custom plugin
+    ├── plugin.lig
+    └── operations/
+```
+
+### Plugin Configuration
+
+Each plugin is defined by a `plugin.lig` file:
+
+```ocaml
+-- plugins/terraform/plugin.lig
+module TerraformPlugin
+
+let plugin = {
+  name = "terraform",
+  version = "1.0.0",
+  description = "Terraform infrastructure management",
+  author = "Cacophony Team",
+  
+  operations = ["plan", "apply", "destroy", "validate"],
+  
+  configuration = {
+    backend = {
+      type = "s3",
+      bucket = "my-terraform-state",
+      region = "us-west-2"
+    },
+    
+    providers = {
+      aws = {
+        region = "us-west-2",
+        profile = "default"
+      }
+    },
+    
+    variables = {
+      environment = "dev",
+      project = "my-project"
+    }
+  }
+}
+
+export { plugin }
+```
+
+## Built-in Plugins
+
+Cacophony includes several built-in plugins for common use cases:
+
+### [Terraform Plugin](./terraform/)
+
+The Terraform plugin provides infrastructure-as-code capabilities for managing cloud infrastructure and resources.
+
+**Key Features:**
+- Plan, apply, and destroy infrastructure
+- State management with various backends
+- Multi-environment support
+- Provider configuration and variable management
+
+[Learn more about the Terraform Plugin →](./terraform/)
+
+### [Kubernetes Plugin](./kubernetes/)
+
+The Kubernetes plugin manages containerized applications with comprehensive orchestration capabilities.
+
+**Key Features:**
+- Deploy applications to Kubernetes clusters
+- Scale resources and manage configurations
+- Service management and health monitoring
+- Rolling updates and rollbacks
+
+[Learn more about the Kubernetes Plugin →](./kubernetes/)
+
+### [Docker Plugin](./docker/)
+
+The Docker plugin handles container building and management with advanced build optimization.
+
+**Key Features:**
+- Build and push Docker images
+- Multi-stage builds and caching
+- Registry management and security scanning
+- Multi-platform builds
+
+[Learn more about the Docker Plugin →](./docker/)
+
+## Custom Plugins
+
+### Creating a Custom Plugin
+
+#### Plugin Structure
+
+```bash
+mkdir -p plugins/custom
+cd plugins/custom
+```
+
+#### Plugin Configuration
+
+```ocaml
+-- plugins/custom/plugin.lig
+module CustomPlugin
+
+let plugin = {
+  name = "custom",
+  version = "1.0.0",
+  description = "Custom plugin for specialized operations",
+  author = "Your Name",
+  
+  operations = ["deploy", "validate", "backup"],
+  
+  configuration = {
+    api_endpoint = "https://api.example.com",
+    api_key = "${API_KEY}",
+    timeout = 300
+  }
+}
+
+export { plugin }
+```
+
+#### Operation Definitions
+
+```ocaml
+-- plugins/custom/operations.lig
+module CustomOperations
+
+let operations = {
+  deploy = {
+    name = "custom-deploy",
+    description = "Deploy using custom API",
+    script = "./scripts/deploy.sh",
+    
+    parameters = {
+      timeout = 600,
+      retries = 3,
+      rollback_on_failure = true
+    },
+    
+    environment = {
+      "API_ENDPOINT" = "${api_endpoint}",
+      "API_KEY" = "${api_key}"
+    }
+  },
+  
+  validate = {
+    name = "custom-validate",
+    description = "Validate deployment",
+    script = "./scripts/validate.sh",
+    
+    parameters = {
+      timeout = 300,
+      health_check_interval = 30
+    }
+  },
+  
+  backup = {
+    name = "custom-backup",
+    description = "Create backup",
+    script = "./scripts/backup.sh",
+    
+    parameters = {
+      timeout = 1800,
+      backup_retention = 7
+    }
+  }
+}
+
+export { operations }
+```
+
+#### Operation Scripts
+
+```bash
+#!/bin/bash
+# scripts/deploy.sh
+
+set -e
+
+API_ENDPOINT="${API_ENDPOINT}"
+API_KEY="${API_KEY}"
+TIMEOUT="${timeout:-600}"
+
+echo "Deploying to ${API_ENDPOINT}..."
+
+# Custom deployment logic here
+curl -X POST \
+  -H "Authorization: Bearer ${API_KEY}" \
+  -H "Content-Type: application/json" \
+  --max-time "${TIMEOUT}" \
+  "${API_ENDPOINT}/deploy" \
+  -d '{"environment": "'"${ENVIRONMENT}"'"}'
+
+echo "Deployment completed successfully"
+```
+
+### AWS Plugin Example
+
+```ocaml
+-- plugins/aws/plugin.lig
+module AwsPlugin
+
+let plugin = {
+  name = "aws",
+  version = "1.0.0",
+  description = "AWS service integration",
+  author = "Cacophony Team",
+  
+  operations = ["deploy", "destroy", "status"],
+  
+  configuration = {
+    region = "us-west-2",
+    profile = "default",
+    services = ["ec2", "rds", "s3"]
+  }
+}
+
+export { plugin }
+```
+
+```ocaml
+-- plugins/aws/operations.lig
+module AwsOperations
+
+let operations = {
+  deploy = {
+    name = "aws-deploy",
+    description = "Deploy to AWS",
+    script = "./scripts/aws-deploy.sh",
+    
+    parameters = {
+      timeout = 1800,
+      wait_for_completion = true
+    },
+    
+    environment = {
+      "AWS_REGION" = "${region}",
+      "AWS_PROFILE" = "${profile}"
+    }
+  },
+  
+  destroy = {
+    name = "aws-destroy",
+    description = "Destroy AWS resources",
+    script = "./scripts/aws-destroy.sh",
+    
+    parameters = {
+      timeout = 1800,
+      force = false
+    }
+  }
+}
+
+export { operations }
+```
+
+## Plugin Integration
+
+### Environment Configuration
+
+Configure plugins in your environment:
+
+```ocaml
+-- environments/dev.lig
+module Dev
+
+let plugins = {
+  terraform = {
+    plugin = "terraform",
+    version = "1.0.0",
+    backend = {
+      type = "local",
+      path = "./terraform.tfstate"
+    }
+  },
+  
+  kubernetes = {
+    plugin = "kubernetes",
+    version = "1.0.0",
+    cluster = {
+      context = "minikube",
+      namespace = "dev"
+    }
+  },
+  
+  custom = {
+    plugin = "custom",
+    version = "1.0.0",
+    api_endpoint = "https://dev-api.example.com"
+  }
+}
+
+export { plugins }
+```
+
+### Collection Integration
+
+Use plugins in your collections:
+
+```ocaml
+-- collections/backend.lig
+module Backend
+
+let config = {
+  name = "backend",
+  type = "kubernetes",
+  
+  plugins = {
+    kubernetes = {
+      deployment = {
+        replicas = 2,
+        image = "backend:latest"
+      }
+    },
+    
+    custom = {
+      pre_deploy = ["backup"],
+      post_deploy = ["validate"]
+    }
+  }
+}
+
+export { config }
+```
+
+## Plugin Development
+
+### Plugin Interface
+
+All plugins must implement the following interface:
+
+```ocaml
+type Plugin = {
+  name: string,
+  version: string,
+  description: string,
+  author: string,
+  operations: array<string>,
+  configuration: object
+}
+
+type Operation = {
+  name: string,
+  description: string,
+  script?: string,
+  parameters?: object,
+  environment?: object
+}
+```
+
+### Plugin Lifecycle
+
+1. **Discovery**: Cacophony discovers plugins in the `plugins/` directory
+2. **Loading**: Plugin configurations are loaded and validated
+3. **Initialization**: Plugins are initialized with environment-specific configuration
+4. **Execution**: Operations are executed when requested
+5. **Cleanup**: Plugins are cleaned up after operations complete
+
+### Error Handling
+
+```ocaml
+-- plugins/custom/error-handling.lig
+module ErrorHandling
+
+let error_handlers = {
+  deploy_failure = {
+    action = "rollback",
+    script = "./scripts/rollback.sh",
+    timeout = 300
+  },
+  
+  validation_failure = {
+    action = "retry",
+    max_retries = 3,
+    retry_interval = 30
+  },
+  
+  timeout = {
+    action = "abort",
+    cleanup_script = "./scripts/cleanup.sh"
+  }
+}
+
+export { error_handlers }
+```
+
+## Best Practices
+
+### Plugin Design
+
+1. **Single Responsibility**: Each plugin should have a focused purpose
+2. **Configuration**: Use environment variables for sensitive data
+3. **Error Handling**: Provide meaningful error messages and recovery options
+4. **Logging**: Include comprehensive logging for debugging
+5. **Documentation**: Document all operations and configuration options
+
+### Security
+
+```ocaml
+-- plugins/secure/plugin.lig
+module SecurePlugin
+
+let security_config = {
+  authentication = {
+    type = "oauth2",
+    client_id = "${CLIENT_ID}",
+    client_secret = "${CLIENT_SECRET}"
+  },
+  
+  encryption = {
+    enabled = true,
+    algorithm = "AES-256"
+  },
+  
+  audit_logging = {
+    enabled = true,
+    level = "info"
+  }
+}
+
+export { security_config }
+```
+
+### Testing
+
+```bash
+# Test plugin configuration
+cacophony validate --plugin custom
+
+# Test plugin operations
+cacophony test --plugin custom --operation deploy
+
+# Test plugin integration
+cacophony test --collection backend --environment dev
+```
+
+## Examples
+
+### Complete Plugin Example
+
+```bash
+# Create plugin directory
+mkdir -p plugins/my-plugin
+cd plugins/my-plugin
+
+# Create plugin configuration
+cat > plugin.lig << 'EOF'
+module MyPlugin
+
+let plugin = {
+  name = "my-plugin",
+  version = "1.0.0",
+  description = "My custom plugin",
+  author = "Your Name",
+  operations = ["deploy", "validate"]
+}
+
+export { plugin }
+EOF
+
+# Create operations
+cat > operations.lig << 'EOF'
+module MyOperations
+
+let operations = {
+  deploy = {
+    name = "my-deploy",
+    description = "Custom deployment",
+    script = "./scripts/deploy.sh"
+  }
+}
+
+export { operations }
+EOF
+
+# Create operation script
+mkdir scripts
+cat > scripts/deploy.sh << 'EOF'
+#!/bin/bash
+echo "Deploying with my plugin..."
+# Your deployment logic here
+echo "Deployment complete"
+EOF
+
+chmod +x scripts/deploy.sh
+```
+
+### Using the Plugin
+
+```ocaml
+-- environments/dev.lig
+module Dev
+
+let my_plugin_config = {
+  plugin = "my-plugin",
+  version = "1.0.0",
+  custom_setting = "value"
+}
+
+export { my_plugin_config }
+```
+
+```bash
+# Run plugin operation
+cacophony run --collection my-app --environment dev --operation deploy
+```
+
+## Related Documentation
+
+- [Cacophony Orchestration](../cacophony/)
+- [Ligature Language Reference](../llm-language-reference.mdx)
+- [Developer Guide](../developer-guide/)
+- [Cacophony Source Code](../../../apps/cacophony/)

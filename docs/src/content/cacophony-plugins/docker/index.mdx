@@ -1,0 +1,729 @@
+---
+title: Docker Plugin
+description: Container building and management with Docker integration
+---
+
+# Docker Plugin
+
+The Docker plugin for Cacophony provides comprehensive container building and management capabilities, allowing you to build, push, and manage Docker images while maintaining Cacophony's declarative and type-safe approach.
+
+## Overview
+
+The Docker plugin enables you to:
+
+- **Build Images**: Build Docker images from Dockerfiles with custom configurations
+- **Push Images**: Push images to container registries
+- **Pull Images**: Pull images from registries
+- **Tag Images**: Manage image tags and versions
+- **Multi-Stage Builds**: Support for complex multi-stage Docker builds
+- **Build Caching**: Optimize builds with layer caching
+- **Registry Management**: Handle multiple container registries
+- **Security Scanning**: Integrate security scanning for images
+
+## Installation
+
+The Docker plugin is included with Cacophony by default. Ensure you have Docker installed:
+
+```bash
+# Install Docker
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+
+# Add user to docker group
+sudo usermod -aG docker $USER
+
+# Verify installation
+docker --version
+```
+
+## Configuration
+
+### Basic Configuration
+
+```ocaml
+-- environments/dev.lig
+module Dev
+
+let docker_config = {
+  plugin = "docker",
+  version = "1.0.0",
+  
+  registry = {
+    url = "localhost:5000",
+    credentials = {
+      username = "${REGISTRY_USERNAME}",
+      password = "${REGISTRY_PASSWORD}"
+    }
+  },
+  
+  build = {
+    context = ".",
+    dockerfile = "Dockerfile",
+    build_args = {
+      "VERSION" = "1.0.0",
+      "ENVIRONMENT" = "dev"
+    }
+  }
+}
+
+export { docker_config }
+```
+
+### Advanced Configuration
+
+```ocaml
+-- environments/prod.lig
+module Prod
+
+let docker_config = {
+  plugin = "docker",
+  version = "1.0.0",
+  
+  registry = {
+    url = "my-registry.com",
+    credentials = {
+      username = "${REGISTRY_USERNAME}",
+      password = "${REGISTRY_PASSWORD}"
+    },
+    insecure_registry = false
+  },
+  
+  build = {
+    context = ".",
+    dockerfile = "Dockerfile.prod",
+    build_args = {
+      "VERSION" = "1.0.0",
+      "ENVIRONMENT" = "production",
+      "NODE_ENV" = "production"
+    },
+    
+    cache_from = ["my-registry.com/my-app:latest"],
+    cache_to = "type=inline",
+    
+    platforms = ["linux/amd64", "linux/arm64"],
+    push = true
+  },
+  
+  security = {
+    scan_images = true,
+    scan_severity = "HIGH",
+    block_on_vulnerabilities = true
+  }
+}
+
+export { docker_config }
+```
+
+## Operations
+
+### Build
+
+Build Docker images:
+
+```bash
+# Build image
+cacophony run --collection backend --environment dev --operation build
+
+# Build with specific tag
+cacophony run --collection backend --environment dev --operation build --tag v1.0.0
+
+# Build with no cache
+cacophony run --collection backend --environment dev --operation build --no-cache
+
+# Build with specific platform
+cacophony run --collection backend --environment dev --operation build --platform linux/amd64
+```
+
+### Push
+
+Push images to registry:
+
+```bash
+# Push image
+cacophony run --collection backend --environment dev --operation push
+
+# Push with specific tag
+cacophony run --collection backend --environment dev --operation push --tag v1.0.0
+
+# Push all tags
+cacophony run --collection backend --environment dev --operation push --all-tags
+```
+
+### Pull
+
+Pull images from registry:
+
+```bash
+# Pull image
+cacophony run --collection backend --environment dev --operation pull
+
+# Pull specific tag
+cacophony run --collection backend --environment dev --operation pull --tag v1.0.0
+
+# Pull with platform
+cacophony run --collection backend --environment dev --operation pull --platform linux/amd64
+```
+
+### Build and Push
+
+Build and push in one operation:
+
+```bash
+# Build and push
+cacophony run --collection backend --environment dev --operation build-push
+
+# Build and push with tag
+cacophony run --collection backend --environment dev --operation build-push --tag v1.0.0
+```
+
+## Collection Configuration
+
+### Basic Collection
+
+```ocaml
+-- collections/backend.lig
+module Backend
+
+let config = {
+  name = "backend",
+  type = "docker",
+  
+  docker = {
+    build = {
+      context = "./backend",
+      dockerfile = "Dockerfile",
+      
+      build_args = {
+        "VERSION" = "1.0.0",
+        "NODE_ENV" = "production"
+      },
+      
+      target = "production"
+    },
+    
+    image = {
+      name = "my-registry.com/backend",
+      tags = ["latest", "v1.0.0"]
+    }
+  }
+}
+
+export { config }
+```
+
+### Advanced Collection
+
+```ocaml
+-- collections/frontend.lig
+module Frontend
+
+let config = {
+  name = "frontend",
+  type = "docker",
+  
+  docker = {
+    build = {
+      context = "./frontend",
+      dockerfile = "Dockerfile",
+      
+      build_args = {
+        "VERSION" = "1.0.0",
+        "NODE_ENV" = "production",
+        "API_URL" = "${API_BASE_URL}"
+      },
+      
+      target = "production",
+      cache_from = ["my-registry.com/frontend:latest"],
+      cache_to = "type=inline"
+    },
+    
+    image = {
+      name = "my-registry.com/frontend",
+      tags = ["latest", "v1.0.0", "stable"]
+    },
+    
+    security = {
+      scan = true,
+      severity = "HIGH"
+    }
+  }
+}
+
+export { config }
+```
+
+### Multi-Stage Build
+
+```ocaml
+-- collections/app.lig
+module App
+
+let config = {
+  name = "app",
+  type = "docker",
+  
+  docker = {
+    build = {
+      context = ".",
+      dockerfile = "Dockerfile",
+      
+      targets = {
+        builder = {
+          build_args = {
+            "VERSION" = "1.0.0"
+          }
+        },
+        
+        production = {
+          build_args = {
+            "VERSION" = "1.0.0",
+            "NODE_ENV" = "production"
+          },
+          cache_from = ["my-registry.com/app:builder"]
+        }
+      }
+    },
+    
+    image = {
+      name = "my-registry.com/app",
+      tags = ["latest", "v1.0.0"]
+    }
+  }
+}
+
+export { config }
+```
+
+## Dockerfile Examples
+
+### Basic Dockerfile
+
+```dockerfile
+# Dockerfile
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci --only=production
+
+COPY . .
+
+EXPOSE 3000
+
+CMD ["npm", "start"]
+```
+
+### Multi-Stage Dockerfile
+
+```dockerfile
+# Dockerfile
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci
+
+COPY . .
+RUN npm run build
+
+FROM node:18-alpine AS production
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci --only=production
+
+COPY --from=builder /app/dist ./dist
+
+EXPOSE 3000
+
+CMD ["npm", "start"]
+```
+
+### Multi-Platform Dockerfile
+
+```dockerfile
+# Dockerfile
+FROM --platform=$BUILDPLATFORM node:18-alpine AS builder
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci
+
+COPY . .
+RUN npm run build
+
+FROM node:18-alpine AS production
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci --only=production
+
+COPY --from=builder /app/dist ./dist
+
+EXPOSE 3000
+
+CMD ["npm", "start"]
+```
+
+## Registry Configuration
+
+### Docker Hub
+
+```ocaml
+let docker_hub_config = {
+  registry = {
+    url = "docker.io",
+    credentials = {
+      username = "${DOCKER_USERNAME}",
+      password = "${DOCKER_PASSWORD}"
+    }
+  }
+}
+```
+
+### Private Registry
+
+```ocaml
+let private_registry_config = {
+  registry = {
+    url = "my-registry.com",
+    credentials = {
+      username = "${REGISTRY_USERNAME}",
+      password = "${REGISTRY_PASSWORD}"
+    },
+    insecure_registry = false
+  }
+}
+```
+
+### Multiple Registries
+
+```ocaml
+let multiple_registries_config = {
+  registries = {
+    primary = {
+      url = "my-registry.com",
+      credentials = {
+        username = "${PRIMARY_USERNAME}",
+        password = "${PRIMARY_PASSWORD}"
+      }
+    },
+    
+    secondary = {
+      url = "backup-registry.com",
+      credentials = {
+        username = "${SECONDARY_USERNAME}",
+        password = "${SECONDARY_PASSWORD}"
+      }
+    }
+  }
+}
+```
+
+## Build Optimization
+
+### Layer Caching
+
+```ocaml
+let caching_config = {
+  build = {
+    cache_from = [
+      "my-registry.com/my-app:latest",
+      "my-registry.com/my-app:builder"
+    ],
+    
+    cache_to = "type=inline",
+    
+    build_args = {
+      "BUILDKIT_INLINE_CACHE" = "1"
+    }
+  }
+}
+```
+
+### Multi-Platform Builds
+
+```ocaml
+let multi_platform_config = {
+  build = {
+    platforms = [
+      "linux/amd64",
+      "linux/arm64",
+      "linux/arm/v7"
+    ],
+    
+    push = true,
+    
+    build_args = {
+      "TARGETPLATFORM" = "${TARGETPLATFORM}",
+      "BUILDPLATFORM" = "${BUILDPLATFORM}"
+    }
+  }
+}
+```
+
+### Build Arguments
+
+```ocaml
+let build_args_config = {
+  build = {
+    build_args = {
+      "VERSION" = "1.0.0",
+      "ENVIRONMENT" = "production",
+      "NODE_ENV" = "production",
+      "API_URL" = "${API_BASE_URL}",
+      "DATABASE_URL" = "${DATABASE_URL}"
+    }
+  }
+}
+```
+
+## Security
+
+### Image Scanning
+
+```ocaml
+let security_config = {
+  security = {
+    scan_images = true,
+    scan_severity = "HIGH",
+    block_on_vulnerabilities = true,
+    
+    scanners = ["trivy", "snyk"],
+    
+    ignore_vulnerabilities = [
+      "CVE-2021-1234",
+      "CVE-2021-5678"
+    ]
+  }
+}
+```
+
+### Image Signing
+
+```ocaml
+let signing_config = {
+  security = {
+    sign_images = true,
+    signing_key = "${SIGNING_KEY}",
+    signing_passphrase = "${SIGNING_PASSPHRASE}"
+  }
+}
+```
+
+## Examples
+
+### Web Application
+
+```ocaml
+-- collections/web-app.lig
+module WebApp
+
+let config = {
+  name = "web-app",
+  type = "docker",
+  
+  docker = {
+    build = {
+      context = "./web-app",
+      dockerfile = "Dockerfile",
+      
+      build_args = {
+        "VERSION" = "1.0.0",
+        "NODE_ENV" = "production"
+      }
+    },
+    
+    image = {
+      name = "my-registry.com/web-app",
+      tags = ["latest", "v1.0.0"]
+    }
+  }
+}
+
+export { config }
+```
+
+### API Service
+
+```ocaml
+-- collections/api.lig
+module API
+
+let config = {
+  name = "api",
+  type = "docker",
+  
+  docker = {
+    build = {
+      context = "./api",
+      dockerfile = "Dockerfile",
+      
+      build_args = {
+        "VERSION" = "1.0.0",
+        "ENVIRONMENT" = "production"
+      },
+      
+      target = "production"
+    },
+    
+    image = {
+      name = "my-registry.com/api",
+      tags = ["latest", "v1.0.0"]
+    }
+  }
+}
+
+export { config }
+```
+
+### Database
+
+```ocaml
+-- collections/database.lig
+module Database
+
+let config = {
+  name = "database",
+  type = "docker",
+  
+  docker = {
+    build = {
+      context = "./database",
+      dockerfile = "Dockerfile",
+      
+      build_args = {
+        "POSTGRES_VERSION" = "13",
+        "ENVIRONMENT" = "production"
+      }
+    },
+    
+    image = {
+      name = "my-registry.com/database",
+      tags = ["latest", "v1.0.0"]
+    }
+  }
+}
+
+export { config }
+```
+
+## Best Practices
+
+### Image Optimization
+
+```ocaml
+let optimization_config = {
+  build = {
+    target = "production",
+    
+    build_args = {
+      "NODE_ENV" = "production",
+      "BUILDKIT_INLINE_CACHE" = "1"
+    },
+    
+    cache_from = ["my-registry.com/my-app:latest"],
+    cache_to = "type=inline"
+  }
+}
+```
+
+### Security Best Practices
+
+```ocaml
+let security_best_practices = {
+  security = {
+    scan_images = true,
+    scan_severity = "HIGH",
+    
+    base_images = {
+      prefer_official = true,
+      prefer_minimal = true
+    },
+    
+    runtime = {
+      run_as_non_root = true,
+      user = "node"
+    }
+  }
+}
+```
+
+### Registry Management
+
+```ocaml
+let registry_management = {
+  registry = {
+    url = "my-registry.com",
+    credentials = {
+      username = "${REGISTRY_USERNAME}",
+      password = "${REGISTRY_PASSWORD}"
+    }
+  },
+  
+  image = {
+    name = "my-registry.com/my-app",
+    tags = ["latest", "${VERSION}", "${GIT_SHA}"]
+  }
+}
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Build Context Issues**
+   ```bash
+   # Check build context
+   ls -la ./context
+   
+   # Build with verbose output
+   cacophony run --collection app --environment dev --operation build --verbose
+   ```
+
+2. **Registry Authentication**
+   ```bash
+   # Login to registry
+   docker login my-registry.com
+   
+   # Check credentials
+   docker info
+   ```
+
+3. **Cache Issues**
+   ```bash
+   # Clear build cache
+   docker builder prune
+   
+   # Build with no cache
+   cacophony run --collection app --environment dev --operation build --no-cache
+   ```
+
+### Debug Commands
+
+```bash
+# Check Docker daemon
+docker info
+
+# List images
+docker images
+
+# Check build history
+docker history my-registry.com/my-app:latest
+
+# Inspect image
+docker inspect my-registry.com/my-app:latest
+```
+
+## Related Documentation
+
+- [Cacophony Orchestration](../cacophony/)
+- [Cacophony Plugins Overview](./index.mdx)
+- [Terraform Plugin](./terraform.mdx)
+- [Kubernetes Plugin](./kubernetes.mdx)
+- [Docker Documentation](https://docs.docker.com/)

@@ -1,0 +1,479 @@
+---
+title: Reed CLI
+description: Command-line interface for parsing, type checking, evaluating, and benchmarking Ligature programs
+---
+
+# Reed CLI
+
+Reed is a command-line interface for the Ligature language, providing tools for parsing, type checking, evaluating, and benchmarking Ligature programs. It serves as the primary CLI tool for working with Ligature code and offers comprehensive functionality for development, testing, and performance analysis.
+
+## Overview
+
+Reed provides a complete development workflow for Ligature programs:
+
+- **Parsing**: Parse and validate Ligature programs with detailed error reporting
+- **Type Checking**: Perform static type analysis on Ligature programs
+- **Evaluation**: Execute Ligature programs and view results
+- **Complete Pipeline**: Run the full parse → type check → evaluate pipeline
+- **Benchmarking**: Performance testing and analysis tools
+- **XDG Configuration**: User-configurable settings with XDG base directory support
+- **Multiple Output Formats**: Support for text, JSON, and YAML output formats
+
+## Quick Start
+
+### Installation
+
+Reed is part of the Ligature workspace. To build it:
+
+```bash
+# From the workspace root
+cargo build --bin reed
+
+# Or from the reed directory
+cd apps/reed
+cargo build
+```
+
+### Basic Usage
+
+```bash
+# Parse a Ligature program
+reed parse --file program.lig
+
+# Type check a program
+reed typecheck --file program.lig
+
+# Evaluate a program
+reed eval --file program.lig
+
+# Run the complete pipeline
+reed run --file program.lig
+```
+
+## Core Commands
+
+### Parsing
+
+Parse and validate Ligature programs:
+
+```bash
+# Parse a single file
+reed parse --file program.lig
+
+# Parse with detailed output
+reed parse --file program.lig --verbose
+
+# Parse and output AST in JSON format
+reed parse --file program.lig --format json
+
+# Parse multiple files
+reed parse --file program1.lig --file program2.lig
+```
+
+### Type Checking
+
+Perform static type analysis:
+
+```bash
+# Type check a program
+reed typecheck --file program.lig
+
+# Type check with detailed error reporting
+reed typecheck --file program.lig --verbose
+
+# Type check and show inferred types
+reed typecheck --file program.lig --show-types
+```
+
+### Evaluation
+
+Execute Ligature programs:
+
+```bash
+# Evaluate a program
+reed eval --file program.lig
+
+# Evaluate with specific input
+reed eval --file program.lig --input '{"x": 5}'
+
+# Evaluate and show intermediate results
+reed eval --file program.lig --trace
+```
+
+### Complete Pipeline
+
+Run the full development pipeline:
+
+```bash
+# Run parse → type check → evaluate
+reed run --file program.lig
+
+# Run with custom options
+reed run --file program.lig --verbose --format json
+```
+
+## Benchmarking
+
+Reed includes comprehensive benchmarking capabilities for performance analysis:
+
+### Quick Benchmark
+
+```bash
+# Quick performance test
+reed benchmark --quick
+
+# Quick benchmark with custom iterations
+reed benchmark --quick --iterations 1000
+```
+
+### Comprehensive Benchmark
+
+```bash
+# Comprehensive performance analysis
+reed benchmark --comprehensive --output results.csv
+
+# Comprehensive benchmark with memory tracking
+reed benchmark --comprehensive --memory --output results.json
+```
+
+### Custom Benchmark
+
+```bash
+# Custom benchmark with specific file
+reed benchmark --custom --file my_benchmark.lig
+
+# Custom benchmark with memory tracking
+reed benchmark --custom --file my_benchmark.lig --memory
+
+# Custom benchmark with specific format
+reed benchmark --custom --file my_benchmark.lig --format yaml
+```
+
+### Benchmark Options
+
+| Option | Description |
+|--------|-------------|
+| `--quick` | Run quick performance test |
+| `--comprehensive` | Run comprehensive analysis |
+| `--custom` | Run custom benchmark |
+| `--iterations <n>` | Number of iterations |
+| `--memory` | Track memory usage |
+| `--output <file>` | Output results to file |
+| `--format <format>` | Output format (json, yaml, csv) |
+
+## Configuration
+
+Reed uses XDG base directories for configuration management:
+
+- **Config**: `~/.config/reed/`
+- **Data**: `~/.local/share/reed/`
+- **Cache**: `~/.cache/reed/`
+- **State**: `~/.local/state/reed/`
+
+### Configuration Options
+
+```json
+{
+  "logging": {
+    "level": "info",
+    "log_to_file": true,
+    "log_to_console": false,
+    "max_file_size": 10485760,
+    "max_files": 5,
+    "include_timestamps": true
+  },
+  "performance": {
+    "enable_parallel": true,
+    "worker_threads": 4,
+    "enable_caching": true,
+    "cache_ttl_seconds": 3600
+  },
+  "defaults": {
+    "output_format": "json",
+    "verbose": false,
+    "show_progress": true,
+    "timeout_seconds": 30
+  },
+  "cache": {
+    "enabled": true,
+    "max_size": 1073741824,
+    "max_age": 86400,
+    "auto_clean": true
+  }
+}
+```
+
+### Configuration Sections
+
+#### Logging
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `level` | `string` | `"info"` | Log level (debug, info, warn, error) |
+| `log_to_file` | `bool` | `true` | Enable file logging |
+| `log_to_console` | `bool` | `false` | Enable console logging |
+| `max_file_size` | `number` | `10485760` | Maximum log file size in bytes |
+| `max_files` | `number` | `5` | Maximum number of log files |
+| `include_timestamps` | `bool` | `true` | Include timestamps in logs |
+
+#### Performance
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `enable_parallel` | `bool` | `true` | Enable parallel processing |
+| `worker_threads` | `number` | `4` | Number of worker threads |
+| `enable_caching` | `bool` | `true` | Enable result caching |
+| `cache_ttl_seconds` | `number` | `3600` | Cache TTL in seconds |
+
+#### Defaults
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `output_format` | `string` | `"json"` | Default output format |
+| `verbose` | `bool` | `false` | Default verbosity |
+| `show_progress` | `bool` | `true` | Show progress indicators |
+| `timeout_seconds` | `number` | `30` | Default timeout |
+
+## Output Formats
+
+Reed supports multiple output formats for different use cases:
+
+### Text Format (Default)
+
+Human-readable output suitable for terminal display:
+
+```
+Parsing program.lig...
+✓ Parsed successfully
+
+Type checking program.lig...
+✓ Type check passed
+
+Evaluating program.lig...
+Result: 42
+```
+
+### JSON Format
+
+Structured JSON output for programmatic consumption:
+
+```json
+{
+  "command": "run",
+  "file": "program.lig",
+  "success": true,
+  "results": {
+    "parse": {
+      "success": true,
+      "ast": { ... }
+    },
+    "typecheck": {
+      "success": true,
+      "types": { ... }
+    },
+    "evaluate": {
+      "success": true,
+      "result": 42
+    }
+  },
+  "timing": {
+    "parse": 0.001,
+    "typecheck": 0.005,
+    "evaluate": 0.002,
+    "total": 0.008
+  }
+}
+```
+
+### YAML Format
+
+YAML format for configuration-friendly output:
+
+```yaml
+command: run
+file: program.lig
+success: true
+results:
+  parse:
+    success: true
+    ast: ...
+  typecheck:
+    success: true
+    types: ...
+  evaluate:
+    success: true
+    result: 42
+timing:
+  parse: 0.001
+  typecheck: 0.005
+  evaluate: 0.002
+  total: 0.008
+```
+
+## Error Handling
+
+Reed provides comprehensive error reporting with detailed information:
+
+### Parsing Errors
+
+```bash
+$ reed parse --file invalid.lig
+Error: Parse error at line 5, column 12
+  |
+5 | let x = 1 + ;
+  |            ^
+  Expected expression, found ';'
+```
+
+### Type Checking Errors
+
+```bash
+$ reed typecheck --file type_error.lig
+Error: Type mismatch at line 3, column 7
+  |
+3 | let result = "string" + 42;
+  |       ^
+  Expected: String + String
+  Found: String + Number
+```
+
+### Evaluation Errors
+
+```bash
+$ reed eval --file runtime_error.lig
+Error: Runtime error at line 7, column 15
+  |
+7 | let result = divide 10 0;
+  |               ^
+  Division by zero
+```
+
+## Performance Features
+
+### Parallel Processing
+
+Reed supports parallel processing for improved performance:
+
+```bash
+# Enable parallel processing (default)
+reed run --file program.lig --parallel
+
+# Specify number of worker threads
+reed run --file program.lig --worker-threads 8
+```
+
+### Caching
+
+Reed includes intelligent caching for improved performance:
+
+```bash
+# Enable caching (default)
+reed run --file program.lig --cache
+
+# Clear cache
+reed cache --clear
+
+# Show cache statistics
+reed cache --stats
+```
+
+### Memory Tracking
+
+Monitor memory usage during execution:
+
+```bash
+# Track memory usage
+reed run --file program.lig --memory
+
+# Memory tracking with detailed output
+reed run --file program.lig --memory --verbose
+```
+
+## Development
+
+### Building
+
+```bash
+# Debug build
+cargo build
+
+# Release build
+cargo build --release
+
+# With specific features
+cargo build --features "benchmark"
+```
+
+### Testing
+
+```bash
+# Run tests
+cargo test
+
+# Run tests with output
+cargo test -- --nocapture
+
+# Run specific test
+cargo test test_parse_command
+```
+
+### Dependencies
+
+Reed depends on the following Ligature crates:
+
+- `ligature-ast`: Abstract syntax tree representation
+- `ligature-parser`: Program parsing and validation
+- `ligature-types`: Type system and type checking
+- `ligature-eval`: Program evaluation engine
+- `embouchure-xdg`: XDG configuration management
+
+## Examples
+
+### Simple Program
+
+```bash
+# Create a simple Ligature program
+echo 'let x = 1 + 2; x' > simple.lig
+
+# Run the complete pipeline
+reed run --file simple.lig
+# Output: 3
+```
+
+### Complex Program
+
+```bash
+# Create a more complex program
+cat > complex.lig << 'EOF'
+let factorial = fun n =>
+  if n <= 1 then 1 else n * factorial (n - 1);
+
+factorial 5
+EOF
+
+# Run with verbose output
+reed run --file complex.lig --verbose
+# Output: 120
+```
+
+### Benchmarking Example
+
+```bash
+# Create a benchmark program
+cat > benchmark.lig << 'EOF'
+let fibonacci = fun n =>
+  if n <= 1 then n else fibonacci (n - 1) + fibonacci (n - 2);
+
+fibonacci 20
+EOF
+
+# Run comprehensive benchmark
+reed benchmark --comprehensive --file benchmark.lig --output results.json
+```
+
+## Related Documentation
+
+- [Ligature Language Reference](../llm-language-reference.mdx)
+- [User Guide](../user-guide/)
+- [Developer Guide](../developer-guide/)
+- [Reed Source Code](../../../apps/reed/)

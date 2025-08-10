@@ -1,0 +1,551 @@
+---
+title: 'Advanced Features'
+description: 'Advanced features and capabilities of the proof engine system'
+---
+
+# Advanced Features
+
+The Ligature proof engine system provides advanced features for complex verification scenarios, performance optimization, and integration with existing systems.
+
+## Differential Testing
+
+Differential testing allows you to compare results between different engines or implementations to ensure consistency and correctness.
+
+### Basic Differential Testing
+
+```rust
+use baton_engine_plugin::prelude::*;
+use baton_lean_engine::prelude::*;
+
+async fn run_differential_tests(engine: &dyn VerificationEngine) -> BatonResult<()> {
+    // Run differential test for expression evaluation
+    let eval_diff = engine.run_differential_test(
+        "test_expression",
+        DifferentialTestType::Evaluation,
+        None
+    ).await?;
+
+    println!("Evaluation differential test: {:?}", eval_diff);
+
+    // Run differential test for type checking
+    let type_diff = engine.run_differential_test(
+        "test_type_check",
+        DifferentialTestType::TypeCheck,
+        None
+    ).await?;
+
+    println!("Type check differential test: {:?}", type_diff);
+
+    Ok(())
+}
+```
+
+### Custom Differential Tests
+
+```rust
+use baton_engine_plugin::prelude::*;
+
+// Define custom test cases
+let test_cases = vec![
+    ("1 + 1", "2"),
+    ("2 * 3", "6"),
+    ("fun x => x + 1", "Nat → Nat"),
+];
+
+for (expression, expected) in test_cases {
+    let result = engine.run_differential_test(
+        &format!("test_{}", expression.replace(" ", "_")),
+        DifferentialTestType::Evaluation,
+        Some(json!({
+            "expression": expression,
+            "expected": expected,
+            "compare_with_rust": true
+        }))
+    ).await?;
+
+    println!("Differential test for {}: {:?}", expression, result);
+}
+```
+
+## Performance Monitoring
+
+The proof engine system provides comprehensive performance monitoring capabilities.
+
+### Enable Performance Monitoring
+
+```rust
+use baton_engine_plugin::prelude::*;
+use serde_json::json;
+
+let config = json!({
+    "enable_performance_monitoring": true,
+    "performance_config": {
+        "collect_metrics": true,
+        "metrics_interval": 5,
+        "enable_profiling": true,
+        "profile_sampling_rate": 0.1
+    }
+});
+
+manager.initialize_plugin("lean", &config).await?;
+```
+
+### Collect Performance Metrics
+
+```rust
+use baton_engine_plugin::prelude::*;
+
+// Get performance statistics
+let stats = manager.get_engine_statistics("lean").await?;
+println!("Engine statistics: {:?}", stats);
+
+// Get performance metrics
+let metrics = manager.get_engine_metrics("lean").await?;
+println!("Engine metrics: {:?}", metrics);
+
+// Monitor resource usage
+let resources = manager.get_engine_resources("lean").await?;
+println!("Resource usage: {:?}", resources);
+```
+
+### Performance Optimization
+
+```rust
+use baton_engine_plugin::prelude::*;
+
+// Optimize for high-throughput scenarios
+let high_throughput_config = json!({
+    "max_concurrent_tasks": 20,
+    "enable_cache": true,
+    "cache_ttl": 7200,
+    "client_config": {
+        "keep_alive": true,
+        "keep_alive_interval": 30,
+        "connection_pool_size": 10
+    },
+    "performance_config": {
+        "enable_connection_pooling": true,
+        "enable_request_batching": true,
+        "batch_size": 10
+    }
+});
+
+// Optimize for low-latency scenarios
+let low_latency_config = json!({
+    "timeout": 10,
+    "max_concurrent_tasks": 5,
+    "client_config": {
+        "connection_timeout": 5,
+        "request_timeout": 10
+    },
+    "performance_config": {
+        "enable_prefetching": true,
+        "prefetch_size": 5
+    }
+});
+```
+
+## Advanced Verification Operations
+
+### Theorem Verification with Proofs
+
+```rust
+use baton_engine_plugin::prelude::*;
+
+// Verify a complex mathematical theorem
+let complex_theorem = r#"
+∀ m n : Nat, 
+  add m n = add n m ∧
+  add (add m n) p = add m (add n p)
+"#;
+
+let proof = r#"
+by induction on m, n, p;
+  case 0, n, p => 
+    simp [add_zero, add_succ];
+  case succ m, n, p =>
+    simp [add_succ];
+    apply ih;
+"#;
+
+let theorem_result = engine.verify_theorem(
+    complex_theorem,
+    Some(proof),
+    Some(120),
+    Some(json!({
+        "enable_proof_replay": true,
+        "verify_proof_steps": true,
+        "extract_counterexamples": true
+    }))
+).await?;
+
+println!("Complex theorem verification: {:?}", theorem_result);
+```
+
+### Invariant Verification
+
+```rust
+use baton_engine_plugin::prelude::*;
+
+// Verify program invariants
+let invariant = r#"
+∀ xs : List Nat,
+  length (reverse xs) = length xs ∧
+  reverse (reverse xs) = xs
+"#;
+
+let invariant_result = engine.verify_invariant(
+    invariant,
+    Some("by structural induction on xs"),
+    Some(60),
+    None
+).await?;
+
+println!("Invariant verification: {:?}", invariant_result);
+```
+
+### Refinement Verification
+
+```rust
+use baton_engine_plugin::prelude::*;
+
+// Verify refinement relations
+let refinement = r#"
+∀ f : Nat → Nat,
+  (∀ x : Nat, f x ≥ 0) →
+  (∀ x y : Nat, x ≤ y → f x ≤ f y)
+"#;
+
+let refinement_result = engine.verify_refinement(
+    refinement,
+    Some("by contradiction"),
+    Some(90),
+    None
+).await?;
+
+println!("Refinement verification: {:?}", refinement_result);
+```
+
+## Batch Processing
+
+Process multiple verification tasks efficiently:
+
+```rust
+use baton_engine_plugin::prelude::*;
+use futures::stream::{self, StreamExt};
+
+async fn batch_verification(engine: &dyn VerificationEngine) -> BatonResult<()> {
+    let tasks = vec![
+        ("1 + 1", "2"),
+        ("2 * 3", "6"),
+        ("fun x => x + 1", "Nat → Nat"),
+        ("∀ n : Nat, n + 0 = n", "theorem"),
+    ];
+
+    // Process tasks in parallel
+    let results: Vec<_> = stream::iter(tasks)
+        .map(|(expr, expected)| async move {
+            if expected == "theorem" {
+                engine.verify_theorem(expr, None, Some(30), None).await
+            } else {
+                engine.verify_evaluation(expr, expected, None).await
+            }
+        })
+        .buffer_unordered(5) // Process up to 5 tasks concurrently
+        .collect()
+        .await;
+
+    for (i, result) in results.iter().enumerate() {
+        match result {
+            Ok(response) => println!("Task {}: ✅ {:?}", i, response),
+            Err(e) => println!("Task {}: ❌ {:?}", i, e),
+        }
+    }
+
+    Ok(())
+}
+```
+
+## Custom Engine Integration
+
+### Implementing a Custom Engine
+
+```rust
+use baton_engine_plugin::prelude::*;
+use async_trait::async_trait;
+use serde_json::Value;
+
+struct CustomEngine {
+    config: Value,
+}
+
+impl CustomEngine {
+    fn new(config: Value) -> Self {
+        Self { config }
+    }
+}
+
+#[async_trait]
+impl VerificationEngine for CustomEngine {
+    async fn verify_evaluation(
+        &self,
+        expression: &str,
+        expected: &str,
+        options: Option<Value>,
+    ) -> BatonResult<VerificationResponse> {
+        // Implement custom evaluation logic
+        let result = self.custom_evaluate(expression).await?;
+        
+        Ok(VerificationResponse {
+            success: result == expected,
+            result: Some(result),
+            proof: None,
+            metadata: None,
+        })
+    }
+
+    async fn verify_type_check(
+        &self,
+        expression: &str,
+        expected_type: &str,
+        options: Option<Value>,
+    ) -> BatonResult<VerificationResponse> {
+        // Implement custom type checking logic
+        let actual_type = self.custom_type_check(expression).await?;
+        
+        Ok(VerificationResponse {
+            success: actual_type == expected_type,
+            result: Some(actual_type),
+            proof: None,
+            metadata: None,
+        })
+    }
+
+    // Implement other required methods...
+}
+
+struct CustomEnginePlugin {
+    engine: Option<CustomEngine>,
+    config: Value,
+}
+
+#[async_trait]
+impl EnginePlugin for CustomEnginePlugin {
+    fn name(&self) -> &str {
+        "custom-engine"
+    }
+
+    fn version(&self) -> &str {
+        "1.0.0"
+    }
+
+    fn description(&self) -> &str {
+        "Custom verification engine"
+    }
+
+    async fn initialize(&mut self, config: &Value) -> BatonResult<()> {
+        self.config = config.clone();
+        self.engine = Some(CustomEngine::new(config.clone()));
+        Ok(())
+    }
+
+    async fn get_engine(&self) -> BatonResult<Box<dyn VerificationEngine>> {
+        if let Some(engine) = &self.engine {
+            Ok(Box::new(engine.clone()))
+        } else {
+            Err(BatonError::EngineNotInitialized)
+        }
+    }
+
+    // Implement other required methods...
+}
+```
+
+## Error Handling and Recovery
+
+### Advanced Error Handling
+
+```rust
+use baton_engine_plugin::prelude::*;
+use baton_error::prelude::*;
+
+async fn robust_verification(engine: &dyn VerificationEngine) -> BatonResult<()> {
+    let result = engine.verify_evaluation("complex_expression", "expected", None).await;
+
+    match result {
+        Ok(response) => {
+            println!("Verification successful: {:?}", response);
+        }
+        Err(BatonError::VerificationFailed(msg)) => {
+            println!("Verification failed: {}", msg);
+            // Implement retry logic or fallback
+            return handle_verification_failure(engine, "complex_expression").await;
+        }
+        Err(BatonError::Timeout(msg)) => {
+            println!("Verification timed out: {}", msg);
+            // Implement timeout recovery
+            return handle_timeout(engine, "complex_expression").await;
+        }
+        Err(BatonError::EngineUnavailable) => {
+            println!("Engine unavailable, attempting recovery...");
+            // Implement engine recovery
+            return recover_engine(engine).await;
+        }
+        Err(e) => {
+            println!("Unexpected error: {:?}", e);
+            return Err(e);
+        }
+    }
+
+    Ok(())
+}
+
+async fn handle_verification_failure(
+    engine: &dyn VerificationEngine,
+    expression: &str,
+) -> BatonResult<()> {
+    // Implement fallback verification strategy
+    println!("Attempting fallback verification for: {}", expression);
+    
+    // Try with different options
+    let fallback_result = engine.verify_evaluation(
+        expression,
+        "expected",
+        Some(json!({
+            "use_simplified_verification": true,
+            "timeout": 60
+        }))
+    ).await?;
+
+    println!("Fallback verification result: {:?}", fallback_result);
+    Ok(())
+}
+```
+
+## Integration with External Systems
+
+### REST API Integration
+
+```rust
+use baton_engine_plugin::prelude::*;
+use reqwest::Client;
+
+struct ExternalVerificationService {
+    client: Client,
+    base_url: String,
+}
+
+impl ExternalVerificationService {
+    async fn verify_external(
+        &self,
+        expression: &str,
+        expected: &str,
+    ) -> BatonResult<VerificationResponse> {
+        let response = self.client
+            .post(&format!("{}/verify", self.base_url))
+            .json(&json!({
+                "expression": expression,
+                "expected": expected
+            }))
+            .send()
+            .await?;
+
+        let result: VerificationResponse = response.json().await?;
+        Ok(result)
+    }
+}
+```
+
+### Database Integration
+
+```rust
+use baton_engine_plugin::prelude::*;
+use sqlx::PgPool;
+
+struct DatabaseBackedEngine {
+    pool: PgPool,
+    engine: Box<dyn VerificationEngine>,
+}
+
+impl DatabaseBackedEngine {
+    async fn verify_with_persistence(
+        &self,
+        expression: &str,
+        expected: &str,
+    ) -> BatonResult<VerificationResponse> {
+        // Check cache first
+        if let Some(cached) = self.get_cached_result(expression).await? {
+            return Ok(cached);
+        }
+
+        // Perform verification
+        let result = self.engine.verify_evaluation(expression, expected, None).await?;
+
+        // Store result in database
+        self.store_result(expression, &result).await?;
+
+        Ok(result)
+    }
+
+    async fn get_cached_result(&self, expression: &str) -> BatonResult<Option<VerificationResponse>> {
+        // Implement database cache lookup
+        todo!()
+    }
+
+    async fn store_result(&self, expression: &str, result: &VerificationResponse) -> BatonResult<()> {
+        // Implement database storage
+        todo!()
+    }
+}
+```
+
+## Monitoring and Observability
+
+### Health Checks
+
+```rust
+use baton_engine_plugin::prelude::*;
+
+async fn monitor_engine_health(manager: &EnginePluginManager) -> BatonResult<()> {
+    let health = manager.get_engine_health("lean").await?;
+    
+    match health.status {
+        HealthStatus::Healthy => {
+            println!("Engine is healthy");
+        }
+        HealthStatus::Degraded => {
+            println!("Engine is degraded: {}", health.message);
+        }
+        HealthStatus::Unhealthy => {
+            println!("Engine is unhealthy: {}", health.message);
+            // Implement recovery actions
+        }
+    }
+
+    Ok(())
+}
+```
+
+### Metrics Collection
+
+```rust
+use baton_engine_plugin::prelude::*;
+
+async fn collect_metrics(manager: &EnginePluginManager) -> BatonResult<()> {
+    let metrics = manager.get_engine_metrics("lean").await?;
+    
+    println!("Verification count: {}", metrics.verification_count);
+    println!("Success rate: {:.2}%", metrics.success_rate * 100.0);
+    println!("Average response time: {:.2}ms", metrics.avg_response_time);
+    println!("Error rate: {:.2}%", metrics.error_rate * 100.0);
+
+    Ok(())
+}
+```
+
+## Related Documentation
+
+- [Proof Engine System Overview](./index.mdx)
+- [Lean 4 Engine Documentation](./lean-engine.mdx)
+- [Configuration Guide](./configuration.mdx)
+- [Engine Development Guide](./engine-development.mdx)

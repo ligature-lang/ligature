@@ -1,0 +1,640 @@
+---
+title: Keywork Package Manager
+description: Comprehensive package management system for Ligature registers
+---
+
+# Keywork Package Manager
+
+Keywork is a comprehensive package management system for Ligature registers. It provides tools for creating, building, publishing, installing, and managing Ligature packages with full dependency resolution and registry integration.
+
+## Overview
+
+Keywork serves as the primary package manager for the Ligature ecosystem, offering:
+
+- **Register Creation**: Initialize new Ligature registers with proper structure
+- **Building**: Compile and package registers with dependency resolution
+- **Validation**: Comprehensive validation of register manifests and modules
+- **Publishing**: Upload registers to remote registries
+- **Installation**: Install registers locally or globally
+- **Dependency Management**: Automatic resolution of package dependencies
+- **Registry Operations**: Search, discover, and manage packages
+
+## Quick Start
+
+### Installation
+
+```bash
+# From the ligature workspace
+cargo install --path apps/keywork
+
+# Or build from source
+cd apps/keywork
+cargo build --release
+```
+
+### Creating Your First Register
+
+```bash
+# Create a new register in the current directory
+keywork init my-register
+
+# Create in a specific directory
+keywork init my-register --directory /path/to/project
+```
+
+This creates a register with the following structure:
+
+```
+my-register/
+├── register.toml
+├── src/
+│   └── example.lig
+└── tests/
+    └── example_test.lig
+```
+
+### Building and Publishing
+
+```bash
+# Build the register
+keywork build
+
+# Publish to registry
+keywork publish
+```
+
+## Core Commands
+
+### Register Management
+
+#### Creating Registers
+
+```bash
+# Create a new register
+keywork init my-register
+
+# Create with specific template
+keywork init my-register --template library
+
+# Create with custom directory
+keywork init my-register --directory /path/to/project
+
+# Create with specific author
+keywork init my-register --author "Your Name <email@example.com>"
+```
+
+#### Building Registers
+
+```bash
+# Build in the current directory
+keywork build
+
+# Build with custom output directory
+keywork build --output ./build
+
+# Build with verbose output
+keywork build --verbose
+
+# Build with specific target
+keywork build --target release
+```
+
+The build process:
+
+1. Validates the register manifest
+2. Checks module syntax and types
+3. Resolves dependencies
+4. Copies files to output directory
+5. Generates build artifacts and checksums
+
+#### Publishing Registers
+
+```bash
+# Publish to default registry
+keywork publish
+
+# Publish to custom registry
+keywork publish --registry https://my-registry.com
+
+# Publish with specific version
+keywork publish --version 1.0.0
+
+# Publish with dry-run (validate without publishing)
+keywork publish --dry-run
+```
+
+**Note**: Requires `KEYWORK_AUTH_TOKEN` environment variable to be set.
+
+### Package Installation
+
+#### Installing Registers
+
+```bash
+# Install the latest version
+keywork install stdlib
+
+# Install a specific version
+keywork install stdlib --version 1.0.0
+
+# Install globally
+keywork install stdlib --global
+
+# Install with specific registry
+keywork install stdlib --registry https://my-registry.com
+
+# Install with force (overwrite existing)
+keywork install stdlib --force
+```
+
+#### Managing Dependencies
+
+```bash
+# Install dependencies for a project
+keywork install-deps
+
+# Update all dependencies
+keywork update --all
+
+# Update specific dependency
+keywork update --dependency stdlib
+
+# Update to latest compatible version
+keywork update --dependency stdlib --latest
+
+# Show dependency tree
+keywork deps --tree
+```
+
+### Registry Operations
+
+#### Searching and Discovery
+
+```bash
+# Search for packages
+keywork search "config"
+
+# Search with specific criteria
+keywork search "web" --category "framework"
+
+# Discover packages by category
+keywork discover "web"
+
+# List available versions
+keywork versions stdlib
+
+# Show package statistics
+keywork stats stdlib
+
+# Show package details
+keywork info stdlib
+```
+
+#### Registry Management
+
+```bash
+# List installed registers
+keywork list
+
+# List with verbose output
+keywork list --verbose
+
+# List globally installed packages
+keywork list --global
+
+# Show registry information
+keywork registry --info
+
+# Add custom registry
+keywork registry --add https://my-registry.com
+```
+
+### Validation and Information
+
+#### Validation Commands
+
+```bash
+# Validate a register
+keywork validate
+
+# Validate with detailed output
+keywork validate --verbose
+
+# Validate specific files
+keywork validate --file src/main.lig
+
+# Validate dependencies
+keywork validate --deps
+```
+
+#### Information Commands
+
+```bash
+# Show register information
+keywork info my-register
+
+# Show detailed information
+keywork info my-register --verbose
+
+# Show build information
+keywork info my-register --build
+
+# Show dependency information
+keywork info my-register --deps
+```
+
+### Cache Management
+
+```bash
+# Clean package cache
+keywork clean-cache
+
+# Show cache statistics
+keywork cache --stats
+
+# Clear specific cache
+keywork cache --clear downloads
+
+# Set cache directory
+keywork cache --set-dir /path/to/cache
+```
+
+## Register Manifest Format
+
+The `register.toml` file defines your package:
+
+```toml
+[register]
+name = "my-register"
+version = "1.0.0"
+description = "A useful Ligature register"
+authors = ["Your Name <your.email@example.com>"]
+license = "Apache-2.0"
+repository = "https://github.com/user/my-register"
+homepage = "https://my-register.example.com"
+keywords = ["ligature", "utilities"]
+categories = ["utilities"]
+
+[dependencies]
+stdlib = "1.0.0"
+config = "0.1.0"
+web = { version = "2.0.0", optional = true }
+
+[dev-dependencies]
+test-utils = "0.5.0"
+
+[exports]
+core = "src/core.lig"
+utils = "src/utils.lig"
+types = "src/types.lig"
+
+[build]
+target = "release"
+optimize = true
+parallel = true
+
+[metadata]
+tags = ["web", "utilities"]
+maintainers = ["maintainer@example.com"]
+```
+
+### Manifest Fields
+
+#### Register Information
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | `string` | Yes | Package name (must be unique) |
+| `version` | `string` | Yes | Semantic version |
+| `description` | `string` | Yes | Package description |
+| `authors` | `array` | Yes | List of authors |
+| `license` | `string` | Yes | License identifier |
+| `repository` | `string` | No | Source repository URL |
+| `homepage` | `string` | No | Package homepage |
+| `keywords` | `array` | No | Search keywords |
+| `categories` | `array` | No | Package categories |
+
+#### Dependencies
+
+Dependencies can be specified with version constraints:
+
+```toml
+[dependencies]
+# Exact version
+stdlib = "1.0.0"
+
+# Version range
+config = ">=1.0.0,<2.0.0"
+
+# Optional dependency
+web = { version = "2.0.0", optional = true }
+
+# Git dependency
+custom = { git = "https://github.com/user/custom" }
+
+# Local dependency
+local = { path = "../local-package" }
+```
+
+#### Exports
+
+Define what modules are exported from your register:
+
+```toml
+[exports]
+# Simple export
+core = "src/core.lig"
+
+# Export with alias
+utils = { path = "src/utils.lig", alias = "my-utils" }
+
+# Conditional export
+web = { path = "src/web.lig", optional = true }
+```
+
+## Dependency Resolution
+
+Keywork provides sophisticated dependency resolution:
+
+### Version Constraints
+
+```toml
+# Exact version
+package = "1.0.0"
+
+# Version range
+package = ">=1.0.0,<2.0.0"
+
+# Compatible version (semver)
+package = "^1.0.0"
+
+# Latest patch version
+package = "~1.0.0"
+
+# Latest minor version
+package = "^1.0"
+
+# Latest version
+package = "*"
+```
+
+### Conflict Resolution
+
+Keywork automatically resolves dependency conflicts:
+
+```bash
+# Show dependency conflicts
+keywork deps --conflicts
+
+# Resolve conflicts automatically
+keywork deps --resolve
+
+# Show resolution strategy
+keywork deps --strategy
+```
+
+### Circular Dependency Detection
+
+```bash
+# Check for circular dependencies
+keywork validate --circular
+
+# Show dependency graph
+keywork deps --graph
+```
+
+## Registry Integration
+
+### Default Registry
+
+Keywork uses a default registry for package distribution:
+
+```bash
+# Show default registry
+keywork registry --default
+
+# Change default registry
+keywork registry --set-default https://registry.ligature.dev
+```
+
+### Custom Registries
+
+Add and manage custom registries:
+
+```bash
+# Add custom registry
+keywork registry --add https://my-registry.com
+
+# List all registries
+keywork registry --list
+
+# Remove registry
+keywork registry --remove https://my-registry.com
+
+# Test registry connection
+keywork registry --test https://my-registry.com
+```
+
+### Authentication
+
+```bash
+# Set authentication token
+export KEYWORK_AUTH_TOKEN="your-token-here"
+
+# Login to registry
+keywork login --registry https://my-registry.com
+
+# Logout from registry
+keywork logout --registry https://my-registry.com
+```
+
+## Build System
+
+### Build Configuration
+
+Configure the build process in your manifest:
+
+```toml
+[build]
+target = "release"
+optimize = true
+parallel = true
+cache = true
+verbose = false
+
+[build.optimization]
+level = 2
+size = false
+speed = true
+
+[build.features]
+default = ["std"]
+optional = ["web", "async"]
+```
+
+### Build Artifacts
+
+Keywork generates various build artifacts:
+
+```
+build/
+├── my-register-1.0.0.tar.gz
+├── my-register-1.0.0.sha256
+├── manifest.json
+├── dependencies.json
+└── metadata.json
+```
+
+### Build Commands
+
+```bash
+# Build with specific configuration
+keywork build --config debug
+
+# Build with custom features
+keywork build --features "web,async"
+
+# Build with optimization
+keywork build --optimize
+
+# Clean build
+keywork build --clean
+```
+
+## Testing and Validation
+
+### Testing Support
+
+```bash
+# Run tests
+keywork test
+
+# Run specific tests
+keywork test --pattern "test_*"
+
+# Run tests with coverage
+keywork test --coverage
+
+# Run tests in parallel
+keywork test --parallel
+```
+
+### Validation
+
+```bash
+# Validate syntax
+keywork validate --syntax
+
+# Validate types
+keywork validate --types
+
+# Validate dependencies
+keywork validate --deps
+
+# Validate exports
+keywork validate --exports
+
+# Full validation
+keywork validate --all
+```
+
+## Examples
+
+### Simple Library Register
+
+```bash
+# Create a simple library
+keywork init my-lib --template library
+
+# Add source files
+echo 'let add = fun x y => x + y;' > src/math.lig
+
+# Update manifest
+cat > register.toml << 'EOF'
+[register]
+name = "my-lib"
+version = "1.0.0"
+description = "Simple math library"
+authors = ["Your Name <email@example.com>"]
+license = "MIT"
+
+[exports]
+math = "src/math.lig"
+EOF
+
+# Build and publish
+keywork build
+keywork publish
+```
+
+### Application Register
+
+```bash
+# Create an application
+keywork init my-app --template application
+
+# Add dependencies
+cat > register.toml << 'EOF'
+[register]
+name = "my-app"
+version = "1.0.0"
+description = "My application"
+authors = ["Your Name <email@example.com>"]
+license = "MIT"
+
+[dependencies]
+stdlib = "1.0.0"
+my-lib = "1.0.0"
+
+[exports]
+main = "src/main.lig"
+EOF
+
+# Install dependencies and build
+keywork install-deps
+keywork build
+```
+
+## Configuration
+
+### Global Configuration
+
+Keywork uses configuration files for global settings:
+
+```toml
+# ~/.config/keywork/config.toml
+[registry]
+default = "https://registry.ligature.dev"
+timeout = 30
+
+[auth]
+token = "your-token-here"
+
+[build]
+parallel = true
+cache = true
+
+[install]
+global = false
+force = false
+```
+
+### Environment Variables
+
+```bash
+# Authentication
+export KEYWORK_AUTH_TOKEN="your-token"
+
+# Registry settings
+export KEYWORK_REGISTRY="https://my-registry.com"
+
+# Build settings
+export KEYWORK_BUILD_PARALLEL="true"
+export KEYWORK_BUILD_CACHE="true"
+```
+
+## Related Documentation
+
+- [Ligature Language Reference](../llm-language-reference.mdx)
+- [User Guide](../user-guide/)
+- [Developer Guide](../developer-guide/)
+- [Keywork Source Code](../../../apps/keywork/)

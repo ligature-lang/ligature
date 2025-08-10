@@ -1,0 +1,698 @@
+---
+title: Cacophony Orchestration
+description: CLI tool for orchestrating collections of Ligature programs across multiple environments
+---
+
+# Cacophony Orchestration
+
+Cacophony is a CLI tool for orchestrating collections of Ligature programs. It provides a unified interface for managing, deploying, and operating Ligature-based configurations across multiple environments and use cases.
+
+## Overview
+
+Cacophony is designed to be:
+
+- **Purpose-Agnostic**: Not tied to any specific domain (infrastructure, etc.) but can orchestrate any Ligature-based configuration
+- **Register-Centric**: Built around Ligature's register system for dependency management and code organization
+- **Environment-Aware**: Supports multiple environments (dev, staging, prod) with environment-specific configurations
+- **Declarative Operations**: All operations are defined declaratively in Ligature, not imperatively in the CLI
+- **Type-Safe Orchestration**: Leverages Ligature's type system to ensure configuration correctness across environments
+- **Extensible**: Plugin system for custom operations and integrations
+
+## Quick Start
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/fugue-ai/ligature.git
+cd ligature/apps/cacophony
+
+# Build the CLI tool
+cargo build --release
+
+# Install globally (optional)
+cargo install --path .
+```
+
+### Initialize a New Project
+
+```bash
+# Initialize with Terraform template
+cacophony init --template terraform --name my-project
+
+# Navigate to your project
+cd my-project
+```
+
+### Basic Workflow
+
+```bash
+# List available resources
+cacophony list --collections --environments
+
+# Validate your configuration
+cacophony validate --environment dev
+
+# Deploy a collection
+cacophony deploy --collection frontend --environment dev
+```
+
+## Project Structure
+
+A typical Cacophony project has the following structure:
+
+```
+my-project/
+├── cacophony.lig          # Main configuration file
+├── environments/          # Environment-specific configurations
+│   ├── dev.lig
+│   ├── staging.lig
+│   └── prod.lig
+├── collections/           # Collection definitions
+│   ├── frontend.lig
+│   ├── backend.lig
+│   └── database.lig
+├── scripts/              # Custom operation scripts
+│   ├── migrate.sh
+│   └── test.sh
+└── plugins/              # Custom plugins (optional)
+    └── custom/
+```
+
+## Configuration
+
+### Main Configuration (`cacophony.lig`)
+
+The main configuration file defines your project structure:
+
+```ocaml
+-- cacophony.lig
+module Cacophony
+
+let project = {
+  name = "my-project",
+  version = "1.0.0",
+  description = "My project description",
+  authors = ["team@example.com"]
+}
+
+let environments = {
+  dev = {
+    name = "development",
+    variables = {
+      "DATABASE_URL" = "postgresql://localhost:5432/dev",
+      "API_BASE_URL" = "http://localhost:8080"
+    },
+    plugins = ["terraform"]
+  },
+  staging = {
+    name = "staging",
+    variables = {
+      "DATABASE_URL" = "postgresql://staging:5432/staging",
+      "API_BASE_URL" = "https://staging-api.example.com"
+    },
+    plugins = ["terraform", "kubernetes"]
+  },
+  prod = {
+    name = "production",
+    variables = {
+      "DATABASE_URL" = "postgresql://prod:5432/prod",
+      "API_BASE_URL" = "https://api.example.com"
+    },
+    plugins = ["terraform", "kubernetes", "monitoring"]
+  }
+}
+
+let collections = {
+  frontend = {
+    name = "frontend",
+    dependencies = ["shared-types"],
+    operations = ["deploy", "validate"],
+    environments = ["dev", "staging", "prod"]
+  },
+  backend = {
+    name = "backend",
+    dependencies = ["database", "shared-types"],
+    operations = ["deploy", "migrate", "validate"],
+    environments = ["dev", "staging", "prod"]
+  },
+  database = {
+    name = "database",
+    dependencies = [],
+    operations = ["deploy", "migrate"],
+    environments = ["dev", "staging", "prod"]
+  }
+}
+
+export { project, environments, collections }
+```
+
+### Environment Configuration
+
+Environment-specific configurations can override default values:
+
+```ocaml
+-- environments/dev.lig
+module Dev
+
+let overrides = {
+  variables = {
+    "DEBUG" = true,
+    "LOG_LEVEL" = "debug"
+  },
+
+  collections = {
+    frontend = {
+      replicas = 1,
+      resources = {
+        cpu = "100m",
+        memory = "128Mi"
+      }
+    },
+    backend = {
+      replicas = 1,
+      resources = {
+        cpu = "200m",
+        memory = "256Mi"
+      }
+    }
+  }
+}
+
+export { overrides }
+```
+
+### Collection Configuration
+
+Each collection defines its specific configuration:
+
+```ocaml
+-- collections/frontend.lig
+module Frontend
+
+let config = {
+  name = "frontend",
+  type = "web",
+
+  deploy = {
+    replicas = 2,
+    resources = {
+      cpu = "500m",
+      memory = "512Mi"
+    },
+
+    ports = [{
+      container = 80,
+      service = 8080,
+      protocol = "http"
+    }],
+
+    environment = {
+      "NODE_ENV" = "production",
+      "API_URL" = "${API_BASE_URL}"
+    }
+  },
+
+  validate = {
+    health_check = {
+      path = "/health",
+      port = 80,
+      timeout = 30
+    }
+  }
+}
+
+export { config }
+```
+
+## Core Commands
+
+### `init`
+
+Initialize a new cacophony project.
+
+```bash
+# Initialize with Terraform template
+cacophony init --template terraform --name my-project
+
+# Initialize with microservices template
+cacophony init --template microservices --name my-project
+
+# Initialize with custom template
+cacophony init --template custom --name my-project --template-path ./custom-template
+```
+
+**Options:**
+- `--template`: Template to use (terraform, microservices, custom)
+- `--name`: Project name
+- `--force`: Force overwrite of existing directory
+- `--template-path`: Path to custom template
+
+### `list`
+
+List available resources and their status.
+
+```bash
+# List all collections and environments
+cacophony list --collections --environments
+
+# List collections only
+cacophony list --collections
+
+# List environments only
+cacophony list --environments
+
+# List with detailed information
+cacophony list --collections --environments --verbose
+
+# List resources for specific environment
+cacophony list --environment dev --collections
+```
+
+### `validate`
+
+Validate configuration and dependencies.
+
+```bash
+# Validate all configurations
+cacophony validate
+
+# Validate specific environment
+cacophony validate --environment dev
+
+# Validate specific collection
+cacophony validate --collection frontend
+
+# Validate with detailed output
+cacophony validate --environment dev --verbose
+
+# Validate dependencies
+cacophony validate --dependencies
+```
+
+### `deploy`
+
+Deploy collections to environments.
+
+```bash
+# Deploy specific collection to environment
+cacophony deploy --collection frontend --environment dev
+
+# Deploy multiple collections
+cacophony deploy --collection frontend --collection backend --environment dev
+
+# Deploy all collections
+cacophony deploy --environment dev
+
+# Deploy with dry-run
+cacophony deploy --collection frontend --environment dev --dry-run
+
+# Deploy with specific operation
+cacophony deploy --collection frontend --environment dev --operation deploy
+```
+
+### `destroy`
+
+Destroy deployed resources.
+
+```bash
+# Destroy specific collection
+cacophony destroy --collection frontend --environment dev
+
+# Destroy all collections in environment
+cacophony destroy --environment dev
+
+# Destroy with confirmation
+cacophony destroy --environment dev --confirm
+```
+
+### `status`
+
+Check the status of deployed resources.
+
+```bash
+# Check status of all resources
+cacophony status
+
+# Check status for specific environment
+cacophony status --environment dev
+
+# Check status for specific collection
+cacophony status --collection frontend
+
+# Check status with detailed output
+cacophony status --environment dev --verbose
+```
+
+### `logs`
+
+View logs for deployed resources.
+
+```bash
+# View logs for collection
+cacophony logs --collection frontend --environment dev
+
+# View logs with follow
+cacophony logs --collection frontend --environment dev --follow
+
+# View logs with time range
+cacophony logs --collection frontend --environment dev --since "1h"
+
+# View logs with specific lines
+cacophony logs --collection frontend --environment dev --tail 100
+```
+
+## Operations
+
+### Built-in Operations
+
+Cacophony provides several built-in operations:
+
+#### `deploy`
+
+Deploy a collection to an environment:
+
+```bash
+cacophony deploy --collection frontend --environment dev
+```
+
+#### `validate`
+
+Validate a collection's configuration:
+
+```bash
+cacophony validate --collection frontend --environment dev
+```
+
+#### `migrate`
+
+Run database migrations:
+
+```bash
+cacophony migrate --collection database --environment dev
+```
+
+#### `test`
+
+Run tests for a collection:
+
+```bash
+cacophony test --collection backend --environment dev
+```
+
+#### `scale`
+
+Scale a collection:
+
+```bash
+cacophony scale --collection frontend --environment dev --replicas 3
+```
+
+### Custom Operations
+
+Define custom operations in your collection configuration:
+
+```ocaml
+-- collections/backend.lig
+module Backend
+
+let custom_operations = {
+  seed_data = {
+    description = "Seed database with initial data",
+    script = "./scripts/seed.sh",
+    environment = {
+      "SEED_FILE" = "./data/seed.sql"
+    }
+  },
+  
+  backup = {
+    description = "Create database backup",
+    script = "./scripts/backup.sh",
+    environment = {
+      "BACKUP_DIR" = "./backups"
+    }
+  }
+}
+
+export { custom_operations }
+```
+
+Run custom operations:
+
+```bash
+# Run custom operation
+cacophony run --collection backend --environment dev --operation seed_data
+
+# Run with custom parameters
+cacophony run --collection backend --environment dev --operation backup --param BACKUP_DIR=/tmp/backups
+```
+
+## Plugins
+
+### Built-in Plugins
+
+Cacophony includes several built-in plugins:
+
+#### Terraform Plugin
+
+Manage infrastructure with Terraform:
+
+```ocaml
+let terraform_config = {
+  plugin = "terraform",
+  version = "1.0.0",
+  backend = {
+    type = "s3",
+    bucket = "my-terraform-state",
+    key = "dev/terraform.tfstate"
+  }
+}
+```
+
+#### Kubernetes Plugin
+
+Deploy to Kubernetes clusters:
+
+```ocaml
+let kubernetes_config = {
+  plugin = "kubernetes",
+  version = "1.0.0",
+  context = "my-cluster",
+  namespace = "my-app"
+}
+```
+
+#### Docker Plugin
+
+Build and manage Docker containers:
+
+```ocaml
+let docker_config = {
+  plugin = "docker",
+  version = "1.0.0",
+  registry = "my-registry.com",
+  build_args = {
+    "VERSION" = "1.0.0"
+  }
+}
+```
+
+### Custom Plugins
+
+Create custom plugins for specific needs:
+
+```ocaml
+-- plugins/custom/aws.lig
+module AwsPlugin
+
+let config = {
+  name = "aws",
+  version = "1.0.0",
+  operations = ["deploy", "destroy", "status"],
+  
+  deploy = {
+    script = "./scripts/aws-deploy.sh",
+    environment = {
+      "AWS_REGION" = "us-west-2",
+      "AWS_PROFILE" = "default"
+    }
+  }
+}
+
+export { config }
+```
+
+## Environment Management
+
+### Environment Variables
+
+Define environment-specific variables:
+
+```ocaml
+let environment_vars = {
+  dev = {
+    "DEBUG" = true,
+    "LOG_LEVEL" = "debug",
+    "DATABASE_URL" = "postgresql://localhost:5432/dev"
+  },
+  staging = {
+    "DEBUG" = false,
+    "LOG_LEVEL" = "info",
+    "DATABASE_URL" = "postgresql://staging:5432/staging"
+  },
+  prod = {
+    "DEBUG" = false,
+    "LOG_LEVEL" = "warn",
+    "DATABASE_URL" = "postgresql://prod:5432/prod"
+  }
+}
+```
+
+### Environment Overrides
+
+Override specific values for environments:
+
+```ocaml
+-- environments/prod.lig
+module Prod
+
+let overrides = {
+  collections = {
+    frontend = {
+      replicas = 5,
+      resources = {
+        cpu = "1000m",
+        memory = "1Gi"
+      }
+    }
+  },
+  
+  variables = {
+    "ENABLE_MONITORING" = true,
+    "ENABLE_LOGGING" = true
+  }
+}
+
+export { overrides }
+```
+
+## Dependency Management
+
+### Collection Dependencies
+
+Define dependencies between collections:
+
+```ocaml
+let collections = {
+  frontend = {
+    name = "frontend",
+    dependencies = ["shared-types"],
+    operations = ["deploy", "validate"]
+  },
+  backend = {
+    name = "backend",
+    dependencies = ["database", "shared-types"],
+    operations = ["deploy", "migrate", "validate"]
+  },
+  database = {
+    name = "database",
+    dependencies = [],
+    operations = ["deploy", "migrate"]
+  }
+}
+```
+
+### Dependency Resolution
+
+Cacophony automatically resolves dependencies:
+
+```bash
+# Deploy with dependencies
+cacophony deploy --collection backend --environment dev
+# This will deploy: database -> shared-types -> backend
+```
+
+## Examples
+
+### Web Application
+
+```bash
+# Initialize web application project
+cacophony init --template web --name my-web-app
+
+# Deploy to development
+cacophony deploy --environment dev
+
+# Deploy to staging
+cacophony deploy --environment staging
+
+# Deploy to production
+cacophony deploy --environment prod
+```
+
+### Microservices
+
+```bash
+# Initialize microservices project
+cacophony init --template microservices --name my-microservices
+
+# Deploy specific service
+cacophony deploy --collection user-service --environment dev
+
+# Deploy all services
+cacophony deploy --environment dev
+
+# Scale service
+cacophony scale --collection user-service --environment prod --replicas 5
+```
+
+### Infrastructure
+
+```bash
+# Initialize infrastructure project
+cacophony init --template terraform --name my-infrastructure
+
+# Deploy infrastructure
+cacophony deploy --environment dev
+
+# Validate infrastructure
+cacophony validate --environment dev
+
+# Destroy infrastructure
+cacophony destroy --environment dev
+```
+
+## Configuration Reference
+
+### Project Configuration
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | `string` | Yes | Project name |
+| `version` | `string` | Yes | Project version |
+| `description` | `string` | No | Project description |
+| `authors` | `array` | No | List of authors |
+
+### Environment Configuration
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | `string` | Yes | Environment name |
+| `variables` | `object` | No | Environment variables |
+| `plugins` | `array` | No | List of plugins |
+
+### Collection Configuration
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | `string` | Yes | Collection name |
+| `dependencies` | `array` | No | Collection dependencies |
+| `operations` | `array` | No | Available operations |
+| `environments` | `array` | No | Supported environments |
+
+## Related Documentation
+
+- [Ligature Language Reference](../llm-language-reference.mdx)
+- [User Guide](../user-guide/)
+- [Developer Guide](../developer-guide/)
+- [Cacophony Source Code](../../../apps/cacophony/)
