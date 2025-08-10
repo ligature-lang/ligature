@@ -70,3 +70,172 @@ decisions:
           pros: ["Non-blocking", "Better UX", "Progress reporting"]
           cons: ["More complex", "Async complexity"]
       outcome: "Async evaluation provides better user experience and scalability"
+
+  - id: "DECISION-004"
+    title: "Expression caching with LRU eviction"
+    description: "Implement LRU cache eviction strategy for optimal memory usage"
+    status: "approved"
+    decision_type: "performance"
+    tags:
+      - "caching"
+      - "performance"
+      - "memory-management"
+    created_date: "2024-08-10T01:00:00Z"
+    context:
+      problem: "Need efficient caching strategy for expression evaluation"
+      alternatives:
+        - name: "No eviction"
+          description: "Keep all cached expressions"
+          pros: ["Simple", "No cache misses"]
+          cons: ["Unbounded memory usage", "Memory leaks"]
+        - name: "LRU eviction"
+          description: "Least Recently Used eviction"
+          pros: ["Bounded memory", "Good hit rates", "Simple implementation"]
+          cons: ["Some cache misses", "Eviction overhead"]
+        - name: "LFU eviction"
+          description: "Least Frequently Used eviction"
+          pros: ["Keeps frequently used items", "Good for stable workloads"]
+          cons: ["Complex implementation", "Poor for changing workloads"]
+      outcome: "LRU provides good balance of performance and memory usage (99.95% hit rate achieved)"
+
+  - id: "DECISION-005"
+    title: "LSP-first IDE integration strategy"
+    description: "Focus on Language Server Protocol for IDE integration"
+    status: "approved"
+    decision_type: "ide-integration"
+    tags:
+      - "ide-integration"
+      - "lsp"
+      - "architecture"
+    created_date: "2024-08-10T01:00:00Z"
+    context:
+      problem: "Need IDE integration that works across multiple editors"
+      alternatives:
+        - name: "Editor-specific extensions"
+          description: "Build extensions for each editor"
+          pros: ["Editor-specific features", "Deep integration"]
+          cons: ["High maintenance", "Limited reach", "Duplicated effort"]
+        - name: "LSP-first approach"
+          description: "Implement LSP server with editor-specific clients"
+          pros: ["Single implementation", "Works with many editors", "Standard protocol"]
+          cons: ["Limited to LSP features", "Less editor-specific optimization"]
+      outcome: "LSP provides broad compatibility and single implementation effort"
+
+  - id: "DECISION-006"
+    title: "Type-level computation system"
+    description: "Implement advanced type-level programming capabilities"
+    status: "approved"
+    decision_type: "type-system"
+    tags:
+      - "type-system"
+      - "type-level"
+      - "advanced-features"
+    created_date: "2024-08-10T01:00:00Z"
+    context:
+      problem: "Need advanced type safety and validation capabilities"
+      alternatives:
+        - name: "Basic type system"
+          description: "Simple static typing"
+          pros: ["Simple", "Easy to understand", "Fast compilation"]
+          cons: ["Limited expressiveness", "Less type safety"]
+        - name: "Type-level computation"
+          description: "Advanced type-level programming"
+          pros: ["High expressiveness", "Advanced type safety", "Compile-time validation"]
+          cons: ["Complex", "Steeper learning curve", "Slower compilation"]
+      outcome: "Type-level computation provides powerful compile-time guarantees and validation"
+
+  - id: "DECISION-007"
+    title: "XDG base directory for configuration"
+    description: "Use XDG base directory specification for configuration storage"
+    status: "approved"
+    decision_type: "configuration"
+    tags:
+      - "configuration"
+      - "xdg"
+      - "cross-platform"
+    created_date: "2024-08-10T01:00:00Z"
+    context:
+      problem: "Need cross-platform configuration storage that follows platform conventions"
+      alternatives:
+        - name: "Custom paths"
+          description: "Define custom configuration paths"
+          pros: ["Full control", "Simple implementation"]
+          cons: ["Platform-specific", "User confusion", "Non-standard"]
+        - name: "XDG base directory"
+          description: "Follow XDG base directory specification"
+          pros: ["Cross-platform", "Standard", "User expectations", "Tool integration"]
+          cons: ["More complex implementation", "XDG dependency"]
+      outcome: "XDG provides standard cross-platform configuration storage"
+
+  - id: "DECISION-008"
+    title: "Plugin architecture for Cacophony"
+    description: "Design Cacophony CLI with plugin-based architecture"
+    status: "approved"
+    decision_type: "architecture"
+    tags:
+      - "cacophony"
+      - "plugin-architecture"
+      - "extensibility"
+    created_date: "2024-08-10T01:00:00Z"
+    context:
+      problem: "Need extensible CLI that can support various deployment targets"
+      alternatives:
+        - name: "Monolithic CLI"
+          description: "Build all features into main CLI"
+          pros: ["Simple", "No plugin complexity", "Guaranteed compatibility"]
+          cons: ["Large binary", "Hard to extend", "All-or-nothing deployment"]
+        - name: "Plugin architecture"
+          description: "Core CLI with plugin system"
+          pros: ["Extensible", "Smaller core", "Optional features", "Community contributions"]
+          cons: ["More complex", "Plugin compatibility", "Security considerations"]
+      outcome: "Plugin architecture provides flexibility and community extensibility"
+
+  - id: "DECISION-009"
+    title: "Performance monitoring with adaptive optimization"
+    description: "Implement comprehensive performance monitoring with adaptive optimization"
+    status: "approved"
+    decision_type: "performance"
+    tags:
+      - "performance"
+      - "monitoring"
+      - "optimization"
+    created_date: "2024-08-10T01:00:00Z"
+    context:
+      problem: "Need to maintain and improve performance as system evolves"
+      alternatives:
+        - name: "Manual optimization"
+          description: "Optimize based on manual analysis"
+          pros: ["Simple", "No runtime overhead"]
+          cons: ["Reactive", "Missed opportunities", "Time-consuming"]
+        - name: "Static optimization"
+          description: "Fixed optimization strategies"
+          pros: ["Predictable", "No runtime overhead"]
+          cons: ["Not adaptive", "Suboptimal for varying workloads"]
+        - name: "Adaptive optimization"
+          description: "Runtime monitoring with adaptive strategies"
+          pros: ["Adapts to workload", "Continuous improvement", "Data-driven"]
+          cons: ["Runtime overhead", "Complex implementation"]
+      outcome: "Adaptive optimization provides continuous performance improvement"
+
+  - id: "DECISION-010"
+    title: "Priority-based development approach"
+    description: "Focus development efforts on high-priority blocking issues first"
+    status: "approved"
+    decision_type: "process"
+    tags:
+      - "process"
+      - "priorities"
+      - "development"
+    created_date: "2024-08-10T01:00:00Z"
+    context:
+      problem: "Multiple development areas competing for attention"
+      alternatives:
+        - name: "Feature-driven"
+          description: "Focus on new features"
+          pros: ["User-facing improvements", "Market differentiation"]
+          cons: ["Technical debt accumulation", "Blocking issues remain"]
+        - name: "Priority-based"
+          description: "Address blocking issues first"
+          pros: ["Removes blockers", "Improves stability", "Enables future work"]
+          cons: ["Less visible progress", "Delays new features"]
+      outcome: "Priority-based approach ensures stable foundation for future development"

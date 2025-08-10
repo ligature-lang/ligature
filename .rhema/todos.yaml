@@ -2,6 +2,7 @@
 # This file tracks work items, tasks, and improvements for this scope
 
 todos:
+  # HIGH PRIORITY - CRITICAL ISSUES
   - id: "TODO-001"
     title: "Fix Ligature evaluator to return proper configuration values instead of Unit"
     description: "Critical for Cacophony CLI functionality - evaluator currently returns Unit instead of proper configuration values"
@@ -24,14 +25,96 @@ todos:
       - "Tests pass with new configuration format"
 
   - id: "TODO-002"
+    title: "Clean up 95+ compiler warnings in ligature-lsp"
+    description: "Address all compiler warnings in ligature-lsp crate for better code quality"
+    priority: "high"
+    status: "todo"
+    tags:
+      - "code-quality"
+      - "compiler-warnings"
+      - "ligature-lsp"
+    created_date: "2024-08-10T01:00:00Z"
+    context:
+      related_files:
+        - "crates/ligature-lsp/src/"
+    acceptance_criteria:
+      - "Zero compiler warnings in ligature-lsp"
+      - "All unused imports removed"
+      - "Dead code warnings resolved"
+
+  - id: "TODO-003"
+    title: "Clean up compiler warnings in ligature-eval"
+    description: "Address compiler warnings in ligature-eval crate"
+    priority: "high"
+    status: "todo"
+    tags:
+      - "code-quality"
+      - "compiler-warnings"
+      - "ligature-eval"
+    created_date: "2024-08-10T01:00:00Z"
+    context:
+      related_files:
+        - "crates/ligature-eval/src/"
+    acceptance_criteria:
+      - "Zero compiler warnings in ligature-eval"
+      - "Unused import warnings (Hash trait) resolved"
+      - "Unused variable warnings fixed"
+
+  - id: "TODO-004"
+    title: "Fix Value serialization for krox crate"
+    description: "Implement proper Value serialization/deserialization for krox caching system"
+    priority: "high"
+    status: "todo"
+    tags:
+      - "krox"
+      - "serialization"
+      - "ligature-eval"
+      - "blocking"
+    created_date: "2024-08-10T01:00:00Z"
+    context:
+      related_files:
+        - "krox/src/"
+        - "crates/ligature-eval/src/value.rs"
+      dependencies:
+        - "ligature-eval"
+    acceptance_criteria:
+      - "Proper Serialize/Deserialize trait implementations for ligature_eval::Value"
+      - "JSON serialization/deserialization working"
+      - "All krox tests passing"
+
+  - id: "TODO-005"
+    title: "Fix Value serialization for reed app"
+    description: "Implement proper Value serialization/deserialization for reed benchmarking tool"
+    priority: "high"
+    status: "todo"
+    tags:
+      - "reed"
+      - "serialization"
+      - "ligature-eval"
+      - "blocking"
+    created_date: "2024-08-10T01:00:00Z"
+    context:
+      related_files:
+        - "apps/reed/src/"
+        - "crates/ligature-eval/src/value.rs"
+      dependencies:
+        - "ligature-eval"
+    acceptance_criteria:
+      - "Proper Serialize/Deserialize trait implementations for ligature_eval::Value"
+      - "Benchmark results can be serialized"
+      - "All reed tests passing"
+
+  # MEDIUM PRIORITY - FEATURES AND IMPROVEMENTS
+  - id: "TODO-006"
     title: "Implement async evaluation for large configurations"
     description: "Add async evaluation support for large configuration files with progress reporting"
-    priority: "high"
+    priority: "medium"
     status: "todo"
     tags:
       - "performance"
       - "async"
       - "ligature-eval"
+      - "cacophony"
     created_date: "2024-08-10T01:00:00Z"
     context:
       related_files:
@@ -44,21 +127,262 @@ todos:
       - "Progress reporting for long-running evaluations"
       - "Memory management for intensive operations"
 
-  - id: "TODO-003"
-    title: "Clean up 95+ compiler warnings"
-    description: "Address all compiler warnings across the codebase for better code quality"
+  - id: "TODO-007"
+    title: "Integrate async evaluator into LSP"
+    description: "Integrate async evaluator for large configuration processing in LSP"
     priority: "medium"
     status: "todo"
     tags:
-      - "code-quality"
-      - "compiler-warnings"
+      - "ligature-lsp"
+      - "async"
+      - "performance"
     created_date: "2024-08-10T01:00:00Z"
     context:
       related_files:
         - "crates/ligature-lsp/src/"
-        - "crates/ligature-eval/src/"
+      dependencies:
+        - "ligature-eval"
+    acceptance_criteria:
+      - "Async document processing for large files"
+      - "Progress reporting for long-running evaluations"
+      - "Resource management for memory-intensive operations"
+
+  - id: "TODO-008"
+    title: "Implement plugin system for Cacophony"
+    description: "Create plugin loading and management system for Cacophony CLI"
+    priority: "medium"
+    status: "todo"
+    tags:
+      - "cacophony"
+      - "plugin-system"
+      - "architecture"
+    created_date: "2024-08-10T01:00:00Z"
+    context:
+      related_files:
         - "apps/cacophony/src/"
     acceptance_criteria:
-      - "Zero compiler warnings"
-      - "All crates compile cleanly"
-      - "Code quality improvements maintained"
+      - "Dynamic plugin discovery from XDG directories"
+      - "Plugin configuration and lifecycle management"
+      - "Plugin dependency resolution"
+
+  - id: "TODO-009"
+    title: "Implement Kubernetes plugin for Cacophony"
+    description: "Create Kubernetes deployment and management plugin"
+    priority: "medium"
+    status: "todo"
+    tags:
+      - "cacophony"
+      - "kubernetes"
+      - "plugin"
+    created_date: "2024-08-10T01:00:00Z"
+    context:
+      related_files:
+        - "apps/cacophony/src/"
+      dependencies:
+        - "plugin-system"
+    acceptance_criteria:
+      - "K8s configuration validation (kubectl apply --dry-run)"
+      - "Deployment operations (deploy, rollback, scale)"
+      - "Status checking and health monitoring"
+
+  - id: "TODO-010"
+    title: "Implement Terraform plugin for Cacophony"
+    description: "Create Terraform infrastructure management plugin"
+    priority: "medium"
+    status: "todo"
+    tags:
+      - "cacophony"
+      - "terraform"
+      - "plugin"
+    created_date: "2024-08-10T01:00:00Z"
+    context:
+      related_files:
+        - "apps/cacophony/src/"
+      dependencies:
+        - "plugin-system"
+    acceptance_criteria:
+      - "Terraform plan/apply operations"
+      - "State management and locking"
+      - "Variable injection from environment"
+
+  - id: "TODO-011"
+    title: "Complete krox caching system implementation"
+    description: "Finish the core caching system implementation for krox"
+    priority: "medium"
+    status: "todo"
+    tags:
+      - "krox"
+      - "caching"
+      - "performance"
+    created_date: "2024-08-10T01:00:00Z"
+    context:
+      related_files:
+        - "krox/src/"
+    acceptance_criteria:
+      - "Complete caching system implementation"
+      - "Comprehensive testing"
+      - "Proper error handling"
+
+  - id: "TODO-012"
+    title: "Complete reed benchmarking functionality"
+    description: "Finish the core benchmarking functionality for reed"
+    priority: "medium"
+    status: "todo"
+    tags:
+      - "reed"
+      - "benchmarking"
+      - "performance"
+    created_date: "2024-08-10T01:00:00Z"
+    context:
+      related_files:
+        - "apps/reed/src/"
+    acceptance_criteria:
+      - "Custom benchmark execution"
+      - "Performance metrics collection"
+      - "Benchmark result analysis"
+
+  - id: "TODO-013"
+    title: "Add comprehensive API documentation"
+    description: "Complete API reference documentation for all crates"
+    priority: "medium"
+    status: "todo"
+    tags:
+      - "documentation"
+      - "api"
+    created_date: "2024-08-10T01:00:00Z"
+    context:
+      related_files:
+        - "docs/"
+    acceptance_criteria:
+      - "All public APIs documented"
+      - "Code examples included"
+      - "Performance characteristics documented"
+
+  # LOW PRIORITY - ENHANCEMENTS AND OPTIMIZATIONS
+  - id: "TODO-014"
+    title: "Add more performance benchmarks"
+    description: "Expand performance benchmarking coverage across all components"
+    priority: "low"
+    status: "todo"
+    tags:
+      - "performance"
+      - "benchmarking"
+      - "reed"
+    created_date: "2024-08-10T01:00:00Z"
+    context:
+      related_files:
+        - "apps/reed/src/"
+        - "benches/"
+    acceptance_criteria:
+      - "Real-world workload testing"
+      - "Memory usage benchmarks"
+      - "Scalability testing"
+
+  - id: "TODO-015"
+    title: "Add more code actions to LSP"
+    description: "Implement additional intelligent refactoring and code generation features"
+    priority: "low"
+    status: "todo"
+    tags:
+      - "ligature-lsp"
+      - "ide-integration"
+      - "refactoring"
+    created_date: "2024-08-10T01:00:00Z"
+    context:
+      related_files:
+        - "crates/ligature-lsp/src/"
+    acceptance_criteria:
+      - "Additional refactoring tools"
+      - "Advanced code generation"
+      - "Quick fix suggestions"
+
+  - id: "TODO-016"
+    title: "Implement advanced configuration features for Cacophony"
+    description: "Add environment-specific overrides and secret management"
+    priority: "low"
+    status: "todo"
+    tags:
+      - "cacophony"
+      - "configuration"
+      - "security"
+    created_date: "2024-08-10T01:00:00Z"
+    context:
+      related_files:
+        - "apps/cacophony/src/"
+    acceptance_criteria:
+      - "Variable interpolation and templating"
+      - "Conditional configuration based on environment"
+      - "Secret management integration"
+
+  - id: "TODO-017"
+    title: "Add semantic highlighting improvements to LSP"
+    description: "Enhance semantic highlighting with more detailed token information"
+    priority: "low"
+    status: "todo"
+    tags:
+      - "ligature-lsp"
+      - "ide-integration"
+      - "syntax-highlighting"
+    created_date: "2024-08-10T01:00:00Z"
+    context:
+      related_files:
+        - "crates/ligature-lsp/src/"
+    acceptance_criteria:
+      - "Enhanced semantic tokens"
+      - "Better syntax highlighting"
+      - "Improved visual feedback"
+
+  - id: "TODO-018"
+    title: "Complete keywork package management implementation"
+    description: "Finish the package management system for Ligature ecosystem"
+    priority: "low"
+    status: "todo"
+    tags:
+      - "keywork"
+      - "package-management"
+      - "ecosystem"
+    created_date: "2024-08-10T01:00:00Z"
+    context:
+      related_files:
+        - "apps/keywork/src/"
+    acceptance_criteria:
+      - "Package registry integration"
+      - "Dependency resolution"
+      - "Version management"
+
+  - id: "TODO-019"
+    title: "Add CI/CD pipeline setup"
+    description: "Set up comprehensive CI/CD pipeline for automated testing and releases"
+    priority: "low"
+    status: "todo"
+    tags:
+      - "ci-cd"
+      - "automation"
+      - "testing"
+    created_date: "2024-08-10T01:00:00Z"
+    context:
+      related_files:
+        - ".github/workflows/"
+    acceptance_criteria:
+      - "Automated testing"
+      - "Release automation"
+      - "Multi-platform builds"
+
+  - id: "TODO-020"
+    title: "Add more comprehensive logging throughout codebase"
+    description: "Implement structured logging across all components for better observability"
+    priority: "low"
+    status: "todo"
+    tags:
+      - "logging"
+      - "observability"
+      - "debugging"
+    created_date: "2024-08-10T01:00:00Z"
+    context:
+      related_files:
+        - "crates/"
+        - "apps/"
+    acceptance_criteria:
+      - "Structured logging implemented"
+      - "Log levels configurable"
+      - "Performance impact minimal"

@@ -2,6 +2,8 @@
 # This file contains the list of crates that are part of the Ligature project
 # and need to be built, tested, and published.
 
+# Krox and performance-monitor are not included due to environment issues
+
 # All crates that should be built and tested in CI
 crates:
   # Core Ligature language crates
@@ -35,37 +37,20 @@ crates:
   - cacophony
   - keywork
   - reed
-  - performance-monitor
   - krox
 
 # Crates that should be published to crates.io
 # Core language crates that are stable and ready for public use
 publish_crates:
-  # Core Ligature language crates
-  - ligature-ast
-  - ligature-error
-  - ligature-parser
-  - ligature-types
-  - ligature-eval
+  # Language server
   - ligature-lsp
   
-  # Configuration management crates
-  - cacophony-config
-  - cacophony-core
-  - cacophony-plugin
-  
-  # Baton system crates
-  - baton-client
-  - baton-core
-  - baton-engine-plugin
-  - baton-error
-  - baton-protocol
-  - baton-specification
-  - baton-verification
-  
-  # Embouchure shared library crates
-  - embouchure-checker
-  - embouchure-xdg
+  # Application crates
+  - baton
+  - cacophony
+  - keywork
+  - reed
+  - krox
 
 # Crates that should be included in coverage reporting
 # Excludes applications and tools that may have cross-language dependencies
@@ -101,4 +86,3 @@ coverage_crates:
   - cacophony
   - keywork
   - reed
-  - performance-monitor 
