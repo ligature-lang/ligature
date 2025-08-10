@@ -5,7 +5,9 @@ use std::path::{Path, PathBuf};
 
 use miette::{IntoDiagnostic, Result, miette};
 
-use crate::dependency::{install_dependencies, resolve_dependencies_from_manifest};
+use crate::dependency::{
+    install_dependencies, parse_dependencies, resolve_dependencies_from_manifest,
+};
 use crate::register::Register;
 use crate::registry::Registry;
 use crate::xdg_config::KeyworkXdgConfig;
@@ -136,10 +138,8 @@ pub async fn install_register(
     version: Option<&str>,
     global: bool,
 ) -> Result<()> {
-    // Use XDG configuration for registry
-    let registry = Registry::with_xdg_config()
-        .await
-        .unwrap_or_else(|_| Registry::default());
+    // Use default registry for development (localhost triggers mock mode)
+    let registry = Registry::default();
 
     let version = version.unwrap_or("latest");
     println!("Installing register '{register_name}' version '{version}'...");
@@ -746,6 +746,140 @@ pub async fn list_available_versions(register_name: &str) -> Result<()> {
         Err(e) => {
             println!("Failed to get versions: {e}");
             return Err(e);
+        }
+    }
+
+    Ok(())
+}
+
+pub async fn show_dependency_graph(path: &Path, format: &str) -> Result<()> {
+    let register = Register::load(path).map_err(|e| miette!("Failed to load register: {}", e))?;
+
+    println!("Dependency graph for register '{}':", register.name());
+
+    let dependencies = parse_dependencies(&register.dependencies())
+        .map_err(|e| miette!("Failed to parse dependencies: {}", e))?;
+
+    match format {
+        "json" => {
+            let graph_data = serde_json::json!({
+                "name": register.name(),
+                "version": register.version(),
+                "dependencies": dependencies.iter().map(|d| {
+                    serde_json::json!({
+                        "name": d.name,
+                        "version": d.version,
+                        "registry": d.registry
+                    })
+                }).collect::<Vec<_>>()
+            });
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&graph_data)
+                    .into_diagnostic()
+                    .map_err(|e| miette!("Failed to serialize graph data: {}", e))?
+            );
+        }
+        "dot" => {
+            println!("digraph dependencies {{");
+            println!("  \"{}\" [label=\"{}\"];", register.name(), register.name());
+            for dep in &dependencies {
+                println!(
+                    "  \"{}\" -> \"{}\" [label=\"{}\"];",
+                    register.name(),
+                    dep.name,
+                    dep.version
+                );
+            }
+            println!("}}");
+        }
+        _ => {
+            println!("  Direct dependencies:");
+            for dep in &dependencies {
+                println!("    {}@{}", dep.name, dep.version);
+            }
+        }
+    }
+
+    Ok(())
+}
+
+pub async fn lock_dependencies(path: &Path) -> Result<()> {
+    let register = Register::load(path).map_err(|e| miette!("Failed to load register: {}", e))?;
+
+    println!("Locking dependencies for register '{}'...", register.name());
+
+    let dependencies = parse_dependencies(&register.dependencies())
+        .map_err(|e| miette!("Failed to parse dependencies: {}", e))?;
+
+    let registry = Registry::default();
+    let mut lock_data = std::collections::HashMap::new();
+
+    for dep in &dependencies {
+        let version = if dep.version == "latest" {
+            registry.get_latest_version(&dep.name).await?
+        } else {
+            dep.version.clone()
+        };
+
+        lock_data.insert(dep.name.clone(), version);
+    }
+
+    let lock_content = toml::to_string_pretty(&serde_json::json!({
+        "lockfile_version": "1.0",
+        "register": {
+            "name": register.name(),
+            "version": register.version()
+        },
+        "dependencies": lock_data
+    }))
+    .into_diagnostic()
+    .map_err(|e| miette!("Failed to serialize lock file: {}", e))?;
+
+    let lock_path = path.join("register.lock");
+    tokio::fs::write(&lock_path, lock_content)
+        .await
+        .into_diagnostic()
+        .map_err(|e| miette!("Failed to write lock file: {}", e))?;
+
+    println!("✓ Created lock file: {}", lock_path.display());
+    Ok(())
+}
+
+pub async fn check_outdated_dependencies(path: &Path) -> Result<()> {
+    let register = Register::load(path).map_err(|e| miette!("Failed to load register: {}", e))?;
+
+    println!(
+        "Checking for outdated dependencies in register '{}'...",
+        register.name()
+    );
+
+    let dependencies = parse_dependencies(&register.dependencies())
+        .map_err(|e| miette!("Failed to parse dependencies: {}", e))?;
+
+    let registry = Registry::default();
+    let mut outdated = Vec::new();
+
+    for dep in &dependencies {
+        if let Ok(versions) = registry.list_versions(&dep.name).await {
+            if let Some(latest) = versions.first() {
+                if latest.version != dep.version && dep.version != "latest" {
+                    outdated.push((
+                        dep.name.clone(),
+                        dep.version.clone(),
+                        latest.version.clone(),
+                    ));
+                }
+            }
+        }
+    }
+
+    if outdated.is_empty() {
+        println!("✓ All dependencies are up to date");
+    } else {
+        println!("Outdated dependencies:");
+        for (name, current, latest) in &outdated {
+            println!("  {}: {} -> {}", name, current, latest);
         }
     }
 

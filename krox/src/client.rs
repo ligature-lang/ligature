@@ -5,7 +5,7 @@ use std::path::Path;
 use ligature_ast::Program;
 use tracing::{debug, info, warn};
 
-use crate::cache::Cache;
+use crate::cache::{Cache, EvictionPolicy};
 use crate::error::{Error, Result};
 use crate::executor::{Executor, HttpExecutor, NativeExecutor};
 use crate::{ClientConfig, ExecutionMode, ExecutionResult};
@@ -208,6 +208,53 @@ impl Client {
         }
     }
 
+    /// Validate cache integrity.
+    pub async fn validate_cache(&mut self) -> Result<()> {
+        if let Some(ref mut cache) = self.cache {
+            cache.validate().await?;
+        }
+        Ok(())
+    }
+
+    /// Set cache eviction policy.
+    pub fn set_cache_eviction_policy(&mut self, policy: EvictionPolicy) -> Result<()> {
+        if let Some(ref mut cache) = self.cache {
+            cache.set_eviction_policy(policy);
+        } else {
+            return Err(Error::configuration(
+                "Cannot set eviction policy: caching is disabled".to_string(),
+                Some("enable_cache".to_string()),
+            ));
+        }
+        Ok(())
+    }
+
+    /// Set cache maximum age.
+    pub fn set_cache_max_age(&mut self, max_age: std::time::Duration) -> Result<()> {
+        if let Some(ref mut cache) = self.cache {
+            cache.set_max_age(max_age);
+        } else {
+            return Err(Error::configuration(
+                "Cannot set max age: caching is disabled".to_string(),
+                Some("enable_cache".to_string()),
+            ));
+        }
+        Ok(())
+    }
+
+    /// Set cache maximum size.
+    pub fn set_cache_max_size(&mut self, max_size: u64) -> Result<()> {
+        if let Some(ref mut cache) = self.cache {
+            cache.set_max_size(max_size);
+        } else {
+            return Err(Error::configuration(
+                "Cannot set max size: caching is disabled".to_string(),
+                Some("enable_cache".to_string()),
+            ));
+        }
+        Ok(())
+    }
+
     /// Get the cache instance.
     pub fn cache(&self) -> Option<&Cache> {
         self.cache.as_ref()
@@ -265,5 +312,30 @@ mod tests {
         } else {
             println!("Note: ligature-cli not found in PATH, test skipped");
         }
+    }
+
+    #[tokio::test]
+    async fn test_cache_management() {
+        let temp_dir = tempdir().unwrap();
+        let mut client = ClientBuilder::new()
+            .cache_dir(temp_dir.path().to_string_lossy().to_string())
+            .enable_cache(true)
+            .build()
+            .await
+            .unwrap();
+
+        // Test cache validation
+        client.validate_cache().await.unwrap();
+
+        // Test setting eviction policy
+        client.set_cache_eviction_policy(EvictionPolicy::Lru).unwrap();
+
+        // Test setting cache limits
+        client.set_cache_max_age(std::time::Duration::from_secs(1800)).unwrap();
+        client.set_cache_max_size(50 * 1024 * 1024).unwrap();
+
+        // Test cache stats
+        let stats = client.cache_stats().await.unwrap();
+        assert!(stats.is_some());
     }
 }

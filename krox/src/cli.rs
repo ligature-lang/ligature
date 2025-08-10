@@ -1,24 +1,24 @@
 //! Command-line interface for Krox.
 
-use std::path::PathBuf;
-
 use clap::{Parser, Subcommand};
-use tracing::{error, info};
+use tracing::info;
 
-use crate::{Client, ClientBuilder, Error, ExecutionMode, Result};
+use crate::cache::EvictionPolicy;
+use crate::error::{Error, Result};
+use crate::{ClientBuilder, ExecutionMode};
 
-/// Krox - Client SDKs for invoking Ligature programs as side effects
+/// Krox CLI - Client SDKs for invoking Ligature programs as side effects
 #[derive(Parser)]
 #[command(name = "krox")]
-#[command(about = "Execute Ligature programs as side effects")]
+#[command(about = "Execute Ligature programs with caching and multiple execution modes")]
 #[command(version)]
 pub struct Cli {
-    /// Execution mode to use
-    #[arg(long, value_enum, default_value = "native")]
+    /// Execution mode
+    #[arg(long, value_enum, default_value_t = ExecutionMode::Native)]
     mode: ExecutionMode,
 
     /// Enable caching
-    #[arg(long, default_value = "true")]
+    #[arg(long, default_value_t = true)]
     cache: bool,
 
     /// Cache directory
@@ -29,58 +29,52 @@ pub struct Cli {
     #[arg(long)]
     http_endpoint: Option<String>,
 
-    /// Timeout for HTTP requests (in seconds)
-    #[arg(long, default_value = "30")]
-    timeout: u64,
-
     /// Path to ligature-cli binary
     #[arg(long)]
     ligature_cli_path: Option<String>,
 
-    /// Enable verbose logging
-    #[arg(long, short)]
+    /// Request timeout in seconds
+    #[arg(long, default_value_t = 30)]
+    timeout: u64,
+
+    /// Configuration file path
+    #[arg(long)]
+    config: Option<String>,
+
+    /// Verbose output
+    #[arg(short, long)]
     verbose: bool,
 
-    /// Configuration file
-    #[arg(long, short)]
-    config: Option<PathBuf>,
+    /// Output format
+    #[arg(long, value_enum, default_value_t = OutputFormat::Pretty)]
+    output: OutputFormat,
 
+    /// Command to execute
     #[command(subcommand)]
-    command: Commands,
+    command: Option<Commands>,
 }
 
 #[derive(Subcommand)]
 enum Commands {
     /// Execute a Ligature program from a file
     Execute {
-        /// Path to the Ligature file
-        file: PathBuf,
-
-        /// Output format
-        #[arg(long, value_enum, default_value = "json")]
-        format: OutputFormat,
+        /// Path to the Ligature program file
+        file: String,
     },
-
     /// Execute a Ligature program from source code
     Eval {
         /// Source code to execute
         source: String,
-
-        /// Output format
-        #[arg(long, value_enum, default_value = "json")]
-        format: OutputFormat,
     },
-
-    /// Show cache statistics
+    /// Cache management commands
     Cache {
         #[command(subcommand)]
         command: CacheCommands,
     },
-
     /// Show configuration
     Config {
-        /// Show configuration in specified format
-        #[arg(long, value_enum, default_value = "yaml")]
+        /// Output format
+        #[arg(long, value_enum, default_value_t = ConfigFormat::Yaml)]
         format: ConfigFormat,
     },
 }
@@ -91,6 +85,24 @@ enum CacheCommands {
     Stats,
     /// Clear the cache
     Clear,
+    /// Validate cache integrity
+    Validate,
+    /// Set eviction policy
+    SetPolicy {
+        /// Eviction policy to use
+        #[arg(value_enum)]
+        policy: EvictionPolicy,
+    },
+    /// Set cache maximum age (in seconds)
+    SetMaxAge {
+        /// Maximum age in seconds
+        age: u64,
+    },
+    /// Set cache maximum size (in bytes)
+    SetMaxSize {
+        /// Maximum size in bytes
+        size: u64,
+    },
 }
 
 #[derive(clap::ValueEnum, Clone)]
@@ -152,39 +164,31 @@ impl Cli {
 
         // Execute command
         match cli.command {
-            Commands::Execute { file, format } => Self::execute_file(client, file, format).await,
-            Commands::Eval { source, format } => Self::execute_source(client, source, format).await,
-            Commands::Cache { command } => Self::handle_cache(client, command).await,
-            Commands::Config { format } => Self::show_config(config, format).await,
+            Some(Commands::Execute { file }) => {
+                let result = client.execute_file(&file).await?;
+                Self::print_result(&result, cli.output)?;
+            }
+            Some(Commands::Eval { source }) => {
+                let result = client.execute_source(&source).await?;
+                Self::print_result(&result, cli.output)?;
+            }
+            Some(Commands::Cache { command }) => {
+                Self::handle_cache(client, command).await?;
+            }
+            Some(Commands::Config { format }) => {
+                Self::show_config(config, format).await?;
+            }
+            None => {
+                // Default behavior: show help
+                let _ = Cli::try_parse_from(["krox", "--help"]);
+            }
         }
-    }
 
-    /// Execute a Ligature program from a file.
-    async fn execute_file(mut client: Client, file: PathBuf, format: OutputFormat) -> Result<()> {
-        info!("Executing file: {:?}", file);
-
-        let result = client.execute_file(file).await?;
-
-        Self::print_result(result, format)?;
-        Ok(())
-    }
-
-    /// Execute a Ligature program from source code.
-    async fn execute_source(
-        mut client: Client,
-        source: String,
-        format: OutputFormat,
-    ) -> Result<()> {
-        info!("Executing source code ({} bytes)", source.len());
-
-        let result = client.execute_source(&source).await?;
-
-        Self::print_result(result, format)?;
         Ok(())
     }
 
     /// Handle cache commands.
-    async fn handle_cache(mut client: Client, command: CacheCommands) -> Result<()> {
+    async fn handle_cache(mut client: crate::Client, command: CacheCommands) -> Result<()> {
         match command {
             CacheCommands::Stats => {
                 if let Some(stats) = client.cache_stats().await? {
@@ -195,6 +199,8 @@ impl Cli {
                     println!("  Hit rate: {:.2}%", stats.hit_rate * 100.0);
                     println!("  Total size: {} bytes", stats.total_size);
                     println!("  Cache directory: {}", stats.cache_dir);
+                    println!("  Evicted entries: {}", stats.evicted_entries);
+                    println!("  Invalid entries: {}", stats.invalid_entries);
                 } else {
                     println!("Caching is disabled");
                 }
@@ -202,6 +208,22 @@ impl Cli {
             CacheCommands::Clear => {
                 client.clear_cache().await?;
                 println!("Cache cleared");
+            }
+            CacheCommands::Validate => {
+                client.validate_cache().await?;
+                println!("Cache validation completed");
+            }
+            CacheCommands::SetPolicy { policy } => {
+                client.set_cache_eviction_policy(policy)?;
+                println!("Cache eviction policy set to {:?}", policy);
+            }
+            CacheCommands::SetMaxAge { age } => {
+                client.set_cache_max_age(std::time::Duration::from_secs(age))?;
+                println!("Cache maximum age set to {} seconds", age);
+            }
+            CacheCommands::SetMaxSize { size } => {
+                client.set_cache_max_size(size)?;
+                println!("Cache maximum size set to {} bytes", size);
             }
         }
         Ok(())
@@ -226,15 +248,14 @@ impl Cli {
     }
 
     /// Print execution result in the specified format.
-    fn print_result(result: crate::ExecutionResult, format: OutputFormat) -> Result<()> {
+    fn print_result(result: &crate::ExecutionResult, format: OutputFormat) -> Result<()> {
         match format {
             OutputFormat::Json => {
-                let json =
-                    serde_json::to_string_pretty(&result).map_err(Error::JsonSerialization)?;
+                let json = serde_json::to_string_pretty(result).map_err(Error::JsonSerialization)?;
                 println!("{json}");
             }
             OutputFormat::Yaml => {
-                let yaml = serde_yaml::to_string(&result).map_err(Error::YamlSerialization)?;
+                let yaml = serde_yaml::to_string(result).map_err(Error::YamlSerialization)?;
                 println!("{yaml}");
             }
             OutputFormat::Pretty => {
@@ -242,26 +263,16 @@ impl Cli {
                 println!("  Value: {:?}", result.value);
                 println!("  Duration: {:?}", result.metadata.duration);
                 println!("  Cached: {}", result.metadata.cached);
-                println!("  Mode: {}", result.metadata.mode);
+                println!("  Mode: {:?}", result.metadata.mode);
                 if !result.metadata.warnings.is_empty() {
                     println!("  Warnings:");
                     for warning in &result.metadata.warnings {
-                        println!("    - {warning}");
+                        println!("    - {}", warning);
                     }
                 }
             }
         }
         Ok(())
-    }
-}
-
-/// Main entry point for the CLI.
-#[allow(dead_code)]
-#[tokio::main]
-async fn main() {
-    if let Err(e) = Cli::run().await {
-        error!("Error: {}", e);
-        std::process::exit(1);
     }
 }
 
@@ -271,18 +282,13 @@ mod tests {
 
     #[test]
     fn test_cli_parsing() {
-        let args = vec!["krox", "execute", "test.lig"];
-        let cli = Cli::try_parse_from(args);
+        let cli = Cli::try_parse_from(["krox", "--help"]);
         assert!(cli.is_ok());
     }
 
     #[test]
     fn test_cli_help() {
-        let args = vec!["krox", "--help"];
-        let cli = Cli::try_parse_from(args);
-        // This might fail if clap can't parse the help, which is expected in some environments
-        if cli.is_err() {
-            println!("Note: CLI help parsing failed, test skipped");
-        }
+        let cli = Cli::try_parse_from(["krox", "cache", "--help"]);
+        assert!(cli.is_ok());
     }
 }

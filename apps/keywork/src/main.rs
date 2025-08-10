@@ -176,6 +176,31 @@ enum Commands {
         #[arg(value_name = "REGISTER")]
         register: String,
     },
+
+    /// Show dependency graph for a project
+    Graph {
+        /// Path to the register directory
+        #[arg(value_name = "PATH", default_value = ".")]
+        path: PathBuf,
+
+        /// Output format (text, json, dot)
+        #[arg(long, default_value = "text")]
+        format: String,
+    },
+
+    /// Lock dependencies to specific versions
+    Lock {
+        /// Path to the register directory
+        #[arg(value_name = "PATH", default_value = ".")]
+        path: PathBuf,
+    },
+
+    /// Check for outdated dependencies
+    Outdated {
+        /// Path to the register directory
+        #[arg(value_name = "PATH", default_value = ".")]
+        path: PathBuf,
+    },
 }
 
 #[tokio::main]
@@ -212,5 +237,8 @@ async fn main() -> Result<()> {
         Commands::CleanCache => clean_cache().await,
         Commands::Stats { register } => show_package_stats(register).await,
         Commands::Versions { register } => list_available_versions(register).await,
+        Commands::Graph { path, format } => show_dependency_graph(path, format).await,
+        Commands::Lock { path } => lock_dependencies(path).await,
+        Commands::Outdated { path } => check_outdated_dependencies(path).await,
     }
 }
