@@ -229,12 +229,13 @@ impl Cli {
     fn print_result(result: crate::ExecutionResult, format: OutputFormat) -> Result<()> {
         match format {
             OutputFormat::Json => {
-                // For now, we'll just print the pretty format since we can't serialize ExecutionResult
-                println!("{{\"note\": \"Serialization not available for ExecutionResult\"}}");
+                let json =
+                    serde_json::to_string_pretty(&result).map_err(Error::JsonSerialization)?;
+                println!("{json}");
             }
             OutputFormat::Yaml => {
-                // For now, we'll just print the pretty format since we can't serialize ExecutionResult
-                println!("note: Serialization not available for ExecutionResult");
+                let yaml = serde_yaml::to_string(&result).map_err(Error::YamlSerialization)?;
+                println!("{yaml}");
             }
             OutputFormat::Pretty => {
                 println!("Execution Result:");

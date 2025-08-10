@@ -7,12 +7,13 @@ todos:
     title: "Fix Ligature evaluator to return proper configuration values instead of Unit"
     description: "Critical for Cacophony CLI functionality - evaluator currently returns Unit instead of proper configuration values"
     priority: "high"
-    status: "todo"
+    status: "completed"
     tags:
       - "cacophony"
       - "ligature-eval"
       - "blocking"
     created_date: "2024-08-10T01:00:00Z"
+    completed_date: "2025-01-27T01:00:00Z"
     context:
       related_files:
         - "apps/cacophony/src/cli.rs"
@@ -28,12 +29,13 @@ todos:
     title: "Clean up 95+ compiler warnings in ligature-lsp"
     description: "Address all compiler warnings in ligature-lsp crate for better code quality"
     priority: "high"
-    status: "todo"
+    status: "completed"
     tags:
       - "code-quality"
       - "compiler-warnings"
       - "ligature-lsp"
     created_date: "2024-08-10T01:00:00Z"
+    completed_date: "2025-01-27T01:00:00Z"
     context:
       related_files:
         - "crates/ligature-lsp/src/"
@@ -46,12 +48,13 @@ todos:
     title: "Clean up compiler warnings in ligature-eval"
     description: "Address compiler warnings in ligature-eval crate"
     priority: "high"
-    status: "todo"
+    status: "completed"
     tags:
       - "code-quality"
       - "compiler-warnings"
       - "ligature-eval"
     created_date: "2024-08-10T01:00:00Z"
+    completed_date: "2025-01-27T01:00:00Z"
     context:
       related_files:
         - "crates/ligature-eval/src/"
@@ -64,13 +67,14 @@ todos:
     title: "Fix Value serialization for krox crate"
     description: "Implement proper Value serialization/deserialization for krox caching system"
     priority: "high"
-    status: "todo"
+    status: "completed"
     tags:
       - "krox"
       - "serialization"
       - "ligature-eval"
       - "blocking"
     created_date: "2024-08-10T01:00:00Z"
+    completed_date: "2025-01-27T01:00:00Z"
     context:
       related_files:
         - "krox/src/"
@@ -86,13 +90,14 @@ todos:
     title: "Fix Value serialization for reed app"
     description: "Implement proper Value serialization/deserialization for reed benchmarking tool"
     priority: "high"
-    status: "todo"
+    status: "completed"
     tags:
       - "reed"
       - "serialization"
       - "ligature-eval"
       - "blocking"
     created_date: "2024-08-10T01:00:00Z"
+    completed_date: "2025-01-27T01:00:00Z"
     context:
       related_files:
         - "apps/reed/src/"

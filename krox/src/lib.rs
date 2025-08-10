@@ -53,7 +53,7 @@ pub use sdk::*;
 use serde::{Deserialize, Serialize};
 
 /// The result of executing a Ligature program.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExecutionResult {
     /// The evaluated value from the program.
     pub value: Value,

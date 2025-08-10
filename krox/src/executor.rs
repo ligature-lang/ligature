@@ -93,7 +93,7 @@ impl NativeExecutor {
 impl Executor for NativeExecutor {
     async fn execute_file(&self, path: &Path) -> Result<Value> {
         let path_str = path.to_string_lossy();
-        let _output = self.execute_command(&["eval", &path_str]).await?;
+        let _output = self.execute_command(&["eval", "-f", &path_str]).await?;
 
         // For now, we'll return a simple unit value since we can't deserialize Value
         // In a real implementation, you'd need a custom serialization format
