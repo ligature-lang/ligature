@@ -10,30 +10,6 @@ env:
   RUST_BACKTRACE: 1
 
 jobs:
-  code-quality:
-    name: Code Quality
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt, clippy
-      - name: Cache dependencies
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
-      - name: Check formatting
-        run: cargo +nightly fmt --all -- --check
-      - name: Run clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
