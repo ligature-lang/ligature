@@ -8,8 +8,6 @@ use miette::{IntoDiagnostic, Result, miette};
 use serde::{Deserialize, Serialize};
 use tokio::fs;
 
-use crate::xdg_config::KeyworkXdgConfig;
-
 #[derive(Debug, Clone)]
 pub struct Registry {
     pub url: String,
@@ -92,42 +90,6 @@ impl Registry {
                 .unwrap_or_default(),
             cache_dir,
         }
-    }
-
-    /// Create a new registry with XDG configuration.
-    pub async fn with_xdg_config() -> Result<Self> {
-        let xdg_config = KeyworkXdgConfig::new()
-            .await
-            .map_err(|e| miette!("Failed to load XDG configuration: {}", e))?;
-
-        let cache_dir = xdg_config
-            .cache_dir()
-            .map_err(|e| miette!("Failed to get cache directory: {}", e))?;
-
-        let timeout = Duration::from_secs(xdg_config.registry_timeout());
-
-        let mut client_builder = reqwest::Client::builder()
-            .timeout(timeout)
-            .user_agent("keywork/1.0.0");
-
-        // Add auth token if available
-        if let Some(token) = xdg_config.auth_token(xdg_config.registry_url()) {
-            client_builder = client_builder.default_headers({
-                let mut headers = reqwest::header::HeaderMap::new();
-                headers.insert("Authorization", format!("Bearer {token}").parse().unwrap());
-                headers
-            });
-        }
-
-        let client = client_builder
-            .build()
-            .map_err(|e| miette!("Failed to create HTTP client: {}", e))?;
-
-        Ok(Self {
-            url: xdg_config.registry_url().to_string(),
-            client,
-            cache_dir,
-        })
     }
 
     pub async fn ensure_cache_dir(&self) -> Result<()> {

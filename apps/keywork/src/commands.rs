@@ -757,7 +757,7 @@ pub async fn show_dependency_graph(path: &Path, format: &str) -> Result<()> {
 
     println!("Dependency graph for register '{}':", register.name());
 
-    let dependencies = parse_dependencies(&register.dependencies())
+    let dependencies = parse_dependencies(register.dependencies())
         .map_err(|e| miette!("Failed to parse dependencies: {}", e))?;
 
     match format {
@@ -809,7 +809,7 @@ pub async fn lock_dependencies(path: &Path) -> Result<()> {
 
     println!("Locking dependencies for register '{}'...", register.name());
 
-    let dependencies = parse_dependencies(&register.dependencies())
+    let dependencies = parse_dependencies(register.dependencies())
         .map_err(|e| miette!("Failed to parse dependencies: {}", e))?;
 
     let registry = Registry::default();
@@ -854,7 +854,7 @@ pub async fn check_outdated_dependencies(path: &Path) -> Result<()> {
         register.name()
     );
 
-    let dependencies = parse_dependencies(&register.dependencies())
+    let dependencies = parse_dependencies(register.dependencies())
         .map_err(|e| miette!("Failed to parse dependencies: {}", e))?;
 
     let registry = Registry::default();
@@ -879,7 +879,7 @@ pub async fn check_outdated_dependencies(path: &Path) -> Result<()> {
     } else {
         println!("Outdated dependencies:");
         for (name, current, latest) in &outdated {
-            println!("  {}: {} -> {}", name, current, latest);
+            println!("  {name}: {current} -> {latest}");
         }
     }
 

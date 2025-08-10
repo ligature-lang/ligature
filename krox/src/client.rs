@@ -328,10 +328,14 @@ mod tests {
         client.validate_cache().await.unwrap();
 
         // Test setting eviction policy
-        client.set_cache_eviction_policy(EvictionPolicy::Lru).unwrap();
+        client
+            .set_cache_eviction_policy(EvictionPolicy::Lru)
+            .unwrap();
 
         // Test setting cache limits
-        client.set_cache_max_age(std::time::Duration::from_secs(1800)).unwrap();
+        client
+            .set_cache_max_age(std::time::Duration::from_secs(1800))
+            .unwrap();
         client.set_cache_max_size(50 * 1024 * 1024).unwrap();
 
         // Test cache stats

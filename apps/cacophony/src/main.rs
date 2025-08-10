@@ -1,15 +1,14 @@
 use std::path::PathBuf;
 
 use anyhow::{Context, Result};
+// Import Cacophony configuration types
+use cacophony_config::*;
 use clap::Parser;
 use ligature_ast::DeclarationKind;
 use ligature_error::{ErrorReportConfig, StandardError, StandardErrorReporter};
 use ligature_eval::value::ValueKind;
 use ligature_eval::{Evaluator, Value};
 use ligature_parser::Declaration;
-
-// Import Cacophony configuration types
-use cacophony_config::*;
 
 /// Type alias for configuration values
 type ConfigValues = Vec<(String, Value)>;

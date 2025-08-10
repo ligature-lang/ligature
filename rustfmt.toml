@@ -6,9 +6,6 @@ tab_spaces = 4
 # Maximum line length
 max_width = 100
 
-# Use Unix line endings
-newline_style = "Unix"
-
 # Format code in edition 2021
 edition = "2021"
 
@@ -30,21 +27,6 @@ array_width = 60
 
 # Chain formatting
 chain_width = 60
-
-# Closure formatting
-closure_width = 60
-
-# If let formatting
-if_let_else_width = 60
-
-# Match expression formatting
-match_expression_width = 60
-
-# Method chain formatting
-method_chain_width = 60
-
-# Tuple formatting
-tuple_width = 60
 
 # Use `?` operator instead of `try!` macro
 use_try_shorthand = true
@@ -69,9 +51,6 @@ format_macro_matchers = true
 
 # Format macro definitions
 format_macro_bodies = true
-
-# Format derive attributes
-format_derive = true
 
 # Format attributes
 format_code_in_doc_comments = true 

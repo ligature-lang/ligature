@@ -1,7 +1,6 @@
 //! Command-line interface for Krox.
 
 use clap::{Parser, Subcommand};
-use tracing::info;
 
 use crate::cache::EvictionPolicy;
 use crate::error::{Error, Result};
@@ -160,7 +159,7 @@ impl Cli {
             builder = builder.ligature_cli_path(ligature_cli_path);
         }
 
-        let client = builder.build().await?;
+        let mut client = builder.build().await?;
 
         // Execute command
         match cli.command {
@@ -214,16 +213,17 @@ impl Cli {
                 println!("Cache validation completed");
             }
             CacheCommands::SetPolicy { policy } => {
+                let policy_clone = policy.clone();
                 client.set_cache_eviction_policy(policy)?;
-                println!("Cache eviction policy set to {:?}", policy);
+                println!("Cache eviction policy set to {policy_clone:?}");
             }
             CacheCommands::SetMaxAge { age } => {
                 client.set_cache_max_age(std::time::Duration::from_secs(age))?;
-                println!("Cache maximum age set to {} seconds", age);
+                println!("Cache maximum age set to {age} seconds");
             }
             CacheCommands::SetMaxSize { size } => {
                 client.set_cache_max_size(size)?;
-                println!("Cache maximum size set to {} bytes", size);
+                println!("Cache maximum size set to {size} bytes");
             }
         }
         Ok(())
@@ -251,7 +251,8 @@ impl Cli {
     fn print_result(result: &crate::ExecutionResult, format: OutputFormat) -> Result<()> {
         match format {
             OutputFormat::Json => {
-                let json = serde_json::to_string_pretty(result).map_err(Error::JsonSerialization)?;
+                let json =
+                    serde_json::to_string_pretty(result).map_err(Error::JsonSerialization)?;
                 println!("{json}");
             }
             OutputFormat::Yaml => {
@@ -267,7 +268,7 @@ impl Cli {
                 if !result.metadata.warnings.is_empty() {
                     println!("  Warnings:");
                     for warning in &result.metadata.warnings {
-                        println!("    - {}", warning);
+                        println!("    - {warning}");
                     }
                 }
             }

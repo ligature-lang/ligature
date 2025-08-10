@@ -49,8 +49,7 @@ struct CacheEntry {
     size: u64,
 }
 
-/// Cache eviction policy.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(clap::ValueEnum, Clone, Debug)]
 pub enum EvictionPolicy {
     /// Least Recently Used - evict least recently accessed entries.
     Lru,
@@ -139,7 +138,7 @@ impl Cache {
             let path = entry.path();
             if path.is_file() {
                 total_entries += 1;
-                
+
                 // Get file size
                 if let Ok(metadata) = fs::metadata(&path).await {
                     total_size += metadata.len();
@@ -149,7 +148,8 @@ impl Cache {
                 if let Ok(content) = fs::read_to_string(&path).await {
                     if let Ok(cache_entry) = serde_json::from_str::<CacheEntry>(&content) {
                         // Track entry for eviction
-                        let key = path.file_name()
+                        let key = path
+                            .file_name()
                             .and_then(|n| n.to_str())
                             .unwrap_or("unknown")
                             .to_string();
@@ -171,8 +171,10 @@ impl Cache {
         self.stats.total_size = total_size;
         self.stats.invalid_entries = invalid_entries;
 
-        debug!("Initialized cache with {} entries, {} bytes, {} invalid entries", 
-               total_entries, total_size, invalid_entries);
+        debug!(
+            "Initialized cache with {} entries, {} bytes, {} invalid entries",
+            total_entries, total_size, invalid_entries
+        );
 
         Ok(())
     }
@@ -230,7 +232,7 @@ impl Cache {
                         self.stats.hits += 1;
                         self.update_hit_rate();
                         debug!("Cache hit for {:?}", path);
-                        
+
                         // Deserialize the Value from JSON
                         match serde_json::from_str::<Value>(&entry.value_json) {
                             Ok(value) => Ok(Some(value)),
@@ -239,7 +241,8 @@ impl Cache {
                                 // Remove invalid entry
                                 let _ = fs::remove_file(&cache_file).await;
                                 self.stats.invalid_entries += 1;
-                                self.stats.total_entries = self.stats.total_entries.saturating_sub(1);
+                                self.stats.total_entries =
+                                    self.stats.total_entries.saturating_sub(1);
                                 self.entry_timestamps.remove(&cache_key);
                                 Ok(None)
                             }
@@ -302,7 +305,7 @@ impl Cache {
                         self.stats.hits += 1;
                         self.update_hit_rate();
                         debug!("Cache hit for content");
-                        
+
                         // Deserialize the Value from JSON
                         match serde_json::from_str::<Value>(&entry.value_json) {
                             Ok(value) => Ok(Some(value)),
@@ -311,7 +314,8 @@ impl Cache {
                                 // Remove invalid entry
                                 let _ = fs::remove_file(&cache_file).await;
                                 self.stats.invalid_entries += 1;
-                                self.stats.total_entries = self.stats.total_entries.saturating_sub(1);
+                                self.stats.total_entries =
+                                    self.stats.total_entries.saturating_sub(1);
                                 self.entry_timestamps.remove(&cache_key);
                                 Ok(None)
                             }
@@ -370,18 +374,22 @@ impl Cache {
         // Update entry with actual size
         let mut entry_with_size = entry;
         entry_with_size.size = content_len;
-        let content_with_size = serde_json::to_string(&entry_with_size).map_err(Error::JsonSerialization)?;
+        let content_with_size =
+            serde_json::to_string(&entry_with_size).map_err(Error::JsonSerialization)?;
 
-        fs::write(&cache_file, content_with_size).await.map_err(|e| {
-            Error::file_system(
-                format!("Failed to write cache file: {e}"),
-                Some(cache_file.to_string_lossy().to_string()),
-            )
-        })?;
+        fs::write(&cache_file, content_with_size)
+            .await
+            .map_err(|e| {
+                Error::file_system(
+                    format!("Failed to write cache file: {e}"),
+                    Some(cache_file.to_string_lossy().to_string()),
+                )
+            })?;
 
         self.stats.total_entries += 1;
         self.stats.total_size += content_len;
-        self.entry_timestamps.insert(cache_key, entry_with_size.last_accessed);
+        self.entry_timestamps
+            .insert(cache_key, entry_with_size.last_accessed);
 
         debug!("Cached result for {:?}", path);
         Ok(())
@@ -419,18 +427,22 @@ impl Cache {
         // Update entry with actual size
         let mut entry_with_size = entry;
         entry_with_size.size = content_len;
-        let content_with_size = serde_json::to_string(&entry_with_size).map_err(Error::JsonSerialization)?;
+        let content_with_size =
+            serde_json::to_string(&entry_with_size).map_err(Error::JsonSerialization)?;
 
-        fs::write(&cache_file, content_with_size).await.map_err(|e| {
-            Error::file_system(
-                format!("Failed to write cache file: {e}"),
-                Some(cache_file.to_string_lossy().to_string()),
-            )
-        })?;
+        fs::write(&cache_file, content_with_size)
+            .await
+            .map_err(|e| {
+                Error::file_system(
+                    format!("Failed to write cache file: {e}"),
+                    Some(cache_file.to_string_lossy().to_string()),
+                )
+            })?;
 
         self.stats.total_entries += 1;
         self.stats.total_size += content_len;
-        self.entry_timestamps.insert(cache_key, entry_with_size.last_accessed);
+        self.entry_timestamps
+            .insert(cache_key, entry_with_size.last_accessed);
 
         debug!("Cached result for content");
         Ok(())
@@ -445,15 +457,15 @@ impl Cache {
         let mut sorted_entries: Vec<_> = self.entry_timestamps.iter().collect();
         match self.eviction_policy {
             EvictionPolicy::Lru => {
-                sorted_entries.sort_by_key(|(_, &timestamp)| timestamp);
+                sorted_entries.sort_by_key(|&(_, &timestamp)| timestamp);
             }
             EvictionPolicy::Lfu => {
                 // For LFU, we'd need to track access counts, but for now use LRU
-                sorted_entries.sort_by_key(|(_, &timestamp)| timestamp);
+                sorted_entries.sort_by_key(|&(_, &timestamp)| timestamp);
             }
             EvictionPolicy::Fifo => {
                 // For FIFO, we'd need to track creation times, but for now use LRU
-                sorted_entries.sort_by_key(|(_, &timestamp)| timestamp);
+                sorted_entries.sort_by_key(|&(_, &timestamp)| timestamp);
             }
         }
 
@@ -473,21 +485,24 @@ impl Cache {
         }
 
         // Evict entries
-        for (key, size) in entries_to_evict {
-            let cache_file = self.cache_dir.join(&key);
+        for (key, size) in &entries_to_evict {
+            let cache_file = self.cache_dir.join(key);
             if let Err(e) = fs::remove_file(&cache_file).await {
                 warn!("Failed to evict cache entry {}: {}", key, e);
             } else {
                 self.stats.evicted_entries += 1;
                 self.stats.total_entries = self.stats.total_entries.saturating_sub(1);
-                self.stats.total_size = self.stats.total_size.saturating_sub(size);
-                self.entry_timestamps.remove(&key);
+                self.stats.total_size = self.stats.total_size.saturating_sub(*size);
+                self.entry_timestamps.remove(key);
                 debug!("Evicted cache entry: {}", key);
             }
         }
 
         if !entries_to_evict.is_empty() {
-            info!("Evicted {} entries to make space for new cache entry", entries_to_evict.len());
+            info!(
+                "Evicted {} entries to make space for new cache entry",
+                entries_to_evict.len()
+            );
         }
 
         Ok(())
@@ -586,8 +601,10 @@ impl Cache {
         self.stats.total_size = total_size;
         self.stats.invalid_entries = invalid_entries;
 
-        info!("Cache validation complete: {} valid entries, {} invalid entries", 
-              valid_entries, invalid_entries);
+        info!(
+            "Cache validation complete: {} valid entries, {} invalid entries",
+            valid_entries, invalid_entries
+        );
 
         Ok(())
     }
