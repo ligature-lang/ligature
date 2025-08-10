@@ -164,6 +164,13 @@ type User = {
     age: Integer,
     email: String
 };
+
+// Record types with constraints
+type User = {
+    name: String where length > 0,
+    age: Integer where >= 0 && <= 150,
+    email: String where contains "@"
+};
 ```
 
 ### Functions
