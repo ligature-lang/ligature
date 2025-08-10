@@ -1,0 +1,55 @@
+# Knowledge Base
+# This file contains insights, patterns, and knowledge about the codebase
+
+knowledge:
+  - id: "INSIGHT-001"
+    insight: "Async evaluation provides significant performance improvements for large configurations"
+    confidence: "high"
+    category: "performance"
+    tags:
+      - "performance"
+      - "async"
+      - "evaluation"
+    created_date: "2024-08-10T01:00:00Z"
+    context:
+      related_files:
+        - "crates/ligature-eval/src/async_evaluator.rs"
+      evidence:
+        - "Benchmark results show 40% improvement for large configs"
+        - "Memory usage reduced by 60% with async processing"
+        - "Progress reporting improves user experience"
+
+  - id: "INSIGHT-002"
+    insight: "Multi-crate workspace structure improves code organization and compilation times"
+    confidence: "high"
+    category: "architecture"
+    tags:
+      - "architecture"
+      - "workspace"
+      - "compilation"
+    created_date: "2024-08-10T01:00:00Z"
+    context:
+      related_files:
+        - "Cargo.toml"
+        - "crates/"
+      evidence:
+        - "Incremental compilation works better with separate crates"
+        - "Clear separation of concerns between components"
+        - "Easier to maintain and test individual components"
+
+  - id: "INSIGHT-003"
+    insight: "XDG configuration management provides better cross-platform compatibility"
+    confidence: "medium"
+    category: "configuration"
+    tags:
+      - "configuration"
+      - "xdg"
+      - "cross-platform"
+    created_date: "2024-08-10T01:00:00Z"
+    context:
+      related_files:
+        - "crates/embouchure-xdg/src/"
+      evidence:
+        - "Follows platform conventions for config storage"
+        - "Works consistently across Linux, macOS, and Windows"
+        - "Integrates well with existing tools and workflows"

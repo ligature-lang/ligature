@@ -1,0 +1,115 @@
+name: ligature
+scope_type: service
+description: A configuration language and evaluation engine for declarative configuration management
+version: 1.0.0
+schema_version: 1.0.0
+dependencies:
+  - name: "rust"
+    version: "1.70+"
+    type: "language"
+  - name: "cargo"
+    version: "latest"
+    type: "build_system"
+  - name: "tokio"
+    version: "1.0+"
+    type: "async_runtime"
+metadata:
+  team: "fugue-ai"
+  repository: "github.com/fugue-ai/ligature"
+  language: "rust"
+  architecture: "multi-crate_workspace"
+  components:
+    - "ligature-parser"
+    - "ligature-eval"
+    - "ligature-lsp"
+    - "ligature-types"
+    - "cacophony"
+    - "krox"
+    - "reed"
+    - "baton"
+    - "keywork"
+protocol_info:
+  version: 1.0.0
+  description: Protocol information for service scope
+  concepts:
+  - name: Scope
+    description: A Rhema scope represents a logical unit of the codebase with its own context and responsibilities.
+    related:
+    - Dependencies
+    - Patterns
+    examples:
+    - A microservice with its own API and business logic
+    - A frontend application with UI components
+    - A shared library with utility functions
+  - name: Knowledge
+    description: Structured information about the codebase, including insights, patterns, and best practices.
+    related:
+    - Patterns
+    - Decisions
+    examples:
+    - API documentation and usage examples
+    - Architecture patterns and implementation details
+    - Performance optimization techniques
+  - name: CQL
+    description: Context Query Language for querying Rhema data structures.
+    related:
+    - Knowledge
+    - Patterns
+    examples:
+    - SELECT * FROM knowledge WHERE category = 'api'
+    - SELECT * FROM patterns WHERE pattern_type = 'security'
+    - SELECT * FROM decisions WHERE status = 'approved'
+  cql_examples:
+  - name: Find API Knowledge
+    query: SELECT * FROM knowledge WHERE category = 'api'
+    description: Retrieve all knowledge entries related to API documentation and usage
+    output_format: JSON array of knowledge entries
+    use_case: Code review and development
+  - name: Find Security Patterns
+    query: SELECT * FROM patterns WHERE pattern_type = 'security'
+    description: Retrieve all security-related patterns and best practices
+    output_format: JSON array of pattern entries
+    use_case: Security review and implementation
+  - name: Find Approved Decisions
+    query: SELECT * FROM decisions WHERE status = 'approved'
+    description: Retrieve all approved architectural and design decisions
+    output_format: JSON array of decision entries
+    use_case: Architecture review and planning
+  patterns:
+  - name: Error Handling
+    description: Standardized approach to error handling across the scope
+    when_to_use: When implementing functions that may fail or need to report errors
+    examples:
+    - Use Result<T, E> for functions that can fail
+    - Log errors with appropriate context and severity
+    - Return meaningful error messages to users
+  - name: Configuration Management
+    description: Environment-based configuration management
+    when_to_use: When the scope needs different settings for different environments
+    examples:
+    - Use environment variables for sensitive configuration
+    - Provide sensible defaults for all configuration options
+    - Validate configuration on startup
+  integrations:
+  - name: IDE Integration
+    description: Integrate Rhema with your development environment
+    setup:
+    - Install Rhema CLI
+    - Configure IDE extensions
+    - Set up workspace settings
+    configuration:
+    - Add Rhema commands to IDE command palette
+    - Configure file watching for auto-sync
+    best_practices:
+    - Use Rhema commands from IDE for consistency
+    - Enable auto-validation on save
+  troubleshooting:
+  - issue: Configuration validation fails
+    description: Rhema configuration files have validation errors
+    solution:
+    - Run `rhema validate` to identify issues
+    - Check YAML syntax and required fields
+    - Review schema documentation
+    prevention:
+    - Use `rhema validate` before committing changes
+    - Follow schema documentation

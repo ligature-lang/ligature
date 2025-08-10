@@ -1,0 +1,64 @@
+# Todo Items
+# This file tracks work items, tasks, and improvements for this scope
+
+todos:
+  - id: "TODO-001"
+    title: "Fix Ligature evaluator to return proper configuration values instead of Unit"
+    description: "Critical for Cacophony CLI functionality - evaluator currently returns Unit instead of proper configuration values"
+    priority: "high"
+    status: "todo"
+    tags:
+      - "cacophony"
+      - "ligature-eval"
+      - "blocking"
+    created_date: "2024-08-10T01:00:00Z"
+    context:
+      related_files:
+        - "apps/cacophony/src/cli.rs"
+        - "crates/ligature-eval/src/lib.rs"
+      dependencies:
+        - "ligature-eval"
+    acceptance_criteria:
+      - "Evaluator returns proper configuration structures"
+      - "Cacophony can parse and use configuration values"
+      - "Tests pass with new configuration format"
+
+  - id: "TODO-002"
+    title: "Implement async evaluation for large configurations"
+    description: "Add async evaluation support for large configuration files with progress reporting"
+    priority: "high"
+    status: "todo"
+    tags:
+      - "performance"
+      - "async"
+      - "ligature-eval"
+    created_date: "2024-08-10T01:00:00Z"
+    context:
+      related_files:
+        - "crates/ligature-eval/src/async_evaluator.rs"
+        - "apps/cacophony/src/cli.rs"
+      dependencies:
+        - "tokio"
+    acceptance_criteria:
+      - "Async evaluator handles large configurations"
+      - "Progress reporting for long-running evaluations"
+      - "Memory management for intensive operations"
+
+  - id: "TODO-003"
+    title: "Clean up 95+ compiler warnings"
+    description: "Address all compiler warnings across the codebase for better code quality"
+    priority: "medium"
+    status: "todo"
+    tags:
+      - "code-quality"
+      - "compiler-warnings"
+    created_date: "2024-08-10T01:00:00Z"
+    context:
+      related_files:
+        - "crates/ligature-lsp/src/"
+        - "crates/ligature-eval/src/"
+        - "apps/cacophony/src/"
+    acceptance_criteria:
+      - "Zero compiler warnings"
+      - "All crates compile cleanly"
+      - "Code quality improvements maintained"
