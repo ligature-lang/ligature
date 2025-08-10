@@ -46,7 +46,7 @@ jobs:
           pnpm install --frozen-lockfile
 
       - name: Build documentation
-        run: npx nx build docs
+        run: pnpm docs:build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
