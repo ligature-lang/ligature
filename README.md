@@ -5,6 +5,51 @@
 
 A Turing-incomplete configuration and data management language with a dependently-typed foundation.
 
+## Language Philosophy
+
+Ligature is designed to be:
+
+- **Correct over fast** - Prioritizes correctness and good error messages over performance
+- **Configuration-native** - Built specifically for configuration management, not general-purpose programming
+- **Verification-ready** - Foundation for formal verification and property-based testing
+- **Developer-friendly** - Professional-grade IDE integration and development tools
+
+## Table of Contents
+
+- [Overview](#overview)
+- [What Ligature Will NOT Do](#what-ligature-will-not-do)
+- [Language Features](#language-features)
+  - [Core Features](#core-features-)
+  - [Advanced Features](#advanced-features-)
+  - [Performance Features](#performance-features-)
+  - [Operator Precedence](#operator-precedence-)
+  - [Basic Types](#basic-types)
+  - [Records](#records)
+  - [Functions](#functions)
+  - [Pattern Matching](#pattern-matching)
+  - [Type System](#type-system)
+  - [Type-Level Computation](#type-level-computation)
+- [Development Tools](#development-tools)
+  - [Professional-Grade IDE Integration](#professional-grade-ide-integration-)
+  - [Language Server (LSP)](#language-server-lsp-)
+  - [Import Resolution](#import-resolution-)
+  - [Type Class System](#type-class-system-)
+  - [Command Line Interface](#command-line-interface)
+- [Applications](#applications)
+  - [Cacophony CLI](#cacophony-cli)
+  - [Reed CLI](#reed-cli)
+  - [Keywork](#keywork)
+- [Performance](#performance)
+- [Getting Started](#getting-started)
+- [Documentation](#documentation)
+  - [User Guides](#user-guides)
+  - [Architecture & Development](#architecture--development)
+- [Contributing](#contributing)
+- [License](#license)
+- [References and Inspiration](#references-and-inspiration)
+- [Dedication](#dedication)
+- [Contact](#contact)
+
 ## Overview
 
 Ligature is a configuration language designed with correctness and safety as primary goals. It provides:
@@ -16,16 +61,6 @@ Ligature is a configuration language designed with correctness and safety as pri
 - **Strong correctness guarantees** - Total functions with comprehensive error reporting
 - **Professional-grade IDE integration** - Complete LSP symbol finding and development tools
 - **Advanced type-level computation** - Type-level programming with dependent types and subtyping
-
-## Language Philosophy
-
-Ligature is designed to be:
-
-- **Correct over fast** - Prioritizes correctness and good error messages over performance
-- **Accessible to average engineers** - Avoids the complexity of Haskell while maintaining power
-- **Configuration-native** - Built specifically for configuration management, not general-purpose programming
-- **Verification-ready** - Foundation for formal verification and property-based testing
-- **Developer-friendly** - Professional-grade IDE integration and development tools
 
 ## What Ligature Will NOT Do
 
@@ -39,6 +74,40 @@ Ligature is designed to be:
 - Require users to write explicit proofs
 
 ## Language Features
+
+### Core Features ✅
+
+- **Type Safety** - Strong static typing prevents runtime errors
+- **Pattern Matching** - Powerful pattern matching for data validation
+- **Module System** - First-class module support for code organization
+- **Import Resolution** - Complete import resolution with cross-module support
+- **Termination Guarantee** - All programs are guaranteed to terminate
+- **Type Classes** - Advanced type system with type classes and instances
+- **Instance Declarations** - Support for constrained and unconstrained instances
+- **Constraint-Based Validation** - Refinement types and pattern constraints with runtime validation
+
+### Advanced Features ✅
+
+- **Union Types** - Represent data with multiple variants
+- **Pattern Guards** - Conditional pattern matching
+- **Type Inference** - Automatic type detection
+- **Record Types** - Structured data with named fields
+- **Cross-Module Navigation** - Go to definition and find references across modules
+- **LSP Integration** - Full language server support with completion and error reporting
+- **Import Constraints** - Type class constraints in instance declarations
+- **Type-Level Computation** - Advanced type-level programming capabilities
+
+### Performance Features ✅
+
+- **Function Call Optimization** - Multi-tier optimization for function calls (1M+ ops/sec)
+- **Environment Lookup Optimization** - Fast reference-based lookups
+- **Evaluation Caching** - Framework for expression-level caching (99.95% hit rate)
+- **Memory Allocation Optimization** - Reduced allocation overhead
+- **Pattern Matching Optimization** - Early termination and efficient binding
+- **Advanced Tail Call Detection** - Pattern-based and context-sensitive optimization
+- **Function Inlining** - Automatic inlining of small, pure functions
+- **Parallel Evaluation** - Multi-threaded expression evaluation
+- **Performance Monitoring** - Real-time performance analysis and optimization
 
 ### Operator Precedence ✅
 
@@ -180,6 +249,38 @@ type If 'Cond 'Then 'Else;
 - **Code Completion** - Context-aware completions with import suggestions
 - **Performance Monitoring** - Built-in performance analysis and optimization
 
+### Language Server (LSP) ✅
+
+- **Cross-Module Completion** - Intelligent code completion from imported modules
+- **Go to Definition** - Navigate to symbol definitions across module boundaries
+- **Find References** - Find all references to symbols across the entire workspace
+- **Workspace Symbols** - Search for symbols across all loaded modules
+- **Real-time Error Reporting** - Immediate feedback on syntax and type errors
+- **Module Loading** - Automatic discovery and loading of modules in workspace
+- **Code Actions** - Automatic fixes and suggestions for common issues
+- **Enhanced Diagnostics** - Detailed error explanations and fix suggestions
+- **Advanced Code Actions** - Intelligent refactoring and code generation
+- **Symbol Finding** - Professional-grade symbol navigation and search
+- **Import Resolution** - Complete module resolution with dependency tracking
+
+### Import Resolution ✅
+
+- **Relative Imports** - Support for `./` and `../` path resolution
+- **Register Imports** - Import from Ligature registers (e.g., `std.collections.list`)
+- **Workspace Imports** - Automatic resolution of modules within workspace folders
+- **Selective Imports** - Import specific symbols from modules
+- **Import Aliases** - Alias imported modules for cleaner code
+- **Cycle Detection** - Prevents infinite import loops
+- **Module Caching** - Efficient caching with file modification detection
+
+### Type Class System ✅
+
+- **Type Class Definitions** - Define type classes with methods and superclasses
+- **Instance Declarations** - Implement type classes for specific types
+- **Constrained Instances** - Instance declarations with type class constraints
+- **Method Implementation** - Complete method implementation checking
+- **Type Class Constraints** - Use type classes in function signatures
+
 ### Command Line Interface
 
 The workspace includes a comprehensive `justfile` for streamlined development:
@@ -209,6 +310,37 @@ just --list
 
 For detailed development workflows, see [Justfile Development Guide](docs/.development/justfile-guide.md).
 
+## Applications
+
+### Cacophony CLI
+
+A CLI tool for orchestrating collections of Ligature programs:
+
+- **Purpose-Agnostic**: Not tied to any specific domain but can orchestrate any Ligature-based configuration
+- **Register-Centric**: Built around Ligature's register system for dependency management
+- **Environment-Aware**: Supports multiple environments (dev, staging, prod)
+- **Declarative Operations**: All operations defined declaratively in Ligature
+- **Type-Safe Orchestration**: Leverages Ligature's type system for correctness
+- **Extensible**: Plugin system for custom operations and integrations
+
+### Reed CLI
+
+A command-line interface for Ligature programs:
+
+- **Parse Ligature files** - Syntax validation and AST generation
+- **Type checking** - Static type analysis and error reporting
+- **Evaluation** - Execute Ligature programs and view results
+- **Performance analysis** - Built-in benchmarking and optimization
+
+### Keywork
+
+Package manager for Ligature registers:
+
+- **Register management** - Install, update, and manage Ligature libraries
+- **Dependency resolution** - Automatic dependency management
+- **Version control** - Semantic versioning for registers
+- **Registry integration** - Centralized package distribution
+
 ## Performance
 
 Current performance metrics (after optimizations):
@@ -230,11 +362,25 @@ Current performance metrics (after optimizations):
 
 ## Documentation
 
-- **[User Guide](docs/user-guide/)** - Complete user documentation
-- **[Performance Guide](docs/user-guide/performance-guide.md)** - Optimization and monitoring
-- **[IDE Integration](docs/user-guide/ide-integration.md)** - Development environment setup
+### User Guides
+
+- **[Getting Started](docs/user-guide/getting-started.md)** - Your first steps with Ligature
+- **[Language Reference](docs/user-guide/language-reference.md)** - Complete language documentation
+- **[Real-world Examples](docs/user-guide/examples.md)** - Practical configuration examples
+- **[Error Messages](docs/user-guide/error-messages.md)** - Understanding and debugging errors
+- **[FAQ](docs/user-guide/faq.md)** - Frequently asked questions
+- **[Cacophony CLI](docs/user-guide/cacophony-cli.md)** - Configuration orchestration and deployment
+- **[Performance Guide](docs/user-guide/performance-guide.md)** - Performance optimization and monitoring
+- **[IDE Integration](docs/user-guide/ide-integration.md)** - Professional-grade development environment
 - **[Type-Level Computation](docs/user-guide/type-level-computation.md)** - Advanced type system features
-- **[January 2025 Achievements](docs/january-2025-achievements.md)** - Recent major milestones
+
+### Architecture & Development
+
+- **[Architecture Overview](docs/architecture/README.md)** - Complete system design and components
+- **[Developer Guide](docs/developer-guide.md)** - Comprehensive guide for contributors and integrators
+- **[API Reference](docs/api-reference.md)** - Complete API documentation for all components
+- **[Technical Analysis](docs/analysis/)** - Deep technical analysis and project tracking
+- **[Contributing Guidelines](CONTRIBUTING.md)** - How to contribute to Ligature
 
 ## Contributing
 
