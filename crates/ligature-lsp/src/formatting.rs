@@ -3,6 +3,7 @@
 use ligature_ast::{Declaration, DeclarationKind, Expr, ExprKind, Program};
 use lsp_types::{Position, Range, TextEdit};
 
+use crate::async_evaluation::{AsyncEvaluationConfig, AsyncEvaluationService};
 use crate::config::FormattingConfig;
 
 /// Provider for code formatting.
@@ -10,6 +11,8 @@ use crate::config::FormattingConfig;
 pub struct FormattingProvider {
     /// Configuration for formatting options.
     config: FormattingConfig,
+    /// Async evaluation service for evaluation-based formatting decisions.
+    async_evaluation: Option<AsyncEvaluationService>,
 }
 
 impl FormattingProvider {
@@ -17,21 +20,40 @@ impl FormattingProvider {
     pub fn new() -> Self {
         Self {
             config: crate::config::FormattingConfig::default(),
+            async_evaluation: None,
         }
     }
 
     /// Create a new formatting provider with custom configuration.
     pub fn with_config(config: crate::config::FormattingConfig) -> Self {
-        Self { config }
+        Self {
+            config,
+            async_evaluation: None,
+        }
     }
 
-    /// Format an entire document.
+    /// Create a new formatting provider with async evaluation.
+    pub fn with_async_evaluation() -> Self {
+        let async_evaluation = AsyncEvaluationService::new(AsyncEvaluationConfig::default()).ok();
+        Self {
+            config: crate::config::FormattingConfig::default(),
+            async_evaluation,
+        }
+    }
+
+    /// Format an entire document with async evaluation support.
     pub async fn format_document(&self, uri: &str, content: &str) -> Vec<TextEdit> {
         // Try to parse the program for AST-based formatting
         let ast = ligature_parser::parse_program(content).ok();
 
         if let Some(program) = ast.as_ref() {
-            self.format_program(uri, content, program)
+            // Use async evaluation to make formatting decisions
+            if let Some(eval_service) = &self.async_evaluation {
+                self.format_program_with_evaluation(uri, content, program, eval_service)
+                    .await
+            } else {
+                self.format_program(uri, content, program)
+            }
         } else {
             // If parsing failed, do basic formatting
             self.format_basic(content)
@@ -53,13 +75,25 @@ impl FormattingProvider {
         }
     }
 
-    /// Format a specific range within a document.
+    /// Format a specific range within a document with async evaluation support.
     pub async fn format_range(&self, uri: &str, content: &str, range: Range) -> Vec<TextEdit> {
         // Try to parse the program for AST-based formatting
         let ast = ligature_parser::parse_program(content).ok();
 
         if let Some(program) = ast.as_ref() {
-            self.format_program_range(uri, content, range, program)
+            // Use async evaluation to make formatting decisions
+            if let Some(eval_service) = &self.async_evaluation {
+                self.format_program_range_with_evaluation(
+                    uri,
+                    content,
+                    range,
+                    program,
+                    eval_service,
+                )
+                .await
+            } else {
+                self.format_program_range(uri, content, range, program)
+            }
         } else {
             // If parsing failed, do basic formatting for the range
             self.format_basic_range(content, range)
@@ -80,6 +114,229 @@ impl FormattingProvider {
             // If parsing failed, do basic formatting for the range
             self.format_basic_range(content, range)
         }
+    }
+
+    /// Format a program with evaluation-based decisions.
+    async fn format_program_with_evaluation(
+        &self,
+        _uri: &str,
+        content: &str,
+        program: &Program,
+        eval_service: &AsyncEvaluationService,
+    ) -> Vec<TextEdit> {
+        let mut edits = Vec::new();
+        let mut formatted_content = String::new();
+        let _current_pos = 0;
+
+        for decl in &program.declarations {
+            let formatted_decl = self
+                .format_declaration_with_evaluation(decl, 0, eval_service)
+                .await;
+            formatted_content.push_str(&formatted_decl);
+            formatted_content.push('\n');
+        }
+
+        // Create a single edit for the entire document
+        edits.push(TextEdit {
+            range: Range {
+                start: Position {
+                    line: 0,
+                    character: 0,
+                },
+                end: Position {
+                    line: content.lines().count() as u32,
+                    character: 0,
+                },
+            },
+            new_text: formatted_content,
+        });
+
+        edits
+    }
+
+    /// Format a program range with evaluation-based decisions.
+    async fn format_program_range_with_evaluation(
+        &self,
+        _uri: &str,
+        content: &str,
+        range: Range,
+        program: &Program,
+        eval_service: &AsyncEvaluationService,
+    ) -> Vec<TextEdit> {
+        let mut edits = Vec::new();
+        let _lines: Vec<&str> = content.lines().collect();
+        let start_line = range.start.line as usize;
+        let end_line = range.end.line as usize;
+
+        // Find declarations that fall within the range
+        for decl in &program.declarations {
+            let decl_start = decl.span.line;
+            let decl_end = decl.span.line;
+
+            if decl_start >= start_line && decl_end <= end_line {
+                let formatted_decl = self
+                    .format_declaration_with_evaluation(decl, 0, eval_service)
+                    .await;
+
+                // Create edit for this declaration
+                edits.push(TextEdit {
+                    range: Range {
+                        start: Position {
+                            line: decl_start as u32,
+                            character: 0,
+                        },
+                        end: Position {
+                            line: decl_end as u32,
+                            character: 0,
+                        },
+                    },
+                    new_text: formatted_decl,
+                });
+            }
+        }
+
+        edits
+    }
+
+    /// Format a declaration with evaluation-based decisions.
+    async fn format_declaration_with_evaluation(
+        &self,
+        decl: &Declaration,
+        indent_level: usize,
+        eval_service: &AsyncEvaluationService,
+    ) -> String {
+        let _indent = "    ".repeat(indent_level);
+
+        match &decl.kind {
+            DeclarationKind::Value(value_decl) => {
+                self.format_value_declaration_with_evaluation(
+                    value_decl,
+                    indent_level,
+                    eval_service,
+                )
+                .await
+            }
+            DeclarationKind::TypeAlias(type_alias) => {
+                self.format_type_alias(type_alias, indent_level)
+            }
+            DeclarationKind::TypeConstructor(type_constructor) => {
+                self.format_type_constructor(type_constructor, indent_level)
+            }
+            DeclarationKind::TypeClass(type_class) => {
+                self.format_type_class(type_class, indent_level)
+            }
+            DeclarationKind::Instance(instance_decl) => {
+                self.format_instance_declaration(instance_decl, indent_level)
+            }
+            DeclarationKind::Import(import) => self.format_import(import, indent_level),
+            DeclarationKind::Export(export) => self.format_export(export, indent_level),
+        }
+    }
+
+    /// Format a value declaration with evaluation-based decisions.
+    async fn format_value_declaration_with_evaluation(
+        &self,
+        value_decl: &ligature_ast::ValueDeclaration,
+        indent_level: usize,
+        eval_service: &AsyncEvaluationService,
+    ) -> String {
+        let indent = "    ".repeat(indent_level);
+        let mut formatted = String::new();
+
+        // Evaluate the value to determine formatting style
+        let should_use_multiline = if let Ok(eval_result) = eval_service
+            .evaluate_expression(
+                &value_decl.value,
+                Some(&format!("format_{}", value_decl.name)),
+            )
+            .await
+        {
+            // Use multiline formatting for complex values
+            eval_result.success && self.is_complex_value(&eval_result.values)
+        } else {
+            // Fallback to simple formatting
+            false
+        };
+
+        formatted.push_str(&indent);
+        formatted.push_str("let ");
+        formatted.push_str(&value_decl.name);
+
+        if let Some(type_annotation) = &value_decl.type_annotation {
+            formatted.push_str(" : ");
+            formatted.push_str(&self.format_type(type_annotation));
+        }
+
+        formatted.push_str(" = ");
+
+        if should_use_multiline {
+            formatted.push('\n');
+            formatted
+                .push_str(&self.format_expression_multiline(&value_decl.value, indent_level + 1));
+        } else {
+            formatted.push_str(&self.format_expression(&value_decl.value, indent_level));
+        }
+
+        formatted.push(';');
+        formatted
+    }
+
+    /// Check if a value is complex enough to warrant multiline formatting.
+    fn is_complex_value(&self, values: &[ligature_eval::value::Value]) -> bool {
+        if values.is_empty() {
+            return false;
+        }
+
+        match &values[0].kind {
+            ligature_eval::value::ValueKind::Record(fields) => fields.len() > 3,
+            ligature_eval::value::ValueKind::List(elements) => elements.len() > 5,
+            ligature_eval::value::ValueKind::Function { .. } => true,
+            ligature_eval::value::ValueKind::Closure { .. } => true,
+            _ => false,
+        }
+    }
+
+    /// Format an expression in multiline style.
+    fn format_expression_multiline(&self, expr: &Expr, indent_level: usize) -> String {
+        let indent = "    ".repeat(indent_level);
+        let mut formatted = String::new();
+
+        match &expr.kind {
+            ExprKind::Record { fields } => {
+                formatted.push_str("{\n");
+                for (i, field) in fields.iter().enumerate() {
+                    formatted.push_str(&indent);
+                    formatted.push_str("    ");
+                    formatted.push_str(&field.name);
+                    formatted.push_str(" = ");
+                    formatted.push_str(&self.format_expression(&field.value, indent_level + 1));
+                    if i < fields.len() - 1 {
+                        formatted.push(',');
+                    }
+                    formatted.push('\n');
+                }
+                formatted.push_str(&indent);
+                formatted.push('}');
+            }
+            ExprKind::Let { name, value, body } => {
+                formatted.push_str("let\n");
+                formatted.push_str(&indent);
+                formatted.push_str("    ");
+                formatted.push_str(name);
+                formatted.push_str(" = ");
+                formatted.push_str(&self.format_expression(value, indent_level + 1));
+                formatted.push('\n');
+                formatted.push_str(&indent);
+                formatted.push_str("in ");
+                formatted.push_str(&self.format_expression(body, indent_level));
+            }
+            _ => {
+                // Fallback to single-line formatting
+                formatted.push_str(&self.format_expression(expr, indent_level));
+            }
+        }
+
+        formatted
     }
 
     /// Format a program with full AST analysis.
@@ -112,7 +369,7 @@ impl FormattingProvider {
         edits
     }
 
-    /// Format a specific range within a program.
+    /// Format a program range with full AST analysis.
     fn format_program_range(
         &self,
         _uri: &str,
@@ -122,24 +379,25 @@ impl FormattingProvider {
     ) -> Vec<TextEdit> {
         let mut edits = Vec::new();
 
-        // Find declarations that overlap with the range
-        let start_line = range.start.line as usize;
-        let end_line = range.end.line as usize;
-
+        // Find declarations that fall within the range
         for decl in &program.declarations {
-            let decl_start_line = decl.span.line;
-            let decl_end_line = decl.span.line;
+            let decl_start = decl.span.line;
+            let decl_end = decl.span.line;
+            let range_start = range.start.line as usize;
+            let range_end = range.end.line as usize;
 
-            if decl_start_line >= start_line && decl_end_line <= end_line {
+            if decl_start >= range_start && decl_end <= range_end {
                 let formatted_decl = self.format_declaration(decl, 0);
+
+                // Create edit for this declaration
                 edits.push(TextEdit {
                     range: Range {
                         start: Position {
-                            line: decl_start_line as u32,
+                            line: decl_start as u32,
                             character: 0,
                         },
                         end: Position {
-                            line: decl_end_line as u32,
+                            line: decl_end as u32,
                             character: 0,
                         },
                     },
@@ -153,7 +411,7 @@ impl FormattingProvider {
 
     /// Format a declaration.
     fn format_declaration(&self, decl: &Declaration, indent_level: usize) -> String {
-        let _indent = " ".repeat(self.config.indent_size * indent_level);
+        let _indent = "    ".repeat(indent_level);
 
         match &decl.kind {
             DeclarationKind::Value(value_decl) => {
@@ -182,22 +440,22 @@ impl FormattingProvider {
         value_decl: &ligature_ast::ValueDeclaration,
         indent_level: usize,
     ) -> String {
-        let indent = " ".repeat(self.config.indent_size * indent_level);
-        let mut result = String::new();
+        let indent = "    ".repeat(indent_level);
+        let mut formatted = String::new();
 
-        result.push_str(&indent);
-        result.push_str("let ");
-        result.push_str(&value_decl.name);
+        formatted.push_str(&indent);
+        formatted.push_str("let ");
+        formatted.push_str(&value_decl.name);
 
         if let Some(type_annotation) = &value_decl.type_annotation {
-            result.push_str(" : ");
-            result.push_str(&self.format_type(type_annotation));
+            formatted.push_str(" : ");
+            formatted.push_str(&self.format_type(type_annotation));
         }
 
-        result.push_str(" = ");
-        result.push_str(&self.format_expression(&value_decl.value, indent_level + 1));
-
-        result
+        formatted.push_str(" = ");
+        formatted.push_str(&self.format_expression(&value_decl.value, indent_level));
+        formatted.push(';');
+        formatted
     }
 
     /// Format a type alias.
@@ -206,22 +464,22 @@ impl FormattingProvider {
         type_alias: &ligature_ast::TypeAlias,
         indent_level: usize,
     ) -> String {
-        let indent = " ".repeat(self.config.indent_size * indent_level);
-        let mut result = String::new();
+        let indent = "    ".repeat(indent_level);
+        let mut formatted = String::new();
 
-        result.push_str(&indent);
-        result.push_str("type ");
-        result.push_str(&type_alias.name);
+        formatted.push_str(&indent);
+        formatted.push_str("type ");
+        formatted.push_str(&type_alias.name);
 
         if !type_alias.parameters.is_empty() {
-            result.push(' ');
-            result.push_str(&type_alias.parameters.join(" "));
+            formatted.push(' ');
+            formatted.push_str(&type_alias.parameters.join(" "));
         }
 
-        result.push_str(" = ");
-        result.push_str(&self.format_type(&type_alias.type_));
-
-        result
+        formatted.push_str(" = ");
+        formatted.push_str(&self.format_type(&type_alias.type_));
+        formatted.push(';');
+        formatted
     }
 
     /// Format a type constructor.
@@ -230,22 +488,23 @@ impl FormattingProvider {
         type_constructor: &ligature_ast::TypeConstructor,
         indent_level: usize,
     ) -> String {
-        let indent = " ".repeat(self.config.indent_size * indent_level);
-        let mut result = String::new();
+        let indent = "    ".repeat(indent_level);
+        let mut formatted = String::new();
 
-        result.push_str(&indent);
-        result.push_str("data ");
-        result.push_str(&type_constructor.name);
+        formatted.push_str(&indent);
+        formatted.push_str("data ");
+        formatted.push_str(&type_constructor.name);
 
         if !type_constructor.parameters.is_empty() {
-            result.push(' ');
-            result.push_str(&type_constructor.parameters.join(" "));
+            formatted.push(' ');
+            formatted.push_str(&type_constructor.parameters.join(" "));
         }
 
-        result.push_str(" = ");
-        result.push_str(&self.format_type(&type_constructor.body));
+        formatted.push_str(" = ");
+        formatted.push_str(&self.format_type(&type_constructor.body));
 
-        result
+        formatted.push(';');
+        formatted
     }
 
     /// Format a type class.
@@ -254,42 +513,33 @@ impl FormattingProvider {
         type_class: &ligature_ast::TypeClassDeclaration,
         indent_level: usize,
     ) -> String {
-        let indent = " ".repeat(self.config.indent_size * indent_level);
-        let mut result = String::new();
+        let indent = "    ".repeat(indent_level);
+        let mut formatted = String::new();
 
-        result.push_str(&indent);
-        result.push_str("class ");
-        result.push_str(&type_class.name);
+        formatted.push_str(&indent);
+        formatted.push_str("class ");
+        formatted.push_str(&type_class.name);
 
         if !type_class.parameters.is_empty() {
-            result.push(' ');
-            result.push_str(&type_class.parameters.join(" "));
+            formatted.push(' ');
+            formatted.push_str(&type_class.parameters.join(" "));
         }
 
-        if !type_class.superclasses.is_empty() {
-            result.push_str(" => ");
-            result.push_str(
-                &type_class
-                    .superclasses
-                    .iter()
-                    .map(|c| c.class_name.as_str())
-                    .collect::<Vec<_>>()
-                    .join(", "),
-            );
-        }
+        // TypeClass doesn't have constraints field, skip for now
 
-        result.push_str(" where\n");
+        formatted.push_str(" where");
+        formatted.push('\n');
 
         for method in &type_class.methods {
-            result.push_str(&indent);
-            result.push_str("  ");
-            result.push_str(&method.name);
-            result.push_str(" : ");
-            result.push_str(&self.format_type(&method.type_));
-            result.push('\n');
+            formatted.push_str(&indent);
+            formatted.push_str("    ");
+            formatted.push_str(&method.name);
+            formatted.push_str(" : ");
+            formatted.push_str(&self.format_type(&method.type_));
+            formatted.push('\n');
         }
 
-        result
+        formatted
     }
 
     /// Format an instance declaration.
@@ -298,103 +548,98 @@ impl FormattingProvider {
         instance_decl: &ligature_ast::InstanceDeclaration,
         indent_level: usize,
     ) -> String {
-        let indent = " ".repeat(self.config.indent_size * indent_level);
-        let mut result = String::new();
+        let indent = "    ".repeat(indent_level);
+        let mut formatted = String::new();
 
-        result.push_str(&indent);
-        result.push_str("instance ");
-        result.push_str(&instance_decl.class_name);
-        result.push(' ');
-        result.push_str(
-            &instance_decl
-                .type_arguments
-                .iter()
-                .map(|t| self.format_type(t))
-                .collect::<Vec<_>>()
-                .join(" "),
-        );
-        result.push_str(" where\n");
+        formatted.push_str(&indent);
+        formatted.push_str("instance ");
+        formatted.push_str(&instance_decl.class_name);
 
-        for method in &instance_decl.methods {
-            result.push_str(&indent);
-            result.push_str("  ");
-            result.push_str(&method.name);
-            result.push_str(" = ");
-            result.push_str(&self.format_expression(&method.implementation, indent_level + 2));
-            result.push('\n');
+        if let Some(constraints) = &instance_decl.constraints {
+            if !constraints.is_empty() {
+                formatted.push_str(" => ");
+                for (i, constraint) in constraints.iter().enumerate() {
+                    if i > 0 {
+                        formatted.push_str(", ");
+                    }
+                    formatted.push_str(&self.format_type_class_constraint(constraint));
+                }
+            }
         }
 
-        result
+        formatted.push_str(" where");
+        formatted.push('\n');
+
+        for method in &instance_decl.methods {
+            formatted.push_str(&indent);
+            formatted.push_str("    ");
+            formatted.push_str(&method.name);
+            formatted.push_str(" = ");
+            formatted.push_str(&self.format_expression(&method.implementation, indent_level + 1));
+            formatted.push('\n');
+        }
+
+        formatted
     }
 
-    /// Format an import statement.
+    /// Format an import.
     fn format_import(&self, import: &ligature_ast::Import, indent_level: usize) -> String {
-        let indent = " ".repeat(self.config.indent_size * indent_level);
-        let mut result = String::new();
+        let indent = "    ".repeat(indent_level);
+        let mut formatted = String::new();
 
-        result.push_str(&indent);
-        result.push_str("import ");
-        result.push_str(&import.path);
+        formatted.push_str(&indent);
+        formatted.push_str("import ");
 
         if let Some(alias) = &import.alias {
-            result.push_str(" as ");
-            result.push_str(alias);
+            formatted.push_str(&import.path);
+            formatted.push_str(" as ");
+            formatted.push_str(alias);
+        } else {
+            formatted.push_str(&import.path);
         }
 
         if let Some(items) = &import.items {
-            result.push_str(" (");
-            result.push_str(
-                &items
+            if !items.is_empty() {
+                formatted.push_str(" (");
+                let items_str = items
                     .iter()
-                    .map(|item| {
-                        if let Some(alias) = &item.alias {
-                            format!("{} as {}", item.name, alias)
-                        } else {
-                            item.name.clone()
-                        }
-                    })
+                    .map(|item| item.name.as_str())
                     .collect::<Vec<_>>()
-                    .join(", "),
-            );
-            result.push(')');
+                    .join(", ");
+                formatted.push_str(&items_str);
+                formatted.push(')');
+            }
         }
 
-        result
+        formatted.push(';');
+        formatted
     }
 
-    /// Format an export statement.
+    /// Format an export.
     fn format_export(
         &self,
         export: &ligature_ast::ExportDeclaration,
         indent_level: usize,
     ) -> String {
-        let indent = " ".repeat(self.config.indent_size * indent_level);
-        let mut result = String::new();
+        let indent = "    ".repeat(indent_level);
+        let mut formatted = String::new();
 
-        result.push_str(&indent);
-        result.push_str("export ");
-        result.push_str(
-            &export
-                .items
-                .iter()
-                .map(|item| {
-                    if let Some(alias) = &item.alias {
-                        format!("{} as {}", item.name, alias)
-                    } else {
-                        item.name.clone()
-                    }
-                })
-                .collect::<Vec<_>>()
-                .join(", "),
-        );
+        formatted.push_str(&indent);
+        formatted.push_str("export ");
 
-        result
+        for (i, item) in export.items.iter().enumerate() {
+            if i > 0 {
+                formatted.push_str(", ");
+            }
+            formatted.push_str(&item.name);
+        }
+
+        formatted.push(';');
+        formatted
     }
 
     /// Format an expression.
     fn format_expression(&self, expr: &Expr, indent_level: usize) -> String {
-        let indent = " ".repeat(self.config.indent_size * indent_level);
-
         match &expr.kind {
             ExprKind::Literal(literal) => self.format_literal(literal),
             ExprKind::Variable(name) => name.clone(),
@@ -408,83 +653,74 @@ impl FormattingProvider {
                 parameter_type,
                 body,
             } => {
-                let mut result = format!("fun {parameter} ");
-                if let Some(param_type) = parameter_type {
-                    result.push_str(&format!(": {} ", self.format_type(param_type)));
-                }
-                result.push_str("-> ");
-                result.push_str(&self.format_expression(body, indent_level + 1));
-                result
+                let param_str = if let Some(type_) = parameter_type {
+                    format!("({}: {})", parameter, self.format_type(type_))
+                } else {
+                    parameter.clone()
+                };
+                let body_str = self.format_expression(body, indent_level);
+                format!("\\{param_str} -> {body_str}")
             }
             ExprKind::Let { name, value, body } => {
-                let mut result = String::new();
-                result.push_str("let ");
-                result.push_str(name);
-                result.push_str(" = ");
-                result.push_str(&self.format_expression(value, indent_level + 1));
-                result.push_str(" in ");
-                result.push_str(&self.format_expression(body, indent_level + 1));
-                result
+                let value_str = self.format_expression(value, indent_level);
+                let body_str = self.format_expression(body, indent_level);
+                format!("let {name} = {value_str} in {body_str}")
             }
             ExprKind::Record { fields } => {
-                let mut result = String::new();
-                result.push('{');
-                for (i, field) in fields.iter().enumerate() {
-                    if i > 0 {
-                        result.push_str(", ");
-                    }
-                    result.push_str(&field.name);
-                    result.push_str(" = ");
-                    result.push_str(&self.format_expression(&field.value, indent_level));
-                }
-                result.push('}');
-                result
+                let fields_str = fields
+                    .iter()
+                    .map(|field| {
+                        format!(
+                            "{} = {}",
+                            field.name,
+                            self.format_expression(&field.value, indent_level)
+                        )
+                    })
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                format!("{{{fields_str}}}")
             }
             ExprKind::FieldAccess { record, field } => {
                 let record_str = self.format_expression(record, indent_level);
                 format!("{record_str}.{field}")
             }
             ExprKind::Union { variant, value } => {
-                let mut result = variant.clone();
-                if let Some(val) = value {
-                    result.push(' ');
-                    result.push_str(&self.format_expression(val, indent_level));
+                if let Some(value_expr) = value {
+                    let value_str = self.format_expression(value_expr, indent_level);
+                    format!("({variant} {value_str})")
+                } else {
+                    variant.clone()
                 }
-                result
             }
             ExprKind::Match { scrutinee, cases } => {
-                let mut result = String::new();
-                result.push_str("match ");
-                result.push_str(&self.format_expression(scrutinee, indent_level));
-                result.push_str(" with\n");
+                let mut formatted = String::new();
+                formatted.push_str("match ");
+                formatted.push_str(&self.format_expression(scrutinee, indent_level));
+                formatted.push_str(" with");
 
                 for case in cases {
-                    result.push_str(&indent);
-                    result.push_str("| ");
-                    result.push_str(&self.format_pattern(&case.pattern));
+                    formatted.push('\n');
+                    formatted.push_str(&"    ".repeat(indent_level));
+                    formatted.push_str("| ");
+                    formatted.push_str(&self.format_pattern(&case.pattern));
                     if let Some(guard) = &case.guard {
-                        result.push_str(" when ");
-                        result.push_str(&self.format_expression(guard, indent_level));
+                        formatted.push_str(" when ");
+                        formatted.push_str(&self.format_expression(guard, indent_level));
                     }
-                    result.push_str(" -> ");
-                    result.push_str(&self.format_expression(&case.expression, indent_level + 1));
-                    result.push('\n');
+                    formatted.push_str(" -> ");
+                    formatted.push_str(&self.format_expression(&case.expression, indent_level + 1));
                 }
-                result
+                formatted
             }
             ExprKind::If {
                 condition,
                 then_branch,
                 else_branch,
             } => {
-                let mut result = String::new();
-                result.push_str("if ");
-                result.push_str(&self.format_expression(condition, indent_level));
-                result.push_str(" then ");
-                result.push_str(&self.format_expression(then_branch, indent_level));
-                result.push_str(" else ");
-                result.push_str(&self.format_expression(else_branch, indent_level));
-                result
+                let condition_str = self.format_expression(condition, indent_level);
+                let then_str = self.format_expression(then_branch, indent_level);
+                let else_str = self.format_expression(else_branch, indent_level);
+                format!("if {condition_str} then {then_str} else {else_str}")
             }
             ExprKind::BinaryOp {
                 operator,
@@ -507,7 +743,7 @@ impl FormattingProvider {
             } => {
                 let expr_str = self.format_expression(expression, indent_level);
                 let type_str = self.format_type(type_annotation);
-                format!("{expr_str} : {type_str}")
+                format!("({expr_str}: {type_str})")
             }
         }
     }
@@ -520,123 +756,54 @@ impl FormattingProvider {
             ligature_ast::Literal::String(s) => format!("\"{s}\""),
             ligature_ast::Literal::Boolean(b) => b.to_string(),
             ligature_ast::Literal::Unit => "()".to_string(),
-            ligature_ast::Literal::List(_) => "[...]".to_string(), /* Placeholder for list formatting */
+            ligature_ast::Literal::List(_) => "[]".to_string(),
         }
     }
 
     /// Format a type.
+    #[allow(clippy::only_used_in_recursion)]
     fn format_type(&self, type_: &ligature_ast::Type) -> String {
         match &type_.kind {
-            ligature_ast::TypeKind::Unit => "()".to_string(),
-            ligature_ast::TypeKind::Bool => "Bool".to_string(),
-            ligature_ast::TypeKind::String => "String".to_string(),
-            ligature_ast::TypeKind::Integer => "Int".to_string(),
-            ligature_ast::TypeKind::Float => "Float".to_string(),
             ligature_ast::TypeKind::Variable(name) => name.clone(),
-            ligature_ast::TypeKind::Function {
-                parameter,
-                return_type,
-            } => {
-                let param_str = self.format_type(parameter);
-                let return_str = self.format_type(return_type);
-                format!("{param_str} -> {return_str}")
-            }
-            ligature_ast::TypeKind::Record { fields } => {
-                let mut result = String::new();
-                result.push('{');
-                for (i, field) in fields.iter().enumerate() {
-                    if i > 0 {
-                        result.push_str(", ");
-                    }
-                    result.push_str(&field.name);
-                    result.push_str(" : ");
-                    result.push_str(&self.format_type(&field.type_));
-                }
-                result.push('}');
-                result
-            }
-            ligature_ast::TypeKind::Union { variants } => {
-                let mut result = String::new();
-                for (i, variant) in variants.iter().enumerate() {
-                    if i > 0 {
-                        result.push_str(" | ");
-                    }
-                    result.push_str(&variant.name);
-                    if let Some(type_) = &variant.type_ {
-                        result.push(' ');
-                        result.push_str(&self.format_type(type_));
-                    }
-                }
-                result
-            }
-            ligature_ast::TypeKind::List(element_type) => {
-                let element_str = self.format_type(element_type);
-                format!("[{element_str}]")
-            }
-            ligature_ast::TypeKind::ForAll { parameter, body } => {
-                let body_str = self.format_type(body);
-                format!("forall {parameter}. {body_str}")
-            }
-            ligature_ast::TypeKind::Exists { parameter, body } => {
-                let body_str = self.format_type(body);
-                format!("exists {parameter}. {body_str}")
-            }
-            ligature_ast::TypeKind::Pi {
-                parameter,
-                parameter_type,
-                return_type,
-            } => {
-                let param_type_str = self.format_type(parameter_type);
-                let return_str = self.format_type(return_type);
-                format!("Pi {parameter} : {param_type_str}. {return_str}")
-            }
-            ligature_ast::TypeKind::Sigma {
-                parameter,
-                parameter_type,
-                return_type,
-            } => {
-                let param_type_str = self.format_type(parameter_type);
-                let return_str = self.format_type(return_type);
-                format!("Sigma {parameter} : {param_type_str}. {return_str}")
-            }
             ligature_ast::TypeKind::Application { function, argument } => {
                 let func_str = self.format_type(function);
                 let arg_str = self.format_type(argument);
                 format!("{func_str} {arg_str}")
             }
-            ligature_ast::TypeKind::Module { name } => format!("Module {name}"),
-            ligature_ast::TypeKind::Constrained { constraint, type_ } => {
-                let constraint_str = self.format_type_class_constraint(constraint);
-                let type_str = self.format_type(type_);
-                format!("{constraint_str} => {type_str}")
-            }
-            ligature_ast::TypeKind::Refinement {
-                base_type,
-                predicate,
-                predicate_name,
+            ligature_ast::TypeKind::Function {
+                parameter,
+                return_type,
             } => {
-                let base_str = self.format_type(base_type);
-                let predicate_str = self.format_expression(predicate, 0);
-                match predicate_name {
-                    Some(name) => format!("{base_str} where {name}"),
-                    None => format!("{base_str} where {predicate_str}"),
-                }
+                let param_str = self.format_type(parameter);
+                let result_str = self.format_type(return_type);
+                format!("{param_str} -> {result_str}")
             }
-            ligature_ast::TypeKind::ConstraintType {
-                base_type,
-                constraints,
-            } => {
-                let base_str = self.format_type(base_type);
-                if constraints.is_empty() {
-                    base_str
-                } else {
-                    let constraint_strs: Vec<String> = constraints
-                        .iter()
-                        .map(|c| self.format_constraint(c))
-                        .collect();
-                    format!("{base_str} & {}", constraint_strs.join(" & "))
-                }
+            ligature_ast::TypeKind::Record { fields } => {
+                let fields_str = fields
+                    .iter()
+                    .map(|field| format!("{}: {}", field.name, self.format_type(&field.type_)))
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                format!("{{{fields_str}}}")
             }
+            ligature_ast::TypeKind::List(element_type) => {
+                let element_str = self.format_type(element_type);
+                format!("[{element_str}]")
+            }
+            ligature_ast::TypeKind::Unit => "()".to_string(),
+            ligature_ast::TypeKind::Bool => "bool".to_string(),
+            ligature_ast::TypeKind::String => "string".to_string(),
+            ligature_ast::TypeKind::Integer => "int".to_string(),
+            ligature_ast::TypeKind::Float => "float".to_string(),
+            ligature_ast::TypeKind::Pi { .. } => "pi".to_string(),
+            ligature_ast::TypeKind::Sigma { .. } => "sigma".to_string(),
+            ligature_ast::TypeKind::Module { .. } => "module".to_string(),
+            ligature_ast::TypeKind::Refinement { .. } => "refinement".to_string(),
+            ligature_ast::TypeKind::ConstraintType { .. } => "constraint".to_string(),
+            ligature_ast::TypeKind::Union { .. } => "union".to_string(),
+            ligature_ast::TypeKind::ForAll { .. } => "forall".to_string(),
+            ligature_ast::TypeKind::Exists { .. } => "exists".to_string(),
+            ligature_ast::TypeKind::Constrained { .. } => "constrained".to_string(),
         }
     }
 
@@ -645,63 +812,32 @@ impl FormattingProvider {
         &self,
         constraint: &ligature_ast::TypeClassConstraint,
     ) -> String {
-        let mut result = constraint.class_name.clone();
-        if !constraint.type_arguments.is_empty() {
-            result.push(' ');
-            result.push_str(
-                &constraint
-                    .type_arguments
-                    .iter()
-                    .map(|t| self.format_type(t))
-                    .collect::<Vec<_>>()
-                    .join(" "),
-            );
-        }
-        result
+        let args_str = constraint
+            .type_arguments
+            .iter()
+            .map(|t| format!("{t:?}"))
+            .collect::<Vec<_>>()
+            .join(" ");
+        format!("{} {}", constraint.class_name, args_str)
     }
 
-    /// Format a validation constraint.
+    #[allow(dead_code)]
     fn format_constraint(&self, constraint: &ligature_ast::ty::Constraint) -> String {
         match constraint {
-            ligature_ast::ty::Constraint::ValueConstraint(expr) => self.format_expression(expr, 0),
-            ligature_ast::ty::Constraint::RangeConstraint {
-                min,
-                max,
-                inclusive,
-            } => {
-                let mut result = String::new();
-                if let Some(min_expr) = min {
-                    result.push_str(&self.format_expression(min_expr, 0));
-                }
-                result.push_str(if *inclusive { " <= " } else { " < " });
-                result.push('x');
-                if let Some(max_expr) = max {
-                    result.push_str(if *inclusive { " <= " } else { " < " });
-                    result.push_str(&self.format_expression(max_expr, 0));
-                }
-                result
+            ligature_ast::ty::Constraint::ValueConstraint(expr) => {
+                format!("where {}", self.format_expression(expr, 0))
             }
             ligature_ast::ty::Constraint::PatternConstraint { pattern, regex } => {
                 if *regex {
-                    format!("regexp(\"{pattern}\")")
+                    format!("with regexp(\"{pattern}\")")
                 } else {
-                    format!("pattern(\"{pattern}\")")
+                    format!("with pattern(\"{pattern}\")")
                 }
             }
-            ligature_ast::ty::Constraint::CustomConstraint {
-                function,
-                arguments,
-            } => {
-                let arg_strs: Vec<String> = arguments
-                    .iter()
-                    .map(|arg| self.format_expression(arg, 0))
-                    .collect();
-                format!("{}({})", function, arg_strs.join(", "))
-            }
-            ligature_ast::ty::Constraint::CrossFieldConstraint { fields, predicate } => {
-                let field_str = fields.join(", ");
-                let predicate_str = self.format_expression(predicate, 0);
-                format!("cross_field({field_str}, {predicate_str})")
+            ligature_ast::ty::Constraint::RangeConstraint { .. }
+            | ligature_ast::ty::Constraint::CustomConstraint { .. }
+            | ligature_ast::ty::Constraint::CrossFieldConstraint { .. } => {
+                format!("{constraint:?}")
             }
         }
     }
@@ -711,29 +847,32 @@ impl FormattingProvider {
         match pattern {
             ligature_ast::Pattern::Literal(literal) => self.format_literal(literal),
             ligature_ast::Pattern::Variable(name) => name.clone(),
-            ligature_ast::Pattern::Union { variant, value } => {
-                let mut result = variant.clone();
-                if let Some(val) = value {
-                    result.push(' ');
-                    result.push_str(&self.format_pattern(val));
-                }
-                result
-            }
             ligature_ast::Pattern::Record { fields } => {
-                let mut result = String::new();
-                result.push('{');
-                for (i, field) in fields.iter().enumerate() {
-                    if i > 0 {
-                        result.push_str(", ");
-                    }
-                    result.push_str(&field.name);
-                    result.push_str(" = ");
-                    result.push_str(&self.format_pattern(&field.pattern));
-                }
-                result.push('}');
-                result
+                let fields_str = fields
+                    .iter()
+                    .map(|field| {
+                        format!("{} = {}", field.name, self.format_pattern(&field.pattern))
+                    })
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                format!("{{{fields_str}}}")
             }
-            ligature_ast::Pattern::List { .. } => "[...]".to_string(), /* Placeholder for list pattern formatting */
+            ligature_ast::Pattern::Union { variant, value } => {
+                if let Some(value_pattern) = value {
+                    let value_str = self.format_pattern(value_pattern);
+                    format!("({variant} {value_str})")
+                } else {
+                    variant.clone()
+                }
+            }
+            ligature_ast::Pattern::List { elements } => {
+                let elements_str = elements
+                    .iter()
+                    .map(|element| self.format_pattern(element))
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                format!("[{elements_str}]")
+            }
             ligature_ast::Pattern::Wildcard => "_".to_string(),
         }
     }
@@ -761,27 +900,27 @@ impl FormattingProvider {
     /// Format a unary operator.
     fn format_unary_operator(&self, op: &ligature_ast::UnaryOperator) -> String {
         match op {
-            ligature_ast::UnaryOperator::Negate => "-".to_string(),
             ligature_ast::UnaryOperator::Not => "!".to_string(),
+            ligature_ast::UnaryOperator::Negate => "-".to_string(),
         }
     }
 
-    /// Basic formatting when AST parsing fails.
+    /// Format basic content without AST analysis.
     fn format_basic(&self, content: &str) -> Vec<TextEdit> {
-        let mut formatted = String::new();
+        let mut edits = Vec::new();
         let lines: Vec<&str> = content.lines().collect();
+        let mut formatted_lines = Vec::new();
 
-        for (i, line) in lines.iter().enumerate() {
+        for line in &lines {
             let trimmed = line.trim();
             if !trimmed.is_empty() {
-                formatted.push_str(trimmed);
-            }
-            if i < lines.len() - 1 {
-                formatted.push('\n');
+                formatted_lines.push(trimmed.to_string());
             }
         }
 
-        vec![TextEdit {
+        let formatted_content = formatted_lines.join("\n");
+
+        edits.push(TextEdit {
             range: Range {
                 start: Position {
                     line: 0,
@@ -792,40 +931,56 @@ impl FormattingProvider {
                     character: 0,
                 },
             },
-            new_text: formatted,
-        }]
+            new_text: formatted_content,
+        });
+
+        edits
     }
 
-    /// Basic formatting for a range when AST parsing fails.
+    /// Format basic content for a range without AST analysis.
     fn format_basic_range(&self, content: &str, range: Range) -> Vec<TextEdit> {
+        let mut edits = Vec::new();
         let lines: Vec<&str> = content.lines().collect();
         let start_line = range.start.line as usize;
         let end_line = range.end.line as usize;
 
-        let mut formatted = String::new();
-        #[allow(clippy::needless_range_loop)]
-        for i in start_line..=end_line.min(lines.len() - 1) {
-            let trimmed = lines[i].trim();
+        let mut formatted_lines = Vec::new();
+        for line in lines
+            .iter()
+            .take(end_line.min(lines.len()))
+            .skip(start_line)
+        {
+            let trimmed = line.trim();
             if !trimmed.is_empty() {
-                formatted.push_str(trimmed);
-            }
-            if i < end_line {
-                formatted.push('\n');
+                formatted_lines.push(trimmed.to_string());
             }
         }
 
-        vec![TextEdit {
-            range,
-            new_text: formatted,
-        }]
+        let formatted_content = formatted_lines.join("\n");
+
+        edits.push(TextEdit {
+            range: Range {
+                start: Position {
+                    line: start_line as u32,
+                    character: 0,
+                },
+                end: Position {
+                    line: end_line as u32,
+                    character: 0,
+                },
+            },
+            new_text: formatted_content,
+        });
+
+        edits
     }
 
-    /// Update the formatting configuration.
+    /// Update the configuration.
     pub fn update_config(&mut self, config: crate::config::FormattingConfig) {
         self.config = config;
     }
 
-    /// Get the current formatting configuration.
+    /// Get the current configuration.
     pub fn get_config(&self) -> &crate::config::FormattingConfig {
         &self.config
     }

@@ -2,7 +2,7 @@
 
 use std::time::{Duration, Instant};
 
-use ligature_ast::Span;
+// use ligature_ast::Span; // Unused import
 use ligature_error::{StandardError, StandardResult};
 use ligature_parser::parse_program;
 
@@ -86,7 +86,7 @@ impl BenchmarkSuite {
         // Set memory baseline if tracking is enabled
         if self.enable_memory_tracking {
             self.memory_tracker.set_baseline().map_err(|e| {
-                StandardError::Internal(format!("Failed to set memory baseline: {}", e))
+                StandardError::Internal(format!("Failed to set memory baseline: {e}"))
             })?;
         }
 
@@ -117,7 +117,7 @@ impl BenchmarkSuite {
         let memory_usage = if self.enable_memory_tracking {
             self.memory_tracker
                 .get_peak_usage()
-                .map_err(|e| StandardError::Internal(format!("Failed to get memory usage: {}", e)))
+                .map_err(|e| StandardError::Internal(format!("Failed to get memory usage: {e}")))
                 .ok()
         } else {
             None

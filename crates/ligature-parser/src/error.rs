@@ -73,7 +73,7 @@ impl ParserError {
             },
             ParserError::UnexpectedToken { token, span } => LigatureError::Parse {
                 code: ErrorCode::E1002,
-                message: format!("Unexpected token: {}", token),
+                message: format!("Unexpected token: {token}"),
                 span,
                 suggestions: vec![
                     "Check for typos or invalid characters".to_string(),
@@ -87,7 +87,7 @@ impl ParserError {
                 span,
             } => LigatureError::Parse {
                 code: ErrorCode::E1003,
-                message: format!("Expected {}, found {}", expected, found),
+                message: format!("Expected {expected}, found {found}"),
                 span,
                 suggestions: vec![
                     format!("Replace '{}' with '{}'", found, expected),
@@ -97,7 +97,7 @@ impl ParserError {
             },
             ParserError::InvalidLiteral { literal, span } => LigatureError::Parse {
                 code: ErrorCode::E1004,
-                message: format!("Invalid literal: {}", literal),
+                message: format!("Invalid literal: {literal}"),
                 span,
                 suggestions: vec![
                     "Check the literal format".to_string(),
@@ -134,7 +134,7 @@ impl ParserError {
             },
             ParserError::InvalidEscapeSequence { sequence, span } => LigatureError::Parse {
                 code: ErrorCode::E1008,
-                message: format!("Invalid escape sequence: {}", sequence),
+                message: format!("Invalid escape sequence: {sequence}"),
                 span,
                 suggestions: vec![
                     "Use a valid escape sequence".to_string(),
@@ -153,11 +153,8 @@ impl ParserError {
     /// Add context to the error.
     pub fn with_context(self, context: &str) -> LigatureError {
         let mut error = self.into_ligature_error();
-        match &mut error {
-            LigatureError::Parse { suggestions, .. } => {
-                suggestions.insert(0, context.to_string());
-            }
-            _ => {}
+        if let LigatureError::Parse { suggestions, .. } = &mut error {
+            suggestions.insert(0, context.to_string());
         }
         error
     }
@@ -175,8 +172,13 @@ impl From<ParserError> for LigatureError {
 /// Parser with enhanced error handling capabilities.
 pub struct Parser {
     source: String,
-    errors: Vec<LigatureError>,
     error_collector: ligature_ast::ErrorCollection,
+}
+
+impl Default for Parser {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Parser {
@@ -184,7 +186,6 @@ impl Parser {
     pub fn new() -> Self {
         Self {
             source: String::new(),
-            errors: Vec::new(),
             error_collector: ligature_ast::ErrorCollection::new(),
         }
     }
@@ -193,7 +194,6 @@ impl Parser {
     pub fn with_source(source: String) -> Self {
         Self {
             source,
-            errors: Vec::new(),
             error_collector: ligature_ast::ErrorCollection::new(),
         }
     }
@@ -202,7 +202,6 @@ impl Parser {
     pub fn with_error_limit(source: String, max_errors: usize) -> Self {
         Self {
             source,
-            errors: Vec::new(),
             error_collector: ligature_ast::ErrorCollection::with_max_errors(max_errors),
         }
     }
@@ -220,7 +219,7 @@ impl Parser {
     pub fn parse_program(&mut self, input: &str) -> ParserResult<ligature_ast::Program> {
         self.source = input.to_string();
 
-        let program = self.parse_expression(input)?;
+        let _program = self.parse_expression(input)?;
 
         Ok(ligature_ast::Program {
             declarations: vec![],

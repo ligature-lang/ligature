@@ -3,8 +3,7 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
-use ligature_ast::LigatureError;
-use ligature_error::{ErrorContextBuilder, StandardError, StandardResult};
+use ligature_error::{StandardError, StandardResult};
 use ligature_parser::parse_module;
 use serde::{Deserialize, Serialize};
 use toml;
@@ -90,7 +89,7 @@ impl ModuleResolver {
         let module_content = std::fs::read_to_string(&module_path).map_err(|e| {
             ligature_error::StandardError::Ligature(ligature_ast::LigatureError::Parse {
                 code: ligature_ast::ErrorCode::E1001,
-                message: format!("Failed to read module file: {}", e),
+                message: format!("Failed to read module file: {e}"),
                 span: ligature_ast::Span::default(),
                 suggestions: vec!["Check that the file exists and is readable".to_string()],
             })
@@ -125,7 +124,7 @@ impl ModuleResolver {
             _ => Err(ligature_error::StandardError::Ligature(
                 ligature_ast::LigatureError::Parse {
                     code: ligature_ast::ErrorCode::E1002,
-                    message: format!("Invalid import path format: {}", path),
+                    message: format!("Invalid import path format: {path}"),
                     span: ligature_ast::Span::default(),
                     suggestions: vec![
                         "Check that the import path follows the correct format".to_string(),
@@ -186,8 +185,8 @@ impl ModuleResolver {
                 ligature_ast::LigatureError::Parse {
                     code: ligature_ast::ErrorCode::E1004,
                     message: format!(
-                        "Module '{}' is not a directory, cannot contain submodules",
-                        intermediate_module
+                        "Module '{intermediate_module}' is not a directory, cannot contain \
+                         submodules"
                     ),
                     span: ligature_ast::Span::default(),
                     suggestions: vec!["Check that the module path is correct".to_string()],
@@ -221,8 +220,7 @@ impl ModuleResolver {
         }
 
         Err(StandardError::NotFound(format!(
-            "Module not found: {}",
-            register_name
+            "Module not found: {register_name}"
         )))
     }
 
@@ -262,10 +260,7 @@ impl ModuleResolver {
             }
         }
 
-        Err(StandardError::NotFound(format!(
-            "Module not found: {}",
-            path
-        )))
+        Err(StandardError::NotFound(format!("Module not found: {path}")))
     }
 
     /// Find a module within a register.
@@ -377,8 +372,7 @@ impl ModuleResolver {
         }
 
         Err(StandardError::NotFound(format!(
-            "Module not found: {}",
-            module_name
+            "Module not found: {module_name}"
         )))
     }
 

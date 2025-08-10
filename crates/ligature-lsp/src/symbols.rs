@@ -9,12 +9,16 @@ use lsp_types::{
     WorkspaceSymbol, WorkspaceSymbolParams,
 };
 
+use crate::async_evaluation::{AsyncEvaluationConfig, AsyncEvaluationService};
+
 /// Provider for document and workspace symbols.
 pub struct SymbolsProvider {
     /// Cache of symbols by document URI.
     symbols_cache: HashMap<String, Vec<DocumentSymbol>>,
     /// Cache of workspace symbols.
     workspace_symbols: HashMap<String, Vec<SymbolInformation>>,
+    /// Async evaluation service for evaluation-based symbol information.
+    async_evaluation: Option<AsyncEvaluationService>,
 }
 
 impl SymbolsProvider {
@@ -23,6 +27,17 @@ impl SymbolsProvider {
         Self {
             symbols_cache: HashMap::new(),
             workspace_symbols: HashMap::new(),
+            async_evaluation: None,
+        }
+    }
+
+    /// Create a new symbols provider with async evaluation.
+    pub fn with_async_evaluation() -> Self {
+        let async_evaluation = AsyncEvaluationService::new(AsyncEvaluationConfig::default()).ok();
+        Self {
+            symbols_cache: HashMap::new(),
+            workspace_symbols: HashMap::new(),
+            async_evaluation,
         }
     }
 
@@ -69,6 +84,30 @@ impl SymbolsProvider {
         symbols
     }
 
+    /// Get document symbols for a program with enhanced evaluation-based information.
+    pub async fn get_document_symbols_enhanced(
+        &self,
+        uri: &str,
+        content: &str,
+    ) -> Vec<DocumentSymbol> {
+        // Try to parse the program for symbols
+        let ast = ligature_parser::parse_program(content).ok();
+
+        if let Some(program) = ast {
+            let mut symbols = Vec::new();
+
+            for decl in &program.declarations {
+                if let Some(symbol) = self.declaration_to_symbol_enhanced(decl, uri).await {
+                    symbols.push(symbol);
+                }
+            }
+
+            symbols
+        } else {
+            vec![]
+        }
+    }
+
     /// Search workspace symbols matching a query.
     pub async fn search_workspace_symbols(
         &self,
@@ -93,7 +132,7 @@ impl SymbolsProvider {
     pub async fn search_workspace_symbols_enhanced(
         &self,
         params: WorkspaceSymbolParams,
-        import_resolution: &crate::import_resolution::ImportResolutionService,
+        import_resolution: &crate::resolution::ImportResolutionService,
         workspace_manager: &crate::workspace::WorkspaceManager,
     ) -> Vec<SymbolInformation> {
         let query = params.query;
@@ -329,6 +368,51 @@ impl SymbolsProvider {
                 children: None,
             }),
         }
+    }
+
+    /// Convert a declaration to a document symbol with enhanced evaluation-based information.
+    async fn declaration_to_symbol_enhanced(
+        &self,
+        decl: &Declaration,
+        uri: &str,
+    ) -> Option<DocumentSymbol> {
+        let mut symbol = self.declaration_to_symbol(decl, uri)?;
+
+        // Enhance symbol information with evaluation-based details
+        if let Some(eval_service) = &self.async_evaluation {
+            if let DeclarationKind::Value(value_decl) = &decl.kind {
+                // Evaluate the value to get runtime information
+                if let Ok(eval_result) = eval_service
+                    .evaluate_expression(
+                        &value_decl.value,
+                        Some(&format!("symbol_{}", value_decl.name)),
+                    )
+                    .await
+                {
+                    if eval_result.success {
+                        // Add evaluation-based details to the symbol
+                        let mut detail = symbol.detail.unwrap_or_default();
+                        if !detail.is_empty() {
+                            detail.push_str(" | ");
+                        }
+                        detail.push_str(&format!("Evaluated: {:?}", eval_result.values));
+                        symbol.detail = Some(detail);
+
+                        // Add tags based on evaluation results
+                        let mut tags = symbol.tags.unwrap_or_default();
+                        if eval_result.evaluation_time.as_millis() > 100 {
+                            tags.push(SymbolTag::DEPRECATED); // Mark as potentially slow
+                        }
+                        if !eval_result.values.is_empty() {
+                            // tags.push(SymbolTag::CONSTANT); // Mark as evaluated constant - CONSTANT not available
+                        }
+                        symbol.tags = Some(tags);
+                    }
+                }
+            }
+        }
+
+        Some(symbol)
     }
 
     /// Get detail information for a value declaration.

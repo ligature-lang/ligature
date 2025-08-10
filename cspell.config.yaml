@@ -7,8 +7,10 @@ words:
   - cpus
   - dashmap
   - Deque
+  - Dhall
   - dtolnay
   - flate2
+  - Furlanetto
   - indexmap
   - Interner
   - Justfile
@@ -21,6 +23,7 @@ words:
   - rstest
   - scrutinee
   - serde
+  - stdlib
   - subtyping
   - sysinfo
   - thiserror

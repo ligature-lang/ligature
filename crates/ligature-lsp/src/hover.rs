@@ -7,6 +7,8 @@ use ligature_ast::{
 };
 use lsp_types::{Hover, HoverContents, MarkedString, Position};
 
+use crate::async_evaluation::{AsyncEvaluationConfig, AsyncEvaluationService};
+
 /// Provider for hover information.
 #[derive(Clone)]
 pub struct HoverProvider {
@@ -14,6 +16,8 @@ pub struct HoverProvider {
     builtins: HashMap<&'static str, BuiltinInfo>,
     /// Built-in types and their documentation.
     builtin_types: HashMap<&'static str, &'static str>,
+    /// Async evaluation service for evaluation-based hover information.
+    async_evaluation: Option<AsyncEvaluationService>,
 }
 
 /// Information about a built-in function.
@@ -192,7 +196,16 @@ impl HoverProvider {
         Self {
             builtins,
             builtin_types,
+            async_evaluation: None,
         }
+    }
+
+    /// Create a new hover provider with async evaluation.
+    pub fn with_async_evaluation() -> Self {
+        let mut provider = Self::new();
+        provider.async_evaluation =
+            AsyncEvaluationService::new(AsyncEvaluationConfig::default()).ok();
+        provider
     }
 
     /// Get hover information for a position in a document.
@@ -204,10 +217,10 @@ impl HoverProvider {
     ) -> Option<Hover> {
         // Try to parse the program for context-aware hover
         let ast = ligature_parser::parse_program(content).ok();
-        self.get_hover(position, content, ast.as_ref())
+        self.get_hover(position, content, ast.as_ref()).await
     }
 
-    pub fn get_hover(
+    pub async fn get_hover(
         &self,
         position: Position,
         content: &str,
@@ -238,6 +251,115 @@ impl HoverProvider {
         // Check for literals and expressions
         if let Some(hover) = self.get_expression_hover(content, position, ast) {
             return Some(hover);
+        }
+
+        // Add evaluation-based hover if available
+        if let Some(eval_service) = &self.async_evaluation {
+            if let Some(program) = ast {
+                if let Some(hover) = self
+                    .get_evaluation_based_hover(program, &word, eval_service)
+                    .await
+                {
+                    return Some(hover);
+                }
+            }
+        }
+
+        None
+    }
+
+    /// Get evaluation-based hover information.
+    async fn get_evaluation_based_hover(
+        &self,
+        program: &Program,
+        word: &str,
+        eval_service: &AsyncEvaluationService,
+    ) -> Option<Hover> {
+        // Try to evaluate the program to get runtime information
+        match eval_service.evaluate_program(program, None).await {
+            Ok(result) => {
+                if result.success {
+                    // Look for the word in the evaluated results
+                    for (i, value) in result.values.iter().enumerate() {
+                        let value_str = format!("{value:?}");
+                        if value_str.to_lowercase().contains(&word.to_lowercase()) {
+                            let contents = vec![
+                                MarkedString::LanguageString(lsp_types::LanguageString {
+                                    language: "ligature".to_string(),
+                                    value: format!("result_{i} = {value_str}"),
+                                }),
+                                MarkedString::String(format!(
+                                    "**Evaluated Value**\n\nThis value was computed at \
+                                     runtime.\n\n**Performance**: {}ms\n**Cache Hit Rate**: {:.1}%",
+                                    result.evaluation_time.as_millis(),
+                                    result.metrics.cache_hit_rate() * 100.0
+                                )),
+                            ];
+
+                            return Some(Hover {
+                                contents: HoverContents::Array(contents),
+                                range: None,
+                            });
+                        }
+                    }
+
+                    // Add performance information hover
+                    if result.evaluation_time.as_millis() > 100 {
+                        let contents = vec![
+                            MarkedString::String("**Performance Warning**".to_string()),
+                            MarkedString::String(format!(
+                                "Evaluation took {}ms, which is slower than \
+                                 expected.\n\nConsider:\n- Caching frequently used values\n- \
+                                 Simplifying complex expressions\n- Using more efficient data \
+                                 structures",
+                                result.evaluation_time.as_millis()
+                            )),
+                        ];
+
+                        return Some(Hover {
+                            contents: HoverContents::Array(contents),
+                            range: None,
+                        });
+                    }
+                } else {
+                    // Show error information
+                    if let Some(error) = result.error {
+                        let contents = vec![
+                            MarkedString::String("**Evaluation Error**".to_string()),
+                            MarkedString::LanguageString(lsp_types::LanguageString {
+                                language: "ligature".to_string(),
+                                value: error.clone(),
+                            }),
+                            MarkedString::String(
+                                "Consider fixing this error before continuing.".to_string(),
+                            ),
+                        ];
+
+                        return Some(Hover {
+                            contents: HoverContents::Array(contents),
+                            range: None,
+                        });
+                    }
+                }
+            }
+            Err(e) => {
+                // Show service error information
+                let contents = vec![
+                    MarkedString::String("**Evaluation Service Error**".to_string()),
+                    MarkedString::LanguageString(lsp_types::LanguageString {
+                        language: "ligature".to_string(),
+                        value: format!("{e}"),
+                    }),
+                    MarkedString::String(
+                        "The evaluation service encountered an error.".to_string(),
+                    ),
+                ];
+
+                return Some(Hover {
+                    contents: HoverContents::Array(contents),
+                    range: None,
+                });
+            }
         }
 
         None

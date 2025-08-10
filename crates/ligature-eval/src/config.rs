@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 use embouchure_xdg::config::XdgConfig;
 use embouchure_xdg::error::XdgError;
-use ligature_error::{ErrorContextBuilder, StandardError, StandardResult};
+use ligature_error::{StandardError, StandardResult};
 use serde::{Deserialize, Serialize};
 
 /// Configuration for the Ligature evaluator with cache tuning options.
@@ -445,7 +445,7 @@ impl EvaluatorConfigManager {
     /// Create a new configuration manager.
     pub fn new() -> StandardResult<Self> {
         let global_config = XdgConfig::new("ligature", "eval.toml")
-            .map_err(|e| StandardError::Configuration(format!("XDG config error: {}", e)))?;
+            .map_err(|e| StandardError::Configuration(format!("XDG config error: {e}")))?;
         Ok(Self {
             global_config,
             project_config_path: None,
@@ -483,30 +483,32 @@ impl EvaluatorConfigManager {
             .global_config
             .load::<EvaluatorConfig>()
             .await
-            .map_err(|e| {
-                StandardError::Configuration(format!("Failed to load TOML config: {}", e))
-            })?
+            .map_err(|e| StandardError::Configuration(format!("Failed to load TOML config: {e}")))?
         {
             return Ok(Some(config));
         }
 
         // Try JSON
         let json_config = XdgConfig::new("ligature", "eval.json").map_err(|e| {
-            StandardError::Configuration(format!("Failed to create JSON config: {}", e))
+            StandardError::Configuration(format!("Failed to create JSON config: {e}"))
         })?;
-        if let Some(config) = json_config.load::<EvaluatorConfig>().await.map_err(|e| {
-            StandardError::Configuration(format!("Failed to load JSON config: {}", e))
-        })? {
+        if let Some(config) = json_config
+            .load::<EvaluatorConfig>()
+            .await
+            .map_err(|e| StandardError::Configuration(format!("Failed to load JSON config: {e}")))?
+        {
             return Ok(Some(config));
         }
 
         // Try YAML
         let yaml_config = XdgConfig::new("ligature", "eval.yaml").map_err(|e| {
-            StandardError::Configuration(format!("Failed to create YAML config: {}", e))
+            StandardError::Configuration(format!("Failed to create YAML config: {e}"))
         })?;
-        if let Some(config) = yaml_config.load::<EvaluatorConfig>().await.map_err(|e| {
-            StandardError::Configuration(format!("Failed to load YAML config: {}", e))
-        })? {
+        if let Some(config) = yaml_config
+            .load::<EvaluatorConfig>()
+            .await
+            .map_err(|e| StandardError::Configuration(format!("Failed to load YAML config: {e}")))?
+        {
             return Ok(Some(config));
         }
 
@@ -717,37 +719,37 @@ impl EvaluatorConfigManager {
         match format {
             ConfigFormat::Toml => {
                 let content = toml::to_string(&config).map_err(|e| {
-                    StandardError::Configuration(format!("Failed to serialize TOML config: {}", e))
+                    StandardError::Configuration(format!("Failed to serialize TOML config: {e}"))
                 })?;
                 self.global_config
                     .save_to("eval.toml", &content)
                     .await
                     .map_err(|e| {
-                        StandardError::Configuration(format!("Failed to save TOML config: {}", e))
+                        StandardError::Configuration(format!("Failed to save TOML config: {e}"))
                     })?;
                 Ok(PathBuf::from("eval.toml"))
             }
             ConfigFormat::Json => {
                 let content = serde_json::to_string_pretty(&config).map_err(|e| {
-                    StandardError::Configuration(format!("Failed to serialize JSON config: {}", e))
+                    StandardError::Configuration(format!("Failed to serialize JSON config: {e}"))
                 })?;
                 self.global_config
                     .save_to("eval.json", &content)
                     .await
                     .map_err(|e| {
-                        StandardError::Configuration(format!("Failed to save JSON config: {}", e))
+                        StandardError::Configuration(format!("Failed to save JSON config: {e}"))
                     })?;
                 Ok(PathBuf::from("eval.json"))
             }
             ConfigFormat::Yaml => {
                 let content = serde_yaml::to_string(&config).map_err(|e| {
-                    StandardError::Configuration(format!("Failed to serialize YAML config: {}", e))
+                    StandardError::Configuration(format!("Failed to serialize YAML config: {e}"))
                 })?;
                 self.global_config
                     .save_to("eval.yaml", &content)
                     .await
                     .map_err(|e| {
-                        StandardError::Configuration(format!("Failed to save YAML config: {}", e))
+                        StandardError::Configuration(format!("Failed to save YAML config: {e}"))
                     })?;
                 Ok(PathBuf::from("eval.yaml"))
             }
@@ -791,22 +793,19 @@ impl From<ConfigError> for StandardError {
     fn from(error: ConfigError) -> Self {
         match error {
             ConfigError::XdgError(xdg_error) => {
-                StandardError::Configuration(format!("XDG config error: {}", xdg_error))
+                StandardError::Configuration(format!("XDG config error: {xdg_error}"))
             }
             ConfigError::ReadError { path, source } => StandardError::Configuration(format!(
-                "Failed to read configuration file {}: {}",
-                path, source
+                "Failed to read configuration file {path}: {source}"
             )),
             ConfigError::ParseError { path, message } => StandardError::Configuration(format!(
-                "Failed to parse configuration file {}: {}",
-                path, message
+                "Failed to parse configuration file {path}: {message}"
             )),
-            ConfigError::SerializeError { source } => StandardError::Configuration(format!(
-                "Failed to serialize configuration: {}",
-                source
-            )),
+            ConfigError::SerializeError { source } => {
+                StandardError::Configuration(format!("Failed to serialize configuration: {source}"))
+            }
             ConfigError::SaveError { source } => {
-                StandardError::Configuration(format!("Failed to save configuration: {}", source))
+                StandardError::Configuration(format!("Failed to save configuration: {source}"))
             }
         }
     }

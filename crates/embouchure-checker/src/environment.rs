@@ -1,9 +1,7 @@
 //! Type environment for managing type bindings and scopes.
 
 use indexmap::IndexMap;
-use ligature_ast::{
-    InstanceDeclaration, Span, Type, TypeAlias, TypeClassDeclaration, TypeConstructor,
-};
+use ligature_ast::{InstanceDeclaration, Type, TypeAlias, TypeClassDeclaration, TypeConstructor};
 use ligature_error::StandardResult;
 
 use crate::error::TypeError;

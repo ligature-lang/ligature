@@ -358,7 +358,7 @@ impl TypeError {
                 span,
             } => AstError::Type {
                 code: ligature_ast::ErrorCode::T2001,
-                message: format!("Type mismatch: expected {}, found {}", expected, found),
+                message: format!("Type mismatch: expected {expected}, found {found}"),
                 span,
                 expected: Some(expected),
                 found: Some(found),
@@ -371,10 +371,7 @@ impl TypeError {
                 span,
             } => AstError::Type {
                 code: ligature_ast::ErrorCode::T2001,
-                message: format!(
-                    "Type mismatch: expected {}, found {}. {}",
-                    expected, found, suggestion
-                ),
+                message: format!("Type mismatch: expected {expected}, found {found}. {suggestion}"),
                 span,
                 expected: Some(expected),
                 found: Some(found),
@@ -382,7 +379,7 @@ impl TypeError {
             },
             TypeError::UnificationFailed { left, right, span } => AstError::Type {
                 code: ligature_ast::ErrorCode::T2002,
-                message: format!("Unification failed: cannot unify {} and {}", left, right),
+                message: format!("Unification failed: cannot unify {left} and {right}"),
                 span,
                 expected: None,
                 found: None,
@@ -396,8 +393,7 @@ impl TypeError {
             } => AstError::Type {
                 code: ligature_ast::ErrorCode::T2003,
                 message: format!(
-                    "Subtyping failed: {} is not a subtype of {}. {}",
-                    left, right, suggestion
+                    "Subtyping failed: {left} is not a subtype of {right}. {suggestion}"
                 ),
                 span,
                 expected: Some(right),
@@ -410,7 +406,7 @@ impl TypeError {
                 span,
             } => AstError::Type {
                 code: ligature_ast::ErrorCode::T2002,
-                message: format!("Occurs check failed: {} occurs in {}", variable, type_),
+                message: format!("Occurs check failed: {variable} occurs in {type_}"),
                 span,
                 expected: None,
                 found: None,
@@ -418,7 +414,7 @@ impl TypeError {
             },
             TypeError::UndefinedTypeVariable { variable, span } => AstError::Type {
                 code: ligature_ast::ErrorCode::T2002,
-                message: format!("Undefined type variable: {}", variable),
+                message: format!("Undefined type variable: {variable}"),
                 span,
                 expected: None,
                 found: None,
@@ -427,8 +423,7 @@ impl TypeError {
             TypeError::TypeClassConstraintUnsatisfied { type_, class, span } => AstError::Type {
                 code: ligature_ast::ErrorCode::T2008,
                 message: format!(
-                    "Type class constraint unsatisfied: {} does not implement {}",
-                    type_, class
+                    "Type class constraint unsatisfied: {type_} does not implement {class}"
                 ),
                 span,
                 expected: None,
@@ -437,7 +432,7 @@ impl TypeError {
             },
             TypeError::AmbiguousType { type_, span } => AstError::Type {
                 code: ligature_ast::ErrorCode::T2002,
-                message: format!("Ambiguous type: {}", type_),
+                message: format!("Ambiguous type: {type_}"),
                 span,
                 expected: None,
                 found: None,
@@ -445,7 +440,7 @@ impl TypeError {
             },
             TypeError::CircularTypeDefinition { type_, span } => AstError::Type {
                 code: ligature_ast::ErrorCode::T2002,
-                message: format!("Circular type definition: {}", type_),
+                message: format!("Circular type definition: {type_}"),
                 span,
                 expected: None,
                 found: None,
@@ -458,8 +453,7 @@ impl TypeError {
             } => AstError::Type {
                 code: ligature_ast::ErrorCode::T2004,
                 message: format!(
-                    "Invalid type application: {} cannot be applied to {}",
-                    function, argument
+                    "Invalid type application: {function} cannot be applied to {argument}"
                 ),
                 span,
                 expected: None,

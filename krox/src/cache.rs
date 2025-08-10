@@ -129,9 +129,14 @@ impl Cache {
                         self.stats.hits += 1;
                         self.update_hit_rate();
                         debug!("Cache hit for {:?}", path);
-                        // TODO: Implement proper Value deserialization from JSON
-                        // For now, return None since we can't easily reconstruct Value from debug format
-                        Ok(None)
+                        // Deserialize the Value from JSON
+                        match serde_json::from_str::<Value>(&entry.value_json) {
+                            Ok(value) => Ok(Some(value)),
+                            Err(e) => {
+                                warn!("Failed to deserialize cached value: {}", e);
+                                Ok(None)
+                            }
+                        }
                     }
                     Err(e) => {
                         warn!("Failed to deserialize cache entry: {}", e);
@@ -183,9 +188,14 @@ impl Cache {
                         self.stats.hits += 1;
                         self.update_hit_rate();
                         debug!("Cache hit for content");
-                        // TODO: Implement proper Value deserialization from JSON
-                        // For now, return None since we can't easily reconstruct Value from debug format
-                        Ok(None)
+                        // Deserialize the Value from JSON
+                        match serde_json::from_str::<Value>(&entry.value_json) {
+                            Ok(value) => Ok(Some(value)),
+                            Err(e) => {
+                                warn!("Failed to deserialize cached value: {}", e);
+                                Ok(None)
+                            }
+                        }
                     }
                     Err(e) => {
                         warn!("Failed to deserialize cache entry: {}", e);
@@ -212,7 +222,7 @@ impl Cache {
         let cache_file = self.cache_dir.join(&cache_key);
 
         let entry = CacheEntry {
-            value_json: format!("{value:?}"), // Simple debug format for now
+            value_json: serde_json::to_string(value).unwrap_or_else(|_| format!("{value:?}")), /* Use proper JSON serialization */
             created_at: SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .unwrap()
@@ -249,7 +259,7 @@ impl Cache {
         let cache_file = self.cache_dir.join(&cache_key);
 
         let entry = CacheEntry {
-            value_json: format!("{value:?}"), // Simple debug format for now
+            value_json: serde_json::to_string(value).unwrap_or_else(|_| format!("{value:?}")), /* Use proper JSON serialization */
             created_at: SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .unwrap()
@@ -374,21 +384,17 @@ mod tests {
 
         let value = Value::integer(42, ligature_ast::Span::default());
 
-        // Test file-based caching (currently returns None due to TODO in implementation)
+        // Test file-based caching
         cache.set("test.lig", &value).await.unwrap();
         let cached = cache.get("test.lig").await.unwrap();
-        // TODO: Fix Value serialization/deserialization to make this test pass
-        // assert!(cached.is_some());
-        // assert_eq!(cached.unwrap(), value);
-        assert!(cached.is_none()); // Current implementation returns None
+        assert!(cached.is_some());
+        assert_eq!(cached.unwrap(), value);
 
-        // Test content-based caching (currently returns None due to TODO in implementation)
+        // Test content-based caching
         cache.set_by_content("let x = 42", &value).await.unwrap();
         let cached = cache.get_by_content("let x = 42").await.unwrap();
-        // TODO: Fix Value serialization/deserialization to make this test pass
-        // assert!(cached.is_some());
-        // assert_eq!(cached.unwrap(), value);
-        assert!(cached.is_none()); // Current implementation returns None
+        assert!(cached.is_some());
+        assert_eq!(cached.unwrap(), value);
     }
 
     #[tokio::test]

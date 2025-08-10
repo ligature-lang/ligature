@@ -252,9 +252,9 @@ impl Worker {
                 self.evaluate_expression(&task.expression, &task.environment)
                     .await
             }
-            TaskStatus::Running => {
-                Err(StandardError::Internal("Task is already running".to_string()).into())
-            }
+            TaskStatus::Running => Err(StandardError::Internal(
+                "Task is already running".to_string(),
+            )),
             TaskStatus::Completed(value) => Ok(value),
             TaskStatus::Failed(error) => Err(StandardError::Internal(error.to_string())),
         }
@@ -282,15 +282,14 @@ impl Worker {
                     }
                 }
             }
-            ligature_ast::ExprKind::Variable(name) => env.lookup(name).ok_or_else(|| {
-                StandardError::Internal(format!("Variable '{}' not found", name)).into()
-            }),
+            ligature_ast::ExprKind::Variable(name) => env
+                .lookup(name)
+                .ok_or_else(|| StandardError::Internal(format!("Variable '{name}' not found"))),
             _ => {
                 // Simplified evaluation for other expression types
-                Err(
-                    StandardError::Internal("Expression type not yet implemented".to_string())
-                        .into(),
-                )
+                Err(StandardError::Internal(
+                    "Expression type not yet implemented".to_string(),
+                ))
             }
         }
     }
@@ -411,8 +410,7 @@ impl ParallelEvaluator {
                             _ => {
                                 return Err(StandardError::Internal(
                                     "Task not completed".to_string(),
-                                )
-                                .into());
+                                ));
                             }
                         }
                     }
@@ -429,7 +427,9 @@ impl ParallelEvaluator {
                     let _ = handle.await;
                 }
 
-                Err(StandardError::Internal("Parallel evaluation timed out".to_string()).into())
+                Err(StandardError::Internal(
+                    "Parallel evaluation timed out".to_string(),
+                ))
             }
         }
     }

@@ -415,9 +415,10 @@ impl TypeChecker {
                             let import_name = item.alias.as_ref().unwrap_or(&item.name);
 
                             // Check for conflicts with existing bindings
-                            self.environment
-                                .bind_with_conflict_check(import_name.clone(), binding_type.clone())
-                                .map_err(|e| e)?;
+                            self.environment.bind_with_conflict_check(
+                                import_name.clone(),
+                                binding_type.clone(),
+                            )?;
                         }
                     }
                 } else {
@@ -425,8 +426,7 @@ impl TypeChecker {
                     for (name, binding_type) in exported_bindings {
                         // Check for conflicts with existing bindings
                         self.environment
-                            .bind_with_conflict_check(name.clone(), binding_type.clone())
-                            .map_err(|e| e)?;
+                            .bind_with_conflict_check(name.clone(), binding_type.clone())?;
                     }
                 }
             }
@@ -670,7 +670,7 @@ impl TypeChecker {
         Err(ligature_error::StandardError::Ligature(
             ligature_ast::LigatureError::Type {
                 code: ligature_ast::ErrorCode::R3004,
-                message: format!("Undefined identifier: {}", name),
+                message: format!("Undefined identifier: {name}"),
                 span: Span::default(),
                 expected: None,
                 found: None,

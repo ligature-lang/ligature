@@ -5,6 +5,7 @@ use thiserror::Error;
 
 /// Standardized error type for Ligature crates.
 #[derive(Error, Debug)]
+#[allow(clippy::large_enum_variant)]
 pub enum StandardError {
     /// Ligature-specific errors from the AST.
     #[error("{0}")]

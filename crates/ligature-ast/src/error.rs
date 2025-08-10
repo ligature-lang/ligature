@@ -454,9 +454,8 @@ impl LigatureError {
 
     /// Add context to the error.
     pub fn with_context(mut self, context: String) -> Self {
-        match &mut self {
-            LigatureError::Evaluation { context: c, .. } => *c = Some(context),
-            _ => {}
+        if let LigatureError::Evaluation { context: c, .. } = &mut self {
+            *c = Some(context)
         }
         self
     }
@@ -509,12 +508,12 @@ impl LigatureError {
                 suggestions,
                 ..
             } => {
-                let mut output = format!("Parse error: {}\n", message);
+                let mut output = format!("Parse error: {message}\n");
                 output.push_str(&span.display(source));
                 if !suggestions.is_empty() {
                     output.push_str("\nSuggestions:\n");
                     for suggestion in suggestions {
-                        output.push_str(&format!("  - {}\n", suggestion));
+                        output.push_str(&format!("  - {suggestion}\n"));
                     }
                 }
                 output
@@ -527,15 +526,15 @@ impl LigatureError {
                 suggestions,
                 ..
             } => {
-                let mut output = format!("Type error: {}\n", message);
+                let mut output = format!("Type error: {message}\n");
                 output.push_str(&span.display(source));
                 if let (Some(expected), Some(found)) = (expected, found) {
-                    output.push_str(&format!("Expected: {}\nFound: {}\n", expected, found));
+                    output.push_str(&format!("Expected: {expected}\nFound: {found}\n"));
                 }
                 if !suggestions.is_empty() {
                     output.push_str("Suggestions:\n");
                     for suggestion in suggestions {
-                        output.push_str(&format!("  - {}\n", suggestion));
+                        output.push_str(&format!("  - {suggestion}\n"));
                     }
                 }
                 output
@@ -546,10 +545,10 @@ impl LigatureError {
                 context,
                 ..
             } => {
-                let mut output = format!("Evaluation error: {}\n", message);
+                let mut output = format!("Evaluation error: {message}\n");
                 output.push_str(&span.display(source));
                 if let Some(context) = context {
-                    output.push_str(&format!("Context: {}\n", context));
+                    output.push_str(&format!("Context: {context}\n"));
                 }
                 output
             }
@@ -559,7 +558,7 @@ impl LigatureError {
 
     /// Create a user-friendly error message with suggestions.
     pub fn to_user_friendly(&self) -> String {
-        let mut output = format!("Error: {}\n", self);
+        let mut output = format!("Error: {self}\n");
 
         let suggestions = self.get_suggestions();
         if !suggestions.is_empty() {
@@ -641,11 +640,18 @@ impl ErrorCollection {
             Ok(value)
         }
     }
+}
 
-    /// Get all errors as a formatted string.
-    pub fn to_string(&self) -> String {
+impl Default for ErrorCollection {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl std::fmt::Display for ErrorCollection {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if self.errors.is_empty() {
-            return "No errors".to_string();
+            return write!(f, "No errors");
         }
 
         let mut output = format!("Found {} error(s):\n\n", self.errors.len());
@@ -653,7 +659,7 @@ impl ErrorCollection {
         for (i, error) in self.errors.iter().enumerate() {
             output.push_str(&format!("{}. {}\n", i + 1, error.to_user_friendly()));
             if i < self.errors.len() - 1 {
-                output.push_str("\n");
+                output.push('\n');
             }
         }
 
@@ -665,13 +671,7 @@ impl ErrorCollection {
             ));
         }
 
-        output
-    }
-}
-
-impl Default for ErrorCollection {
-    fn default() -> Self {
-        Self::new()
+        write!(f, "{output}")
     }
 }
 
@@ -795,7 +795,7 @@ impl ErrorReporter {
                     output.push_str("\x1b[0m"); // Reset
                 }
                 for suggestion in suggestions {
-                    output.push_str(&format!("  {}\n", suggestion));
+                    output.push_str(&format!("  {suggestion}\n"));
                 }
             }
         }
@@ -821,7 +821,7 @@ impl ErrorReporter {
 
             output
         } else {
-            format!("  --> unknown location\n")
+            "  --> unknown location\n".to_string()
         }
     }
 }

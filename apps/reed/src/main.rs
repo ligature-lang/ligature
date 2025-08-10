@@ -167,12 +167,10 @@ async fn main() -> Result<()> {
             // Output in configured format
             match output_format.as_str() {
                 "json" => {
-                    // TODO: Implement proper Value serialization
-                    println!("{}", serde_json::to_string_pretty(&format!("{result:?}"))?);
+                    println!("{}", serde_json::to_string_pretty(&result)?);
                 }
                 "yaml" => {
-                    // TODO: Implement proper Value serialization
-                    println!("{}", serde_yaml::to_string(&format!("{result:?}"))?);
+                    println!("{}", serde_yaml::to_string(&result)?);
                 }
                 _ => {
                     println!("  Result: {result:?}");
@@ -232,12 +230,10 @@ async fn main() -> Result<()> {
             // Output in configured format
             match output_format.as_str() {
                 "json" => {
-                    // TODO: Implement proper Value serialization
-                    println!("{}", serde_json::to_string_pretty(&format!("{result:?}"))?);
+                    println!("{}", serde_json::to_string_pretty(&result)?);
                 }
                 "yaml" => {
-                    // TODO: Implement proper Value serialization
-                    println!("{}", serde_yaml::to_string(&format!("{result:?}"))?);
+                    println!("{}", serde_yaml::to_string(&result)?);
                 }
                 _ => {
                     println!("  Final result: {result:?}");

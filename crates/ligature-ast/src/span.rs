@@ -125,7 +125,7 @@ impl Span {
 
             output
         } else {
-            format!("  --> unknown location\n")
+            "  --> unknown location\n".to_string()
         }
     }
 }

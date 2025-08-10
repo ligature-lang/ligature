@@ -8,7 +8,7 @@ use std::time::Duration;
 
 use dashmap::DashMap;
 use futures::future::join_all;
-use ligature_ast::{Expr, Program, Span, Type, TypeKind};
+use ligature_ast::{Expr, Program, Type, TypeKind};
 use ligature_error::{StandardError, StandardResult};
 use uuid::Uuid;
 
@@ -355,9 +355,9 @@ impl ConcurrentConstraintSolver {
                     self.solutions.iter().map(|entry| entry.clone()).collect();
                 Ok(solutions)
             }
-            Err(_) => {
-                Err(StandardError::Internal("Constraint solving timed out".to_string()).into())
-            }
+            Err(_) => Err(StandardError::Internal(
+                "Constraint solving timed out".to_string(),
+            )),
         }
     }
 
@@ -416,9 +416,9 @@ impl ConcurrentTypeChecker {
                 Ok(Ok(())) => {}
                 Ok(Err(error)) => return Err(error),
                 Err(join_error) => {
-                    return Err(
-                        StandardError::Internal(format!("Task join error: {join_error}")).into(),
-                    );
+                    return Err(StandardError::Internal(format!(
+                        "Task join error: {join_error}"
+                    )));
                 }
             }
         }
@@ -449,9 +449,9 @@ impl ConcurrentTypeChecker {
                 Ok(Ok(())) => {}
                 Ok(Err(error)) => return Err(error),
                 Err(join_error) => {
-                    return Err(
-                        StandardError::Internal(format!("Task join error: {join_error}")).into(),
-                    );
+                    return Err(StandardError::Internal(format!(
+                        "Task join error: {join_error}"
+                    )));
                 }
             }
         }
@@ -518,15 +518,15 @@ impl ConcurrentTypeChecker {
             ligature_ast::ExprKind::Variable(name) => self
                 .type_environment
                 .lookup(name)
-                .ok_or_else(|| StandardError::Internal(format!("Variable '{}' not found", name))),
+                .ok_or_else(|| StandardError::Internal(format!("Variable '{name}' not found"))),
             ligature_ast::ExprKind::Application { function, argument } => {
                 let function_type = Box::pin(self.infer_expression_type(function)).await?;
 
                 // Check if function type is actually a function
                 if !function_type.is_function() {
-                    return Err(
-                        StandardError::Internal("Expected function type".to_string()).into(),
-                    );
+                    return Err(StandardError::Internal(
+                        "Expected function type".to_string(),
+                    ));
                 }
 
                 // Extract parameter and return types
@@ -538,10 +538,9 @@ impl ConcurrentTypeChecker {
 
                     Ok(return_type.clone())
                 } else {
-                    Err(
-                        StandardError::Internal("Function type inference failed".to_string())
-                            .into(),
-                    )
+                    Err(StandardError::Internal(
+                        "Function type inference failed".to_string(),
+                    ))
                 }
             }
             ligature_ast::ExprKind::Abstraction {
@@ -563,7 +562,7 @@ impl ConcurrentTypeChecker {
 
                 // Check if it's a record type
                 if !record_type.is_record() {
-                    return Err(StandardError::Internal("Expected record type".to_string()).into());
+                    return Err(StandardError::Internal("Expected record type".to_string()));
                 }
 
                 // Find the field type
@@ -573,17 +572,20 @@ impl ConcurrentTypeChecker {
                             return Ok(field_info.type_.clone());
                         }
                     }
-                    Err(StandardError::Internal("Record field not found".to_string()).into())
+                    Err(StandardError::Internal(
+                        "Record field not found".to_string(),
+                    ))
                 } else {
-                    Err(StandardError::Internal("Record type inference failed".to_string()).into())
+                    Err(StandardError::Internal(
+                        "Record type inference failed".to_string(),
+                    ))
                 }
             }
             ligature_ast::ExprKind::Match { scrutinee, cases } => {
                 if cases.is_empty() {
                     return Err(StandardError::Internal(
                         "Match expression has no cases".to_string(),
-                    )
-                    .into());
+                    ));
                 }
 
                 // Infer type of scrutinee
@@ -602,8 +604,7 @@ impl ConcurrentTypeChecker {
                 } else {
                     Err(StandardError::Internal(
                         "Match expression type inference failed".to_string(),
-                    )
-                    .into())
+                    ))
                 }
             }
             _ => {

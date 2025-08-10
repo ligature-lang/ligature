@@ -91,14 +91,3 @@ uuid = { version = "1.0", features = ["v4"] }
 walkdir = "2.4"
 which = "6.0"
 xdg = "2.5"
-
-[workspace.features]
-default = []
-lean-integration = [
-  "baton-client",
-  "baton-protocol",
-  "baton-verification",
-  "baton-specification",
-  "baton-core",
-  "baton-error",
-]

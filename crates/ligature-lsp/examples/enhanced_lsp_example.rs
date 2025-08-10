@@ -3,10 +3,9 @@
 //! This example shows how to use the enhanced diagnostics, completion, and code actions
 //! features to provide better IDE integration.
 
-use ligature_lsp::{
-    CodeActionsProvider, EnhancedCompletionConfig, EnhancedCompletionProvider,
-    EnhancedDiagnosticsConfig, EnhancedDiagnosticsProvider,
-};
+use ligature_lsp::completion::CompletionConfig;
+use ligature_lsp::diagnostics::DiagnosticsConfig;
+use ligature_lsp::{CodeActionsProvider, CompletionProvider, DiagnosticsProvider};
 use lsp_types::{DiagnosticSeverity, Position, Range};
 
 #[tokio::main]
@@ -36,7 +35,7 @@ async fn example_enhanced_diagnostics() {
     println!("-------------------------------");
 
     // Create enhanced diagnostics provider with custom configuration
-    let config = EnhancedDiagnosticsConfig {
+    let config = DiagnosticsConfig {
         enable_detailed_explanations: true,
         enable_fix_suggestions: true,
         enable_security_warnings: true,
@@ -44,7 +43,8 @@ async fn example_enhanced_diagnostics() {
         ..Default::default()
     };
 
-    let mut diagnostics = EnhancedDiagnosticsProvider::with_config(config);
+    let mut diagnostics = DiagnosticsProvider::new();
+    diagnostics.update_config(config);
 
     // Example Ligature code with various issues
     let code = r#"
@@ -67,7 +67,7 @@ match someValue of
 
     // Compute diagnostics
     if let Some(diagnostics_list) = diagnostics
-        .compute_enhanced_diagnostics("file:///example.lig", code, None)
+        .compute_diagnostics("file:///example.lig", code, None)
         .await
     {
         println!("Found {} diagnostics:", diagnostics_list.len());
@@ -103,16 +103,17 @@ async fn example_enhanced_completion() {
     println!("-------------------------------");
 
     // Create enhanced completion provider with custom configuration
-    let config = EnhancedCompletionConfig {
+    let config = CompletionConfig {
         enable_context_aware: true,
-        enable_type_aware: true,
+        enable_type_aware_completions: true,
         enable_fuzzy_matching: true,
         enable_auto_import: true,
-        enable_snippets: true,
+        enable_snippet_completions: true,
         ..Default::default()
     };
 
-    let completion = EnhancedCompletionProvider::with_config(config);
+    let mut completion = CompletionProvider::new();
+    completion.update_config(config);
 
     // Example code for different contexts
     let function_context = r#"
@@ -160,7 +161,7 @@ match someValue of
         println!("\n  Testing {context_name}:");
 
         let completions = completion
-            .provide_enhanced_completion("file:///example.lig", code, position, None)
+            .provide_completion("file:///example.lig", code, position)
             .await;
 
         if let lsp_types::CompletionResponse::Array(items) = completions {

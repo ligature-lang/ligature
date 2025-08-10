@@ -127,7 +127,7 @@ impl EvaluationError {
                     .suggestion("Check the types of your variables and expressions")
                     .suggestion("Ensure function arguments match expected types");
                 context_builder.build_type_error(
-                    format!("Type error: expected {}, found {}", expected, found),
+                    format!("Type error: expected {expected}, found {found}"),
                     Some(expected.clone()),
                     Some(found.clone()),
                 )
@@ -146,7 +146,7 @@ impl EvaluationError {
                     .suggestion("Check that the variable is properly defined")
                     .suggestion("Verify the variable is in scope")
                     .suggestion("Check for typos in variable names");
-                context_builder.build_evaluation_error(format!("Unbound variable: {}", name))
+                context_builder.build_evaluation_error(format!("Unbound variable: {name}"))
             }
             EvaluationError::InvalidFunctionApplication { .. } => {
                 context_builder = context_builder
@@ -193,8 +193,7 @@ impl EvaluationError {
                     .suggestion("Check that the operation is valid for the given type")
                     .suggestion("Verify operand types before performing operations");
                 context_builder.build_evaluation_error(format!(
-                    "Invalid operation: {} on {}",
-                    operation, operand_type
+                    "Invalid operation: {operation} on {operand_type}"
                 ))
             }
             EvaluationError::IndexOutOfBounds { index, length, .. } => {
@@ -205,8 +204,7 @@ impl EvaluationError {
                     .suggestion("Check that your index is within the valid range")
                     .suggestion("Verify the length of your collection before indexing");
                 context_builder.build_evaluation_error(format!(
-                    "Index out of bounds: index {}, length {}",
-                    index, length
+                    "Index out of bounds: index {index}, length {length}"
                 ))
             }
             EvaluationError::FieldNotFound {
@@ -218,10 +216,8 @@ impl EvaluationError {
                     .metadata("record_type", record_type.clone())
                     .suggestion("Check that the field name is spelled correctly")
                     .suggestion("Verify the record has the expected structure");
-                context_builder.build_evaluation_error(format!(
-                    "Field not found: {} in {}",
-                    field, record_type
-                ))
+                context_builder
+                    .build_evaluation_error(format!("Field not found: {field} in {record_type}"))
             }
             EvaluationError::VariantNotFound {
                 variant,
@@ -234,10 +230,8 @@ impl EvaluationError {
                     .metadata("union_type", union_type.clone())
                     .suggestion("Check that the variant name is spelled correctly")
                     .suggestion("Verify the union type has the expected variants");
-                context_builder.build_evaluation_error(format!(
-                    "Variant not found: {} in {}",
-                    variant, union_type
-                ))
+                context_builder
+                    .build_evaluation_error(format!("Variant not found: {variant} in {union_type}"))
             }
             EvaluationError::Timeout { .. } => {
                 context_builder = context_builder
@@ -253,7 +247,7 @@ impl EvaluationError {
                     .suggestion("Check the external function implementation")
                     .suggestion("Verify function arguments and return types");
                 context_builder
-                    .build_evaluation_error(format!("External function error: {}", message))
+                    .build_evaluation_error(format!("External function error: {message}"))
             }
         }
     }
@@ -376,18 +370,20 @@ impl From<EvaluationError> for StandardError {
 // This should be removed once all code is migrated to the new evaluator
 #[derive(Debug)]
 pub struct LegacyEvaluator {
-    environment: crate::environment::EvaluationEnvironment,
-    errors: Vec<LigatureError>,
     error_collector: ligature_ast::ErrorCollection,
     recursion_limit: usize,
     timeout_ms: u64,
 }
 
+impl Default for LegacyEvaluator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl LegacyEvaluator {
     pub fn new() -> Self {
         Self {
-            environment: crate::environment::EvaluationEnvironment::new(),
-            errors: Vec::new(),
             error_collector: ligature_ast::ErrorCollection::new(),
             recursion_limit: 1000,
             timeout_ms: 30000,
@@ -420,6 +416,7 @@ impl LegacyEvaluator {
         ))
     }
 
+    #[allow(dead_code)]
     fn evaluate_expression_with_context(
         &mut self,
         _expr: &ligature_ast::Expr,
@@ -431,6 +428,7 @@ impl LegacyEvaluator {
         ))
     }
 
+    #[allow(dead_code)]
     fn evaluate_literal(
         &self,
         _lit: &ligature_ast::Literal,
@@ -441,6 +439,7 @@ impl LegacyEvaluator {
         ))
     }
 
+    #[allow(dead_code)]
     fn evaluate_identifier(&self, _id: &str) -> EvaluationResult<crate::value::Value> {
         // This is a placeholder implementation
         Err(StandardError::Internal(
@@ -448,6 +447,7 @@ impl LegacyEvaluator {
         ))
     }
 
+    #[allow(dead_code)]
     fn evaluate_binary_operation(
         &mut self,
         _left: &ligature_ast::Expr,
@@ -461,6 +461,7 @@ impl LegacyEvaluator {
         ))
     }
 
+    #[allow(dead_code)]
     fn evaluate_function(
         &mut self,
         _params: &[String],
@@ -473,6 +474,7 @@ impl LegacyEvaluator {
         ))
     }
 
+    #[allow(dead_code)]
     fn evaluate_application(
         &mut self,
         _func: &ligature_ast::Expr,

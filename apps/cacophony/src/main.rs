@@ -4,7 +4,12 @@ use anyhow::{Context, Result};
 use clap::Parser;
 use ligature_ast::DeclarationKind;
 use ligature_error::{ErrorReportConfig, StandardError, StandardErrorReporter};
+use ligature_eval::value::ValueKind;
+use ligature_eval::{Evaluator, Value};
 use ligature_parser::Declaration;
+
+/// Type alias for configuration values
+type ConfigValues = Vec<(String, Value)>;
 
 #[derive(Parser)]
 #[command(name = "cacophony")]
@@ -16,7 +21,7 @@ struct Cli {
     #[arg(short, long)]
     verbose: bool,
 
-    #[arg(short, long)]
+    #[arg(long)]
     validate: bool,
 }
 
@@ -39,14 +44,19 @@ fn process_file(file: &PathBuf, verbose: bool, validate: bool) -> Result<()> {
     let result = process_configuration(&source, file, validate);
 
     match result {
-        Ok(config) => {
+        Ok(config_values) => {
             if verbose {
                 println!("Configuration processed successfully:");
                 println!("  File: {}", file.display());
                 println!("  Size: {} bytes", source.len());
-                println!("  Validated: {}", validate);
+                println!("  Validated: {validate}");
+                println!("  Configuration values:");
+                for (name, value) in &config_values {
+                    println!("    {name} = {value:?}");
+                }
             } else {
                 println!("✓ Configuration processed successfully");
+                println!("  Found {} configuration values", config_values.len());
             }
             Ok(())
         }
@@ -87,16 +97,19 @@ fn process_stdin(verbose: bool, validate: bool) -> Result<()> {
         let result = process_configuration(&buffer, PathBuf::from("<stdin>").as_path(), validate);
 
         match result {
-            Ok(_) => {
+            Ok(config_values) => {
                 if verbose {
                     println!("✓ Line processed successfully");
+                    for (name, value) in &config_values {
+                        println!("  {name} = {value:?}");
+                    }
                 }
             }
             Err(e) => {
                 if verbose {
-                    eprintln!("Error: {:?}", e);
+                    eprintln!("Error: {e:?}");
                 } else {
-                    eprintln!("Error: {}", e);
+                    eprintln!("Error: {e}");
                 }
             }
         }
@@ -107,7 +120,11 @@ fn process_stdin(verbose: bool, validate: bool) -> Result<()> {
     Ok(())
 }
 
-fn process_configuration(source: &str, file: &std::path::Path, validate: bool) -> Result<()> {
+fn process_configuration(
+    source: &str,
+    file: &std::path::Path,
+    validate: bool,
+) -> Result<ConfigValues> {
     // Parse configuration with error context
     let mut parser = ligature_parser::Parser::new();
     let program = parser
@@ -119,49 +136,74 @@ fn process_configuration(source: &str, file: &std::path::Path, validate: bool) -
         validate_configuration(&program).with_context(|| "Configuration validation failed")?;
     }
 
-    // Apply configuration with error context
-    apply_configuration(&program).with_context(|| "Failed to apply configuration")?;
+    // Apply configuration using the evaluator and extract values
+    let config_values =
+        apply_configuration(&program).with_context(|| "Failed to apply configuration")?;
 
-    Ok(())
+    Ok(config_values)
 }
 
 fn validate_configuration(program: &ligature_parser::Program) -> Result<()> {
-    // Simulate validation logic
+    // Validate each declaration
     for decl in &program.declarations {
-        validate_declaration(decl).with_context(|| format!("Failed to validate declaration"))?;
+        validate_declaration(decl).with_context(|| "Failed to validate declaration".to_string())?;
     }
     Ok(())
 }
 
 fn validate_declaration(decl: &Declaration) -> Result<()> {
-    // Simulate declaration validation
+    // Validate declaration structure
     match &decl.kind {
         DeclarationKind::Value(value_decl) => {
             if value_decl.name.is_empty() {
                 return Err(anyhow::anyhow!("Variable name cannot be empty"));
             }
+            // Additional validation could be added here (type checking, etc.)
         }
-        _ => {}
+        _ => {
+            // For now, we only process value declarations as configuration
+            // Other declaration types are ignored
+        }
     }
     Ok(())
 }
 
-fn apply_configuration(program: &ligature_parser::Program) -> Result<()> {
-    // Simulate configuration application
-    for decl in &program.declarations {
-        apply_declaration(decl).with_context(|| "Failed to apply declaration")?;
-    }
-    Ok(())
+fn apply_configuration(program: &ligature_parser::Program) -> Result<ConfigValues> {
+    // Create a new evaluator
+    let mut evaluator = Evaluator::new();
+
+    // Evaluate the program - this will populate the evaluator's environment
+    evaluator
+        .evaluate_program(program)
+        .with_context(|| "Failed to evaluate configuration program")?;
+
+    // Extract configuration values from the evaluator's environment
+    let config_values = extract_configuration_values(&evaluator.environment);
+
+    Ok(config_values)
 }
 
-fn apply_declaration(decl: &Declaration) -> Result<()> {
-    // Simulate declaration application
-    match &decl.kind {
-        DeclarationKind::Value(value_decl) => {
-            // In a real implementation, this would set the value in the environment
-            println!("Setting {} = {:?}", value_decl.name, value_decl.value);
+fn extract_configuration_values(
+    environment: &ligature_eval::EvaluationEnvironment,
+) -> ConfigValues {
+    let mut config_values = Vec::new();
+
+    // Get all bindings from the environment
+    let bindings = environment.current_bindings();
+
+    for (name, value) in bindings {
+        // Only include values that are not functions or modules (i.e., actual configuration data)
+        if !is_function_or_module(value) {
+            config_values.push((name.clone(), value.clone()));
         }
-        _ => {}
     }
-    Ok(())
+
+    config_values
+}
+
+fn is_function_or_module(value: &Value) -> bool {
+    matches!(
+        &value.kind,
+        ValueKind::Function { .. } | ValueKind::Closure { .. } | ValueKind::Module { .. }
+    )
 }

@@ -26,6 +26,7 @@ pub mod type_class_tests;
 pub mod type_tests;
 pub mod union_type_inference_tests;
 pub mod value_optimization_tests;
+pub mod lsp_server_tests;
 
 use ligature_ast::AstResult;
 use ligature_eval::evaluate_program;

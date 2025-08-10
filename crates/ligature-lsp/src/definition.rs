@@ -5,6 +5,8 @@ use std::collections::HashMap;
 use ligature_ast::{DeclarationKind, Program, Span};
 use lsp_types::{Location, Position, Range, Url};
 
+use crate::async_evaluation::{AsyncEvaluationConfig, AsyncEvaluationService};
+
 /// Type alias for the definitions cache to reduce complexity
 type DefinitionsCache = HashMap<String, HashMap<String, Location>>;
 
@@ -13,6 +15,8 @@ type DefinitionsCache = HashMap<String, HashMap<String, Location>>;
 pub struct DefinitionProvider {
     /// Cache of symbol definitions by document URI.
     definitions_cache: DefinitionsCache,
+    /// Async evaluation service for evaluation-based definition finding.
+    async_evaluation: Option<AsyncEvaluationService>,
 }
 
 impl DefinitionProvider {
@@ -20,6 +24,130 @@ impl DefinitionProvider {
     pub fn new() -> Self {
         Self {
             definitions_cache: HashMap::new(),
+            async_evaluation: None,
+        }
+    }
+
+    /// Create a new definition provider with async evaluation.
+    pub fn with_async_evaluation() -> Self {
+        let async_evaluation = AsyncEvaluationService::new(AsyncEvaluationConfig::default()).ok();
+        Self {
+            definitions_cache: HashMap::new(),
+            async_evaluation,
+        }
+    }
+
+    /// Find the definition of a symbol at a given position with enhanced evaluation-based information.
+    pub async fn find_definition_enhanced(
+        &self,
+        uri: &str,
+        content: &str,
+        position: Position,
+    ) -> Option<Location> {
+        // Try to parse the program for context-aware definition finding
+        let ast = ligature_parser::parse_program(content).ok();
+
+        let symbol_name = self.get_symbol_at_position(content, position);
+        if symbol_name.is_empty() {
+            return None;
+        }
+
+        // Check cache first
+        if let Some(cache) = self.definitions_cache.get(uri) {
+            if let Some(location) = cache.get(&symbol_name) {
+                return Some(location.clone());
+            }
+        }
+
+        // Find definition in the current document
+        if let Some(program) = ast.as_ref() {
+            if let Some(location) = self.find_definition_in_program(program, &symbol_name, uri) {
+                // Enhance location with evaluation-based information
+                let enhanced_location = self
+                    .enhance_location_with_evaluation(location, program, &symbol_name)
+                    .await;
+                return Some(enhanced_location);
+            }
+        }
+
+        None
+    }
+
+    /// Enhance location with evaluation-based information.
+    async fn enhance_location_with_evaluation(
+        &self,
+        location: Location,
+        _program: &Program,
+        _symbol_name: &str,
+    ) -> Location {
+        // For now, return the original location
+        // In the future, this could be enhanced to include evaluation-based metadata
+        // such as runtime type information, value ranges, etc.
+        location
+    }
+
+    /// Find evaluation-based definitions that might not be statically visible.
+    pub async fn find_evaluation_based_definitions(
+        &self,
+        uri: &str,
+        content: &str,
+        position: Position,
+    ) -> Vec<Location> {
+        let mut definitions = Vec::new();
+
+        if let Some(eval_service) = &self.async_evaluation {
+            if let Ok(program) = ligature_parser::parse_program(content) {
+                let symbol_name = self.get_symbol_at_position(content, position);
+
+                if !symbol_name.is_empty() {
+                    // Look for definitions that might be created through evaluation
+                    for decl in &program.declarations {
+                        if let DeclarationKind::Value(value_decl) = &decl.kind {
+                            // Check if this value declaration might define the symbol through evaluation
+                            if let Ok(eval_result) = eval_service
+                                .evaluate_expression(
+                                    &value_decl.value,
+                                    Some(&format!("def_{symbol_name}")),
+                                )
+                                .await
+                            {
+                                if eval_result.success {
+                                    // Check if the evaluation result contains the symbol
+                                    for value in &eval_result.values {
+                                        if self.value_contains_symbol(value, &symbol_name) {
+                                            definitions.push(Location {
+                                                uri: Url::parse(uri).unwrap(),
+                                                range: self.span_to_range(decl.span.clone()),
+                                            });
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        definitions
+    }
+
+    /// Check if a value contains a specific symbol.
+    #[allow(clippy::only_used_in_recursion)]
+    fn value_contains_symbol(
+        &self,
+        value: &ligature_eval::value::Value,
+        symbol_name: &str,
+    ) -> bool {
+        match &value.kind {
+            ligature_eval::value::ValueKind::Record(fields) => {
+                fields.iter().any(|(key, _)| key == symbol_name)
+            }
+            ligature_eval::value::ValueKind::List(elements) => elements
+                .iter()
+                .any(|element| self.value_contains_symbol(element, symbol_name)),
+            ligature_eval::value::ValueKind::String(s) => s.contains(symbol_name),
+            _ => false,
         }
     }
 

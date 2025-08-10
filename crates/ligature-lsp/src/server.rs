@@ -44,20 +44,20 @@ use tower_lsp::lsp_types::*;
 use tower_lsp::{Client, LanguageServer, LspService, Server};
 use tracing::{info, warn};
 
-use crate::code_actions::CodeActionsProvider;
+use crate::actions::CodeActionsProvider;
+use crate::async_evaluation::{AsyncEvaluationConfig, AsyncEvaluationService};
 use crate::completion::CompletionProvider;
-use crate::config::{ConfigurationManager, LspConfiguration};
+use crate::config::{ConfigurationManager, LspConfig, LspConfiguration, LspXdgConfig};
 use crate::definition::DefinitionProvider;
 use crate::diagnostics::DiagnosticsProvider;
 use crate::formatting::FormattingProvider;
 use crate::hover::HoverProvider;
-use crate::import_resolution::ImportResolutionService;
 use crate::inlay_hints::InlayHintsProvider;
 use crate::references::ReferencesProvider;
 use crate::rename::RenameProvider;
+use crate::resolution::ImportResolutionService;
 use crate::symbols::SymbolsProvider;
 use crate::workspace::WorkspaceManager;
-use crate::xdg_config::{LspConfig, LspXdgConfig};
 
 // Constants
 const DEFAULT_SERVER_VERSION: &str = "0.1.0";
@@ -152,6 +152,11 @@ pub struct LigatureLspServer {
     shutdown_requested: Arc<AtomicBool>,
     /// Pending requests counter for graceful shutdown
     pending_requests: Arc<RwLock<usize>>,
+    /// Async evaluation service for evaluation-based features.
+    #[allow(dead_code)]
+    async_evaluation: Arc<RwLock<AsyncEvaluationService>>,
+    /// Workspace manager with async evaluation support
+    workspace_manager_with_eval: Arc<WorkspaceManager>,
 }
 
 impl LigatureLspServer {
@@ -179,9 +184,9 @@ impl LigatureLspServer {
     /// // let server = LigatureLspServer::new(client);
     /// ```
     pub fn new(client: Client) -> Self {
-        let diagnostics = Arc::new(RwLock::new(DiagnosticsProvider::new()));
-        let completion = Arc::new(RwLock::new(CompletionProvider::new()));
-        let hover = HoverProvider::new();
+        let diagnostics = Arc::new(RwLock::new(DiagnosticsProvider::with_async_evaluation()));
+        let completion = Arc::new(RwLock::new(CompletionProvider::with_async_evaluation()));
+        let hover = HoverProvider::with_async_evaluation();
         let references = ReferencesProvider::new();
         let symbols = Arc::new(RwLock::new(SymbolsProvider::new()));
         let definition = DefinitionProvider::new();
@@ -193,7 +198,15 @@ impl LigatureLspServer {
         let documents = Arc::new(RwLock::new(HashMap::new()));
         let config_manager = Arc::new(RwLock::new(ConfigurationManager::new()));
         let config = Arc::new(RwLock::new(LspConfiguration::default()));
-        let workspace_manager = Arc::new(WorkspaceManager::new(config));
+        let workspace_manager = Arc::new(WorkspaceManager::new(config.clone()));
+        let workspace_manager_with_eval = Arc::new(WorkspaceManager::with_async_evaluation(config));
+
+        // Initialize async evaluation service
+        let async_evaluation_config = AsyncEvaluationConfig::default();
+        let async_evaluation = Arc::new(RwLock::new(
+            AsyncEvaluationService::new(async_evaluation_config)
+                .unwrap_or_else(|_| AsyncEvaluationService::default()),
+        ));
 
         Self {
             client,
@@ -214,6 +227,8 @@ impl LigatureLspServer {
             xdg_config: None, // Will be initialized in initialize()
             shutdown_requested: Arc::new(AtomicBool::new(false)),
             pending_requests: Arc::new(RwLock::new(0)),
+            async_evaluation,
+            workspace_manager_with_eval,
         }
     }
 
@@ -1470,6 +1485,7 @@ impl LanguageServer for LigatureLspServer {
         let uri = params.text_document.uri.to_string();
 
         if let Some(content) = self.get_document_content(&uri).await {
+            // Use enhanced formatting with async evaluation
             let result = self.formatting.format_document(&uri, &content).await;
             Ok(Some(result))
         } else {
@@ -1485,6 +1501,7 @@ impl LanguageServer for LigatureLspServer {
         let range = params.range;
 
         if let Some(content) = self.get_document_content(&uri).await {
+            // Use enhanced range formatting with async evaluation
             let result = self.formatting.format_range(&uri, &content, range).await;
             Ok(Some(result))
         } else {
@@ -1500,7 +1517,7 @@ impl LanguageServer for LigatureLspServer {
         if let Some(content) = self.get_document_content(&uri).await {
             let result = self
                 .rename
-                .rename_symbol(&uri, &content, position, &new_name)
+                .rename_symbol_enhanced(&uri, &content, position, &new_name)
                 .await;
             Ok(result)
         } else {
@@ -1512,6 +1529,7 @@ impl LanguageServer for LigatureLspServer {
         let uri = params.text_document.uri.to_string();
 
         if let Some(content) = self.get_document_content(&uri).await {
+            // Use enhanced inlay hints with async evaluation
             let result = self
                 .inlay_hints
                 .read()
@@ -1549,13 +1567,13 @@ impl LanguageServer for LigatureLspServer {
     async fn did_change_workspace_folders(&self, params: DidChangeWorkspaceFoldersParams) {
         info!("Workspace folders changed");
 
-        // Remove deleted folders
-        self.workspace_manager
+        // Remove deleted folders with enhanced async evaluation
+        self.workspace_manager_with_eval
             .remove_workspace_folders(params.event.removed)
             .await;
 
-        // Add new folders
-        self.workspace_manager
+        // Add new folders with enhanced async evaluation
+        self.workspace_manager_with_eval
             .add_workspace_folders(params.event.added)
             .await;
     }

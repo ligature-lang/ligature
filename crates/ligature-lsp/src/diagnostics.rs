@@ -8,6 +8,8 @@ use ligature_parser::parse_program;
 // use ligature_types::type_check_program;
 use lsp_types::{Diagnostic, DiagnosticSeverity, Position, Range};
 
+use crate::async_evaluation::{AsyncEvaluationConfig, AsyncEvaluationService};
+
 /// Configuration for diagnostics provider.
 #[derive(Debug, Clone)]
 pub struct DiagnosticsConfig {
@@ -17,6 +19,20 @@ pub struct DiagnosticsConfig {
     pub enable_semantic_diagnostics: bool,
     /// Whether to enable style diagnostics.
     pub enable_style_diagnostics: bool,
+    /// Whether to enable detailed error explanations.
+    pub enable_detailed_explanations: bool,
+    /// Whether to suggest fixes in error messages.
+    pub enable_fix_suggestions: bool,
+    /// Whether to provide related information for errors.
+    pub enable_related_information: bool,
+    /// Whether to categorize errors by severity.
+    pub enable_error_categorization: bool,
+    /// Whether to provide performance warnings.
+    pub enable_performance_warnings: bool,
+    /// Whether to provide style suggestions.
+    pub enable_style_suggestions: bool,
+    /// Whether to provide security warnings.
+    pub enable_security_warnings: bool,
 }
 
 impl Default for DiagnosticsConfig {
@@ -25,6 +41,13 @@ impl Default for DiagnosticsConfig {
             enable_type_aware_diagnostics: true,
             enable_semantic_diagnostics: true,
             enable_style_diagnostics: true,
+            enable_detailed_explanations: true,
+            enable_fix_suggestions: true,
+            enable_related_information: true,
+            enable_error_categorization: true,
+            enable_performance_warnings: true,
+            enable_style_suggestions: true,
+            enable_security_warnings: true,
         }
     }
 }
@@ -38,6 +61,8 @@ pub struct DiagnosticsProvider {
     // type_checker: TypeChecker,
     /// Configuration for diagnostics.
     config: DiagnosticsConfig,
+    /// Async evaluation service for evaluation-based diagnostics.
+    async_evaluation: Option<AsyncEvaluationService>,
 }
 
 impl DiagnosticsProvider {
@@ -47,6 +72,18 @@ impl DiagnosticsProvider {
             diagnostics_cache: HashMap::new(),
             // type_checker: TypeChecker::new(),
             config: DiagnosticsConfig::default(),
+            async_evaluation: None,
+        }
+    }
+
+    /// Create a new diagnostics provider with async evaluation.
+    pub fn with_async_evaluation() -> Self {
+        let async_evaluation = AsyncEvaluationService::new(AsyncEvaluationConfig::default()).ok();
+        Self {
+            diagnostics_cache: HashMap::new(),
+            // type_checker: TypeChecker::new(),
+            config: DiagnosticsConfig::default(),
+            async_evaluation,
         }
     }
 
@@ -59,11 +96,16 @@ impl DiagnosticsProvider {
     ) -> Option<Vec<Diagnostic>> {
         let mut diagnostics = Vec::new();
 
-        // Parse diagnostics
+        // Parse diagnostics with enhanced error reporting
         if let Err(parse_error) = parse_program(content) {
             match parse_error {
                 ligature_error::StandardError::Ligature(ligature_error) => {
-                    diagnostics.extend(self.convert_parse_errors(&ligature_error));
+                    if self.config.enable_detailed_explanations {
+                        diagnostics
+                            .extend(self.convert_enhanced_parse_errors(&ligature_error, uri));
+                    } else {
+                        diagnostics.extend(self.convert_parse_errors(&ligature_error));
+                    }
                 }
                 _ => {
                     // Handle other standard errors as generic parse errors
@@ -73,7 +115,7 @@ impl DiagnosticsProvider {
                         code: Some(lsp_types::NumberOrString::String("P000".to_string())),
                         code_description: None,
                         source: Some("ligature-parser".to_string()),
-                        message: format!("Parse error: {}", parse_error),
+                        message: format!("Parse error: {parse_error}"),
                         related_information: None,
                         tags: None,
                         data: None,
@@ -85,6 +127,14 @@ impl DiagnosticsProvider {
         // Type checking diagnostics
         if let Some(program) = ast {
             diagnostics.extend(self.compute_type_diagnostics(program));
+
+            // Evaluation-based diagnostics
+            if let Some(eval_service) = &self.async_evaluation {
+                diagnostics.extend(
+                    self.compute_evaluation_diagnostics(program, eval_service)
+                        .await,
+                );
+            }
         }
 
         // Additional semantic checks
@@ -112,7 +162,89 @@ impl DiagnosticsProvider {
         diagnostics
     }
 
+    /// Compute evaluation-based diagnostics.
+    async fn compute_evaluation_diagnostics(
+        &self,
+        program: &Program,
+        eval_service: &AsyncEvaluationService,
+    ) -> Vec<Diagnostic> {
+        let mut diagnostics = Vec::new();
+
+        // Try to evaluate the program to catch runtime errors
+        match eval_service.evaluate_program(program, None).await {
+            Ok(result) => {
+                if !result.success {
+                    if let Some(error) = result.error {
+                        diagnostics.push(Diagnostic {
+                            range: Range::new(Position::new(0, 0), Position::new(0, 0)),
+                            severity: Some(DiagnosticSeverity::ERROR),
+                            code: Some(lsp_types::NumberOrString::String("E000".to_string())),
+                            code_description: None,
+                            source: Some("ligature-eval".to_string()),
+                            message: format!("Evaluation error: {error}"),
+                            related_information: None,
+                            tags: None,
+                            data: None,
+                        });
+                    }
+                } else {
+                    // Add performance warnings for slow evaluations
+                    if result.evaluation_time.as_millis() > 100 {
+                        diagnostics.push(Diagnostic {
+                            range: Range::new(Position::new(0, 0), Position::new(0, 0)),
+                            severity: Some(DiagnosticSeverity::WARNING),
+                            code: Some(lsp_types::NumberOrString::String("P000".to_string())),
+                            code_description: None,
+                            source: Some("ligature-eval".to_string()),
+                            message: format!(
+                                "Slow evaluation: {}ms (consider optimizing)",
+                                result.evaluation_time.as_millis()
+                            ),
+                            related_information: None,
+                            tags: None,
+                            data: None,
+                        });
+                    }
+
+                    // Add cache performance information
+                    if result.metrics.cache_hit_rate() < 0.8 {
+                        diagnostics.push(Diagnostic {
+                            range: Range::new(Position::new(0, 0), Position::new(0, 0)),
+                            severity: Some(DiagnosticSeverity::INFORMATION),
+                            code: Some(lsp_types::NumberOrString::String("C000".to_string())),
+                            code_description: None,
+                            source: Some("ligature-eval".to_string()),
+                            message: format!(
+                                "Low cache hit rate: {:.1}% (consider caching strategies)",
+                                result.metrics.cache_hit_rate() * 100.0
+                            ),
+                            related_information: None,
+                            tags: None,
+                            data: None,
+                        });
+                    }
+                }
+            }
+            Err(e) => {
+                diagnostics.push(Diagnostic {
+                    range: Range::new(Position::new(0, 0), Position::new(0, 0)),
+                    severity: Some(DiagnosticSeverity::ERROR),
+                    code: Some(lsp_types::NumberOrString::String("E001".to_string())),
+                    code_description: None,
+                    source: Some("ligature-eval".to_string()),
+                    message: format!("Evaluation service error: {e}"),
+                    related_information: None,
+                    tags: None,
+                    data: None,
+                });
+            }
+        }
+
+        diagnostics
+    }
+
     /// Convert type errors to LSP diagnostics.
+    #[allow(dead_code)]
     fn convert_type_errors(&self, error: &ligature_ast::AstError) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
@@ -702,6 +834,298 @@ impl DiagnosticsProvider {
     /// Clear diagnostics for a document.
     pub fn clear_diagnostics(&mut self, uri: &str) {
         self.diagnostics_cache.remove(uri);
+    }
+
+    /// Convert enhanced parse errors with detailed explanations.
+    fn convert_enhanced_parse_errors(
+        &self,
+        error: &ligature_ast::AstError,
+        uri: &str,
+    ) -> Vec<Diagnostic> {
+        let mut diagnostics = Vec::new();
+        let range = if let Some(span) = error.span() {
+            self.span_to_range(span.clone())
+        } else {
+            Range::new(Position::new(0, 0), Position::new(0, 0))
+        };
+
+        let mut message = error.to_string();
+        let mut code = "P001".to_string();
+
+        // Add detailed explanations and fix suggestions
+        if self.config.enable_detailed_explanations {
+            match error {
+                ligature_ast::AstError::Parse {
+                    code: error_code,
+                    message: error_msg,
+                    suggestions,
+                    ..
+                } => {
+                    code = error_code.as_str().to_string();
+                    message = error_msg.clone();
+                    if self.config.enable_fix_suggestions && !suggestions.is_empty() {
+                        message = format!("{} Suggestions: {}", message, suggestions.join(", "));
+                    }
+                }
+                ligature_ast::AstError::Type {
+                    code: error_code,
+                    message: error_msg,
+                    expected,
+                    found,
+                    suggestions,
+                    ..
+                } => {
+                    code = error_code.as_str().to_string();
+                    message = error_msg.clone();
+                    if let (Some(expected_type), Some(found_type)) = (expected, found) {
+                        message =
+                            format!("{message} Expected: {expected_type}, Found: {found_type}");
+                    }
+                    if self.config.enable_fix_suggestions && !suggestions.is_empty() {
+                        message = format!("{} Suggestions: {}", message, suggestions.join(", "));
+                    }
+                }
+                ligature_ast::AstError::InvalidIdentifier {
+                    code: error_code,
+                    name,
+                    ..
+                } => {
+                    code = error_code.as_str().to_string();
+                    message = format!(
+                        "Invalid identifier '{name}'. Identifiers must start with a letter or \
+                         underscore and contain only letters, digits, and underscores."
+                    );
+                    if self.config.enable_fix_suggestions {
+                        if let Some(suggestion) = self.suggest_identifier_fix(name) {
+                            message = format!("{message} Suggestion: {suggestion}");
+                        }
+                    }
+                }
+                ligature_ast::AstError::DuplicateIdentifier {
+                    code: error_code,
+                    name,
+                    ..
+                } => {
+                    code = error_code.as_str().to_string();
+                    message = format!(
+                        "Duplicate declaration of '{name}'. Each identifier must be declared only \
+                         once in its scope."
+                    );
+                }
+                ligature_ast::AstError::UndefinedIdentifier {
+                    code: error_code,
+                    name,
+                    ..
+                } => {
+                    code = error_code.as_str().to_string();
+                    message = format!(
+                        "Undefined variable '{name}'. Make sure the variable is declared before \
+                         use."
+                    );
+                }
+                _ => {
+                    code = "P008".to_string();
+                    message = error.to_string();
+                }
+            }
+        }
+
+        // Add related information if enabled
+        let related_information = if self.config.enable_related_information {
+            self.get_related_information_for_parse_error(error, uri)
+        } else {
+            None
+        };
+
+        // Determine severity based on error categorization
+        let severity = if self.config.enable_error_categorization {
+            match error {
+                ligature_ast::AstError::Parse { .. } => DiagnosticSeverity::ERROR,
+                ligature_ast::AstError::Type { .. } => DiagnosticSeverity::ERROR,
+                ligature_ast::AstError::InvalidIdentifier { .. } => DiagnosticSeverity::ERROR,
+                ligature_ast::AstError::DuplicateIdentifier { .. } => DiagnosticSeverity::ERROR,
+                ligature_ast::AstError::UndefinedIdentifier { .. } => DiagnosticSeverity::WARNING,
+                _ => DiagnosticSeverity::ERROR,
+            }
+        } else {
+            DiagnosticSeverity::ERROR
+        };
+
+        diagnostics.push(Diagnostic {
+            range,
+            severity: Some(severity),
+            code: Some(lsp_types::NumberOrString::String(code)),
+            code_description: None,
+            source: Some("ligature-parser".to_string()),
+            message,
+            related_information,
+            tags: None,
+            data: None,
+        });
+
+        diagnostics
+    }
+
+    #[allow(dead_code)]
+    fn check_security_issues(&self, content: &str, _uri: &str) -> Vec<Diagnostic> {
+        let mut diagnostics = Vec::new();
+
+        // Check for hardcoded passwords
+        if content.contains("password") && content.contains("=") {
+            diagnostics.push(Diagnostic {
+                range: Range {
+                    start: Position {
+                        line: 0,
+                        character: 0,
+                    },
+                    end: Position {
+                        line: 0,
+                        character: 0,
+                    },
+                },
+                severity: Some(DiagnosticSeverity::WARNING),
+                code: Some(lsp_types::NumberOrString::String("S001".to_string())),
+                code_description: None,
+                source: Some("ligature-security".to_string()),
+                message: "Potential hardcoded password detected".to_string(),
+                related_information: None,
+                tags: None,
+                data: None,
+            });
+        }
+
+        // Check for potential SQL injection patterns
+        if content.contains("SELECT") && content.contains("${") {
+            diagnostics.push(Diagnostic {
+                range: Range {
+                    start: Position {
+                        line: 0,
+                        character: 0,
+                    },
+                    end: Position {
+                        line: 0,
+                        character: 0,
+                    },
+                },
+                severity: Some(DiagnosticSeverity::WARNING),
+                code: Some(lsp_types::NumberOrString::String("S002".to_string())),
+                code_description: None,
+                source: Some("ligature-security".to_string()),
+                message: "Potential SQL injection pattern detected".to_string(),
+                related_information: None,
+                tags: None,
+                data: None,
+            });
+        }
+
+        diagnostics
+    }
+
+    #[allow(dead_code)]
+    fn check_performance_issues(&self, _program: &Program, _uri: &str) -> Vec<Diagnostic> {
+        // Placeholder for performance checks
+        Vec::new()
+    }
+
+    #[allow(dead_code)]
+    fn check_style_issues(&self, content: &str, _uri: &str) -> Vec<Diagnostic> {
+        let mut diagnostics = Vec::new();
+
+        // Check for long lines
+        for (line_num, line) in content.lines().enumerate() {
+            if line.len() > 100 {
+                diagnostics.push(Diagnostic {
+                    range: Range {
+                        start: Position {
+                            line: line_num as u32,
+                            character: 0,
+                        },
+                        end: Position {
+                            line: line_num as u32,
+                            character: line.len() as u32,
+                        },
+                    },
+                    severity: Some(DiagnosticSeverity::INFORMATION),
+                    code: Some(lsp_types::NumberOrString::String("ST001".to_string())),
+                    code_description: None,
+                    source: Some("ligature-style".to_string()),
+                    message: "Line is too long (consider breaking it)".to_string(),
+                    related_information: None,
+                    tags: None,
+                    data: None,
+                });
+            }
+        }
+
+        diagnostics
+    }
+
+    #[allow(dead_code)]
+    fn suggest_token_fix(&self, token: &str) -> Option<String> {
+        // Simple token suggestions
+        match token {
+            "fucntion" => Some("function".to_string()),
+            "retrun" => Some("return".to_string()),
+            "improt" => Some("import".to_string()),
+            "exprot" => Some("export".to_string()),
+            _ => None,
+        }
+    }
+
+    #[allow(dead_code)]
+    fn suggest_type_fix(&self, expected: &str, found: &str) -> Option<String> {
+        // Type conversion suggestions
+        match (expected, found) {
+            ("Int", "String") => Some("parseInt".to_string()),
+            ("String", "Int") => Some("toString".to_string()),
+            _ => None,
+        }
+    }
+
+    /// Suggest identifier fixes.
+    fn suggest_identifier_fix(&self, name: &str) -> Option<String> {
+        if name.chars().next().is_some_and(|c| c.is_numeric()) {
+            Some(
+                "Identifiers cannot start with a number. Add a letter or underscore prefix."
+                    .to_string(),
+            )
+        } else if name.contains('-') {
+            Some("Identifiers cannot contain hyphens. Use underscores instead.".to_string())
+        } else {
+            None
+        }
+    }
+
+    /// Get related information for parse errors.
+    fn get_related_information_for_parse_error(
+        &self,
+        error: &ligature_ast::AstError,
+        uri: &str,
+    ) -> Option<Vec<lsp_types::DiagnosticRelatedInformation>> {
+        // This would provide links to related documentation or examples
+        let mut related = Vec::new();
+
+        // Add suggestions from the error if available
+        for suggestion in error.get_suggestions() {
+            related.push(lsp_types::DiagnosticRelatedInformation {
+                location: lsp_types::Location {
+                    uri: lsp_types::Url::parse(uri).ok()?,
+                    range: Range::new(Position::new(0, 0), Position::new(0, 0)),
+                },
+                message: suggestion,
+            });
+        }
+
+        if related.is_empty() {
+            None
+        } else {
+            Some(related)
+        }
+    }
+
+    /// Update configuration.
+    pub fn update_config(&mut self, config: DiagnosticsConfig) {
+        self.config = config;
     }
 }
 

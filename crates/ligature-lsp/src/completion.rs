@@ -9,6 +9,8 @@ use lsp_types::{
     MarkupKind, Position,
 };
 
+use crate::async_evaluation::{AsyncEvaluationConfig, AsyncEvaluationService};
+
 /// Provider for code completion suggestions.
 pub struct CompletionProvider {
     /// Built-in keywords and their documentation.
@@ -20,6 +22,8 @@ pub struct CompletionProvider {
     // type_checker: TypeChecker,
     /// Configuration for completions.
     config: CompletionConfig,
+    /// Async evaluation service for evaluation-based completions.
+    async_evaluation: Option<AsyncEvaluationService>,
 }
 
 /// Configuration for completion provider.
@@ -31,6 +35,16 @@ pub struct CompletionConfig {
     pub enable_snippet_completions: bool,
     /// Whether to enable import completions.
     pub enable_import_completions: bool,
+    /// Whether to enable context-aware completions.
+    pub enable_context_aware: bool,
+    /// Whether to enable documentation in completions.
+    pub enable_documentation: bool,
+    /// Whether to enable examples in completions.
+    pub enable_examples: bool,
+    /// Whether to enable fuzzy matching.
+    pub enable_fuzzy_matching: bool,
+    /// Whether to enable auto-import suggestions.
+    pub enable_auto_import: bool,
 }
 
 impl Default for CompletionConfig {
@@ -39,6 +53,11 @@ impl Default for CompletionConfig {
             enable_type_aware_completions: true,
             enable_snippet_completions: true,
             enable_import_completions: true,
+            enable_context_aware: true,
+            enable_documentation: true,
+            enable_examples: true,
+            enable_fuzzy_matching: true,
+            enable_auto_import: true,
         }
     }
 }
@@ -50,6 +69,10 @@ struct BuiltinFunction {
     documentation: String,
     parameters: Vec<String>,
     return_type: String,
+    #[allow(dead_code)]
+    examples: Vec<String>,
+    #[allow(dead_code)]
+    category: String,
 }
 
 impl CompletionProvider {
@@ -83,6 +106,8 @@ impl CompletionProvider {
                 documentation: "Add two integers".to_string(),
                 parameters: vec!["a".to_string(), "b".to_string()],
                 return_type: "Int".to_string(),
+                examples: vec!["add 5 3".to_string(), "let result = add x y".to_string()],
+                category: "arithmetic".to_string(),
             },
         );
         builtins.insert(
@@ -92,6 +117,8 @@ impl CompletionProvider {
                 documentation: "Subtract two integers".to_string(),
                 parameters: vec!["a".to_string(), "b".to_string()],
                 return_type: "Int".to_string(),
+                examples: vec!["sub 10 3".to_string(), "let result = sub x y".to_string()],
+                category: "arithmetic".to_string(),
             },
         );
         builtins.insert(
@@ -101,6 +128,8 @@ impl CompletionProvider {
                 documentation: "Multiply two integers".to_string(),
                 parameters: vec!["a".to_string(), "b".to_string()],
                 return_type: "Int".to_string(),
+                examples: vec!["mul 5 3".to_string(), "let result = mul x y".to_string()],
+                category: "arithmetic".to_string(),
             },
         );
         builtins.insert(
@@ -110,6 +139,8 @@ impl CompletionProvider {
                 documentation: "Divide two integers".to_string(),
                 parameters: vec!["a".to_string(), "b".to_string()],
                 return_type: "Int".to_string(),
+                examples: vec!["div 10 2".to_string(), "let result = div x y".to_string()],
+                category: "arithmetic".to_string(),
             },
         );
         builtins.insert(
@@ -119,6 +150,8 @@ impl CompletionProvider {
                 documentation: "Check if two values are equal".to_string(),
                 parameters: vec!["a".to_string(), "b".to_string()],
                 return_type: "Bool".to_string(),
+                examples: vec!["eq 5 5".to_string(), "let result = eq x y".to_string()],
+                category: "comparison".to_string(),
             },
         );
         builtins.insert(
@@ -128,6 +161,8 @@ impl CompletionProvider {
                 documentation: "Check if first integer is less than second".to_string(),
                 parameters: vec!["a".to_string(), "b".to_string()],
                 return_type: "Bool".to_string(),
+                examples: vec!["lt 3 5".to_string(), "let result = lt x y".to_string()],
+                category: "comparison".to_string(),
             },
         );
         builtins.insert(
@@ -137,6 +172,8 @@ impl CompletionProvider {
                 documentation: "Check if first integer is greater than second".to_string(),
                 parameters: vec!["a".to_string(), "b".to_string()],
                 return_type: "Bool".to_string(),
+                examples: vec!["gt 5 3".to_string(), "let result = gt x y".to_string()],
+                category: "comparison".to_string(),
             },
         );
         builtins.insert(
@@ -146,6 +183,11 @@ impl CompletionProvider {
                 documentation: "Concatenate two strings".to_string(),
                 parameters: vec!["a".to_string(), "b".to_string()],
                 return_type: "String".to_string(),
+                examples: vec![
+                    "concat \"hello\" \"world\"".to_string(),
+                    "let result = concat x y".to_string(),
+                ],
+                category: "string".to_string(),
             },
         );
         builtins.insert(
@@ -155,6 +197,11 @@ impl CompletionProvider {
                 documentation: "Get the length of a list".to_string(),
                 parameters: vec!["list".to_string()],
                 return_type: "Int".to_string(),
+                examples: vec![
+                    "length [1, 2, 3]".to_string(),
+                    "let result = length myList".to_string(),
+                ],
+                category: "list".to_string(),
             },
         );
         builtins.insert(
@@ -164,6 +211,11 @@ impl CompletionProvider {
                 documentation: "Get the first element of a list".to_string(),
                 parameters: vec!["list".to_string()],
                 return_type: "Maybe a".to_string(),
+                examples: vec![
+                    "head [1, 2, 3]".to_string(),
+                    "let result = head myList".to_string(),
+                ],
+                category: "list".to_string(),
             },
         );
         builtins.insert(
@@ -173,6 +225,11 @@ impl CompletionProvider {
                 documentation: "Get all but the first element of a list".to_string(),
                 parameters: vec!["list".to_string()],
                 return_type: "Maybe (List a)".to_string(),
+                examples: vec![
+                    "tail [1, 2, 3]".to_string(),
+                    "let result = tail myList".to_string(),
+                ],
+                category: "list".to_string(),
             },
         );
         builtins.insert(
@@ -182,6 +239,11 @@ impl CompletionProvider {
                 documentation: "Add an element to the front of a list".to_string(),
                 parameters: vec!["element".to_string(), "list".to_string()],
                 return_type: "List a".to_string(),
+                examples: vec![
+                    "cons 1 [2, 3]".to_string(),
+                    "let result = cons x myList".to_string(),
+                ],
+                category: "list".to_string(),
             },
         );
         builtins.insert(
@@ -191,6 +253,11 @@ impl CompletionProvider {
                 documentation: "Check if a list is empty".to_string(),
                 parameters: vec!["list".to_string()],
                 return_type: "Bool".to_string(),
+                examples: vec![
+                    "isEmpty []".to_string(),
+                    "let result = isEmpty myList".to_string(),
+                ],
+                category: "list".to_string(),
             },
         );
 
@@ -199,7 +266,16 @@ impl CompletionProvider {
             builtins,
             // type_checker: TypeChecker::new(),
             config: CompletionConfig::default(),
+            async_evaluation: None,
         }
+    }
+
+    /// Create a new completion provider with async evaluation.
+    pub fn with_async_evaluation() -> Self {
+        let mut provider = Self::new();
+        provider.async_evaluation =
+            AsyncEvaluationService::new(AsyncEvaluationConfig::default()).ok();
+        provider
     }
 
     /// Get completions for a given position in a document.
@@ -215,6 +291,16 @@ impl CompletionProvider {
         // Try to parse the program for context-aware completions
         let ast = ligature_parser::parse_program(content).ok();
 
+        // Get enhanced context-aware completions
+        if self.config.enable_context_aware {
+            completions.extend(self.get_context_aware_completions(content, position, &word));
+        }
+
+        // Get auto-import suggestions if enabled
+        if self.config.enable_auto_import {
+            completions.extend(self.get_auto_import_suggestions(&word, content));
+        }
+
         // Get context-aware completions
         if let Some(program) = ast.as_ref() {
             // Type-aware completions
@@ -229,6 +315,16 @@ impl CompletionProvider {
         completions.extend(self.get_builtin_completions(&word));
         completions.extend(self.get_snippet_completions(&word));
 
+        // Add evaluation-based completions if available
+        if let Some(eval_service) = &self.async_evaluation {
+            if let Some(program) = ast.as_ref() {
+                completions.extend(
+                    self.get_evaluation_based_completions(program, &word, eval_service)
+                        .await,
+                );
+            }
+        }
+
         CompletionResponse::Array(completions)
     }
 
@@ -238,7 +334,7 @@ impl CompletionProvider {
         uri: &str,
         content: &str,
         position: Position,
-        import_resolution: &crate::import_resolution::ImportResolutionService,
+        import_resolution: &crate::resolution::ImportResolutionService,
     ) -> CompletionResponse {
         let mut completions = self.provide_completion(uri, content, position).await;
 
@@ -255,12 +351,164 @@ impl CompletionProvider {
         completions
     }
 
+    /// Get evaluation-based completions.
+    async fn get_evaluation_based_completions(
+        &self,
+        program: &Program,
+        prefix: &str,
+        eval_service: &AsyncEvaluationService,
+    ) -> Vec<CompletionItem> {
+        let mut completions = Vec::new();
+
+        // Try to evaluate the program to get runtime information
+        match eval_service.evaluate_program(program, None).await {
+            Ok(result) => {
+                if result.success {
+                    // Add completions based on evaluated values
+                    for (i, value) in result.values.iter().enumerate() {
+                        let value_str = format!("{value:?}");
+                        if value_str.to_lowercase().contains(&prefix.to_lowercase()) {
+                            completions.push(CompletionItem {
+                                label: format!("result_{i}"),
+                                kind: Some(CompletionItemKind::VALUE),
+                                tags: None,
+                                detail: Some(format!("Evaluated: {value_str}")),
+                                documentation: Some(lsp_types::Documentation::MarkupContent(
+                                    MarkupContent {
+                                        kind: MarkupKind::Markdown,
+                                        value: format!(
+                                            "**Evaluated \
+                                             Value**\n\n```\n{}\n```\n\n**Performance**: {}ms",
+                                            value_str,
+                                            result.evaluation_time.as_millis()
+                                        ),
+                                    },
+                                )),
+                                insert_text_mode: None,
+                                label_details: None,
+                                deprecated: None,
+                                preselect: None,
+                                sort_text: Some(format!("eval_{i}")),
+                                filter_text: None,
+                                insert_text: Some(value_str),
+                                insert_text_format: Some(InsertTextFormat::PLAIN_TEXT),
+                                text_edit: None,
+                                additional_text_edits: None,
+                                commit_characters: None,
+                                command: None,
+                                data: None,
+                            });
+                        }
+                    }
+
+                    // Add performance-based suggestions
+                    if result.evaluation_time.as_millis() > 100 {
+                        completions.push(CompletionItem {
+                            label: "optimize".to_string(),
+                            kind: Some(CompletionItemKind::TEXT),
+                            tags: None,
+                            detail: Some("Performance optimization suggestion".to_string()),
+                            documentation: Some(lsp_types::Documentation::MarkupContent(
+                                MarkupContent {
+                                    kind: MarkupKind::Markdown,
+                                    value: format!(
+                                        "**Performance Warning**\n\nEvaluation took {}ms. \
+                                         Consider:\n- Caching frequently used values\n- \
+                                         Simplifying complex expressions\n- Using more efficient \
+                                         data structures",
+                                        result.evaluation_time.as_millis()
+                                    ),
+                                },
+                            )),
+                            insert_text_mode: None,
+                            label_details: None,
+                            deprecated: None,
+                            preselect: None,
+                            sort_text: Some("perf_optimize".to_string()),
+                            filter_text: None,
+                            insert_text: Some("// TODO: Optimize for performance".to_string()),
+                            insert_text_format: Some(InsertTextFormat::PLAIN_TEXT),
+                            text_edit: None,
+                            additional_text_edits: None,
+                            commit_characters: None,
+                            command: None,
+                            data: None,
+                        });
+                    }
+                } else {
+                    // Add error-based completions
+                    if let Some(error) = result.error {
+                        completions.push(CompletionItem {
+                            label: "fix_error".to_string(),
+                            kind: Some(CompletionItemKind::TEXT),
+                            tags: None,
+                            detail: Some("Error fix suggestion".to_string()),
+                            documentation: Some(lsp_types::Documentation::MarkupContent(
+                                MarkupContent {
+                                    kind: MarkupKind::Markdown,
+                                    value: format!(
+                                        "**Evaluation Error**\n\n```\n{error}\n```\n\nConsider \
+                                         fixing the error before continuing."
+                                    ),
+                                },
+                            )),
+                            insert_text_mode: None,
+                            label_details: None,
+                            deprecated: None,
+                            preselect: None,
+                            sort_text: Some("error_fix".to_string()),
+                            filter_text: None,
+                            insert_text: Some("// TODO: Fix evaluation error".to_string()),
+                            insert_text_format: Some(InsertTextFormat::PLAIN_TEXT),
+                            text_edit: None,
+                            additional_text_edits: None,
+                            commit_characters: None,
+                            command: None,
+                            data: None,
+                        });
+                    }
+                }
+            }
+            Err(e) => {
+                // Add service error completions
+                completions.push(CompletionItem {
+                    label: "eval_service_error".to_string(),
+                    kind: Some(CompletionItemKind::TEXT),
+                    tags: None,
+                    detail: Some("Evaluation service error".to_string()),
+                    documentation: Some(lsp_types::Documentation::MarkupContent(MarkupContent {
+                        kind: MarkupKind::Markdown,
+                        value: format!(
+                            "**Evaluation Service Error**\n\n```\n{e}\n```\n\nThe evaluation \
+                             service encountered an error."
+                        ),
+                    })),
+                    insert_text_mode: None,
+                    label_details: None,
+                    deprecated: None,
+                    preselect: None,
+                    sort_text: Some("service_error".to_string()),
+                    filter_text: None,
+                    insert_text: Some("// TODO: Check evaluation service".to_string()),
+                    insert_text_format: Some(InsertTextFormat::PLAIN_TEXT),
+                    text_edit: None,
+                    additional_text_edits: None,
+                    commit_characters: None,
+                    command: None,
+                    data: None,
+                });
+            }
+        }
+
+        completions
+    }
+
     /// Get completions from imported modules.
     async fn get_imported_completions(
         &self,
         uri: &str,
         _position: Position,
-        import_resolution: &crate::import_resolution::ImportResolutionService,
+        import_resolution: &crate::resolution::ImportResolutionService,
     ) -> Vec<CompletionItem> {
         let mut completions = Vec::new();
 
@@ -963,6 +1211,265 @@ impl CompletionProvider {
         }
 
         line[start..end].to_string()
+    }
+
+    /// Get context-aware completions based on the current position.
+    fn get_context_aware_completions(
+        &self,
+        content: &str,
+        position: Position,
+        prefix: &str,
+    ) -> Vec<CompletionItem> {
+        if !self.config.enable_context_aware {
+            return Vec::new();
+        }
+
+        let mut items = Vec::new();
+
+        // Check if we're in a function definition context
+        if content
+            .lines()
+            .take(position.line as usize)
+            .any(|line| line.contains("fun"))
+        {
+            items.extend(self.get_function_context_completions(prefix));
+        }
+
+        // Check if we're in a type definition context
+        if content
+            .lines()
+            .take(position.line as usize)
+            .any(|line| line.contains("type"))
+        {
+            items.extend(self.get_type_context_completions(prefix));
+        }
+
+        // Check if we're in a pattern matching context
+        if content
+            .lines()
+            .take(position.line as usize)
+            .any(|line| line.contains("match"))
+        {
+            items.extend(self.get_pattern_context_completions(prefix));
+        }
+
+        // Check if we're in an import context
+        if content
+            .lines()
+            .take(position.line as usize)
+            .any(|line| line.contains("import"))
+        {
+            items.extend(self.get_import_context_completions(prefix));
+        }
+
+        items
+    }
+
+    /// Get function context completions.
+    fn get_function_context_completions(&self, prefix: &str) -> Vec<CompletionItem> {
+        let mut items = Vec::new();
+
+        if "fun".starts_with(prefix) {
+            items.push(CompletionItem {
+                label: "fun".to_string(),
+                kind: Some(CompletionItemKind::KEYWORD),
+                detail: Some("Function definition".to_string()),
+                documentation: Some(lsp_types::Documentation::MarkupContent(MarkupContent {
+                    kind: MarkupKind::Markdown,
+                    value: "Define a function with parameters and return type".to_string(),
+                })),
+                deprecated: None,
+                sort_text: Some("1_fun".to_string()),
+                filter_text: Some("fun".to_string()),
+                insert_text: Some(
+                    "fun ${1:name} (${2:param}: ${3:Type}) -> ${4:ReturnType} = ${5:expression}"
+                        .to_string(),
+                ),
+                insert_text_format: Some(InsertTextFormat::SNIPPET),
+                text_edit: None,
+                additional_text_edits: None,
+                commit_characters: None,
+                command: None,
+                data: None,
+                tags: None,
+                preselect: None,
+                insert_text_mode: None,
+                label_details: None,
+            });
+        }
+
+        items
+    }
+
+    /// Get type context completions.
+    fn get_type_context_completions(&self, prefix: &str) -> Vec<CompletionItem> {
+        let mut items = Vec::new();
+
+        if "type".starts_with(prefix) {
+            items.push(CompletionItem {
+                label: "type".to_string(),
+                kind: Some(CompletionItemKind::KEYWORD),
+                detail: Some("Type alias".to_string()),
+                documentation: Some(lsp_types::Documentation::MarkupContent(MarkupContent {
+                    kind: MarkupKind::Markdown,
+                    value: "Define a type alias".to_string(),
+                })),
+                deprecated: None,
+                sort_text: Some("1_type".to_string()),
+                filter_text: Some("type".to_string()),
+                insert_text: Some("type ${1:Name} = ${2:Type}".to_string()),
+                insert_text_format: Some(InsertTextFormat::SNIPPET),
+                text_edit: None,
+                additional_text_edits: None,
+                commit_characters: None,
+                command: None,
+                data: None,
+                tags: None,
+                preselect: None,
+                insert_text_mode: None,
+                label_details: None,
+            });
+        }
+
+        items
+    }
+
+    /// Get pattern context completions.
+    fn get_pattern_context_completions(&self, prefix: &str) -> Vec<CompletionItem> {
+        let mut items = Vec::new();
+
+        if "match".starts_with(prefix) {
+            items.push(CompletionItem {
+                label: "match".to_string(),
+                kind: Some(CompletionItemKind::KEYWORD),
+                detail: Some("Pattern matching".to_string()),
+                documentation: Some(lsp_types::Documentation::MarkupContent(MarkupContent {
+                    kind: MarkupKind::Markdown,
+                    value: "Pattern matching expression".to_string(),
+                })),
+                deprecated: None,
+                sort_text: Some("1_match".to_string()),
+                filter_text: Some("match".to_string()),
+                insert_text: Some(
+                    "match ${1:expression} of\n  ${2:pattern} => ${3:result}\n  ${4:pattern} => \
+                     ${5:result}"
+                        .to_string(),
+                ),
+                insert_text_format: Some(InsertTextFormat::SNIPPET),
+                text_edit: None,
+                additional_text_edits: None,
+                commit_characters: None,
+                command: None,
+                data: None,
+                tags: None,
+                preselect: None,
+                insert_text_mode: None,
+                label_details: None,
+            });
+        }
+
+        items
+    }
+
+    /// Get import context completions.
+    fn get_import_context_completions(&self, prefix: &str) -> Vec<CompletionItem> {
+        let mut items = Vec::new();
+
+        if "import".starts_with(prefix) {
+            items.push(CompletionItem {
+                label: "import".to_string(),
+                kind: Some(CompletionItemKind::KEYWORD),
+                detail: Some("Import statement".to_string()),
+                documentation: Some(lsp_types::Documentation::MarkupContent(MarkupContent {
+                    kind: MarkupKind::Markdown,
+                    value: "Import from a module".to_string(),
+                })),
+                deprecated: None,
+                sort_text: Some("1_import".to_string()),
+                filter_text: Some("import".to_string()),
+                insert_text: Some("import ${1:ModuleName} from \"${2:path}\"".to_string()),
+                insert_text_format: Some(InsertTextFormat::SNIPPET),
+                text_edit: None,
+                additional_text_edits: None,
+                commit_characters: None,
+                command: None,
+                data: None,
+                tags: None,
+                preselect: None,
+                insert_text_mode: None,
+                label_details: None,
+            });
+        }
+
+        items
+    }
+
+    /// Get auto-import suggestions.
+    fn get_auto_import_suggestions(&self, prefix: &str, _content: &str) -> Vec<CompletionItem> {
+        if !self.config.enable_auto_import {
+            return Vec::new();
+        }
+
+        let mut items = Vec::new();
+
+        // Check if the prefix looks like it could be an import
+        if prefix.contains("::") || prefix.contains(".") {
+            items.push(CompletionItem {
+                label: format!("import {prefix}"),
+                kind: Some(CompletionItemKind::SNIPPET),
+                detail: Some("Auto-import suggestion".to_string()),
+                documentation: Some(lsp_types::Documentation::MarkupContent(MarkupContent {
+                    kind: MarkupKind::Markdown,
+                    value: format!("Import {prefix} from the appropriate module"),
+                })),
+                deprecated: None,
+                sort_text: Some("0_auto_import".to_string()),
+                filter_text: Some(prefix.to_string()),
+                insert_text: Some(format!("import {} from \"{}\"", prefix, "${1:module_path}")),
+                insert_text_format: Some(InsertTextFormat::SNIPPET),
+                text_edit: None,
+                additional_text_edits: None,
+                commit_characters: None,
+                command: None,
+                data: None,
+                tags: None,
+                preselect: None,
+                insert_text_mode: None,
+                label_details: None,
+            });
+        }
+
+        items
+    }
+
+    /// Fuzzy match text against pattern.
+    #[allow(dead_code)]
+    fn fuzzy_match(&self, text: &str, pattern: &str) -> bool {
+        let text_lower = text.to_lowercase();
+        let pattern_lower = pattern.to_lowercase();
+
+        if pattern_lower.is_empty() {
+            return true;
+        }
+
+        let mut pattern_chars = pattern_lower.chars().peekable();
+        let mut _last_match_pos = 0;
+
+        for (i, text_char) in text_lower.chars().enumerate() {
+            if let Some(&pattern_char) = pattern_chars.peek() {
+                if text_char == pattern_char {
+                    pattern_chars.next();
+                    _last_match_pos = i;
+                }
+            }
+        }
+
+        pattern_chars.peek().is_none()
+    }
+
+    /// Update configuration.
+    pub fn update_config(&mut self, config: CompletionConfig) {
+        self.config = config;
     }
 }
 

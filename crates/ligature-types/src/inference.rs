@@ -86,6 +86,7 @@ pub struct TypeInference {
     /// Dependency graph for cycle detection.
     dependency_graph: HashMap<String, HashSet<String>>,
     /// Current import stack for cycle detection.
+    #[allow(dead_code)]
     import_stack: Vec<String>,
 }
 
@@ -456,6 +457,7 @@ impl TypeInference {
     }
 
     /// Unbind pattern variables from the environment.
+    #[allow(clippy::only_used_in_recursion)]
     fn unbind_pattern_variables(&mut self, pattern: &ligature_ast::Pattern) {
         match pattern {
             ligature_ast::Pattern::Variable(_name) => {
@@ -1274,18 +1276,17 @@ impl TypeInference {
         &self,
         manifest_path: &Path,
     ) -> StandardResult<HashMap<String, String>> {
-        use std::fs;
-
         use toml::Value;
 
-        let content =
-            fs::read_to_string(manifest_path).map_err(|e| AstError::InvalidTypeAnnotation {
+        let content = std::fs::read_to_string(manifest_path).map_err(|_e| {
+            AstError::InvalidTypeAnnotation {
                 code: ligature_ast::ErrorCode::T2001,
                 span: Span::default(),
-            })?;
+            }
+        })?;
 
         let value: Value =
-            toml::from_str(&content).map_err(|e| AstError::InvalidTypeAnnotation {
+            toml::from_str(&content).map_err(|_e| AstError::InvalidTypeAnnotation {
                 code: ligature_ast::ErrorCode::T2001,
                 span: Span::default(),
             })?;
@@ -1305,8 +1306,6 @@ impl TypeInference {
 
     /// Load a module from a file path.
     fn load_module(&mut self, path: &str) -> StandardResult<ligature_ast::Program> {
-        use std::fs;
-
         use ligature_parser;
 
         // Check cache first
@@ -1320,13 +1319,14 @@ impl TypeInference {
             &self.parse_import_path(path)?.1,
         )?;
 
-        let content =
-            std::fs::read_to_string(&module_path).map_err(|e| AstError::InvalidTypeAnnotation {
+        let content = std::fs::read_to_string(&module_path).map_err(|_e| {
+            AstError::InvalidTypeAnnotation {
                 code: ligature_ast::ErrorCode::T2001,
                 span: Span::default(),
-            })?;
+            }
+        })?;
 
-        let program = ligature_parser::parse_program(&content).map_err(|e| {
+        let program = ligature_parser::parse_program(&content).map_err(|_e| {
             AstError::InvalidTypeAnnotation {
                 code: ligature_ast::ErrorCode::T2001,
                 span: Span::default(),
@@ -1484,7 +1484,7 @@ impl TypeInference {
                 })?;
 
             // Instantiate the method signature with the instance's type arguments
-            let instantiated_signature = self.instantiate_type_class_constraint(
+            let _instantiated_signature = self.instantiate_type_class_constraint(
                 &ligature_ast::TypeClassConstraint {
                     class_name: instance.class_name.clone(),
                     type_arguments: instance.type_arguments.clone(),
@@ -1495,7 +1495,7 @@ impl TypeInference {
 
             // Check that the method implementation has the correct type
             let inferred_type = self.infer_expression(&method_impl.implementation)?;
-            let expected_type = self
+            let _expected_type = self
                 .environment
                 .lookup_type_class(&method.name)
                 .ok_or_else(|| AstError::UndefinedMethod {
@@ -1558,7 +1558,7 @@ impl TypeInference {
         // Find an instance that matches the constraint
         let instances = self.environment.lookup_instances(&constraint.class_name);
 
-        for _instance in instances {
+        if let Some(_instance) = instances {
             // Note: InstanceDeclaration doesn't have type_arguments field, need to handle differently
             if true {
                 // Placeholder - need proper type comparison

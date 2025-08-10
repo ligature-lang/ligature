@@ -48,11 +48,11 @@ pub use value::Value;
 /// Evaluate a complete program using the default evaluator.
 pub fn evaluate_program(program: &Program) -> StandardResult<Value> {
     let mut evaluator = Evaluator::new();
-    Ok(evaluator.evaluate_program(program)?)
+    evaluator.evaluate_program(program)
 }
 
 /// Evaluate a single expression using the default evaluator.
 pub fn evaluate_expression(expr: &Expr) -> StandardResult<Value> {
     let mut evaluator = Evaluator::new();
-    Ok(evaluator.evaluate_expression(expr)?)
+    evaluator.evaluate_expression(expr)
 }

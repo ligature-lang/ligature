@@ -1,6 +1,5 @@
 use embouchure_checker::resolver::{Module, ModuleResolver};
 use ligature_ast::{AstResult, Declaration, Import, Span};
-use ligature_eval::Evaluator;
 
 fn main() -> AstResult<()> {
     let mut resolver = ModuleResolver::new();
@@ -286,7 +285,7 @@ fn main() -> AstResult<()> {
         .iter()
         .filter(|decl| decl.is_export())
         .count();
-    println!("  - Exported declarations: {}", exported_count);
+    println!("  - Exported declarations: {exported_count}");
 
     assert_eq!(exported_count, 1, "Expected 1 exported declaration");
     println!("✓ Module with exports works correctly");

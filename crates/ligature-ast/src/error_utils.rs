@@ -333,10 +333,7 @@ impl EnhancedErrorReporter {
 
         for error in &self.errors {
             let category = get_error_category(error);
-            errors_by_category
-                .entry(category)
-                .or_insert_with(Vec::new)
-                .push(error);
+            errors_by_category.entry(category).or_default().push(error);
         }
 
         // Report errors by category
@@ -388,7 +385,7 @@ impl EnhancedErrorReporter {
         // Error code
         if self.config.show_error_codes {
             let error_code = get_error_code(error);
-            output.push_str(&format!("[{}] ", error_code.to_string()));
+            output.push_str(&format!("[{error_code}] "));
         }
 
         // Error header
@@ -421,7 +418,7 @@ impl EnhancedErrorReporter {
                     output.push_str("\x1b[0m"); // Reset
                 }
                 for suggestion in suggestions {
-                    output.push_str(&format!("  {}\n", suggestion));
+                    output.push_str(&format!("  {suggestion}\n"));
                 }
             }
         }
@@ -447,7 +444,7 @@ impl EnhancedErrorReporter {
 
             output
         } else {
-            format!("  --> unknown location\n")
+            "  --> unknown location\n".to_string()
         }
     }
 }

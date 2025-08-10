@@ -11,7 +11,7 @@ use std::collections::HashMap;
 
 use ligature_ast::ty::Constraint;
 use ligature_ast::{Expr, Type, TypeKind};
-use ligature_error::{ErrorContextBuilder, StandardError, StandardResult};
+use ligature_error::{StandardError, StandardResult};
 use regex::Regex;
 
 use crate::environment::EvaluationEnvironment;
@@ -308,7 +308,7 @@ impl ValidationEngine {
     fn get_or_compile_regex(&mut self, pattern: &str) -> StandardResult<&Regex> {
         if !self.regex_cache.contains_key(pattern) {
             let regex = Regex::new(pattern)
-                .map_err(|e| StandardError::Internal(format!("Invalid regex pattern: {}", e)))?;
+                .map_err(|e| StandardError::Internal(format!("Invalid regex pattern: {e}")))?;
             self.regex_cache.insert(pattern.to_string(), regex);
         }
         Ok(self.regex_cache.get(pattern).unwrap())

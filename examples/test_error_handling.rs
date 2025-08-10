@@ -9,7 +9,7 @@ fn main() -> StandardResult<()> {
     // Test 1: Basic error creation
     println!("1. Testing basic error creation:");
     let basic_error = StandardError::validation_error("Test validation error");
-    println!("   Created error: {}", basic_error);
+    println!("   Created error: {basic_error}");
     println!("   Suggestions: {:?}", basic_error.get_suggestions());
     println!("   Recoverable: {}", basic_error.is_recoverable());
     println!();
@@ -18,7 +18,7 @@ fn main() -> StandardResult<()> {
     println!("2. Testing error with context:");
     let context_error = StandardError::configuration_error("Invalid configuration")
         .with_context("Configuration validation failed: field=database_url");
-    println!("   Created error: {}", context_error);
+    println!("   Created error: {context_error}");
     println!();
 
     // Test 3: Ligature error
@@ -28,7 +28,7 @@ fn main() -> StandardResult<()> {
         name: "undefined_var".to_string(),
         span: Span::new(1, 1, 1, 15),
     });
-    println!("   Created error: {}", ligature_error);
+    println!("   Created error: {ligature_error}");
     println!("   Error code: {:?}", ligature_error.error_code());
     println!("   Span: {:?}", ligature_error.span());
     println!("   Suggestions: {:?}", ligature_error.get_suggestions());

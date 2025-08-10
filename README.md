@@ -252,6 +252,10 @@ This project is licensed under the Apache License, Version 2.0 - see the [LICENS
 - **Rust Analyzer**: For LSP implementation patterns
 - **Elm**: For accessible ML-family syntax design
 
+## Dedication
+
+This project is dedicated to **Pedro Furlanetto**, whose ideas and vision inspired many of the priorities and design decisions in Ligature. His enthusiasm for well-designed languages and thoughtful approach to programming continue to influence my work.
+
 ## Contact
 
 - GitHub Issues: [https://github.com/ligature-lang/ligature/issues](https://github.com/ligature-lang/ligature/issues)

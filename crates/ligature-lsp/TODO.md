@@ -12,6 +12,8 @@ The LSP implementation is comprehensive with:
 - Import-aware completion
 - Professional-grade IDE integration
 - Enhanced diagnostics and error reporting
+- **Enhanced features fully integrated into main providers**
+- **Simple server removed and enhanced features consolidated**
 
 ## 🔴 High Priority
 
@@ -65,17 +67,21 @@ The LSP implementation is comprehensive with:
 - **Document Management**: Full document lifecycle management
 - **Configuration**: XDG configuration management
 - **Error Handling**: Comprehensive error handling and recovery
+- **Enhanced Diagnostics**: Detailed error explanations, fix suggestions, security warnings, style suggestions
+- **Enhanced Completion**: Context-aware completions, auto-import suggestions, fuzzy matching
+- **Code Actions**: Intelligent refactoring and code generation
+- **Async Evaluation**: Support for large configuration processing
 
 ### 🔄 In Progress Features
 
-- **Warning Cleanup**: 95+ compiler warnings to resolve
-- **Async Integration**: Integration with async evaluation system
+- **Warning Cleanup**: 13 compiler warnings to resolve (reduced from 95+)
+- **Performance Optimization**: Further optimization of large workspace performance
 
 ### 📋 Planned Features
 
-- **Async Evaluation**: Support for large configuration processing
-- **Advanced Code Actions**: Intelligent refactoring and code generation
-- **Performance Optimizations**: Large workspace performance improvements
+- **Advanced Code Actions**: Additional intelligent refactoring and code generation
+- **Performance Optimizations**: Further large workspace performance improvements
+- **Additional LSP Features**: Semantic highlighting, advanced formatting options
 
 ## 🔧 Technical Debt
 

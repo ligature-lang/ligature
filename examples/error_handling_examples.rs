@@ -25,12 +25,11 @@ pub fn basic_error_example() -> StandardResult<()> {
         .map_err(|e| StandardError::deserialization_error(e.to_string()))
         .map_err(|e| {
             e.with_context(format!(
-                "Failed to parse file: {} during json_parsing",
-                file_path
+                "Failed to parse file: {file_path} during json_parsing"
             ))
         })?;
 
-    println!("Successfully parsed: {:?}", parsed);
+    println!("Successfully parsed: {parsed:?}");
     Ok(())
 }
 
@@ -61,12 +60,10 @@ pub fn rich_context_example() -> StandardResult<()> {
             if let Some(port_str) = port.as_str() {
                 if port_str.parse::<u16>().is_err() {
                     return Err(StandardError::validation_error(format!(
-                        "Invalid port number: {}",
-                        port_str
+                        "Invalid port number: {port_str}"
                     ))
                     .with_context(format!(
-                        "Port validation failed: field=database.port, value={}",
-                        port_str
+                        "Port validation failed: field=database.port, value={port_str}"
                     )));
                 }
             }
@@ -148,18 +145,18 @@ pub fn error_recovery_example() -> StandardResult<()> {
 
         match perform_operation() {
             Ok(result) => {
-                println!("Operation successful: {:?}", result);
+                println!("Operation successful: {result:?}");
                 return Ok(());
             }
             Err(error) => {
                 if error.is_recoverable() && attempts < max_attempts {
-                    println!("Attempt {} failed, retrying...", attempts);
+                    println!("Attempt {attempts} failed, retrying...");
                     std::thread::sleep(std::time::Duration::from_millis(100));
                     continue;
                 } else {
                     return Err(error.with_context(format!(
-                        "Operation failed after retries: attempts={}, max_attempts={}",
-                        attempts, max_attempts
+                        "Operation failed after retries: attempts={attempts}, \
+                         max_attempts={max_attempts}"
                     )));
                 }
             }
@@ -191,8 +188,7 @@ pub fn custom_error_example() -> StandardResult<()> {
             match err {
                 CustomError::Network(msg) => StandardError::network_error(msg),
                 CustomError::Timeout(seconds) => StandardError::timeout_error(format!(
-                    "Operation timed out after {} seconds",
-                    seconds
+                    "Operation timed out after {seconds} seconds"
                 )),
             }
         }
@@ -205,7 +201,7 @@ pub fn custom_error_example() -> StandardResult<()> {
     match result {
         Ok(_) => println!("Success"),
         Err(error) => {
-            println!("Error: {}", error);
+            println!("Error: {error}");
             if let StandardError::Network(_) = error {
                 println!("This is a network error");
             }
@@ -222,7 +218,7 @@ pub fn cli_error_example() -> StandardResult<()> {
     if args.len() < 2 {
         return Err(StandardError::invalid_argument_error(format!(
             "Usage: {} <file>",
-            args.get(0).unwrap_or(&"program".to_string())
+            args.first().unwrap_or(&"program".to_string())
         )));
     }
 
@@ -231,7 +227,7 @@ pub fn cli_error_example() -> StandardResult<()> {
     // Simulate file processing
     let content = std::fs::read_to_string(file_path)
         .map_err(|e| StandardError::io_error(e, "Failed to read file"))
-        .map_err(|e| e.with_context(format!("Failed to read file: {}", file_path)))?;
+        .map_err(|e| e.with_context(format!("Failed to read file: {file_path}")))?;
 
     // Process content
     process_content(&content).map_err(|e| {
@@ -409,24 +405,24 @@ pub fn fallback_strategy_example() -> StandardResult<()> {
     // Try primary method
     match primary_method() {
         Ok(result) => {
-            println!("Primary method succeeded: {:?}", result);
-            return Ok(());
+            println!("Primary method succeeded: {result:?}");
+            Ok(())
         }
         Err(primary_error) => {
-            println!("Primary method failed: {}", primary_error);
+            println!("Primary method failed: {primary_error}");
 
             // Try fallback method
             match fallback_method() {
                 Ok(result) => {
-                    println!("Fallback method succeeded: {:?}", result);
-                    return Ok(());
+                    println!("Fallback method succeeded: {result:?}");
+                    Ok(())
                 }
                 Err(fallback_error) => {
                     // Both methods failed, return combined error
-                    return Err(StandardError::internal_error(format!(
-                        "Both primary and fallback methods failed. Primary: {}, Fallback: {}",
-                        primary_error, fallback_error
-                    )));
+                    Err(StandardError::internal_error(format!(
+                        "Both primary and fallback methods failed. Primary: {primary_error}, \
+                         Fallback: {fallback_error}"
+                    )))
                 }
             }
         }

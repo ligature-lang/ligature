@@ -5,12 +5,16 @@ use std::collections::HashMap;
 use ligature_ast::{DeclarationKind, Expr, ExprKind, Program, Span};
 use lsp_types::{Position, Range, TextEdit, Url, WorkspaceEdit};
 
+use crate::async_evaluation::{AsyncEvaluationConfig, AsyncEvaluationService};
+
 /// Provider for symbol renaming.
 #[derive(Clone)]
 pub struct RenameProvider {
     /// Cache of symbol locations by document URI.
     #[allow(clippy::type_complexity)]
     symbol_cache: HashMap<String, HashMap<String, Vec<Range>>>,
+    /// Async evaluation service for evaluation-based rename validation.
+    async_evaluation: Option<AsyncEvaluationService>,
 }
 
 impl RenameProvider {
@@ -18,35 +22,145 @@ impl RenameProvider {
     pub fn new() -> Self {
         Self {
             symbol_cache: HashMap::new(),
+            async_evaluation: None,
         }
     }
 
-    /// Prepare rename by checking if the symbol at the given position can be renamed.
-    pub fn prepare_rename(
+    /// Create a new rename provider with async evaluation.
+    pub fn with_async_evaluation() -> Self {
+        let async_evaluation = AsyncEvaluationService::new(AsyncEvaluationConfig::default()).ok();
+        Self {
+            symbol_cache: HashMap::new(),
+            async_evaluation,
+        }
+    }
+
+    /// Prepare rename by checking if the symbol at the given position can be renamed with enhanced validation.
+    pub async fn prepare_rename_enhanced(
         &self,
         _uri: &str,
         position: Position,
         content: &str,
-        ast: Option<&Program>,
     ) -> Option<lsp_types::PrepareRenameResponse> {
+        let ast = ligature_parser::parse_program(content).ok();
         let symbol_name = self.get_symbol_at_position(content, position);
+
         if symbol_name.is_empty() {
             return None;
         }
 
         // Check if this is a valid symbol that can be renamed
-        if let Some(program) = ast {
+        if let Some(program) = ast.as_ref() {
             if self.is_renameable_symbol(program, &symbol_name) {
-                let range = self.get_symbol_range_at_position(content, position);
-                return Some(lsp_types::PrepareRenameResponse::Range(range));
+                // Use async evaluation to validate the rename
+                if let Some(eval_service) = &self.async_evaluation {
+                    if let Ok(eval_result) = self
+                        .validate_rename_with_evaluation(program, &symbol_name, eval_service)
+                        .await
+                    {
+                        if eval_result {
+                            let range = self.get_symbol_range_at_position(content, position);
+                            return Some(lsp_types::PrepareRenameResponse::Range(range));
+                        }
+                    }
+                } else {
+                    // Fallback to basic validation
+                    let range = self.get_symbol_range_at_position(content, position);
+                    return Some(lsp_types::PrepareRenameResponse::Range(range));
+                }
             }
         }
 
         None
     }
 
-    /// Rename a symbol and return all the changes needed.
-    pub async fn rename_symbol(
+    /// Validate rename using async evaluation.
+    async fn validate_rename_with_evaluation(
+        &self,
+        program: &Program,
+        symbol_name: &str,
+        eval_service: &AsyncEvaluationService,
+    ) -> Result<bool, Box<dyn std::error::Error>> {
+        // Check if the symbol is used in any evaluated expressions
+        for decl in &program.declarations {
+            if let DeclarationKind::Value(value_decl) = &decl.kind {
+                if self.expression_uses_symbol(&value_decl.value, symbol_name) {
+                    // Evaluate the expression to ensure it's valid
+                    if let Ok(eval_result) = eval_service
+                        .evaluate_expression(
+                            &value_decl.value,
+                            Some(&format!("rename_{symbol_name}")),
+                        )
+                        .await
+                    {
+                        if !eval_result.success {
+                            // If evaluation fails, the rename might break the code
+                            return Ok(false);
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(true)
+    }
+
+    /// Check if an expression uses a specific symbol.
+    #[allow(clippy::only_used_in_recursion)]
+    fn expression_uses_symbol(&self, expr: &Expr, symbol_name: &str) -> bool {
+        match &expr.kind {
+            ExprKind::Variable(name) => name == symbol_name,
+            ExprKind::Application { function, argument } => {
+                self.expression_uses_symbol(function, symbol_name)
+                    || self.expression_uses_symbol(argument, symbol_name)
+            }
+            ExprKind::Let { name, value, body } => {
+                name == symbol_name
+                    || self.expression_uses_symbol(value, symbol_name)
+                    || self.expression_uses_symbol(body, symbol_name)
+            }
+            ExprKind::If {
+                condition,
+                then_branch,
+                else_branch,
+            } => {
+                self.expression_uses_symbol(condition, symbol_name)
+                    || self.expression_uses_symbol(then_branch, symbol_name)
+                    || self.expression_uses_symbol(else_branch, symbol_name)
+            }
+            ExprKind::BinaryOp {
+                operator: _,
+                left,
+                right,
+            } => {
+                self.expression_uses_symbol(left, symbol_name)
+                    || self.expression_uses_symbol(right, symbol_name)
+            }
+            ExprKind::UnaryOp {
+                operator: _,
+                operand,
+            } => self.expression_uses_symbol(operand, symbol_name),
+            ExprKind::Match { scrutinee, cases } => {
+                self.expression_uses_symbol(scrutinee, symbol_name)
+                    || cases
+                        .iter()
+                        .any(|case| self.expression_uses_symbol(&case.expression, symbol_name))
+            }
+            ExprKind::Record { fields } => fields
+                .iter()
+                .any(|field| self.expression_uses_symbol(&field.value, symbol_name)),
+            ExprKind::FieldAccess { record, field: _ } => {
+                self.expression_uses_symbol(record, symbol_name)
+            }
+            ExprKind::Literal(_) => false,
+            ExprKind::Abstraction { .. } => false,
+            ExprKind::Union { .. } => false,
+            ExprKind::Annotated { .. } => false,
+        }
+    }
+
+    /// Rename a symbol and return all the changes needed with enhanced validation.
+    pub async fn rename_symbol_enhanced(
         &self,
         uri: &str,
         content: &str,
@@ -67,6 +181,18 @@ impl RenameProvider {
         }
 
         if let Some(program) = ast.as_ref() {
+            // Use async evaluation to validate the rename
+            if let Some(eval_service) = &self.async_evaluation {
+                if let Ok(is_valid) = self
+                    .validate_rename_with_evaluation(program, &symbol_name, eval_service)
+                    .await
+                {
+                    if !is_valid {
+                        return None; // Rename would break the code
+                    }
+                }
+            }
+
             let changes = self.find_all_references(program, &symbol_name, new_name, uri, content);
             if !changes.is_empty() {
                 return Some(WorkspaceEdit {

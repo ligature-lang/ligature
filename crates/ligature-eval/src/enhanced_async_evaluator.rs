@@ -8,7 +8,7 @@ use std::time::{Duration, Instant};
 
 use dashmap::DashMap;
 use ligature_ast::{Expr, Program, Span};
-use ligature_error::{ErrorContextBuilder, StandardError, StandardResult};
+use ligature_error::{StandardError, StandardResult};
 use tokio::sync::RwLock;
 
 use crate::concurrent::{
@@ -214,9 +214,9 @@ impl EnhancedAsyncEvaluator {
                 Ok(Ok(value)) => values.push(value),
                 Ok(Err(error)) => return Err(error),
                 Err(join_error) => {
-                    return Err(
-                        StandardError::Internal(format!("Task join error: {join_error}")).into(),
-                    );
+                    return Err(StandardError::Internal(format!(
+                        "Task join error: {join_error}"
+                    )));
                 }
             }
         }
@@ -289,9 +289,9 @@ impl EnhancedAsyncEvaluator {
                     Ok(Value::list(evaluated_elements, expr.span.clone()))
                 }
             },
-            ligature_ast::ExprKind::Variable(name) => env.lookup(name).ok_or_else(|| {
-                StandardError::Internal(format!("Variable '{}' not found", name)).into()
-            }),
+            ligature_ast::ExprKind::Variable(name) => env
+                .lookup(name)
+                .ok_or_else(|| StandardError::Internal(format!("Variable '{name}' not found"))),
             ligature_ast::ExprKind::Application { function, argument } => {
                 let function_value = Box::pin(self.evaluate_expression(function, env)).await?;
                 let argument_value = Box::pin(self.evaluate_expression(argument, env)).await?;
@@ -331,9 +331,13 @@ impl EnhancedAsyncEvaluator {
                     record_fields
                         .get(field)
                         .cloned()
-                        .ok_or(StandardError::Internal("Record field not found".to_string()).into())
+                        .ok_or(StandardError::Internal(
+                            "Record field not found".to_string(),
+                        ))
                 } else {
-                    Err(StandardError::Internal("Record field access failed".to_string()).into())
+                    Err(StandardError::Internal(
+                        "Record field access failed".to_string(),
+                    ))
                 }
             }
             ligature_ast::ExprKind::Union { variant, value } => {
@@ -357,7 +361,9 @@ impl EnhancedAsyncEvaluator {
                     }
                 }
 
-                Err(StandardError::Internal("Pattern matching failed".to_string()).into())
+                Err(StandardError::Internal(
+                    "Pattern matching failed".to_string(),
+                ))
             }
             ligature_ast::ExprKind::If {
                 condition,
@@ -373,7 +379,9 @@ impl EnhancedAsyncEvaluator {
                         Box::pin(self.evaluate_expression(else_branch, env)).await
                     }
                 } else {
-                    Err(StandardError::Internal("Condition evaluation failed".to_string()).into())
+                    Err(StandardError::Internal(
+                        "Condition evaluation failed".to_string(),
+                    ))
                 }
             }
             ligature_ast::ExprKind::BinaryOp {
@@ -430,7 +438,9 @@ impl EnhancedAsyncEvaluator {
                 env_copy.bind(parameter.as_ref().clone(), argument.clone());
                 Box::pin(self.evaluate_expression(body, &env_copy)).await
             }
-            _ => Err(StandardError::Internal("Unsupported expression type".to_string()).into()),
+            _ => Err(StandardError::Internal(
+                "Unsupported expression type".to_string(),
+            )),
         }
     }
 
@@ -443,7 +453,7 @@ impl EnhancedAsyncEvaluator {
         _span: Span,
     ) -> StandardResult<Value> {
         left.apply_binary_op(operator, right).map_err(|e| {
-            ligature_error::StandardError::Internal(format!("Binary operation failed: {}", e))
+            ligature_error::StandardError::Internal(format!("Binary operation failed: {e}"))
         })
     }
 
@@ -455,7 +465,7 @@ impl EnhancedAsyncEvaluator {
         _span: Span,
     ) -> StandardResult<Value> {
         operand.apply_unary_op(operator).map_err(|e| {
-            ligature_error::StandardError::Internal(format!("Unary operation failed: {}", e))
+            ligature_error::StandardError::Internal(format!("Unary operation failed: {e}"))
         })
     }
 

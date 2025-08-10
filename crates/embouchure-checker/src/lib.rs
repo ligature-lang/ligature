@@ -48,7 +48,7 @@ pub use checker::TypeChecker;
 
 #[cfg(test)]
 mod tests {
-    use ligature_ast::{Expr, ExprKind, Literal, Program, Span, Type, TypeKind};
+    use ligature_ast::{Expr, ExprKind, Literal, Span, TypeKind};
     use ligature_parser::parse_program;
 
     use super::*;

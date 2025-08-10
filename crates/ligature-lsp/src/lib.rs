@@ -12,44 +12,39 @@
 //! - **Advanced Code Actions**: Intelligent refactoring and code generation
 //! - **Improved IDE Integration**: Better performance and real-time feedback
 
-pub mod code_actions;
+pub mod actions;
+pub mod async_evaluation;
 pub mod completion;
 pub mod config;
 pub mod definition;
 pub mod diagnostics;
-pub mod enhanced_completion;
-pub mod enhanced_diagnostics;
-// pub mod enhanced_server; // Temporarily disabled due to tower-lsp compatibility issues
+// Enhanced features have been integrated into the main providers
 pub mod formatting;
 pub mod hover;
-pub mod import_resolution;
 pub mod inlay_hints;
 pub mod references;
 pub mod rename;
+pub mod resolution;
 pub mod server;
 pub mod symbols;
 pub mod workspace;
-pub mod xdg_config;
 
 // Original providers
-pub use code_actions::CodeActionsProvider;
+pub use actions::CodeActionsProvider;
 pub use completion::CompletionProvider;
 pub use definition::DefinitionProvider;
 pub use diagnostics::DiagnosticsProvider;
-// Enhanced providers (temporarily disabled due to tower-lsp compatibility issues)
-pub use enhanced_completion::{EnhancedCompletionConfig, EnhancedCompletionProvider};
-pub use enhanced_diagnostics::{EnhancedDiagnosticsConfig, EnhancedDiagnosticsProvider};
+// Enhanced features are now integrated into the main providers
 pub use formatting::FormattingProvider;
 pub use hover::HoverProvider;
-pub use import_resolution::ImportResolutionService;
 pub use inlay_hints::InlayHintsProvider;
 use ligature_ast::Program;
 pub use references::ReferencesProvider;
 pub use rename::RenameProvider;
+pub use resolution::ImportResolutionService;
 pub use server::LigatureLspServer;
 pub use symbols::SymbolsProvider;
 use tower_lsp::LspService;
-// pub use enhanced_server::{EnhancedLigatureLspServer, EnhancedWorkspaceConfiguration};
 
 /// State for a document in the LSP server.
 #[derive(Debug, Clone)]
@@ -80,10 +75,7 @@ pub async fn run_server() {
     server::run_server().await;
 }
 
-/// Run the enhanced LSP server.
-// pub async fn run_enhanced_server() {
-//     enhanced_server::run_enhanced_server().await;
-// }
+// Enhanced features are now integrated into the main server
 /// Re-export commonly used LSP types for convenience.
 pub use lsp_types;
 /// Re-export tower-lsp for advanced usage.
@@ -181,10 +173,8 @@ mod tests {
         // In a real test environment, we'd need to mock the client
         // For now, we just test that the modules can be imported and used
         let _provider = CompletionProvider::new();
-        let _enhanced_provider = EnhancedCompletionProvider::new();
         let _hover = HoverProvider::new();
         let _diagnostics = DiagnosticsProvider::new();
-        let _enhanced_diagnostics = EnhancedDiagnosticsProvider::new();
         let _references = ReferencesProvider::new();
         let _symbols = SymbolsProvider::new();
         // let _enhanced_server = EnhancedLigatureLspServer::new(client); // Temporarily disabled
@@ -197,10 +187,8 @@ mod tests {
 
         // Just test that the providers can be created
         let _completion = CompletionProvider::new();
-        let _enhanced_completion = EnhancedCompletionProvider::new();
         let _hover = HoverProvider::new();
         let _diagnostics = DiagnosticsProvider::new();
-        let _enhanced_diagnostics = EnhancedDiagnosticsProvider::new();
         let _references = ReferencesProvider::new();
         let _symbols = SymbolsProvider::new();
         let _definition = DefinitionProvider::new();
@@ -259,28 +247,5 @@ mod tests {
         assert_eq!(workspace_folders.len(), 2);
         assert_eq!(workspace_folders[0].name, "project1");
         assert_eq!(workspace_folders[1].name, "project2");
-    }
-
-    #[test]
-    fn test_enhanced_configurations() {
-        // Test enhanced completion configuration
-        let completion_config = EnhancedCompletionConfig::default();
-        assert!(completion_config.enable_context_aware);
-        assert!(completion_config.enable_type_aware);
-        assert!(completion_config.enable_snippets);
-        assert!(completion_config.enable_documentation);
-        assert!(completion_config.enable_examples);
-        assert!(completion_config.enable_fuzzy_matching);
-        assert!(completion_config.enable_auto_import);
-
-        // Test enhanced diagnostics configuration
-        let diagnostics_config = EnhancedDiagnosticsConfig::default();
-        assert!(diagnostics_config.enable_detailed_explanations);
-        assert!(diagnostics_config.enable_fix_suggestions);
-        assert!(diagnostics_config.enable_related_information);
-        assert!(diagnostics_config.enable_error_categorization);
-        assert!(diagnostics_config.enable_performance_warnings);
-        assert!(diagnostics_config.enable_style_suggestions);
-        assert!(diagnostics_config.enable_security_warnings);
     }
 }

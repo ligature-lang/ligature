@@ -1,14 +1,17 @@
 //! Value representation for the Ligature evaluation engine.
 
+#![allow(clippy::type_complexity)]
+
 use std::collections::HashMap;
 use std::sync::Arc;
 
 use ligature_ast::{Expr, Literal, Span};
+use serde::Deserialize;
 
 use crate::environment::EvaluationEnvironment;
 
 /// A value in the Ligature language.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct Value {
     /// The kind of value.
     pub kind: ValueKind,
@@ -589,30 +592,55 @@ impl Value {
 }
 
 /// The kind of value with optimized representations.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub enum ValueKind {
     /// Unit value.
     Unit,
 
     /// Boolean value.
+    #[serde(
+        serialize_with = "serialize_arc_bool",
+        deserialize_with = "deserialize_arc_bool"
+    )]
     Boolean(Arc<bool>),
 
     /// String value with shared storage.
+    #[serde(
+        serialize_with = "serialize_arc_string",
+        deserialize_with = "deserialize_arc_string"
+    )]
     String(Arc<String>),
 
     /// Integer value.
+    #[serde(
+        serialize_with = "serialize_arc_i64",
+        deserialize_with = "deserialize_arc_i64"
+    )]
     Integer(Arc<i64>),
 
     /// Floating-point value.
+    #[serde(
+        serialize_with = "serialize_arc_f64",
+        deserialize_with = "deserialize_arc_f64"
+    )]
     Float(Arc<f64>),
 
     /// Record value with shared field storage.
+    #[serde(
+        serialize_with = "serialize_arc_record",
+        deserialize_with = "deserialize_arc_record"
+    )]
     Record(Arc<HashMap<String, Value>>),
 
     /// List value with shared element storage.
+    #[serde(
+        serialize_with = "serialize_arc_list",
+        deserialize_with = "deserialize_arc_list"
+    )]
     List(Arc<Vec<Value>>),
 
     /// Function value.
+    #[serde(skip_serializing, skip_deserializing)]
     Function {
         /// Function parameter name
         parameter: Arc<String>,
@@ -621,6 +649,7 @@ pub enum ValueKind {
     },
 
     /// Closure value.
+    #[serde(skip_serializing, skip_deserializing)]
     Closure {
         /// Closure parameter name
         parameter: Arc<String>,
@@ -633,12 +662,21 @@ pub enum ValueKind {
     /// Union value.
     Union {
         /// Union variant name
+        #[serde(
+            serialize_with = "serialize_arc_string",
+            deserialize_with = "deserialize_arc_string"
+        )]
         variant: Arc<String>,
         /// Union variant value (if any)
+        #[serde(
+            serialize_with = "serialize_option_arc_value",
+            deserialize_with = "deserialize_option_arc_value"
+        )]
         value: Option<Arc<Value>>,
     },
 
     /// Module value.
+    #[serde(skip_serializing, skip_deserializing)]
     Module {
         /// Module name
         name: Arc<String>,
@@ -932,4 +970,131 @@ impl Default for ValuePool {
     fn default() -> Self {
         Self::new(1000)
     }
+}
+
+// Serialization functions for Arc types
+fn serialize_arc_bool<S>(value: &Arc<bool>, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    serializer.serialize_bool(**value)
+}
+
+fn deserialize_arc_bool<'de, D>(deserializer: D) -> Result<Arc<bool>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let value = bool::deserialize(deserializer)?;
+    Ok(Arc::new(value))
+}
+
+fn serialize_arc_string<S>(value: &Arc<String>, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    serializer.serialize_str(value)
+}
+
+fn deserialize_arc_string<'de, D>(deserializer: D) -> Result<Arc<String>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let value = String::deserialize(deserializer)?;
+    Ok(Arc::new(value))
+}
+
+fn serialize_arc_i64<S>(value: &Arc<i64>, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    serializer.serialize_i64(**value)
+}
+
+fn deserialize_arc_i64<'de, D>(deserializer: D) -> Result<Arc<i64>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let value = i64::deserialize(deserializer)?;
+    Ok(Arc::new(value))
+}
+
+fn serialize_arc_f64<S>(value: &Arc<f64>, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    serializer.serialize_f64(**value)
+}
+
+fn deserialize_arc_f64<'de, D>(deserializer: D) -> Result<Arc<f64>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let value = f64::deserialize(deserializer)?;
+    Ok(Arc::new(value))
+}
+
+fn serialize_arc_record<S>(
+    value: &Arc<HashMap<String, Value>>,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    use serde::ser::SerializeMap;
+    let mut map = serializer.serialize_map(Some(value.len()))?;
+    for (k, v) in value.iter() {
+        map.serialize_entry(k, v)?;
+    }
+    map.end()
+}
+
+fn deserialize_arc_record<'de, D>(deserializer: D) -> Result<Arc<HashMap<String, Value>>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let value = HashMap::<String, Value>::deserialize(deserializer)?;
+    Ok(Arc::new(value))
+}
+
+fn serialize_arc_list<S>(value: &Arc<Vec<Value>>, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    use serde::ser::SerializeSeq;
+    let mut seq = serializer.serialize_seq(Some(value.len()))?;
+    for item in value.iter() {
+        seq.serialize_element(item)?;
+    }
+    seq.end()
+}
+
+fn deserialize_arc_list<'de, D>(deserializer: D) -> Result<Arc<Vec<Value>>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let value = Vec::<Value>::deserialize(deserializer)?;
+    Ok(Arc::new(value))
+}
+
+fn serialize_option_arc_value<S>(
+    value: &Option<Arc<Value>>,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    match value {
+        Some(v) => serializer.serialize_some(&**v),
+        None => serializer.serialize_none(),
+    }
+}
+
+type OptionArcValue = Option<Arc<Value>>;
+
+fn deserialize_option_arc_value<'de, D>(deserializer: D) -> Result<OptionArcValue, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let value = Option::<Value>::deserialize(deserializer)?;
+    Ok(value.map(Arc::new))
 }

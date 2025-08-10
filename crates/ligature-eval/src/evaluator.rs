@@ -12,7 +12,7 @@ use crate::advanced_optimizations::{
     AdvancedTailCallDetector, ClosureCaptureOptimizer, FunctionInliner, GenerationalGC,
     OptimizedEvaluator, ParallelEvaluator,
 };
-use crate::config::{ConfigError, ConfigFormat, EvaluatorConfig, EvaluatorConfigManager};
+use crate::config::{ConfigFormat, EvaluatorConfig, EvaluatorConfigManager};
 use crate::environment::EvaluationEnvironment;
 use crate::resolver::ModuleResolver;
 use crate::validation::{ValidationEngine, ValidationResult, ValidationStats};
@@ -949,6 +949,7 @@ impl Evaluator {
     }
 
     /// Evaluate an import statement.
+    #[allow(dead_code)]
     fn evaluate_import(&mut self, import: &ligature_ast::Import) -> StandardResult<()> {
         let module_value = self.module_resolver.resolve_module(&import.path)?;
         let module_name = import.alias.as_ref().unwrap_or(&import.path);
@@ -972,6 +973,7 @@ impl Evaluator {
     }
 
     /// Import selective bindings from a module.
+    #[allow(dead_code)]
     fn import_selective_bindings(
         &mut self,
         module_path: &str,
@@ -1002,6 +1004,7 @@ impl Evaluator {
     }
 
     /// Import all exported bindings from a module into the current environment.
+    #[allow(dead_code)]
     fn import_module_bindings(
         &mut self,
         module_path: &str,
@@ -1449,7 +1452,6 @@ impl Evaluator {
                     .apply_binary_op(operator, &right_val)
                     .map_err(|_e| {
                         StandardError::Internal("Function body evaluation failed".to_string())
-                            .into()
                     })
             }
             _ => {
@@ -1549,7 +1551,7 @@ impl Evaluator {
 
         self.environment
             .lookup(name)
-            .ok_or_else(|| StandardError::Internal(format!("Variable '{}' not found", name)).into())
+            .ok_or_else(|| StandardError::Internal(format!("Variable '{name}' not found")))
     }
 
     /// Evaluate a lambda abstraction.
@@ -1621,11 +1623,12 @@ impl Evaluator {
         let record_value = self.evaluate_expression_internal(record)?;
 
         match &record_value.kind {
-            ValueKind::Record(fields) => fields
-                .get(field)
-                .cloned()
-                .ok_or(StandardError::Internal("Record evaluation failed".to_string()).into()),
-            _ => Err(StandardError::Internal("Record field access failed".to_string()).into()),
+            ValueKind::Record(fields) => fields.get(field).cloned().ok_or(StandardError::Internal(
+                "Record evaluation failed".to_string(),
+            )),
+            _ => Err(StandardError::Internal(
+                "Record field access failed".to_string(),
+            )),
         }
     }
 
@@ -1697,8 +1700,7 @@ impl Evaluator {
                         None => {
                             return Err(StandardError::Internal(
                                 "Guard evaluation failed".to_string(),
-                            )
-                            .into());
+                            ));
                         }
                     }
                 } else {
@@ -1707,7 +1709,9 @@ impl Evaluator {
             }
         }
 
-        Err(StandardError::Internal("Pattern matching failed".to_string()).into())
+        Err(StandardError::Internal(
+            "Pattern matching failed".to_string(),
+        ))
     }
 
     /// Evaluate an if expression with optimized condition evaluation.
@@ -1722,7 +1726,9 @@ impl Evaluator {
         match condition_value.as_boolean() {
             Some(true) => self.evaluate_expression_internal(then_branch),
             Some(false) => self.evaluate_expression_internal(else_branch),
-            None => Err(StandardError::Internal("Condition evaluation failed".to_string()).into()),
+            None => Err(StandardError::Internal(
+                "Condition evaluation failed".to_string(),
+            )),
         }
     }
 
@@ -1738,9 +1744,7 @@ impl Evaluator {
 
         left_value
             .apply_binary_op(operator, &right_value)
-            .map_err(|_e| {
-                StandardError::Internal("Binary operation evaluation failed".to_string()).into()
-            })
+            .map_err(|_e| StandardError::Internal("Binary operation evaluation failed".to_string()))
     }
 
     /// Evaluate a unary operation.
@@ -1751,9 +1755,9 @@ impl Evaluator {
     ) -> StandardResult<Value> {
         let operand_value = self.evaluate_expression_internal(operand)?;
 
-        operand_value.apply_unary_op(operator).map_err(|_e| {
-            StandardError::Internal("Unary operation evaluation failed".to_string()).into()
-        })
+        operand_value
+            .apply_unary_op(operator)
+            .map_err(|_e| StandardError::Internal("Unary operation evaluation failed".to_string()))
     }
 
     /// Check if a pattern matches a value.

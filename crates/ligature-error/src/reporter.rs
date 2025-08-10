@@ -144,10 +144,7 @@ impl StandardErrorReporter {
 
         for error in &self.errors {
             let category = self.get_error_category(error);
-            errors_by_category
-                .entry(category)
-                .or_insert_with(Vec::new)
-                .push(error);
+            errors_by_category.entry(category).or_default().push(error);
         }
 
         let mut output = String::new();
@@ -248,7 +245,7 @@ impl StandardErrorReporter {
                     output.push_str("\x1b[0m"); // Reset
                 }
                 for suggestion in suggestions {
-                    output.push_str(&format!("  {}\n", suggestion));
+                    output.push_str(&format!("  {suggestion}\n"));
                 }
             }
         }
@@ -275,7 +272,7 @@ impl StandardErrorReporter {
 
             output
         } else {
-            format!("  --> unknown location\n")
+            "  --> unknown location\n".to_string()
         }
     }
 
@@ -457,8 +454,10 @@ mod tests {
     #[test]
     fn test_error_reporter_grouping() {
         let mut reporter = StandardErrorReporter::new();
-        let mut config = ErrorReportConfig::default();
-        config.group_by_category = true;
+        let config = ErrorReportConfig {
+            group_by_category: true,
+            ..Default::default()
+        };
         reporter.set_config(config);
 
         let parse_error = StandardError::Ligature(LigatureError::Parse {

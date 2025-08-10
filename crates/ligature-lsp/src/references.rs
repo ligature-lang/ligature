@@ -5,12 +5,16 @@ use std::collections::HashMap;
 use ligature_ast::{Declaration, DeclarationKind, Expr, ExprKind, Program, Span};
 use lsp_types::{Location, Position, Range, ReferenceContext, Url};
 
+use crate::async_evaluation::{AsyncEvaluationConfig, AsyncEvaluationService};
+
 /// Provider for finding references to symbols.
 #[derive(Clone)]
 pub struct ReferencesProvider {
     /// Cache of symbol references by document URI.
     #[allow(clippy::type_complexity)]
     references_cache: HashMap<String, HashMap<String, Vec<Location>>>,
+    /// Async evaluation service for evaluation-based reference finding.
+    async_evaluation: Option<AsyncEvaluationService>,
 }
 
 impl ReferencesProvider {
@@ -18,10 +22,20 @@ impl ReferencesProvider {
     pub fn new() -> Self {
         Self {
             references_cache: HashMap::new(),
+            async_evaluation: None,
         }
     }
 
-    /// Find all references to a symbol at a given position.
+    /// Create a new references provider with async evaluation.
+    pub fn with_async_evaluation() -> Self {
+        let async_evaluation = AsyncEvaluationService::new(AsyncEvaluationConfig::default()).ok();
+        Self {
+            references_cache: HashMap::new(),
+            async_evaluation,
+        }
+    }
+
+    /// Find all references to a symbol at a given position with enhanced async evaluation support.
     pub async fn find_references(
         &self,
         uri: &str,
@@ -44,6 +58,14 @@ impl ReferencesProvider {
         // Find references in the current document
         if let Some(program) = ast.as_ref() {
             references.extend(self.find_references_in_program(program, &symbol_name, uri));
+
+            // Use async evaluation to find evaluation-based references
+            if let Some(eval_service) = &self.async_evaluation {
+                references.extend(
+                    self.find_evaluation_based_references(program, &symbol_name, uri, eval_service)
+                        .await,
+                );
+            }
         }
 
         // If include_declaration is true, add the declaration location
@@ -58,6 +80,95 @@ impl ReferencesProvider {
         }
 
         references
+    }
+
+    /// Find evaluation-based references using async evaluation.
+    async fn find_evaluation_based_references(
+        &self,
+        program: &Program,
+        symbol_name: &str,
+        uri: &str,
+        eval_service: &AsyncEvaluationService,
+    ) -> Vec<Location> {
+        let mut references = Vec::new();
+
+        // Find references in expressions that use the symbol
+        for decl in &program.declarations {
+            if let DeclarationKind::Value(value_decl) = &decl.kind {
+                // Check if this value declaration uses the symbol
+                if self.expression_uses_symbol(&value_decl.value, symbol_name) {
+                    // Evaluate the expression to see if it's actually used
+                    if let Ok(eval_result) = eval_service
+                        .evaluate_expression(&value_decl.value, Some(&format!("ref_{symbol_name}")))
+                        .await
+                    {
+                        if eval_result.success {
+                            // Add reference location
+                            references.push(Location {
+                                uri: Url::parse(uri).unwrap(),
+                                range: self.span_to_range(decl.span.clone()),
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
+        references
+    }
+
+    /// Check if an expression uses a specific symbol.
+    #[allow(clippy::only_used_in_recursion)]
+    fn expression_uses_symbol(&self, expr: &Expr, symbol_name: &str) -> bool {
+        match &expr.kind {
+            ExprKind::Variable(name) => name == symbol_name,
+            ExprKind::Application { function, argument } => {
+                self.expression_uses_symbol(function, symbol_name)
+                    || self.expression_uses_symbol(argument, symbol_name)
+            }
+            ExprKind::Let { name, value, body } => {
+                name == symbol_name
+                    || self.expression_uses_symbol(value, symbol_name)
+                    || self.expression_uses_symbol(body, symbol_name)
+            }
+            ExprKind::If {
+                condition,
+                then_branch,
+                else_branch,
+            } => {
+                self.expression_uses_symbol(condition, symbol_name)
+                    || self.expression_uses_symbol(then_branch, symbol_name)
+                    || self.expression_uses_symbol(else_branch, symbol_name)
+            }
+            ExprKind::BinaryOp {
+                operator: _,
+                left,
+                right,
+            } => {
+                self.expression_uses_symbol(left, symbol_name)
+                    || self.expression_uses_symbol(right, symbol_name)
+            }
+            ExprKind::UnaryOp {
+                operator: _,
+                operand,
+            } => self.expression_uses_symbol(operand, symbol_name),
+            ExprKind::Match { scrutinee, cases } => {
+                self.expression_uses_symbol(scrutinee, symbol_name)
+                    || cases
+                        .iter()
+                        .any(|case| self.expression_uses_symbol(&case.expression, symbol_name))
+            }
+            ExprKind::Record { fields } => fields
+                .iter()
+                .any(|field| self.expression_uses_symbol(&field.value, symbol_name)),
+            ExprKind::FieldAccess { record, field: _ } => {
+                self.expression_uses_symbol(record, symbol_name)
+            }
+            ExprKind::Literal(_) => false,
+            ExprKind::Abstraction { .. } => false,
+            ExprKind::Union { .. } => false,
+            ExprKind::Annotated { .. } => false,
+        }
     }
 
     /// Find all references to a symbol at a given position (original method).
